@@ -2217,3 +2217,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788387598.4,politics,scc-hrep-rep-2026-11-03-gte220,SELL,2,0.18,earn,2.7743,0.8,0.127025,10,14,0.253,0.12,0.25,-0.053,-7,7 ticks in front of the touch — we would hold 100% of the ask side,C8KA8YHHTMVP
 1788387898.4,cfb,aachc-cfb-wins-2026-11-28-nd-11pt5wins,SELL,2,0.35,sell,3.5878,0.97,,38,46,0.069,0.34,0.35,0.07,0,selling filled stock — it earns while it waits,C8K7YSP68MW0
 1788388558.4,politics,paccc-usho-midterms-2026-11-03-dem,SELL,50,0.847,manual,0.224,4.74,0.8339,83,87,0,0.846,0.847,-0.0131,-50,the owner's own order — the engine leaves it alone,C8F9364V4MVP
+1788390418.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,10,0.189,sell,15,0.85,0.1661,15,18,0.699,0.184,0.189,0.0229,10,buying back the short at or under what it sold for — the bid earns while it wait,C8KYD0Q4PMVY
+1788390598.9,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,6,0.97,earn,1.2953,2.4,0.998125,97,99,0.432,0.97,0.99,-0.0281,6,1 tick behind the touch — we would hold 25% of the bid side,C8JP218TMMVV
+1788390658.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,10,0.188,sell,39.5069,0.07,0.1661,14,18,0.759,0.184,0.189,-0.0219,-10,selling filled stock — it earns while it waits,C8MM7K3F8MW1
+1788391019.1,cfb,aachc-cfb-wins-2026-11-28-sc-5pt5wins,SELL,1,0.49,sell,7.5,0.62,,73,86,0.441,0.48,0.49,0.31,0,selling filled stock — it earns while it waits,C8M8DH4BYMVK
+1788391259.1,cfb,aachc-cfb-wins-2026-11-28-boscol-4pt5wins,BUY,1,0.32,earn,1.25,0.9,,27,36,0,0.16,0.34,0.01,1,joins the touch — the book has been quiet,C8M3J2PNWMVY
+1788391619.4,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,BUY,1,0.45,sell,0.0987,8.63,,48,54,0.599,0.35,0.45,-0.06,2,buying back the short at or under what it sold for — the bid earns while it wait,C8DCM72MRMVY
+1788391619.4,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,BUY,1,0.45,sell,0.0987,2.93,,48,54,0.599,0.35,0.45,-0.06,3,buying back the short at or under what it sold for — the bid earns while it wait,C8JEKPA5CMVP
+1788393119.6,cfb,aachc-cfb-wins-2026-11-28-boscol-4pt5wins,SELL,1,0.17,sell,3.75,0.52,,27,33,0.452,0.16,0.17,0.13,0,selling filled stock — it earns while it waits,C8MVEFA8MMW0
