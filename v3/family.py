@@ -452,6 +452,10 @@ class Family:
         # "can't you match up the placement time with the execution
         # time to get an exact resting period?" — yes, with this).
         self.placed_at: dict[str, float] = {}
+        # every position move the feed showed, [ts, market, delta]: the
+        # hourly journal reconciliation reads the DIRECTION of a hand
+        # trade off the move nearest its time (owner, 2026-09-02)
+        self.pos_moves: list[list] = []
         self.priority: set = set()   # markets to re-check first
         self.pending_pages: list = []   # open fills awaiting a mark
         self.log: list[dict] = []
@@ -1532,6 +1536,10 @@ class Family:
         deltas = {m: (positions.get(m) or (0.0, 0.0))[0]
                   - self.positions_seen.get(m, 0.0)
                   for m in tracked}
+        for _m, _d in deltas.items():
+            if abs(_d) > 0.005:
+                self.pos_moves.append([round(now, 1), _m, round(_d, 2)])
+        del self.pos_moves[:-500]
         # limbo first: orders that disappeared earlier waiting for the
         # lagging position feed to say fill or cancel
         for oid, gp in list(self.gone_pending.items()):
@@ -4300,6 +4308,7 @@ class Family:
             "positions_seen": self.positions_seen,
             "silent_cancels": self.silent_cancels,
             "placed_at": self.placed_at,
+            "pos_moves": self.pos_moves[-500:],
             "pending_pages": self.pending_pages,
             "gone_pending": {oid: {"rec": asdict(g["rec"]),
                                    "until": g["until"]}
@@ -4376,6 +4385,8 @@ class Family:
             # Rescan everything under the config actually running.
             self.scoreboard = {}
         self.universe = dict(d.get("universe") or {})
+        self.pos_moves = [list(x) for x in (d.get("pos_moves") or [])
+                          if isinstance(x, (list, tuple)) and len(x) == 3]
         if d.get("terms"):
             self.terms = TermsStore.from_dict(d["terms"])
         self.earned_today = float(d.get("earned_today") or 0.0)
