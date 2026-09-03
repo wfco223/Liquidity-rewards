@@ -107,8 +107,14 @@ class OrderDesk:
     """
 
     def __init__(self, client: Client, whitelist, switch_on, fresh_book, log,
-                 sleep=None, clock=None, closing_only=None, tick_for=None):
+                 sleep=None, clock=None, closing_only=None, tick_for=None,
+                 own_at=None):
         self.client = client
+        # own_at(slug, book_side, price) -> shares of OURS resting at that
+        # level. We cannot buy our own orders (owner, 2026-09-02): a take
+        # is measured against the best level that is not ours and what
+        # OTHERS show there
+        self.own_at = own_at or (lambda slug, side, px: 0.0)
         self.whitelist = whitelist
         self.switch_on = switch_on
         self.fresh_book = fresh_book
@@ -160,29 +166,32 @@ class OrderDesk:
             from .intents import BUY_LONG, BUY_SHORT
             if initiator != "owner":
                 return "bond taker orders are the owner's rail only"
-            if side == "BUY" and intent == BUY_LONG:
-                if not book.asks:
-                    return "no ask to take"
-                if price > book.asks[0][0] + 1e-12:
-                    return (f"taker bid {price * 100:g}c is above the ask "
-                            f"{book.asks[0][0] * 100:g}c — never worse than "
-                            f"the touch")
-                if qty > book.asks[0][1] + 1e-9:
-                    return (f"taker bid for {qty:g} exceeds the "
-                            f"{book.asks[0][1]:g} showing at the ask")
-                return None
-            if side == "SELL" and intent == BUY_SHORT:
-                if not book.bids:
-                    return "no bid to take"
-                if price < book.bids[0][0] - 1e-12:
-                    return (f"taker ask {price * 100:g}c is below the bid "
-                            f"{book.bids[0][0] * 100:g}c — never worse than "
-                            f"the touch")
-                if qty > book.bids[0][1] + 1e-9:
-                    return (f"taker ask for {qty:g} exceeds the "
-                            f"{book.bids[0][1]:g} showing at the bid")
-                return None
-            return "bond taker orders may only open a bond at the touch"
+            if (side, intent) == ("BUY", BUY_LONG):
+                far, word = "SELL", "ask"
+            elif (side, intent) == ("SELL", BUY_SHORT):
+                far, word = "BUY", "bid"
+            else:
+                return "bond taker orders may only open a bond at the touch"
+            # the levels on the far side net of our own orders: the best
+            # one that is not entirely ours is the touch we may take
+            others = []
+            for p, q in book.side(far):
+                avail = q - float(self.own_at(slug, far, p) or 0.0)
+                if avail > 1e-9:
+                    others.append((p, avail))
+            if not others:
+                return f"no {word} to take that is not our own"
+            best_px, best_q = others[0]
+            worse = (price > best_px + 1e-12) if far == "SELL" else (price < best_px - 1e-12)
+            if worse:
+                return (f"taker {'bid' if far == 'SELL' else 'ask'} "
+                        f"{price * 100:g}c is past the best {word} not ours, "
+                        f"{best_px * 100:g}c — never worse than the touch")
+            at_level = next((q for p, q in others if abs(p - price) < 1e-9), 0.0)
+            if qty > at_level + 1e-9:
+                return (f"taker for {qty:g} exceeds the {at_level:g} others "
+                        f"show at {price * 100:g}c")
+            return None
         if taker:
             # the ONE carved exception (owner, 2026-08-22): a SELL of
             # held stock limited AT the bid crosses on purpose — but

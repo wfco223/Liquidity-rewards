@@ -100,6 +100,10 @@ class Rig:
             whitelist=self.fam.knows,
             switch_on=lambda: self.switch,
             fresh_book=lambda s: self.cache.fresh(s, 120, self.now),
+            own_at=lambda slug, side, px: sum(
+                o.qty for o in self.fam.orders.values()
+                if o.market == slug and o.side == side
+                and abs(o.price - px) < 1e-9),
             log=lambda e: None,
             sleep=lambda s: None, clock=lambda: self.now,
         )

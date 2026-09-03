@@ -988,6 +988,12 @@ class Monitor:
                 # the exchange's own figure where we have it, else the
                 # last book of any age. No grid, no order.
                 tick_for=lambda slug, c=cache: c.grid(slug),
+                # we cannot buy our own orders (owner, 2026-09-02): the
+                # take rails measure against what OTHERS show
+                own_at=lambda slug, side, px, f=fam: sum(
+                    o.qty for o in list(f.orders.values())
+                    if o.market == slug and o.side == side
+                    and abs(o.price - px) < 1e-9),
                 log=self._audit,
             )
             fam.desk = desk
