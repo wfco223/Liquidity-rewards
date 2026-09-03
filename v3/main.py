@@ -1010,7 +1010,7 @@ class Monitor:
                                               name="Bonds switch",
                                               scope="Bonds")
         self.bonds = Bonds(self.families["politics"], self.client,
-                           self.silver.model_fair)
+                           self.silver.model_fair, alert=self.alerts.notify)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
@@ -2661,16 +2661,21 @@ class Monitor:
                            f"{slug} — market fields: "
                            + ",".join(sorted(md.keys()))[:400])
 
-    def bonds_op(self, op: str, market: str) -> dict:
+    def bonds_op(self, op: str, market: str, value=None) -> dict:
         """The owner's taps on the bonds page: add a proposed market,
-        ignore it, un-ignore it, or remove one from the list. Persisted
-        at once, like a switch flip — the list is his, and a restart
+        ignore it, un-ignore it, remove one from the list, set the
+        deploy budget or the price bar. Persisted at once, like a
+        switch flip — the list and the money are his, and a restart
         between a tap and the next save must not undo it."""
         market = str(market or "").strip()
-        if not market:
-            return {"ok": False, "note": "no market given"}
         now = time.time()
-        if op == "bonds_approve":
+        if op in ("bonds_budget", "bonds_max"):
+            r = (self.bonds.set_budget(value) if op == "bonds_budget"
+                 else self.bonds.set_max(value))
+            market = market or "-"
+        elif not market:
+            return {"ok": False, "note": "no market given"}
+        elif op == "bonds_approve":
             r = self.bonds.approve(market, now)
         elif op == "bonds_ignore":
             r = self.bonds.ignore(market, now)

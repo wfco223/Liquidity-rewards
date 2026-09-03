@@ -54,7 +54,9 @@ from .intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 HIGH_ODDS = 0.99            # YES bond: Silver's odds for YES at or above
 LOW_ODDS = 0.01             # NO bond: Silver's odds for YES at or below
 PRICE_CAP = 0.995           # never pay more than this per dollar of bond
-REINVEST_MIN_USD = 5.0      # proceeds below this wait for the next sale
+SNIPE_MAX_DEFAULT = 0.985   # the owner's bar for a "great opportunity",
+                            # per dollar of bond; he sets it from the page
+REINVEST_MIN_USD = 5.0      # money below this waits
 SCAN_HOUR_UTC = 7           # 3 am Eastern: the nightly Silver check
 LOG_KEEP = 200
 DROPPED_KEEP = 30
@@ -81,11 +83,21 @@ def scan_due(now: float, last_day: str, hour: int = SCAN_HOUR_UTC) -> str | None
 
 
 class Bonds:
-    def __init__(self, fam, client, fair, clock=None):
+    def __init__(self, fam, client, fair, clock=None, alert=None):
         self.fam = fam                  # the politics family
         self.client = client
         self.fair = fair                # slug -> Silver's YES odds, or None
         self._clock = clock or time.time
+        self.alert = alert or (lambda title, msg: None)   # takes only —
+                                                          # money moved
+        # the owner's money, the sniper's way (owner, 2026-09-02: "I will
+        # leave the money out of my account. When there is a great
+        # opportunity the bond engine makes the purchase and I top off the
+        # money for the engine"): a deploy BUDGET he sets and tops up, a
+        # price bar for what counts as great, and what was spent since
+        self.budget: float = 0.0
+        self.snipe_max: float = SNIPE_MAX_DEFAULT
+        self.spent: float = 0.0
         self.approved: dict[str, dict] = {}   # slug -> {added, odds, side}
         self.proposed: dict[str, dict] = {}   # slug -> {odds, side, since}
         self.ignored: dict[str, float] = {}   # slug -> ts
@@ -248,6 +260,36 @@ class Bonds:
         return {"ok": True, "note": "removed — a bond order still resting "
                                     "stays yours; the engine leaves it alone"}
 
+    def set_budget(self, amount: float) -> dict:
+        """The money the sniper may deploy before the owner tops up.
+        Setting it resets 'spent since'."""
+        try:
+            amount = float(amount)
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "budget must be a number"}
+        if amount < 0 or amount > 100000:
+            return {"ok": False, "note": "budget must be $0 to $100,000"}
+        self.budget = round(amount, 2)
+        self.spent = 0.0
+        self._log(event="budget_set", usd=self.budget)
+        return {"ok": True, "note": f"deploy budget set to ${self.budget:,.2f} "
+                                    f"— the engine takes great prices up "
+                                    f"to that, then waits for a top-up"}
+
+    def set_max(self, px: float) -> dict:
+        """The bar for a great price, per dollar of bond."""
+        try:
+            px = float(px)
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "price must be a number"}
+        if not (0.5 <= px <= PRICE_CAP):
+            return {"ok": False,
+                    "note": f"price must be 50c to {PRICE_CAP * 100:g}c"}
+        self.snipe_max = round(px, 4)
+        self._log(event="max_set", price=self.snipe_max)
+        return {"ok": True, "note": f"takes anything at {px * 100:g}c or "
+                                    f"better per dollar of bond"}
+
     # ------------------------------------------------------------ the money
 
     def cycle(self, now: float, positions: dict, on: bool) -> dict:
@@ -366,12 +408,16 @@ class Bonds:
         return b, round(1.0 - b, 4), q
 
     def _reinvest(self, now: float, positions: dict) -> dict | None:
-        """Proceeds LIFT the touch of the cheapest listed market whose
-        earning side pays — a limit at the touch, never past it, never
-        more than it shows — so the cash is a bond again the same minute
-        (owner, 2026-09-02)."""
-        spend = self.cash
-        if spend < REINVEST_MIN_USD:
+        """The sniper (owner, 2026-09-02). Money = sale proceeds plus the
+        deploy budget he tops up. When a listed market shows a GREAT
+        price — at or under his bar, per dollar of bond — it LIFTS that
+        touch: a limit at the touch, never past it, never more than it
+        shows, cheapest market first, one take a cycle. The rewards-
+        seeking shares others rest there become his bond, and his own
+        resting order has one competitor fewer. Proceeds are spent
+        before the budget; a take pings the phone so he can top up."""
+        money = self.cash + self.budget
+        if money < REINVEST_MIN_USD:
             return None
         best = None
         for slug, meta in self.approved.items():
@@ -380,8 +426,10 @@ class Bonds:
             if book is None:
                 continue
             px, cost, size = self._take_price(side, book)
-            if px is None or cost <= 0 or cost > PRICE_CAP or size < 1.0:
+            if px is None or cost <= 0 or size < 1.0:
                 continue
+            if cost > min(self.snipe_max, PRICE_CAP) + 1e-9:
+                continue                    # not a great price
             prog = self.fam.terms.get(slug)
             if prog is None or not prog.is_live():
                 continue
@@ -394,7 +442,7 @@ class Bonds:
         if best is None:
             return None
         cost, slug, side, px, size, book = best
-        qty = float(min(math.floor(spend / cost), math.floor(size)))
+        qty = float(min(math.floor(money / cost), math.floor(size)))
         if qty < 1.0:
             return None
         bs, intent = self.entry(side)
@@ -408,12 +456,24 @@ class Bonds:
         self.fam.orders[r.order_id] = FamilyOrder(
             id=r.order_id, market=slug, side=bs, price=(r.price or px),
             qty=qty, intent=r.intent or intent, placed_ts=now, purpose="bond",
-            why=f"bond: reinvesting proceeds — took the {side} at the touch")
-        self.cash = round(self.cash - qty * cost, 4)
+            why=f"bond: took the {side} at the touch — a great price")
+        usd = round(qty * cost, 4)
+        from_cash = min(self.cash, usd)
+        self.cash = round(self.cash - from_cash, 4)
+        from_budget = round(usd - from_cash, 4)
+        self.budget = round(max(self.budget - from_budget, 0.0), 4)
+        self.spent = round(self.spent + from_budget, 4)
         self._log(event="took", market=slug, side=side, price=(r.price or px),
-                  qty=qty, cost=round(qty * cost, 2), cash=round(self.cash, 2))
+                  qty=qty, cost=round(usd, 2), cash=round(self.cash, 2),
+                  budget=round(self.budget, 2))
+        if from_budget > 0.005:
+            self.alert("Bond engine bought",
+                       f"{qty:g} {side} at {(r.price or px) * 100:g}c in "
+                       f"{slug[:40]} — ${usd:,.2f}; ${self.budget:,.2f} of "
+                       f"the deploy budget left")
         return {"market": slug, "bond": side, "side": bs,
-                "price": (r.price or px), "qty": qty, "taken": True}
+                "price": (r.price or px), "qty": qty, "taken": True,
+                "usd": round(usd, 2)}
 
     def _probe(self, slug: str, book, prog, book_side: str, qty: float | None = None):
         from . import survey as sv
@@ -483,6 +543,8 @@ class Bonds:
         return {"rows": rows, "proposed": proposed, "dropped": dropped,
                 "ignored": sorted(self.ignored),
                 "cash": round(self.cash, 2),
+                "budget": round(self.budget, 2), "spent": round(self.spent, 2),
+                "snipe_max": self.snipe_max,
                 "held_cost": round(held_cost, 2),
                 "high": HIGH_ODDS, "low": LOW_ODDS, "price_cap": PRICE_CAP,
                 "scan_day": self.scan_day, "scan_hour_utc": SCAN_HOUR_UTC,
@@ -494,6 +556,8 @@ class Bonds:
         return {"approved": self.approved, "proposed": self.proposed,
                 "ignored": self.ignored, "dropped": self.dropped,
                 "cash": round(self.cash, 4),
+                "budget": round(self.budget, 4), "spent": round(self.spent, 4),
+                "snipe_max": self.snipe_max,
                 "pos_seen": self.pos_seen, "side_seen": self.side_seen,
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
@@ -505,6 +569,9 @@ class Bonds:
         self.ignored = {str(k): float(v) for k, v in (d.get("ignored") or {}).items()}
         self.dropped = {str(k): dict(v) for k, v in (d.get("dropped") or {}).items()}
         self.cash = float(d.get("cash") or 0.0)
+        self.budget = float(d.get("budget") or 0.0)
+        self.spent = float(d.get("spent") or 0.0)
+        self.snipe_max = float(d.get("snipe_max") or SNIPE_MAX_DEFAULT)
         self.pos_seen = {str(k): float(v) for k, v in (d.get("pos_seen") or {}).items()}
         self.side_seen = {str(k): str(v) for k, v in (d.get("side_seen") or {}).items()}
         self.scan_day = str(d.get("scan_day") or "")

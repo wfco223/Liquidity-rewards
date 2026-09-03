@@ -814,6 +814,13 @@ function bPct(x){return x==null?'—':(x*100).toFixed(x>=0.1?0:1)+'%';}
 function bOp(op,m){post({op:op,market:m},function(j){
  var el=document.getElementById('bmsg');if(el)el.innerHTML='<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';});}
 function bSide(s){return s==='NO'?'<span class="pill">NO bond</span>':'<span class="pill">YES bond</span>';}
+function bSet(op,label,cur){
+ var v=prompt(label,cur);if(v==null)return;var x=parseFloat(v);
+ if(!(x>=0)){alert('a number, please');return;}
+ if(op==='bonds_max')x=x/100;
+ post({op:op,market:'-',value:x},function(j){
+  var el=document.getElementById('bmsg');if(el)el.innerHTML='<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';});
+}
 function render(d){
  if(d.starting)return bootCard(d);
  var b=d.bonds||{};var sw=((d.switch_view||{}).bonds)||{};
@@ -829,9 +836,10 @@ function render(d){
  out+='<div class="card"><b>Bonds</b> <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
  out+='<div class="hint">A YES bond is a politics market Silver puts at '+bPct(b.high||0.99)+'+ for YES, bought at 98–99¢; a NO bond is one at '+bPct(b.low||0.01)+' or under, bought as NO (a short of YES at 1–2¢). Each pays the last cent or two at resolution and, held, is not buying power — no engine fill can reach it. Bond-like across many; on any one, the price is the market’s own odds that the lot goes to zero. Markets that leave the band drop off the list by themselves. With the bonds switch on, every held bond gets one resting order that earns while it waits and is left alone, and sale proceeds take the touch of the cheapest listed market whose earning side pays — so the cash is a bond again the same minute.</div>';
  out+='<div id="bmsg"></div>';
- out+='<div class="sub">Proceeds awaiting reinvestment: <b>'+usd(b.cash||0)+'</b> · held at cost: '+usd(b.held_cost||0)+(b.scan_day?' · last night’s check: '+esc(b.scan_day):' · not checked yet')+'</div>';
+ out+='<div class="sub">Deploy budget: <b>'+usd(b.budget||0)+'</b>'+(b.spent?' ('+usd(b.spent)+' spent since you set it)':'')+' · sale proceeds waiting: '+usd(b.cash||0)+' · held at cost: '+usd(b.held_cost||0)+(b.scan_day?' · last night’s check: '+esc(b.scan_day):' · not checked yet')+'</div>';
+ out+='<div class="sub">Takes anything at <b>'+pc(b.snipe_max||0.985)+'</b> or better per dollar of bond, cheapest listed market first, never more than the touch shows. Each take pings the phone so you can top the account up.</div>';
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
- out+='<div><button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
+ out+='<div><button onclick="bSet(\'bonds_budget\',\'Deploy budget in dollars:\',(b.budget||0).toFixed(2))">Set budget</button> <button onclick="bSet(\'bonds_max\',\'Take at this price or better (cents per dollar of bond):\',((b.snipe_max||0.985)*100).toFixed(1))">Set price bar</button> <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
  out+='</div>';
  var rows=b.rows||[];
  out+='<div class="card"><b>Bond list — cheapest first</b>';
@@ -1663,7 +1671,8 @@ class WebServer:
         if op == "qualify_ask":
             return self.monitor.qualify_ask(str(body.get("market") or ""))
         if op.startswith("bonds_"):
-            return self.monitor.bonds_op(op, str(body.get("market") or ""))
+            return self.monitor.bonds_op(op, str(body.get("market") or ""),
+                                         body.get("value"))
         if op == "backfill":
             return self.monitor.backfill_journal(
                 days=float(body.get("days") or 3.0),

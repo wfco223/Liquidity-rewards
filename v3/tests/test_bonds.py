@@ -103,8 +103,14 @@ class TestTheList(Base):
         self.assertEqual(self.b.approved[ALD]["side"], "NO")
         self.assertNotIn(AL, self.b.proposed)
 
-    def test_no_notification_is_sent(self):
-        self.assertFalse(hasattr(self.b, "alert"))
+    def test_proposals_and_drops_never_ping_the_phone(self):
+        pings = []
+        self.b.alert = lambda t, m: pings.append((t, m))
+        self.b.scan(self.now, force=True)
+        self.b.approve(AL, self.now)
+        self.odds[AL] = 0.9
+        self.b.scan(self.now + 1, force=True)          # a drop, silently
+        self.assertEqual(pings, [])
 
     def test_proposals_sit_newest_first(self):
         self.b.scan(self.now, force=True)
@@ -265,6 +271,82 @@ class TestTheMoney(Base):
         self.assertEqual(b2.cash, 12.5)
         self.assertEqual(b2.scan_day, "2026-09-03")
         self.assertEqual(self.r.fam.bond_markets, {AL, ALD})
+
+
+class TestTheSniper(Base):
+    """Owner, 2026-09-02: "I will leave the money out of my account.
+    When there is a great opportunity the bond engine makes the
+    purchase and I top off the money for the engine... it's more about
+    sniping the rewards seeking shares that others place."""
+
+    def setUp(self):
+        super().setUp()
+        self.pings = []
+        self.b.alert = lambda t, m: self.pings.append((t, m))
+        self.b.approve(AL, self.now)
+        self.b.approve(TN, self.now)
+
+    def test_no_money_no_takes(self):
+        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=200.0))
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.r.exchange.live, {})
+
+    def test_the_budget_funds_a_take_at_a_great_price_and_pings(self):
+        self.b.set_budget(500.0)
+        # AL at 99c is not great (bar 98.5c); TN at 98c is
+        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=200.0))
+        out = self.b.cycle(self.now, self.positions(), on=True)
+        takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
+        self.assertEqual(len(takes), 1)
+        self.assertEqual(takes[0].market, TN)
+        self.assertEqual(takes[0].qty, 200.0)              # the touch showed 200
+        self.assertAlmostEqual(self.b.budget, 500.0 - 200 * 0.98, places=2)
+        self.assertAlmostEqual(self.b.spent, 196.0, places=2)
+        self.assertEqual(out["placed"][0]["usd"], 196.0)
+        self.assertEqual(len(self.pings), 1)
+        self.assertIn("$196.00", self.pings[0][1])
+        self.assertIn("$304.00", self.pings[0][1])         # budget left
+
+    def test_nothing_at_the_bar_or_under_means_no_take(self):
+        self.b.set_budget(500.0)
+        self.b.cycle(self.now, self.positions(), on=True)   # both asks at 99c
+        self.assertEqual(self.r.exchange.live, {})
+        self.assertEqual(self.b.budget, 500.0)
+
+    def test_the_bar_is_the_owners_and_the_take_is_only_ever_at_the_touch(self):
+        self.b.set_budget(500.0)
+        r = self.b.set_max(0.99)
+        self.assertTrue(r["ok"])
+        self.b.cycle(self.now, self.positions(), on=True)   # 99c now qualifies
+        takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
+        self.assertEqual(len(takes), 1)
+        self.assertAlmostEqual(takes[0].price, 0.99)
+        self.assertFalse(self.b.set_max(0.999)["ok"])       # over the cap
+        self.assertFalse(self.b.set_budget(-1)["ok"])
+
+    def test_proceeds_are_spent_before_the_budget(self):
+        self.b.set_budget(100.0)
+        self.b.cash = 50.0
+        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=100.0))
+        self.b.cycle(self.now, self.positions(), on=True)   # takes 100 @ 98c = $98
+        self.assertEqual(self.b.cash, 0.0)
+        self.assertAlmostEqual(self.b.budget, 100.0 - 48.0, places=2)
+        self.assertAlmostEqual(self.b.spent, 48.0, places=2)
+
+    def test_setting_the_budget_again_is_the_top_up(self):
+        self.b.set_budget(100.0)
+        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=100.0))
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertAlmostEqual(self.b.spent, 98.0, places=2)
+        self.b.set_budget(300.0)
+        self.assertEqual((self.b.budget, self.b.spent), (300.0, 0.0))
+
+    def test_budget_and_bar_survive_a_restart(self):
+        self.b.set_budget(250.0)
+        self.b.set_max(0.99)
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(self.b.to_dict())
+        self.assertEqual((b2.budget, b2.snipe_max), (250.0, 0.99))
 
 
 class TestTheDesksSecondCarveOut(Base):
