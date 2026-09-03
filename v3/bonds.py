@@ -77,6 +77,8 @@ DANCE_MAX_MOVES = 3         # a minnow that moves more than this is taken at onc
 SCAN_HOUR_UTC = 7           # 3 am Eastern: the nightly Silver check
 LOG_KEEP = 200
 DROPPED_KEEP = 30
+ENTER_MAX_LEVELS = 20       # the owner's entry sweeps at most this many levels
+LADDER_SHOW = 8             # entry-side levels the page shows to enter at
 
 
 def side_for(odds: float | None) -> str | None:
@@ -696,9 +698,12 @@ class Bonds:
             return None
         bs, intent = self.entry(side)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
+        # a taker order fills and never rests, so it is not verified as
+        # resting (the dump learned this): the fill shows up in the
+        # position feed and the exchange's trade record
         r = self.fam.desk.place_resting(slug, bs, px, qty, net_position=pos,
                                         initiator="owner", intent=intent,
-                                        taker="bond")
+                                        taker="bond", verify=False)
         if not (r.ok and r.order_id):
             self._log(event="snap_refused", market=slug, note=r.note[:120])
             return None
@@ -745,6 +750,72 @@ class Bonds:
         except Exception:  # noqa: BLE001
             return None
 
+    # ------------------------------------------------------------ the owner's entry
+
+    def enter(self, slug: str, limit_px, now: float,
+              positions: dict | None = None) -> dict:
+        """The owner's own entry (2026-09-02: "the initial purchases
+        should be made by me so let me see the books in the bond market
+        and give me the choice to enter at various prices, snapping up
+        all the currently resting sale orders at or below that price"):
+        sweep the entry side from the touch out to his price, each level
+        taken at its own price and never more than it shows, until the
+        money runs out. Every lot joins the ledger."""
+        meta = self.approved.get(slug)
+        if meta is None:
+            return {"ok": False, "note": "not on the bond list"}
+        side = meta["side"]
+        try:
+            limit_px = float(limit_px)
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "which price?"}
+        if not (0.001 <= limit_px <= 0.999):
+            return {"ok": False, "note": "price must be 0.1c to 99.9c"}
+        if self._money() < MONEY_MIN_USD:
+            return {"ok": False, "note": "no money to buy with — set the deploy "
+                                         "budget first"}
+        bought = usd = 0.0
+        lots = 0
+        last = None
+        for _ in range(ENTER_MAX_LEVELS):
+            try:
+                book = self.client.book(slug, fetched_at=now)
+            except Exception as e:  # noqa: BLE001
+                self._log(event="enter_stopped", market=slug,
+                          note=f"could not read the book: {str(e)[:80]}")
+                break
+            self.fam.cache.put(slug, book)
+            px, cost, size = self._take_price(side, book)
+            if px is None or size < 1.0:
+                break
+            past = ((side == "YES" and px > limit_px + 1e-9)
+                    or (side == "NO" and px < limit_px - 1e-9))
+            if past:
+                break
+            if last is not None and abs(px - last[0]) < 1e-9 and size >= last[1] - 1e-9:
+                break                   # the book did not move: do not re-buy the same level
+            last = (px, size)
+            pos = positions if positions is not None else {
+                slug: (float((self.fam.inventory.get(slug) or {}).get("qty") or 0.0), 0.0)}
+            r = self._snap(slug, side, book, px, size, pos, now)
+            if not r:
+                break
+            bought += r["qty"]
+            usd += r["usd"]
+            lots += 1
+            if self._money() < MONEY_MIN_USD:
+                break
+        if bought <= 0.005:
+            return {"ok": False, "note": "nothing was bought — nothing resting "
+                                         "at or inside that price, or no money"}
+        self._log(event="entered", market=slug, side=side, qty=round(bought, 2),
+                  usd=round(usd, 2), lots=lots, limit=limit_px)
+        return {"ok": True,
+                "note": f"bought {bought:g} {side} in {lots} lot"
+                        f"{'s' if lots != 1 else ''} for ${usd:,.2f} "
+                        f"({usd / bought * 100:.1f}c per dollar of bond); "
+                        f"${self._money():,.2f} left to deploy"}
+
     # ------------------------------------------------------------ the page
 
     def view(self, now: float, positions: dict | None = None) -> dict:
@@ -771,7 +842,19 @@ class Bonds:
                             "share": round(p.share, 4),
                             "qualifies": bool(p.qualifies), "note": p.note}
             minnow = self._minnow_in_front(slug, side, book) if book is not None else None
+            ladder = []
+            if book is not None:
+                cum_q = cum_usd = 0.0
+                lv = list(book.asks if side == "YES" else book.bids)[:LADDER_SHOW]
+                for p, q in lv:
+                    c = p if side == "YES" else round(1.0 - p, 4)
+                    cum_q += q
+                    cum_usd += q * c
+                    ladder.append({"px": p, "cost": round(c, 4), "qty": round(q, 1),
+                                   "cum_qty": round(cum_q, 1),
+                                   "cum_usd": round(cum_usd, 2)})
             rows.append({
+                "ladder": ladder,
                 "market": slug, "bond": side, "odds": meta.get("odds"),
                 "bid": bid, "ask": ask,
                 "cost": (round(cost, 4) if cost else None),
@@ -811,6 +894,7 @@ class Bonds:
                 "ignored": sorted(self.ignored),
                 "cash": round(self.cash, 2),
                 "budget": round(self.budget, 2), "spent": round(self.spent, 2),
+                "money": round(self._money(), 2),
                 "unpinged": round(self.unpinged, 2),
                 "held_cost": held_cost,
                 "high": HIGH_ODDS, "low": LOW_ODDS, "price_cap": PRICE_CAP,
