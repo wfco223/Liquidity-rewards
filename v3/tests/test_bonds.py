@@ -450,6 +450,79 @@ class TestEntryAndSales(Base):
         self.assertEqual(self.r.fam.bond_qty, {AL: 50.0})
 
 
+class TestTheOwnersEntry(Base):
+    """Owner, 2026-09-02: "the initial purchases should be made by me so
+    let me see the books in the bond market and give me the choice to
+    enter at various prices, snapping up all the currently resting sale
+    orders at or below that price."""
+
+    class Sweeping:
+        """A book that loses each level as it is taken."""
+
+        def __init__(self, asks, now):
+            self.asks, self.now = list(asks), now
+            self.books = {}
+
+        def book(self, slug, fetched_at=None):
+            return Book(bids=((0.90, 50.0), (0.50, 20000.0)),
+                        asks=tuple(self.asks) + ((0.999, 20000.0),),
+                        tick=0.01, fetched_at=fetched_at or self.now)
+
+        def post(self, *a, **k):
+            # the take fills: the touch level is gone from the book
+            self.asks.pop(0)
+            return {"id": "T%d" % (10 - len(self.asks))}
+
+        def __getattr__(self, name):
+            return lambda *a, **k: []
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.sweep = self.Sweeping([(0.95, 20.0), (0.96, 30.0), (0.97, 40.0),
+                                    (0.98, 500.0)], self.now)
+        self.b.client = self.sweep
+        self.r.fam.desk.client = self.sweep
+        self.r.cache.put(AL, self.sweep.book(AL))
+
+    def test_the_page_shows_the_ladder_to_enter_at(self):
+        v = self.b.view(self.now, self.positions())
+        lad = v["rows"][0]["ladder"]
+        self.assertEqual([l["px"] for l in lad][:4], [0.95, 0.96, 0.97, 0.98])
+        self.assertEqual(lad[1]["cum_qty"], 50.0)
+        self.assertAlmostEqual(lad[1]["cum_usd"], 20 * 0.95 + 30 * 0.96, places=2)
+        self.assertEqual(v["money"], 1000.0)
+
+    def test_entering_at_a_price_sweeps_everything_at_or_inside_it(self):
+        r = self.b.enter(AL, 0.97, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 90.0)          # 20 + 30 + 40
+        self.assertAlmostEqual(self.b.cost_basis(AL, "YES"),
+                               (20 * 0.95 + 30 * 0.96 + 40 * 0.97) / 90, places=4)
+        self.assertEqual(self.sweep.asks, [(0.98, 500.0)])      # the 98s untouched
+        self.assertAlmostEqual(self.b.budget, 1000 - (19 + 28.8 + 38.8), places=2)
+        self.assertIn("90 YES in 3 lots", r["note"])
+
+    def test_the_money_is_the_limit(self):
+        self.b.set_budget(40.0)
+        r = self.b.enter(AL, 0.98, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 20.0 + 21.0)   # 20 @ 95c, then 21 @ 96c
+        self.assertLess(self.b.budget, 5.0)
+
+    def test_nothing_inside_the_price_means_nothing_bought(self):
+        r = self.b.enter(AL, 0.94, self.now, self.positions())
+        self.assertFalse(r["ok"])
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertEqual(self.b.budget, 1000.0)
+
+    def test_only_listed_markets_and_only_with_money(self):
+        self.assertFalse(self.b.enter(GA, 0.97, self.now)["ok"])
+        self.b.set_budget(0.0)
+        self.assertIn("budget", self.b.enter(AL, 0.97, self.now)["note"])
+
+
 class TestTheDesksSecondCarveOut(Base):
     def test_only_the_owner_may_take_and_never_past_the_touch(self):
         d = self.r.fam.desk
