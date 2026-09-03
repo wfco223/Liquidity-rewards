@@ -87,6 +87,8 @@ TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed t
 HOLD_ENGINE_S = 600.0       # after clearing our orders out of a take's way, the engine waits this long
 CLEAR_WAIT_S = 5.0          # how long a cleared order gets to leave the open-order list
 RECONFIRM_S = 3600.0        # a booked fill is re-checked against the record this long
+MORE_SHARE = 0.30           # the buy-more order rests only where it captures this much of its side
+DOTS_KEEP = 2880            # bond earning-rate samples kept for the graph
 
 
 def side_for(odds: float | None) -> str | None:
@@ -158,7 +160,18 @@ class Bonds:
         # every booked fill by order id, so it can be re-checked against
         # the record for an hour (the 2026-09-03 Hawaii take: five
         # executions read as one — the ledger said 1, the exchange 5)
-        self.fill_book: dict[str, dict] = {}   # oid -> {slug, side, qty, px, ts}
+        self.fill_book: dict[str, dict] = {}   # oid -> {slug, side, qty, px, ts, open}
+        # buying more (owner, 2026-09-03): a second resting order on the
+        # thin side buys more bond, up to an amount he sets per market —
+        # defaulting to his first purchase there — at the cheapest price
+        # that still captures MORE_SHARE of its side's earnings, else
+        # not at all; it moves when it no longer captures that, and is
+        # pulled when no price inside the cap can. Reset when the market
+        # is no longer held.
+        self.more_cap: dict[str, dict] = {}    # slug -> {usd, by, first}
+        self.moved_more_at: dict[str, float] = {}
+        self._more_note: dict[str, str] = {}
+        self.dots: list = []                   # [ts, $/day of every bond order] for the graph
         self.unpinged: float = 0.0            # bought since the last ping
         self.moved_at: dict[str, float] = {}
         self.slot: dict[str, dict] = {}
@@ -268,7 +281,12 @@ class Bonds:
         counted in himself. A lot with no such backing is dropped at
         restore (the Hawaii case, 2026-09-03)."""
         self.lot_ts[slug] = self._clock()
+        fresh = slug not in self.lots
         lot = self.lots.setdefault(slug, {"qty": 0.0, "cost": 0.0, "fills": []})
+        if fresh and slug not in self.more_cap:
+            # his first purchase here is the default for buying more
+            self.more_cap[slug] = {"usd": round(usd, 2), "by": "default",
+                                   "first": str(ref or "adopt")}
         lot["qty"] = round(lot["qty"] + (qty if side == "YES" else -qty), 4)
         lot["cost"] = round(lot["cost"] + usd, 4)
         if ref:
@@ -340,8 +358,12 @@ class Bonds:
         record; a lot is corrected to the exchange's running total for
         that order, up or down, at its average price. The record is the
         truth; a first read can be early."""
+        for oid, f in self.fill_book.items():
+            if f.get("open") and oid not in self.fam.orders:
+                f["open"] = False               # gone: one last hour of checks
+                f["ts"] = round(now, 1)
         due = {oid: f for oid, f in self.fill_book.items()
-               if now - float(f.get("ts") or 0.0) <= RECONFIRM_S}
+               if f.get("open") or now - float(f.get("ts") or 0.0) <= RECONFIRM_S}
         if not due:
             return
         try:
@@ -374,8 +396,8 @@ class Bonds:
                 self._follow_tax()
             f["qty"] = shares
             f["px"] = px
-            self._log(event="fill_corrected", market=slug, side=side, order_id=oid,
-                      qty=shares, price=px,
+            self._log(event=("bought_more" if f.get("open") else "fill_corrected"),
+                      market=slug, side=side, order_id=oid, qty=shares, price=px,
                       note=f"the record shows {shares:g} filled on this order; "
                            f"the ledger had {booked:g}")
 
@@ -615,6 +637,23 @@ class Bonds:
         self._log(event="budget_set", usd=self.budget)
         return {"ok": True, "note": f"deploy budget set to ${self.budget:,.2f}"}
 
+    def set_more_cap(self, slug: str, amount) -> dict:
+        """The most the buy-more order may rest for in this market, in
+        dollars of bond. Set by him; the default is his first purchase."""
+        if slug not in self.approved:
+            return {"ok": False, "note": "not on the bond list"}
+        try:
+            usd = float(amount)
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "dollars, please"}
+        if usd < 0 or usd > 100000:
+            return {"ok": False, "note": "$0 to $100,000"}
+        cur = self.more_cap.get(slug) or {}
+        self.more_cap[slug] = {"usd": round(usd, 2), "by": "owner",
+                               "first": cur.get("first", "")}
+        self._log(event="more_cap_set", market=slug, usd=round(usd, 2))
+        return {"ok": True, "note": f"buying more here up to ${usd:,.2f}"}
+
     def follow_tax(self) -> dict:
         """The budget goes back to following what he owes in taxes."""
         self.budget_mode = "tax"
@@ -663,6 +702,9 @@ class Bonds:
                               cash=round(self.cash, 2))
         self._reconfirm(now)
         self._trim_to_exchange(positions, now)
+        for s in list(self.more_cap):
+            if abs(float((self.lots.get(s) or {}).get("qty") or 0.0)) < 0.005:
+                self.more_cap.pop(s, None)       # no longer held: the default resets
         if on:
             for slug in sorted(self.approved):
                 side = self.approved[slug]["side"]
@@ -672,6 +714,13 @@ class Bonds:
                 r = self._work_minnows(slug, side, positions, now)
                 if r:
                     placed.append(r)
+                r = self._keep_buying(slug, side, positions, now)
+                if r:
+                    placed.append(r)
+        rate = sum(o.live_est or 0.0 for o in list(self.fam.orders.values())
+                   if o.purpose == "bond")
+        self.dots.append([round(now, 1), round(rate, 2)])
+        del self.dots[:-DOTS_KEEP]
         self._sample_share(now)
         if not hasattr(self, "_exch_seen"):
             self._exch_seen = {}
@@ -732,7 +781,11 @@ class Bonds:
             scored.append((px, est, int(round(abs(px - ref) / tick))))
         best = max(e for _, e, _ in scored)
         if best <= 0:
-            px, est, ticks = scored[0]
+            # nothing earns anywhere (a wall at the touch): sit at the
+            # FARTHEST slot, the most profitable price, not at the touch
+            # — the Tennessee lesson (2026-09-03): an exit resting at
+            # the touch AT COST filled in 13 minutes for a gain of $0
+            px, est, ticks = scored[-1]
             return px, est, ticks, 1.0
         for px, est, ticks in reversed(scored):
             if est >= KEEP_FRACTION * best - 1e-12:
@@ -839,6 +892,143 @@ class Bonds:
                   price=(r.price or want), qty=qty, ticks=ticks)
         return {"market": slug, "bond": side, "side": bs,
                 "price": (r.price or want), "qty": qty, "ticks": ticks}
+
+    # -- buying more ---------------------------------------------------------
+
+    def _more_orders(self, slug: str) -> list[FamilyOrder]:
+        return [o for o in list(self.fam.orders.values())
+                if o.purpose == "bond" and o.market == slug
+                and str(o.why or "").startswith("bond more")]
+
+    def _share_at(self, slug: str, far: str, book, px: float,
+                  qty: float) -> tuple[float, float]:
+        """(share of the side's score, $/day) for `qty` of ours resting
+        at `px` on `far`, on this book net of every order of ours."""
+        from .scoring import estimate_join
+        prog = self.fam.terms.get(slug)
+        if prog is None or not prog.is_live():
+            return 0.0, 0.0
+        pool = self.fam._side_pool(slug, prog)
+        tick = book.tick or 0.01
+        mine: dict[float, float] = {}
+        for o in list(self.fam.orders.values()):
+            if o.market == slug and o.side == far:
+                mine[round(o.price, 4)] = mine.get(round(o.price, 4), 0.0) + o.qty
+        levels = [(p, q - mine.get(round(p, 4), 0.0)) for p, q in book.side(far)]
+        levels = [(p, q) for p, q in levels if q > 1e-9]
+        j = estimate_join(far, levels, tick, float(prog.df), float(prog.target), px, qty)
+        if not (j.qualifies and j.in_window):
+            return 0.0, 0.0
+        return float(j.share), (float(j.share) * pool if pool else 0.0)
+
+    def _more_slot(self, slug: str, side: str, book, cap_usd: float):
+        """The cheapest bond price, inside the 99.5c cap and the spread,
+        where up to cap_usd of ours captures MORE_SHARE of its side:
+        (price, qty, share, est) or None."""
+        far, _ = self.entry(side)
+        tick = book.tick or 0.01
+        bids, asks = book.bids, book.asks
+        if side == "YES":
+            hi = (asks[0][0] - tick) if asks else 0.99
+            lo = ((bids[0][0] if bids else hi) - BEHIND_MAX_TICKS * tick)
+            n = max(int(round((hi - lo) / tick)), 0)
+            cands = [self._snap_down(lo + i * tick, tick) for i in range(n + 1)]
+            cands = [p for p in cands if 0.001 <= p <= min(PRICE_CAP, 0.999)]
+            cands.sort()                                   # cheapest first
+        else:
+            lo = (bids[0][0] + tick) if bids else 0.01
+            hi = ((asks[0][0] if asks else lo) + BEHIND_MAX_TICKS * tick)
+            n = max(int(round((hi - lo) / tick)), 0)
+            cands = [self._snap_up(lo + i * tick, tick) for i in range(n + 1)]
+            cands = [p for p in cands if max(0.001, 1.0 - PRICE_CAP) <= p <= 0.999]
+            cands.sort(reverse=True)                       # cheapest NO first
+        for px in list(dict.fromkeys(cands)):
+            cost = px if side == "YES" else round(1.0 - px, 4)
+            qty = float(math.floor(cap_usd / cost)) if cost > 0 else 0.0
+            if qty < 1.0:
+                continue
+            share, est = self._share_at(slug, far, book, px, qty)
+            if share + 1e-9 >= MORE_SHARE:
+                return px, qty, share, est
+        return None
+
+    def _pull_more(self, slug: str, why: str) -> None:
+        for o in self._more_orders(slug):
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if r.ok:
+                self.fam.orders.pop(o.id, None)
+                f = self.fill_book.get(o.id)
+                if f is not None:
+                    f["open"] = False
+                    f["ts"] = round(self._clock(), 1)
+                self._log(event="more_pulled", market=slug, price=o.price,
+                          qty=o.qty, note=why)
+
+    def _keep_buying(self, slug: str, side: str, positions: dict,
+                     now: float) -> dict | None:
+        """The buy-more order (owner, 2026-09-03): rests at the cheapest
+        price that captures MORE_SHARE of its side, sized to the cap;
+        moves when it no longer captures that, on the cooldown; pulled
+        when no price inside the cap can, or when nothing is held."""
+        cap = self.more_cap.get(slug) or {}
+        cap_usd = float(cap.get("usd") or 0.0)
+        cur = self._more_orders(slug)
+        if self.held(slug, side) < 1.0 or cap_usd < 1.0:
+            if cur:
+                self._pull_more(slug, "nothing held here" if cap_usd >= 1.0
+                                else "buy-more amount is zero")
+            return None
+        book = self.fam.cache.fresh(slug, 120.0, now)
+        if book is None:
+            return None
+        far, intent = self.entry(side)
+        pos = float((positions.get(slug) or (0.0, 0.0))[0])
+        if cur:
+            o = cur[0]
+            cost = o.price if side == "YES" else round(1.0 - o.price, 4)
+            want_qty = float(math.floor(cap_usd / cost)) if cost > 0 else 0.0
+            share, _est = self._share_at(slug, far, book, o.price, o.qty)
+            if share + 1e-9 >= MORE_SHARE and abs(o.qty - want_qty) < 1.0:
+                return None
+            if now - self.moved_more_at.get(slug, 0.0) < MOVE_COOLDOWN_S:
+                return None
+            slot = self._more_slot(slug, side, book, cap_usd)
+            if slot is None:
+                self._pull_more(slug, f"no price inside the cap captures "
+                                      f"{MORE_SHARE:.0%} of the side now")
+                return None
+            if abs(slot[0] - o.price) < 1e-9 and abs(slot[1] - o.qty) < 1.0:
+                return None
+            self._pull_more(slug, "moving")
+        slot = self._more_slot(slug, side, book, cap_usd)
+        if slot is None:
+            note = f"no price inside the cap captures {MORE_SHARE:.0%} of its side"
+            if self._more_note.get(slug) != note:
+                self._more_note[slug] = note
+                self._log(event="more_none", market=slug, note=note)
+            return None
+        px, qty, share, est = slot
+        r = self.fam.desk.place_resting(slug, far, px, qty, net_position=pos,
+                                        initiator="owner", intent=intent)
+        if not (r.ok and r.order_id):
+            self._log(event="more_refused", market=slug, note=r.note[:120])
+            return None
+        px = r.price or px
+        self.fam.orders[r.order_id] = FamilyOrder(
+            id=r.order_id, market=slug, side=far, price=px, qty=qty,
+            intent=(r.intent or intent), placed_ts=now, purpose="bond",
+            why=f"bond more: buying up to ${cap_usd:,.2f} more — "
+                f"{share:.0%} of the {'bid' if far == 'BUY' else 'ask'} side "
+                f"at {px * 100:g}c")
+        self.fill_book[r.order_id] = {"slug": slug, "side": side, "qty": 0.0,
+                                      "px": px, "ts": round(now, 1), "open": True}
+        self.moved_more_at[slug] = now
+        self._more_note.pop(slug, None)
+        self._log(event=("more_moved" if cur else "more_rested"), market=slug,
+                  side=side, price=px, qty=qty, share=round(share, 3),
+                  est=round(est, 4))
+        return {"market": slug, "bond": side, "side": far, "price": px,
+                "qty": qty, "more": True}
 
     # -- the sniper ----------------------------------------------------------
 
@@ -1383,7 +1573,29 @@ class Bonds:
             "slot": self.slot.get(slug),
             "hold_until": (self.fam.hold_until.get(slug)
                            if self.fam.hold_until.get(slug, 0.0) > now else None),
+            "more": self._more_view(slug, side, book, held),
         }
+
+    def _more_view(self, slug: str, side: str, book, held: float) -> dict | None:
+        cap = self.more_cap.get(slug)
+        if held < 0.005 or cap is None:
+            return None
+        far, _ = self.entry(side)
+        out = {"cap_usd": round(float(cap.get("usd") or 0.0), 2),
+               "by": cap.get("by", "default"), "order": None, "slot": None}
+        cur = self._more_orders(slug)
+        if cur:
+            o = cur[0]
+            share, est = (self._share_at(slug, far, book, o.price, o.qty)
+                          if book is not None else (0.0, 0.0))
+            out["order"] = {"price": o.price, "qty": o.qty,
+                            "share": round(share, 4), "est": round(est, 4)}
+        elif book is not None and out["cap_usd"] >= 1.0:
+            slot = self._more_slot(slug, side, book, out["cap_usd"])
+            if slot:
+                out["slot"] = {"price": slot[0], "qty": slot[1],
+                               "share": round(slot[2], 4), "est": round(slot[3], 4)}
+        return out
 
     def live_rows(self, now: float, positions: dict | None = None) -> dict:
         """The live line's payload: the rows of the markets he is in
@@ -1427,6 +1639,7 @@ class Bonds:
                 "high": HIGH_ODDS, "low": LOW_ODDS, "price_cap": PRICE_CAP,
                 "keep": KEEP_FRACTION,
                 "dance_wait_s": DANCE_WAIT_S, "minnow_max": MINNOW_MAX,
+                "more_share": MORE_SHARE,
                 "scan_day": self.scan_day, "scan_hour_utc": SCAN_HOUR_UTC,
                 "log": self.log[-12:]}
 
@@ -1448,6 +1661,8 @@ class Bonds:
                 "rewards_by_market": self.rewards_by_market,
                 "lot_ts": self.lot_ts, "exch_max": self.exch_max,
                 "fill_book": self.fill_book,
+                "more_cap": self.more_cap, "moved_more_at": self.moved_more_at,
+                "dots": self.dots[-DOTS_KEEP:],
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
                 "exch_seen": getattr(self, "_exch_seen", {}),
@@ -1499,6 +1714,10 @@ class Bonds:
         self.lot_ts = {str(k): float(v) for k, v in (d.get("lot_ts") or {}).items()}
         self.exch_max = {str(k): float(v) for k, v in (d.get("exch_max") or {}).items()}
         self.fill_book = {str(k): dict(v) for k, v in (d.get("fill_book") or {}).items()}
+        self.more_cap = {str(k): dict(v) for k, v in (d.get("more_cap") or {}).items()}
+        self.moved_more_at = {str(k): float(v) for k, v
+                              in (d.get("moved_more_at") or {}).items()}
+        self.dots = [list(x) for x in (d.get("dots") or [])][-DOTS_KEEP:]
         # a lot booked before fills were kept by order id: seed the book
         # from the lot itself so the next cycle re-checks it (the Hawaii
         # lot of 2026-09-03: 1 booked, 5 filled)
