@@ -817,7 +817,6 @@ function bSide(s){return s==='NO'?'<span class="pill">NO bond</span>':'<span cla
 function bSet(op,label,cur){
  var v=prompt(label,cur);if(v==null)return;var x=parseFloat(v);
  if(!(x>=0)){alert('a number, please');return;}
- if(op==='bonds_max')x=x/100;
  bOp(op,'-',x);
 }
 function bAdopt(m,room){
@@ -838,12 +837,12 @@ function render(d){
  });
  out+='</div>';
  out+='<div class="card"><b>Bonds</b> <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
- out+='<div class="hint">A YES bond is a politics market Silver puts at '+bPct(b.high||0.99)+'+ for YES; a NO bond is one at '+bPct(b.low||0.01)+' or under, bought as NO (a short of YES). Each pays the last cent or two at resolution and, held, is not buying power. Bond-like across many; on any one, the price is the market’s own odds that the lot goes to zero. Only shares this engine bought (or you counted in) are bond shares — the engine’s own stock in the same market is not shown here and is left to the engine. With the bonds switch on: every held bond gets one resting order, as far behind the touch as it can sit while keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under cost, never chasing forward; a small order (25 shares or fewer) sitting in front of it gets a 10-share decoy joining it at its own price; each time it moves the decoy joins it again; when it stays put for two hours it is bought at its price, and when it moves more than three times, reaches the far touch, or goes under our cost it is bought at once — its shares join the bond; a listed market with no bond yet is entered when its touch is at or under the price bar.</div>';
+ out+='<div class="hint">A YES bond is a politics market Silver puts at '+bPct(b.high||0.99)+'+ for YES; a NO bond is one at '+bPct(b.low||0.01)+' or under, bought as NO (a short of YES). Each pays the last cent or two at resolution and, held, is not buying power. Bond-like across many; on any one, the price is the market’s own odds that the lot goes to zero. Only shares this engine bought (or you counted in) are bond shares — the engine’s own stock in the same market is not shown here and is left to the engine. With the bonds switch on: every held bond gets one resting order, as far behind the touch as it can sit while keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under cost, never chasing forward; a small order (25 shares or fewer) sitting in front of it gets a 10-share decoy joining it at its own price; each time it moves the decoy joins it again; when it stays put for two hours it is bought at its price, and when it moves more than three times, reaches the far touch, or goes under our cost it is bought at once — its shares join the bond. The engine buys nowhere else: to start a bond, buy by hand and count the shares in below.</div>';
  out+='<div id="bmsg"></div>';
  out+='<div class="sub">Deploy budget: <b>'+usd(b.budget||0)+'</b>'+(b.spent?' ('+usd(b.spent)+' spent since you set it)':'')+' · sale proceeds waiting: '+usd(b.cash||0)+' · bonds held at cost: '+usd(b.held_cost||0)+(b.scan_day?' · last night’s check: '+esc(b.scan_day):' · not checked yet')+'</div>';
- out+='<div class="sub">Price bar for new ground only: <b>'+pc(b.snipe_max||0.985)+'</b> per dollar of bond — a listed market you hold nothing in is entered when its touch is at or under it. Minnows in front of your orders are handled by the dance, not the bar. A phone note every $100 bought'+(b.unpinged?' ('+usd(b.unpinged)+' since the last one)':'')+'.</div>';
+ out+='<div class="sub">A phone note every $100 bought'+(b.unpinged?' ('+usd(b.unpinged)+' since the last one)':'')+'.</div>';
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
- out+='<div><button onclick="bSet(\'bonds_budget\',\'Deploy budget in dollars:\',(b.budget||0).toFixed(2))">Set budget</button> <button onclick="bSet(\'bonds_max\',\'Price bar (cents per dollar of bond):\',((b.snipe_max||0.985)*100).toFixed(1))">Set price bar</button> <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
+ out+='<div><button onclick="bSet(\'bonds_budget\',\'Deploy budget in dollars:\',(b.budget||0).toFixed(2))">Set budget</button> <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
  out+='</div>';
  var rows=b.rows||[];
  out+='<div class="card"><b>Bond list — cheapest first</b>';

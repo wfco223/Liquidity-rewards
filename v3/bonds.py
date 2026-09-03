@@ -38,9 +38,11 @@ And the corrections, same day, in order:
   comes off and its shares are taken at its price; when it moves more
   than three times, reaches the far touch, or crosses under our cost,
   it is taken at once. They join the bond, and our main order has one
-  competitor fewer. (The price bar governs only new ground.)
-  A market where we hold no bond yet is entered the plain way: the
-  touch taken when it is at or under the bar.
+  competitor fewer.
+- "The sniper should only work where I have bond sales resting." So
+  nothing is bought anywhere a bond order of ours is not resting: no
+  automatic entry into new ground, no price bar. A bond starts with
+  the owner buying by hand and counting the shares in from the page.
 
 Bond-LIKE across many such markets; on any one the price is the
 market's own odds that the lot goes to zero, and the page says so.
@@ -63,7 +65,6 @@ from .intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 HIGH_ODDS = 0.99            # YES bond: Silver's odds for YES at or above
 LOW_ODDS = 0.01             # NO bond: Silver's odds for YES at or below
 PRICE_CAP = 0.995           # never pay more than this per dollar of bond
-SNIPE_MAX_DEFAULT = 0.985   # the price bar, per dollar of bond; owner-set
 MONEY_MIN_USD = 5.0         # money below this waits
 PING_EVERY_USD = 100.0      # a phone ping per this much bought
 KEEP_FRACTION = 0.6         # the resting slot keeps this much of the best reward
@@ -116,7 +117,6 @@ class Bonds:
         self.budget: float = 0.0              # the owner's deploy money
         self.spent: float = 0.0               # from the budget, since set
         self.unpinged: float = 0.0            # bought since the last ping
-        self.snipe_max: float = SNIPE_MAX_DEFAULT
         self.moved_at: dict[str, float] = {}
         self.slot: dict[str, dict] = {}
         self.dance: dict[str, dict] = {}      # slug -> {px, moves, since}
@@ -374,20 +374,6 @@ class Bonds:
         self._log(event="budget_set", usd=self.budget)
         return {"ok": True, "note": f"deploy budget set to ${self.budget:,.2f}"}
 
-    def set_max(self, px) -> dict:
-        try:
-            px = float(px)
-        except (TypeError, ValueError):
-            return {"ok": False, "note": "price must be a number"}
-        if not (0.5 <= px <= PRICE_CAP):
-            return {"ok": False,
-                    "note": f"price must be 50c to {PRICE_CAP * 100:g}c"}
-        self.snipe_max = round(px, 4)
-        self._log(event="max_set", price=self.snipe_max)
-        return {"ok": True, "note": f"the bar is {px * 100:g}c per dollar of "
-                                    f"bond — minnows are led down to it and "
-                                    f"taken there"}
-
     # ------------------------------------------------------------ the money
 
     def cycle(self, now: float, positions: dict, on: bool) -> dict:
@@ -431,9 +417,6 @@ class Bonds:
                 r = self._work_minnows(slug, side, positions, now)
                 if r:
                     placed.append(r)
-            r = self._enter(now, positions)
-            if r:
-                placed.append(r)
         if not hasattr(self, "_exch_seen"):
             self._exch_seen = {}
         for slug in set(self.approved) | set(self.lots):
@@ -629,7 +612,10 @@ class Bonds:
         bs, intent = self.earn(side)
         tick = book.tick or 0.01
         decoys = self._orders(slug, bs, decoy=True)
-        minnow = self._minnow_in_front(slug, side, book)
+        # the sniper works only where a bond sale of ours is resting
+        # (owner, 2026-09-02) — no resting order, no minnow, no decoy
+        minnow = (self._minnow_in_front(slug, side, book)
+                  if self._orders(slug, bs, decoy=False) else None)
         if minnow is None:
             self._pull_decoys(slug, side)
             self.dance.pop(slug, None)
@@ -720,8 +706,8 @@ class Bonds:
         self.fam.orders[r.order_id] = FamilyOrder(
             id=r.order_id, market=slug, side=bs, price=(r.price or px),
             qty=qty, intent=(r.intent or intent), placed_ts=now, purpose="bond",
-            why=f"bond: took {qty:g} {side} at {px * 100:g}c — in the way of "
-                f"our resting order, or new ground at the bar")
+            why=f"bond: took {qty:g} {side} at {px * 100:g}c — it was in the "
+                f"way of our resting order")
         usd = round(qty * cost, 4)
         self._book_lot(slug, side, qty, usd)
         self._pay(usd)
@@ -747,39 +733,6 @@ class Bonds:
             return None, 0.0, 0.0
         b, q = book.bids[0]
         return b, round(1.0 - b, 4), q
-
-    def _enter(self, now: float, positions: dict) -> dict | None:
-        """New ground: a listed market where we hold no bond yet, whose
-        touch is at or under the bar and whose earning side pays — take
-        the touch, cheapest first, one a cycle."""
-        if self._money() < MONEY_MIN_USD:
-            return None
-        best = None
-        for slug, meta in self.approved.items():
-            side = meta["side"]
-            if self.held(slug, side) > 0.005 or self._orders(slug):
-                continue
-            book = self.fam.cache.fresh(slug, 120.0, now)
-            if book is None:
-                continue
-            px, cost, size = self._take_price(side, book)
-            if px is None or cost <= 0 or size < 1.0:
-                continue
-            if cost > min(self.snipe_max, PRICE_CAP) + 1e-9:
-                continue
-            prog = self.fam.terms.get(slug)
-            if prog is None or not prog.is_live():
-                continue
-            ebs, _ = self.earn(side)
-            probe = self._probe(slug, book, prog, ebs)
-            if probe is None or not probe.qualifies or probe.est_day <= 0:
-                continue
-            if best is None or cost < best[0]:
-                best = (cost, slug, side, px, size, book)
-        if best is None:
-            return None
-        _cost, slug, side, px, size, book = best
-        return self._snap(slug, side, book, px, size, positions, now)
 
     def _probe(self, slug: str, book, prog, book_side: str, qty: float | None = None):
         from . import survey as sv
@@ -859,7 +812,6 @@ class Bonds:
                 "cash": round(self.cash, 2),
                 "budget": round(self.budget, 2), "spent": round(self.spent, 2),
                 "unpinged": round(self.unpinged, 2),
-                "snipe_max": self.snipe_max,
                 "held_cost": held_cost,
                 "high": HIGH_ODDS, "low": LOW_ODDS, "price_cap": PRICE_CAP,
                 "keep": KEEP_FRACTION,
@@ -875,7 +827,6 @@ class Bonds:
                 "cash": round(self.cash, 4),
                 "budget": round(self.budget, 4), "spent": round(self.spent, 4),
                 "unpinged": round(self.unpinged, 4),
-                "snipe_max": self.snipe_max,
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
                 "exch_seen": getattr(self, "_exch_seen", {}),
@@ -895,7 +846,6 @@ class Bonds:
         self.budget = float(d.get("budget") or 0.0)
         self.spent = float(d.get("spent") or 0.0)
         self.unpinged = float(d.get("unpinged") or 0.0)
-        self.snipe_max = float(d.get("snipe_max") or SNIPE_MAX_DEFAULT)
         self.scan_day = str(d.get("scan_day") or "")
         self._earn_seen = {str(k): float(v) for k, v in (d.get("earn_seen") or {}).items()}
         self._earn_px = {str(k): float(v) for k, v in (d.get("earn_px") or {}).items()}
