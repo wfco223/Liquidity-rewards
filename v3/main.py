@@ -687,7 +687,9 @@ def pair_fills(fills: list) -> list:
                     str(r.get("intent") or "") in (
                         "ORDER_INTENT_SELL_LONG", "ORDER_INTENT_BUY_SHORT")
                     or qty < 1.0))
-                if r.get("purpose") == "sell" or hand_close:
+                bond_close = (r.get("purpose") == "bond"
+                              and r.get("side") == "SELL")
+                if r.get("purpose") == "sell" or bond_close or hand_close:
                     # an exit with no purchase to match: it closed stock
                     # bought before the journal — not a new position
                     lot["stray_close"] = True
@@ -996,6 +998,15 @@ class Monitor:
             self.families[key] = fam
             self.switches[key] = sw
             self.samplers[key] = Estimator()
+        # Bonds: the tax reserve earning like a bond (owner, 2026-09-02).
+        # Silver's odds propose, the owner approves, the engine stays
+        # out; its own switch, off by default like every other
+        from .bonds import Bonds
+        self.switches["bonds"] = MasterSwitch(alert=self.alerts.notify,
+                                              name="Bonds switch",
+                                              scope="Bonds")
+        self.bonds = Bonds(self.families["politics"], self.client,
+                           self.silver.model_fair, alert=self.alerts.notify)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
@@ -1143,6 +1154,10 @@ class Monitor:
         self.survey_frame_note = str(saved.get("survey_frame") or "")
         self.cancel_jobs = list(saved.get("cancel_jobs") or [])
         self.ladder_day = str(saved.get("ladder_day") or "")
+        if saved.get("bonds"):
+            self.bonds.restore(saved["bonds"])
+        if saved.get("sw_bonds"):
+            self.switches["bonds"].restore(saved["sw_bonds"])
         self.ladder_seen = {str(k): str(v) for k, v in
                             (saved.get("ladder_seen") or {}).items()}
         self.actuals_by_day = dict(saved.get("actuals_by_day") or {})
@@ -1228,6 +1243,8 @@ class Monitor:
             "mkt_claim_day": self.mkt_claim_day,
             "cancel_jobs": list(getattr(self, "cancel_jobs", [])),
             "rss_mb": round(rss_mb(), 1),
+            "bonds": self.bonds.to_dict(),
+            "sw_bonds": self.switches["bonds"].to_dict(),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
             "survey_stats": {p: st.__dict__ for p, st
@@ -1298,6 +1315,7 @@ class Monitor:
         st["master_switch"] = self.master.to_dict()
         for key in self.families:
             st[f"sw_{key}"] = self.switches[key].to_dict()
+        st["sw_bonds"] = self.switches["bonds"].to_dict()
         st["saved_at"] = time.time()
         self.last_state = st
         self.freeze_payload()      # a switch flip shows immediately
@@ -2639,6 +2657,41 @@ class Monitor:
                            f"{slug} — market fields: "
                            + ",".join(sorted(md.keys()))[:400])
 
+    def bonds_op(self, op: str, market: str) -> dict:
+        """The owner's taps on the bonds page: add a proposed market,
+        ignore it, un-ignore it, or remove one from the list. Persisted
+        at once, like a switch flip — the list is his, and a restart
+        between a tap and the next save must not undo it."""
+        market = str(market or "").strip()
+        if not market:
+            return {"ok": False, "note": "no market given"}
+        now = time.time()
+        if op == "bonds_approve":
+            r = self.bonds.approve(market, now)
+        elif op == "bonds_ignore":
+            r = self.bonds.ignore(market, now)
+        elif op == "bonds_unignore":
+            r = self.bonds.unignore(market)
+        elif op == "bonds_remove":
+            r = self.bonds.remove(market, now)
+        elif op == "bonds_scan":
+            new = self.bonds.scan(now, force=True)
+            r = {"ok": True, "note": f"scanned — {len(new)} new candidate"
+                                     f"{'s' if len(new) != 1 else ''}"}
+        else:
+            return {"ok": False, "note": f"unknown op {op}"}
+        self._audit({"op": op, "market": market, "initiator": "owner",
+                     "ok": bool(r.get("ok")), "ts": now})
+        if r.get("ok"):
+            st = dict(self.last_state) if self.last_state else {}
+            st["bonds"] = self.bonds.to_dict()
+            st["saved_at"] = now
+            self.last_state = st
+            self.freeze_payload()
+            self.store.save_local(st)
+            self.store.save_remote(st)
+        return r
+
     def publish_ladders(self, now: float) -> None:
         """Once a day (owner yes, 2026-09-02): the full ladders of every
         market we are earning in, and of every market that earned in
@@ -3297,6 +3350,8 @@ class Monitor:
         st = dict(self.last_state) if self.last_state else {"saved_at": 0}
         st["switch_view"] = {
             "master": self.master.state(),
+            **({"bonds": self.switches["bonds"].state()}
+               if "bonds" in self.switches else {}),
             **{k: self.switches[k].state() for k in self.families}}
         st["floor"] = self.floor.status()
         return st
@@ -3353,6 +3408,10 @@ class Monitor:
             d["survey"] = self.survey_view()
         except Exception:  # noqa: BLE001 — the payload never dies for research
             pass
+        try:
+            d["bonds"] = self.bonds.view(time.time())
+        except Exception as e:  # noqa: BLE001
+            d["bonds"] = {"rows": [], "proposed": [], "error": str(e)[:120]}
         return d
 
     def boot_payload(self) -> bytes:
@@ -3373,7 +3432,9 @@ class Monitor:
                 "summaries": {}, "labels": {}, "errors": [],
                 "switch_view": {
                     "master": self.master.state(),
-                    **{k: self.switches[k].state() for k in self.families}},
+                    **({"bonds": self.switches["bonds"].state()}
+               if "bonds" in self.switches else {}),
+            **{k: self.switches[k].state() for k in self.families}},
                 "starting": True,
             }
             return json.dumps(body).encode()
@@ -3602,6 +3663,12 @@ class Monitor:
         if any(getattr(fam, "last_discover", 0.0) == now
                for fam in self.families.values()):
             self._note(f"memory: {rss_mb():.0f} MB resident after discovery")
+        try:      # the bonds, after the families: count sales, keep every
+                  # held bond earning, reinvest — only with its switch on
+            on_b = self.master.on and self.switches["bonds"].on and self._floor_ok
+            self.bonds.cycle(now, positions, on_b)
+        except Exception as e:  # noqa: BLE001 — never breaks the cycle
+            self._note(f"bonds: {type(e).__name__}: {e}")
         try:
             self._run_due_cancels(now)
         except Exception as e:  # noqa: BLE001 — never breaks the cycle
