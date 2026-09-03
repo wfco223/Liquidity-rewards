@@ -1548,19 +1548,23 @@ class Bonds:
             # read as "reached the far touch" every cycle, the snap had
             # nothing to take, and no decoy was ever placed)
             why = None
-            if at_far_touch:
-                # and a tick under the other side it has nowhere to move
+            if at_far_touch or past_cost:
+                # a tick under the other side it has nowhere to move
                 # (owner, 2026-09-03: "there wouldn't be much for the
-                # decoy to do anyways"): no decoy; the exit's contingent
-                # steps up to join it on the cooldown instead
+                # decoy to do anyways"); and past our cost a decoy would
+                # be a sale at a loss (Idaho, 2026-09-03: a decoy joined
+                # 0.01 share at 84c against a 94c cost and was filled).
+                # No decoy either way; the exit steps up on the cooldown
                 if decoys:
                     self._pull_decoys(slug, side)
                 st["idle"] = True
                 if not st.get("noted_idle"):
                     st["noted_idle"] = True
                     self._log(event="dance_idle", market=slug, minnow_px=m_px,
-                              note="dust at the far touch: nowhere for it to move, "
-                                   "nothing for a decoy to do; the exit steps up instead")
+                              note=("dust under our cost: a decoy there would sell at "
+                                    "a loss; none placed" if past_cost else
+                                    "dust at the far touch: nowhere for it to move, "
+                                    "nothing for a decoy to do; the exit steps up instead"))
                 return None
             st["idle"] = False
             if not st.get("noted"):
@@ -1575,7 +1579,10 @@ class Bonds:
             return None if (r and r.get("retry")) else r
         if decoys and not moved:
             return None                            # the clock is running
-        # (re)join the minnow at its price
+        # (re)join the minnow at its price — never past cost: a decoy is
+        # an exit order too, and an exit never sells at a loss
+        if past_cost:
+            return None
         held = min(self.held(slug, side), self.exchange_held(slug, side, positions))
         qty = float(min(DECOY_QTY, math.floor(held)))
         if qty < 1.0:
