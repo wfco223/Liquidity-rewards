@@ -4798,3 +4798,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788470226.9,politics,usgubewc-usgub-tn-2026-11-03-dem,SELL,12,0.03,backfill,,1.54,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C967TE0VRMW0
 1788470226.9,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,0.49,0.07,backfill,,15.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8SXK0772MVY
 1788470226.9,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,5.51,0.07,backfill,,2.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C95C8WP76MW1
+1788470706.9,politics,enwc-uspres-nom-dem-2028-wesmoo,BUY,1,0.05,sell,0.0215,0.95,,2,7,0,0.05,0.06,0.01,1,buying back the short at or under what it sold for — the bid earns while it wait,C96ZKP3Y2MW0
+1788470946.9,politics,enwc-uspres-nom-dem-2028-wesmoo,BUY,128,0.05,earn,2.4837,0.02,,1,5,0.454,0.05,0.06,0.02,128,joins the touch — the book has been quiet,C97RD7DEGMVY
+1788472267.0,cfb,aachc-cfb-wins-2026-11-28-kan-7pt5wins,BUY,1,0.44,sell,3.7129,3.04,,5,12,0.319,0.02,0.47,0.36,2,buying back the short at or under what it sold for — the bid earns while it wait,C95G9PMARMVZ
+1788472747.0,cfb,aachc-cfb-wins-2026-11-28-txtech-7pt5wins,BUY,1,0.93,sell,0.2876,35.18,,77,93,0.011,0.96,0.97,0.08,1,buying back the short at or under what it sold for — the bid earns while it wait,C8A0BYR6YMW1
+1788473527.1,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,sell,0,0,0.989475,95,99,0.39,0.96,0.97,0.0295,0,taker dump — sold into the bid (the carved exception),C98ERK74MMVK
+1788473587.1,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,72,0.04,bond,6.2236,0.03,0.0004,3,6,0.692,0.03,0.08,-0.0396,-247,bond more: buying up to $69.12 more; never dearer than his first price — 50% of ,C98E2V9WWMVK
+1788473647.1,politics,ussewc-usse-tn-2026-11-03-rep,SELL,20,0.95,bond,2.0358,7.63,0.998625,92,97,0.424,0.93,0.97,0.0486,0,bond: resized to the whole lot,C91YPNRW8MW0
+1788473793.7,politics,ussewc-usse-ky-2026-11-03-rep,BUY,7,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C98GVADTGMVK
+1788473827.1,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,-0.49,0.07,fix,0.0066,15.92,0.014775,3,6,0.474,0.04,0.07,0.0552,0.49,size trimmed by 0.49 to the exchange's count (order C8SXK0772MVY),C8SXK0772MVY
+1788473827.1,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,-5.51,0.07,fix,0.0737,2.6,0.014775,3,6,0.474,0.04,0.07,0.0552,6,size trimmed by 5.51 to the exchange's count (order C95C8WP76MW1),C95C8WP76MW1
+1788473827.1,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,void,0,0,0.989475,95,99,0.395,0.96,0.97,0.0295,0,voided: the exchange has no trade for order C97GX9AA0MW0 — the row of 09-03 21:0,C97GX9AA0MW0
+1788473827.1,politics,ussewc-usse-ky-2026-11-03-rep,BUY,7,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C98GVADTGMVK
