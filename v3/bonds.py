@@ -81,6 +81,7 @@ LOG_KEEP = 200
 DROPPED_KEEP = 30
 ENTER_MAX_LEVELS = 20       # the owner's entry sweeps at most this many levels
 LADDER_SHOW = 8             # entry-side levels the page shows to enter at
+SHARE_KEEP_DAYS = 7         # a day's reward split is held this long, then booked
 
 
 def side_for(odds: float | None) -> str | None:
@@ -104,7 +105,8 @@ def scan_due(now: float, last_day: str, hour: int = SCAN_HOUR_UTC) -> str | None
 
 
 class Bonds:
-    def __init__(self, fam, client, fair, clock=None, alert=None, tax_owed=None):
+    def __init__(self, fam, client, fair, clock=None, alert=None, tax_owed=None,
+                 paid=None):
         self.fam = fam                  # the politics family
         self.client = client
         self.fair = fair                # slug -> Silver's YES odds, or None
@@ -125,6 +127,21 @@ class Bonds:
         # he types a fixed figure; tax_owed() -> {owed, gross, rate} or None
         self.budget_mode: str = "tax"
         self.tax_owed = tax_owed or (lambda: None)
+        # earnings (owner, 2026-09-03: "the overall earnings from the
+        # bonds which is the profit from sales and the liquidity rewards
+        # payments ... differentiate the liquidity payments from engine
+        # resting orders"). Rewards are paid per MARKET, and the engine
+        # quotes bond markets too, so each cycle samples the bond orders'
+        # share of what all our orders in the market are measured to
+        # earn; a day's payment splits by the day's average share.
+        self.paid = paid or (lambda day, slug: None)   # (day, slug) -> usd paid
+        self.realized: float = 0.0            # profit on sales by our orders
+        self.sold_usd: float = 0.0
+        self.share_day: dict[str, dict[str, list]] = {}   # day -> slug -> [sum, n]
+        self.rewards_booked: float = 0.0      # bond share of days folded away
+        self.engine_booked: float = 0.0       # the engine's share, same days
+        self.paid_booked: float = 0.0
+        self.rewards_by_market: dict[str, float] = {}
         self.unpinged: float = 0.0            # bought since the last ping
         self.moved_at: dict[str, float] = {}
         self.slot: dict[str, dict] = {}
@@ -292,6 +309,80 @@ class Bonds:
                        f"${self.cash:,.2f} of proceeds waiting")
             self.unpinged = 0.0
 
+    # ------------------------------------------------------------ earnings
+
+    @staticmethod
+    def _day(ts: float) -> str:
+        return time.strftime("%Y-%m-%d", time.gmtime(ts))
+
+    def _sample_share(self, now: float) -> None:
+        """Once a cycle: in each bond market, the bond orders' share of
+        what ALL our resting orders there are measured to earn (the
+        family's live $/day per order; by size when nothing measures)."""
+        day = self._day(now)
+        for slug in set(self.approved) | set(self.lots):
+            ours = [o for o in list(self.fam.orders.values()) if o.market == slug]
+            if not ours:
+                continue
+            bond = [o for o in ours if o.purpose == "bond"]
+            tot = sum(o.live_est or 0.0 for o in ours)
+            if tot > 1e-9:
+                share = sum(o.live_est or 0.0 for o in bond) / tot
+            else:
+                tq = sum(o.qty for o in ours)
+                share = sum(o.qty for o in bond) / tq if tq > 1e-9 else 0.0
+            rec = self.share_day.setdefault(day, {}).setdefault(slug, [0.0, 0])
+            rec[0] += share
+            rec[1] += 1
+
+    def _attributed(self) -> tuple[dict, float, float, float]:
+        """(bond rewards by market, bond total, engine total, paid total)
+        over the days still held, from the exchange's own payments."""
+        by: dict[str, float] = {}
+        bond = eng = paid = 0.0
+        for day, mk in self.share_day.items():
+            for slug, (ssum, n) in mk.items():
+                p = self.paid(day, slug)
+                if p is None or n <= 0:
+                    continue
+                sh = ssum / n
+                by[slug] = by.get(slug, 0.0) + p * sh
+                bond += p * sh
+                eng += p * (1.0 - sh)
+                paid += p
+        return by, bond, eng, paid
+
+    def _fold_rewards(self, now: float) -> None:
+        """Days older than SHARE_KEEP_DAYS are booked at what the
+        exchange has paid by then and dropped."""
+        cut = self._day(now - SHARE_KEEP_DAYS * 86400)
+        for day in [d for d in self.share_day if d < cut]:
+            for slug, (ssum, n) in self.share_day[day].items():
+                p = self.paid(day, slug)
+                if p is None or n <= 0:
+                    continue
+                sh = ssum / n
+                self.rewards_booked = round(self.rewards_booked + p * sh, 4)
+                self.engine_booked = round(self.engine_booked + p * (1.0 - sh), 4)
+                self.paid_booked = round(self.paid_booked + p, 4)
+                self.rewards_by_market[slug] = round(
+                    self.rewards_by_market.get(slug, 0.0) + p * sh, 4)
+            del self.share_day[day]
+
+    def _earned(self) -> dict:
+        _, bond, eng, paid = self._attributed()
+        rewards = self.rewards_booked + bond
+        return {"total": round(self.realized + rewards, 2),
+                "sales": round(self.realized, 2),
+                "sold_usd": round(self.sold_usd, 2),
+                "rewards": round(rewards, 2),
+                "engine": round(self.engine_booked + eng, 2),
+                "paid": round(self.paid_booked + paid, 2)}
+
+    def _market_rewards(self, slug: str) -> float:
+        by, *_ = self._attributed()
+        return self.rewards_by_market.get(slug, 0.0) + by.get(slug, 0.0)
+
     # ------------------------------------------------------------ the list
 
     def scan(self, now: float, force: bool = False) -> list[str]:
@@ -432,6 +523,7 @@ class Bonds:
         Places nothing unless the bonds switch is on."""
         self.scan(now)
         self._follow_tax()
+        self._fold_rewards(now)
         self._mark_engine()
         placed: list[dict] = []
         # sales: our earning order gave up shares and the ledger shrinks
@@ -454,6 +546,8 @@ class Bonds:
                     proceeds = sold * (px if side == "YES" else (1.0 - px))
                     cost = self._unbook_lot(slug, side, sold)
                     self.cash = round(self.cash + proceeds, 4)
+                    self.realized = round(self.realized + proceeds - cost, 4)
+                    self.sold_usd = round(self.sold_usd + proceeds, 4)
                     self._log(event="sold", market=slug, side=side,
                               qty=round(sold, 2), price=px,
                               proceeds=round(proceeds, 2),
@@ -468,6 +562,7 @@ class Bonds:
                 r = self._work_minnows(slug, side, positions, now)
                 if r:
                     placed.append(r)
+        self._sample_share(now)
         if not hasattr(self, "_exch_seen"):
             self._exch_seen = {}
         for slug in set(self.approved) | set(self.lots):
@@ -907,6 +1002,7 @@ class Bonds:
                 "qty": round(held, 2),
                 "cost_px": self.cost_basis(slug, side),
                 "uncounted": round(max(exch - held, 0.0), 2),
+                "rewards": round(self._market_rewards(slug), 2),
                 "earn": earn,
                 "earn_order": ([{"price": o.price, "qty": o.qty,
                                  "est": round(o.live_est or 0.0, 4)}
@@ -938,6 +1034,7 @@ class Bonds:
                 "budget": round(self._budget_now(), 2), "spent": round(self.spent, 2),
                 "budget_mode": self.budget_mode, "tax": self.tax_owed() or None,
                 "money": round(self._money(), 2),
+                "earned": self._earned(),
                 "unpinged": round(self.unpinged, 2),
                 "held_cost": held_cost,
                 "high": HIGH_ODDS, "low": LOW_ODDS, "price_cap": PRICE_CAP,
@@ -955,6 +1052,12 @@ class Bonds:
                 "budget": round(self.budget, 4), "spent": round(self.spent, 4),
                 "budget_mode": self.budget_mode,
                 "unpinged": round(self.unpinged, 4),
+                "realized": round(self.realized, 4), "sold_usd": round(self.sold_usd, 4),
+                "share_day": self.share_day,
+                "rewards_booked": round(self.rewards_booked, 4),
+                "engine_booked": round(self.engine_booked, 4),
+                "paid_booked": round(self.paid_booked, 4),
+                "rewards_by_market": self.rewards_by_market,
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
                 "exch_seen": getattr(self, "_exch_seen", {}),
@@ -975,6 +1078,16 @@ class Bonds:
         self.spent = float(d.get("spent") or 0.0)
         self.budget_mode = str(d.get("budget_mode") or "tax")
         self.unpinged = float(d.get("unpinged") or 0.0)
+        self.realized = float(d.get("realized") or 0.0)
+        self.sold_usd = float(d.get("sold_usd") or 0.0)
+        self.share_day = {str(day): {str(k): [float(v[0]), int(v[1])]
+                                     for k, v in (mk or {}).items()}
+                          for day, mk in (d.get("share_day") or {}).items()}
+        self.rewards_booked = float(d.get("rewards_booked") or 0.0)
+        self.engine_booked = float(d.get("engine_booked") or 0.0)
+        self.paid_booked = float(d.get("paid_booked") or 0.0)
+        self.rewards_by_market = {str(k): float(v) for k, v
+                                  in (d.get("rewards_by_market") or {}).items()}
         self.scan_day = str(d.get("scan_day") or "")
         self._earn_seen = {str(k): float(v) for k, v in (d.get("earn_seen") or {}).items()}
         self._earn_px = {str(k): float(v) for k, v in (d.get("earn_px") or {}).items()}
