@@ -229,7 +229,16 @@ class Bonds:
         return max(pos, 0.0) if side == "YES" else max(-pos, 0.0)
 
     def cost_basis(self, slug: str, side: str) -> float:
-        """What a dollar of this bond cost, from the ledger."""
+        """What a share of this bond cost, commissions in, from the
+        ledger — the figure shown and the one profit is measured from."""
+        lot = self.lots.get(slug) or {}
+        q = abs(float(lot.get("qty") or 0.0))
+        c = float(lot.get("cost") or 0.0) + float(lot.get("fees") or 0.0)
+        return round(c / q, 4) if q > 0.005 and c > 0 else 0.0
+
+    def price_basis(self, slug: str, side: str) -> float:
+        """The average price paid per share, commissions out: the
+        exit's floor (holding at cost is fine)."""
         lot = self.lots.get(slug) or {}
         q = abs(float(lot.get("qty") or 0.0))
         c = float(lot.get("cost") or 0.0)
@@ -237,8 +246,8 @@ class Bonds:
 
     def _yes_px_floor(self, slug: str, side: str) -> float:
         """The YES price our earning order must not cross: what a share
-        cost (YES) or fetched (NO), from the ledger."""
-        cb = self.cost_basis(slug, side)
+        cost (YES) or fetched (NO), the price paid, from the ledger."""
+        cb = self.price_basis(slug, side)
         if cb <= 0:
             return 0.0
         return cb if side == "YES" else round(1.0 - cb, 4)
@@ -275,14 +284,15 @@ class Bonds:
                              if abs(float(l.get("qty") or 0.0)) > 0.005}
 
     def _book_lot(self, slug: str, side: str, qty: float, usd: float,
-                  ref: str = "") -> None:
+                  ref: str = "", fee: float = 0.0) -> None:
         """A lot is booked only from something the exchange confirmed —
         `ref` is the filled order's id, or "adopt" for shares the owner
         counted in himself. A lot with no such backing is dropped at
         restore (the Hawaii case, 2026-09-03)."""
         self.lot_ts[slug] = self._clock()
         fresh = slug not in self.lots
-        lot = self.lots.setdefault(slug, {"qty": 0.0, "cost": 0.0, "fills": []})
+        lot = self.lots.setdefault(slug, {"qty": 0.0, "cost": 0.0, "fills": [], "fees": 0.0})
+        lot["fees"] = round(float(lot.get("fees") or 0.0) + fee, 4)
         if fresh and slug not in self.more_cap:
             # his first purchase here is the default for buying more
             self.more_cap[slug] = {"usd": round(usd, 2), "by": "default",
@@ -307,8 +317,11 @@ class Bonds:
         if q <= 0.005 or take <= 0.005:
             return 0.0
         usd = round(float(lot.get("cost") or 0.0) * take / q, 4)
+        fee = round(float(lot.get("fees") or 0.0) * take / q, 4)
         lot["qty"] = round(lot["qty"] - (take if side == "YES" else -take), 4)
         lot["cost"] = round(lot["cost"] - usd, 4)
+        lot["fees"] = round(float(lot.get("fees") or 0.0) - fee, 4)
+        usd = round(usd + fee, 4)
         if abs(lot["qty"]) < 0.005:
             self.lots.pop(slug, None)
         self._mark_engine()
@@ -376,15 +389,27 @@ class Bonds:
                 continue
             shares, avg, _ = got
             booked = float(f.get("qty") or 0.0)
-            if abs(shares - booked) < 0.005:
+            fee = self._fee_of(oid, acts)
+            fee_booked = float(f.get("fee") or 0.0)
+            if abs(shares - booked) < 0.005 and abs(fee - fee_booked) < 0.005:
                 continue
             slug, side = f["slug"], f["side"]
             px = avg or float(f.get("px") or 0.0)
             cost_per = px if side == "YES" else round(1.0 - px, 4)
+            f["fee"] = fee
+            if abs(shares - booked) < 0.005:
+                # only the fee changed
+                lot = self.lots.get(slug)
+                if lot is not None:
+                    lot["fees"] = round(float(lot.get("fees") or 0.0) + fee - fee_booked, 4)
+                    if fee > fee_booked:
+                        self._pay(round(fee - fee_booked, 4))
+                continue
             if shares > booked:
                 extra = round(shares - booked, 4)
                 usd = round(extra * cost_per, 4)
-                self._book_lot(slug, side, extra, usd)
+                self._book_lot(slug, side, extra, usd, fee=round(fee - fee_booked, 4))
+                usd = round(usd + (fee - fee_booked), 4)
                 self._pay(usd)
                 self._ping_maybe(usd)
             else:
@@ -794,6 +819,11 @@ class Bonds:
         return px, est, ticks, 1.0
 
     def _bound(self, slug: str, side: str, tick: float) -> float:
+        """The YES price the exit may not cross: the price paid, on the
+        tick. Holding at cost is fine (owner, 2026-09-03: "never mind on
+        the new price floor. We may not be able to earn rewards that
+        way. Holding at cost is fine"); the commission a take paid is
+        in the cost SHOWN and in the profit math, not in this floor."""
         px = self._yes_px_floor(slug, side)
         if side == "YES":
             return self._snap_up(px, tick) if px > 0 else 0.0
@@ -1240,7 +1270,7 @@ class Bonds:
             return None
         # the exchange's trade record says what filled, at what price;
         # the ledger books THAT and nothing else (owner, 2026-09-03)
-        filled, fill_px, note = self._filled(r.order_id, qty, (r.price or px), slug)
+        filled, fill_px, fee, note = self._filled(r.order_id, qty, (r.price or px), slug)
         if filled < 0.01:
             self._log(event="take_unfilled", market=slug, side=side, price=px,
                       qty=qty, order_id=r.order_id,
@@ -1257,12 +1287,13 @@ class Bonds:
             why=f"bond: took {qty:g} {side} at {px * 100:g}c — it was in the "
                 f"way of our resting order")
         usd = round(qty * cost, 4)
-        self._book_lot(slug, side, qty, usd, ref=r.order_id)
+        self._book_lot(slug, side, qty, usd, ref=r.order_id, fee=fee)
         self.fill_book[r.order_id] = {"slug": slug, "side": side, "qty": qty,
-                                      "px": px, "ts": round(now, 1)}
+                                      "px": px, "fee": fee, "ts": round(now, 1)}
+        usd = round(usd + fee, 4)                 # the commission is money spent
         self._pay(usd)
         self._log(event="snapped", market=slug, side=side, price=px, qty=qty,
-                  cost=round(usd, 2), cash=round(self.cash, 2),
+                  cost=round(usd, 2), fee=round(fee, 4), cash=round(self.cash, 2),
                   budget=round(self.budget, 2), order_id=r.order_id,
                   **({"note": note} if note else {}))
         self._ping_maybe(usd)
@@ -1286,23 +1317,25 @@ class Bonds:
         return None
 
     def _filled(self, order_id: str, want: float, posted_px: float,
-                slug: str) -> tuple[float, float, str]:
+                slug: str) -> tuple[float, float, float, str]:
         """What the exchange's trade record shows filled under this
         order id: (shares, average price, note). Polled for FILL_WAIT_S
         because the feed lags a placement by a few seconds. An order
         that shows resting instead of filled is cancelled — a take was
         never meant to rest. Nothing is assumed."""
-        shares, avg, note = 0.0, posted_px, ""
+        shares, avg, fee, note = 0.0, posted_px, 0.0, ""
         for attempt in range(int(FILL_WAIT_S) + 1):
             if attempt:
                 self._sleep(1.0)
             try:
-                got = self._record_of(order_id, self.client.recent_trades(limit=50))
+                acts = self.client.recent_trades(limit=50)
+                got = self._record_of(order_id, acts)
             except Exception as e:  # noqa: BLE001 — the record is the truth; keep asking
                 note = f"trade record: {str(e)[:80]}"
                 continue
             if got is not None:
                 shares, avg, note = got
+                fee = self._fee_of(order_id, acts)
                 if not avg:
                     avg = posted_px
                     note = note or "price taken from the order (the record gave none)"
@@ -1320,7 +1353,23 @@ class Bonds:
                         break
             except Exception as e:  # noqa: BLE001
                 note = f"open orders: {str(e)[:80]}"
-        return shares, avg, note
+        return shares, avg, fee, note
+
+    def _fee_of(self, order_id: str, activities) -> float:
+        """The commissions the exchange collected on one order, summed
+        over its executions (one per execution id). Positive is a fee
+        (a take); a maker fill's rebate comes back negative."""
+        seen: dict[str, float] = {}
+        for a in activities or []:
+            t = a.get("trade") or {}
+            for exk in ("passiveExecution", "aggressorExecution"):
+                ex = t.get(exk) or {}
+                o = ex.get("order") or {}
+                if str(o.get("id") or "") != order_id:
+                    continue
+                xid = str(ex.get("id") or "") or f"{t.get('id')}/{exk}"
+                seen[xid] = self._px_of(ex.get("commissionNotionalCollected")) or 0.0
+        return round(sum(seen.values()), 4)
 
     def _record_of(self, order_id: str, activities) -> tuple[float, float, str] | None:
         """(filled shares, average price, note) for one order from the
@@ -1574,7 +1623,17 @@ class Bonds:
             "hold_until": (self.fam.hold_until.get(slug)
                            if self.fam.hold_until.get(slug, 0.0) > now else None),
             "more": self._more_view(slug, side, book, held),
+            "floor": self._floor_view(slug, side, book),
         }
+
+    def _floor_view(self, slug: str, side: str, book) -> float | None:
+        """The lowest bond price the exit will sell at — the price paid,
+        on the tick — shown so a sale is never a surprise."""
+        if self.cost_basis(slug, side) <= 0:
+            return None
+        tick = (book.tick if book is not None else None) or 0.01
+        b = self._bound(slug, side, tick)
+        return round(b if side == "YES" else 1.0 - b, 4)
 
     def _more_view(self, slug: str, side: str, book, held: float) -> dict | None:
         cap = self.more_cap.get(slug)
@@ -1680,6 +1739,7 @@ class Bonds:
         for k, v in (d.get("lots") or {}).items():
             lot = {"qty": float(v.get("qty") or 0.0),
                    "cost": float(v.get("cost") or 0.0),
+                   "fees": float(v.get("fees") or 0.0),
                    "fills": [str(x) for x in (v.get("fills") or [])]}
             if not lot["fills"]:
                 # booked by the old code on the assumption a take filled:
