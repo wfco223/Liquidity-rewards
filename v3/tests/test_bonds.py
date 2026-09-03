@@ -573,3 +573,134 @@ class TestEngineHandsOff(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestOurOwnOrdersAreNotForSale(Base):
+    """Owner, 2026-09-02: "we can't buy our own orders, so exclude orders
+    that the engine places. For instance on this Hawai'i governor market
+    we are selling 3 shares at the touch so the actually available
+    shares should be 5.\""""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+
+    def ours(self, px, qty, oid="E1", purpose="sell"):
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=AL, side="SELL", price=px, qty=qty,
+            intent=SELL_LONG, placed_ts=self.now, purpose=purpose)
+
+    def hawaii(self):
+        self.bk = Book(bids=((0.97, 50.0), (0.50, 20000.0)),
+                       asks=((0.98, 8.0), (0.99, 20000.0)),
+                       tick=0.01, fetched_at=self.now)
+        self.r.cache.put(AL, self.bk)
+        self.ours(0.98, 3.0)
+
+    def test_eight_showing_three_ours_is_five(self):
+        self.hawaii()
+        row = self.b.view(self.now, self.positions())["rows"][0]
+        self.assertAlmostEqual(float(row["size"]), 5.0)
+        self.assertEqual(row["ladder"][0]["px"], 0.98)
+        self.assertAlmostEqual(row["ladder"][0]["qty"], 5.0)
+        self.assertAlmostEqual(row["ladder"][0]["cum_qty"], 5.0)
+        self.assertAlmostEqual(row["ladder"][0]["cum_usd"], 5 * 0.98, places=2)
+        px, cost, size = self.b._take_price("YES", self.bk, AL)
+        self.assertEqual((px, size), (0.98, 5.0))
+
+    def test_a_level_that_is_all_ours_is_not_on_the_ladder(self):
+        self.r.cache.put(AL, Book(bids=((0.97, 50.0), (0.50, 20000.0)),
+                                  asks=((0.98, 3.0), (0.99, 300.0)),
+                                  tick=0.01, fetched_at=self.now))
+        self.ours(0.98, 3.0)
+        row = self.b.view(self.now, self.positions())["rows"][0]
+        self.assertEqual([l["px"] for l in row["ladder"]], [0.99])
+        self.assertEqual(row["cost"], 0.99)
+        self.assertAlmostEqual(float(row["size"]), 300.0)
+
+    def test_a_sweep_skips_a_level_that_is_only_ours(self):
+        sweep = TestTheOwnersEntry.Sweeping(
+            [(0.95, 20.0), (0.96, 30.0), (0.97, 40.0), (0.98, 500.0)], self.now)
+        mine = {0.95}
+
+        def post(*a, **k):
+            # a take fills against OTHERS: the first level not ours goes
+            for i, (p, q) in enumerate(sweep.asks):
+                if p not in mine:
+                    sweep.asks.pop(i)
+                    break
+            return {"id": "T%d" % len(sweep.asks)}
+
+        sweep.post = post
+        self.b.client = sweep
+        self.r.fam.desk.client = sweep
+        self.r.cache.put(AL, sweep.book(AL))
+        self.ours(0.95, 20.0)
+        r = self.b.enter(AL, 0.97, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 70.0)          # 30 + 40, not our 20
+        self.assertEqual(sweep.asks, [(0.95, 20.0), (0.98, 500.0)])
+
+    def test_the_desk_refuses_a_take_of_our_own_level(self):
+        self.hawaii()
+        d = self.r.fam.desk
+        r = d.place_resting(AL, "BUY", 0.98, 6.0, intent=BUY_LONG,
+                            initiator="owner", taker="bond")
+        self.assertFalse(r.ok)
+        self.assertIn("exceeds", r.note)                       # others show 5
+        r = d.place_resting(AL, "BUY", 0.98, 5.0, intent=BUY_LONG,
+                            initiator="owner", taker="bond")
+        self.assertTrue(r.ok, r.note)
+        # a level that is all ours is not the touch for a take
+        self.r.cache.put(AL, Book(bids=((0.97, 50.0), (0.50, 20000.0)),
+                                  asks=((0.98, 3.0), (0.99, 300.0)),
+                                  tick=0.01, fetched_at=self.now))
+        r = d.place_resting(AL, "BUY", 0.98, 3.0, intent=BUY_LONG,
+                            initiator="owner", taker="bond")
+        self.assertFalse(r.ok)
+        r = d.place_resting(AL, "BUY", 0.99, 300.0, intent=BUY_LONG,
+                            initiator="owner", taker="bond")
+        self.assertTrue(r.ok, r.note)
+
+
+class TestTheMinnowCheckNetsAllOurOrders(Base):
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=0.0, ask=0.99))
+        self.bond(AL, "YES", 1500.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.main = self.orders(AL, "SELL", decoy=False)[0]
+        self.m_px = round(self.main.price - 0.01, 2)
+        self.r.fam.orders["E1"] = FamilyOrder(
+            id="E1", market=AL, side="SELL", price=self.m_px, qty=5.0,
+            intent=SELL_LONG, placed_ts=self.now, purpose="sell")
+
+    def book(self, others, t):
+        merged = {}
+        for p, q in [(o.price, o.qty) for o in self.orders(AL, "SELL")] + [
+                (self.m_px, others), (0.99, 20000.0)]:
+            merged[round(p, 4)] = merged.get(round(p, 4), 0.0) + q
+        self.r.cache.put(AL, Book(
+            bids=((0.88, 50.0), (0.50, 20000.0)),
+            asks=tuple(sorted((p, q) for p, q in merged.items() if q > 0)),
+            tick=0.01, fetched_at=self.now + t))
+
+    def test_our_engine_order_in_front_is_not_a_minnow(self):
+        self.book(0.0, 60)                       # the 5 in front are ours
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        self.assertNotIn(AL, self.b.dance)
+        self.assertIsNone(self.b.view(self.now + 60, self.positions())["rows"][0]["minnow"])
+
+    def test_only_the_others_shares_count_as_the_minnow(self):
+        self.book(3.0, 60)                       # 8 showing, 5 ours
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        decoys = self.orders(AL, "SELL", decoy=True)
+        self.assertEqual(len(decoys), 1)
+        self.assertAlmostEqual(decoys[0].price, self.m_px)
+        self.book(3.0, 61)                       # the book now shows the decoy too
+        v = self.b.view(self.now + 61, self.positions())["rows"][0]
+        self.assertAlmostEqual(v["minnow"]["qty"], 3.0)
