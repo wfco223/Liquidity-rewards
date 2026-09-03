@@ -5180,3 +5180,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788422745.8,politics,ussewc-usse-ky-2026-11-03-rep,BUY,3,0.94,bond,0,0.02,0.99665,93,95,0.851,0.93,0.94,-0.0567,20,bond: took 3 YES at 94c — it was in the way of our resting order,C8W7K0JTPMVY
 1788423345.8,politics,ussewc-usse-ky-2026-11-03-rep,BUY,1,0.94,bond,0,0.02,0.99665,92,95,0.867,0.93,0.94,-0.0567,21,bond: took 1 YES at 94c — it was in the way of our resting order,C8WBG52GCMVZ
 1788423465.8,politics,ussewc-usse-ky-2026-11-03-rep,BUY,1,0.94,bond,0,0.02,0.99665,92,95,0.88,0.93,0.95,-0.0567,22,bond: took 1 YES at 94c — it was in the way of our resting order,C8WCJ54J2MVY
+1788426166.0,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,6.12,0.97,earn,1.5394,0.97,0.998125,97,99,0.569,0.97,0.99,-0.0281,12.12,1 tick behind the touch — we would hold 24% of the bid side,C8W7Z77K0MVK
+1788426706.0,politics,ussewc-usse-ky-2026-11-03-rep,BUY,11,0.94,bond,0,0.02,0.99665,92,94,0.889,0.93,0.94,-0.0567,33,bond: took 11 YES at 94c — it was in the way of our resting order,C8X5YKQAPMVF
+1788426766.0,politics,ussewc-usse-ky-2026-11-03-rep,BUY,2,0.94,bond,0,0.02,0.99665,92,94,0.898,0.93,0.95,-0.0567,35,bond: took 2 YES at 94c — it was in the way of our resting order,C8X5NXM98MVZ
+1788427066.0,politics,ussewc-usse-mt-2026-11-03-setbod,BUY,4,0.1,earn,2.7777,0.28,,10,14,0.095,0.1,0.11,-0.02,53,joins the touch — the book has been quiet,C8WY6H6K6MVV
+1788427486.0,politics,usgubewc-usgub-wy-2026-11-03-rep,SELL,1,0.98,void,0,0,0.999875,98,99,0.432,0.98,0.99,0.0199,0,voided: the exchange has no trade for order C8WHS19EYMVV — the row of 09-03 08:3,C8WHS19EYMVV
