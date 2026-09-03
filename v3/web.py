@@ -925,7 +925,7 @@ function render(d){
  out+='<div class="sub">Money <b>'+usd(b.money||0)+'</b> = budget '+usd(b.budget||0)+' + proceeds '+usd(b.cash||0)+' · held at cost '+usd(b.held_cost||0)+' · Silver checked '+(b.scan_day?esc(b.scan_day):'never')+'</div>';
  out+='<div class="sub">Budget '+(tax?'= taxes owed '+usd(tx.owed||0)+' ('+Math.round((tx.rate||0.22)*100)+'% of '+usd(tx.gross||0)+' paid)':'fixed by you')+(b.spent?' − '+usd(b.spent)+' spent':'')+'</div>';
  var e=b.earned||{};
- out+='<div class="sub">Earned <b>'+usd(e.total||0)+'</b> = '+usd(e.sales||0)+' profit on sales ('+usd(e.sold_usd||0)+' sold) + '+usd(e.rewards||0)+' rewards'+(e.paid?' · the exchange paid '+usd(e.paid)+' on these markets; the engine\'s own orders there earned the other '+usd(e.engine||0):'')+'</div>';
+ out+='<div class="sub">Earned <b>'+usd(e.total||0)+'</b> = '+usd(e.sales||0)+' profit on sales ('+usd(e.sold_usd||0)+' sold) + '+usd(e.rewards||0)+' rewards measured by the bond orders while resting'+(e.today?' ('+usd(e.today)+' today)':'')+'</div>';
  out+='<div id="bmsg">'+(window._bNote||'')+'</div>';
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
  out+='<div>'+bField('bbud',bKeep('bbud'),'7em')+' <button onclick="bBudget()">Set budget</button>'+(tax?'':' <button onclick="bOp(\'bonds_budget_tax\',\'-\')">Follow taxes owed</button>')+' <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
@@ -936,7 +936,7 @@ function render(d){
   +'<div>A second order buys more on the thin side, up to an amount you set per market (your first purchase there by default, reset when you no longer hold it), at the cheapest price that captures '+Math.round((b.more_share||0.3)*100)+'% of its side, never dearer than the price you first paid there. It moves when it no longer captures that; when no price at or under your first price can, it comes off.</div>'
   +'<div>A small order (25 or fewer) in front of it gets a decoy joining it. Sits two hours, moves over three times, reaches the touch or goes under cost: bought, joins the bond.</div>'
   +'<div>Sale proceeds go back into Money. A phone note every $100 bought.</div>'
-  +'<div>Rewards are paid per market and the engine quotes bond markets too, so a day\'s payment is split between the bond order and the engine\'s orders by their measured share of what all our orders there earn. An estimate.</div>'
+  +'<div>Rewards are paid per market and the engine quotes bond markets too, so the bond rewards shown are what the bond orders themselves measured while resting — order by order, not a share of a market\'s payout. An estimate, graded the same way as the rest of the book.</div>'
   +'<div>Your markets hold seats on the exchange stream; this page redraws as their books move while you are at the top, and holds still while you are scrolled down.</div></details>';
  out+='</div>';
  var pr=b.proposed||[];
