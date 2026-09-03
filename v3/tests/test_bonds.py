@@ -154,12 +154,14 @@ class TestTheList(Base):
         self.assertEqual(v["dropped"][0]["held"], 100.0)
         self.assertEqual(self.pings, [])
 
-    def test_the_engine_keeps_quoting_and_exits_only_its_own_stock(self):
+    def test_the_engine_quotes_a_listed_market_until_he_holds_a_bond_there(self):
         self.b.approve(AL, self.now)
         self.assertFalse(self.r.fam._frozen(AL))
         self.assertTrue(self.r.fam.enterable(AL))
         self.bond(AL, "YES", 100.0, 0.98)
         self.assertEqual(self.r.fam.bond_qty, {AL: 100.0})   # what _sell subtracts
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.r.fam._frozen(AL))                # from the first purchase on
 
     def test_ignore_is_remembered_and_reversible(self):
         self.b.scan(self.now, force=True)
@@ -1469,3 +1471,86 @@ class TestTheArkansasLesson(Base):
         row = [r for r in self.b.view(self.now + 60, self.positions())["rows"]
                if r["market"] == ALD][0]
         self.assertEqual(row["slot"]["reserve"], 195.0 - o.qty)
+
+
+class TestTheEngineIsOutOfHeldBondMarkets(Base):
+    """Owner, 2026-09-03: "clear the engine out of bond markets after I
+    place my first order and until I no longer hold any position in
+    that market. It's just too confusing with the engine and the
+    bonds.\""""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+
+    def engine_order(self, oid, side, px, qty, purpose="earn"):
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=AL, side=side, price=px, qty=qty,
+            intent=BUY_LONG if side == "BUY" else SELL_LONG,
+            placed_ts=self.now, purpose=purpose)
+        self.r.exchange.live[oid] = {"id": oid, "market": AL, "side": side,
+                                     "price": px, "size": qty, "intent": ""}
+
+    def test_the_first_purchase_clears_the_engine_out_and_counts_its_stock(self):
+        self.engine_order("E1", "BUY", 0.97, 20.0)
+        self.engine_order("E2", "SELL", 0.99, 30.0, purpose="sell")
+        self.engine_order("H1", "BUY", 0.96, 5.0, purpose="manual")   # his hand order stays
+        self.exch(AL, 30.0, 0.95)                          # the engine's own 30 @ 95c
+        self.r.fam.inventory[AL] = {"qty": 30.0, "cost": 28.5}
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertFalse(self.r.fam._frozen(AL))          # nothing held yet: the engine quotes
+        self.assertIn("E1", self.r.fam.orders)
+        # his first purchase
+        self.b._book_lot(AL, "YES", 100.0, 98.0, ref="T1")
+        self.exch(AL, 130.0, 0.955)
+        self.r.fam.inventory[AL] = {"qty": 130.0, "cost": 126.5}
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertTrue(self.r.fam._frozen(AL))
+        self.assertIn(AL, self.b.engine_out)
+        self.assertNotIn("E1", self.r.fam.orders)
+        self.assertNotIn("E2", self.r.fam.orders)
+        self.assertNotIn("E1", self.r.exchange.live)
+        self.assertIn("H1", self.r.fam.orders)             # untouched
+        self.assertEqual(self.b.held(AL, "YES"), 130.0)    # the engine's 30 count as bond now
+        self.assertIn("adopt", self.b.lots[AL]["fills"])
+        ev = {e["event"] for e in self.b.log}
+        self.assertIn("engine_cleared", ev)
+        self.assertIn("adopted", ev)
+        # the freeze survives a restore
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        self.r.fam.freeze_dyn.clear()
+        b2.restore(self.b.to_dict())
+        self.assertTrue(self.r.fam._frozen(AL))
+
+    def test_the_engine_comes_back_when_nothing_is_held(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.r.fam._frozen(AL))
+        self.b.lots.clear()                                # sold out
+        self.exch(AL, 0.0, 0.0)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertFalse(self.r.fam._frozen(AL))
+        self.assertNotIn(AL, self.b.engine_out)
+        self.assertIn("engine_back", {e["event"] for e in self.b.log})
+
+    def test_a_hand_purchase_is_counted_after_the_grace_unless_a_fill_is_pending(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.exch(AL, 140.0, 0.98)                         # 40 more, bought by hand
+        self.r.fam.inventory[AL] = {"qty": 140.0, "cost": 137.2}
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)    # not yet: the grace
+        self.b.cycle(self.now + 120, self.positions(), on=True)
+        self.b.cycle(self.now + 400, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 140.0)
+        # an excess that keeps changing (a bond order filling in parts)
+        # restarts the grace each time; the record books those fills
+        self.exch(AL, 150.0, 0.98)
+        self.b.cycle(self.now + 800, self.positions(), on=True)
+        self.exch(AL, 155.0, 0.98)
+        self.b.cycle(self.now + 900, self.positions(), on=True)
+        self.b.cycle(self.now + 1150, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 140.0)
+        self.b.cycle(self.now + 1300, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 155.0)

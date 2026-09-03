@@ -167,6 +167,12 @@ class Bonds:
         # pulled when no price inside the cap can. Reset when the market
         # is no longer held.
         self.more_cap: dict[str, dict] = {}    # slug -> {usd, by, first}
+        # the engine is cleared out of a bond market from his first
+        # purchase until he holds nothing there (owner, 2026-09-03:
+        # "It's just too confusing with the engine and the bonds"), and
+        # everything he holds on the bond side there counts as bond
+        self.engine_out: set[str] = set()
+        self._over_since: dict[str, tuple] = {}   # slug -> (excess, since)
         self.moved_more_at: dict[str, float] = {}
         self._more_note: dict[str, str] = {}
         self.dots: list = []                   # [ts, $/day of every bond order] for the graph
@@ -695,6 +701,7 @@ class Bonds:
                               cash=round(self.cash, 2))
         self._reconfirm(now)
         self._trim_to_exchange(positions, now)
+        self._engine_out(positions, now)
         for s in list(self.more_cap):
             if abs(float((self.lots.get(s) or {}).get("qty") or 0.0)) < 0.005:
                 self.more_cap.pop(s, None)       # no longer held: the default resets
@@ -959,6 +966,88 @@ class Bonds:
                   reserve=round(max(lot_qty - qty, 0.0), 2))
         return {"market": slug, "bond": side, "side": bs,
                 "price": (r.price or want), "qty": qty, "ticks": ticks}
+
+    # -- the engine, out of the way --------------------------------------------
+
+    def _engine_out(self, positions: dict | None, now: float) -> None:
+        """From his first purchase in a market until he holds nothing
+        there: the engine's orders are pulled once, the market is frozen
+        for the engine (it places, moves and cancels nothing), and
+        everything on the bond side there counts as bond — the engine's
+        own stock at what it cost, and any later excess the record does
+        not explain after a grace."""
+        for slug in sorted(set(self.approved) | set(self.lots)):
+            side = (self.approved.get(slug) or {}).get("side") or (
+                "YES" if float((self.lots.get(slug) or {}).get("qty") or 0) >= 0 else "NO")
+            held = self.held(slug, side)
+            if held > 0.005 and slug not in self.engine_out:
+                gone = []
+                for o in list(self.fam.orders.values()):
+                    if o.market != slug or o.purpose in ("manual", "bond"):
+                        continue
+                    r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+                    if r.ok:
+                        self.fam.orders.pop(o.id, None)
+                        gone.append(o.id)
+                self.engine_out.add(slug)
+                self.fam.freeze_dyn.add(slug)
+                self._log(event="engine_cleared", market=slug, orders=gone,
+                          note=f"{len(gone)} engine order{'s' if len(gone) != 1 else ''} "
+                               f"pulled; the engine stays out until nothing is held here")
+                self._adopt_excess(slug, side, positions, now, force=True)
+            elif held <= 0.005 and slug in self.engine_out:
+                self.engine_out.discard(slug)
+                self.fam.freeze_dyn.discard(slug)
+                self._over_since.pop(slug, None)
+                self._log(event="engine_back", market=slug,
+                          note="nothing held here any more; the engine may quote again")
+            elif slug in self.engine_out:
+                self.fam.freeze_dyn.add(slug)           # the freeze is not persisted by the family
+                self._adopt_excess(slug, side, positions, now, force=False)
+
+    def _adopt_excess(self, slug: str, side: str, positions: dict | None,
+                      now: float, force: bool) -> None:
+        """Shares on the bond side the exchange shows beyond the ledger
+        count as bond: at once when the engine is cleared out (its own
+        stock), else once the excess has held still for TRIM_GRACE_S
+        (a purchase of his by hand; a bond order's own fills are booked
+        from the record and keep the excess moving meanwhile)."""
+        if not positions:
+            return
+        exch = self.exchange_held(slug, side, positions)
+        over = round(exch - self.held(slug, side), 4)
+        if over < 1.0:
+            self._over_since.pop(slug, None)
+            return
+        if not force:
+            # the excess must hold still for the grace: a bond order
+            # filling in parts keeps changing it, and the record books
+            # those fills itself
+            prev = self._over_since.get(slug)
+            if prev is None or abs(prev[0] - over) >= 1.0:
+                self._over_since[slug] = (over, now)
+                return
+            if now - prev[1] < TRIM_GRACE_S:
+                return
+        inv = self.fam.inventory.get(slug) or {}
+        iq = float(inv.get("qty") or 0.0)
+        ic = float(inv.get("cost") or 0.0)
+        if abs(iq) > 0.005 and ic != 0.0:
+            per_yes = ic / iq
+        else:
+            pb = self.price_basis(slug, side)
+            per_yes = (pb if side == "YES" else 1.0 - pb) if pb > 0 else None
+        if per_yes is None:
+            return
+        per = per_yes if side == "YES" else round(1.0 - per_yes, 4)
+        per = min(max(per, 0.0), 1.0)
+        self._book_lot(slug, side, over, round(over * per, 4), ref="adopt")
+        self._over_since.pop(slug, None)
+        self._log(event="adopted", market=slug, side=side, qty=over,
+                  price=round(per, 4),
+                  note=("the engine's stock here counts as bond now" if force
+                        else "held beyond the ledger for five minutes with no "
+                             "bond fill pending: counted as bond"))
 
     # -- buying more ---------------------------------------------------------
 
@@ -1775,6 +1864,7 @@ class Bonds:
                 "lot_ts": self.lot_ts, "exch_max": self.exch_max,
                 "fill_book": self.fill_book,
                 "more_cap": self.more_cap, "moved_more_at": self.moved_more_at,
+                "engine_out": sorted(self.engine_out),
                 "dots": self.dots[-DOTS_KEEP:],
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
@@ -1824,6 +1914,9 @@ class Bonds:
         self.exch_max = {str(k): float(v) for k, v in (d.get("exch_max") or {}).items()}
         self.fill_book = {str(k): dict(v) for k, v in (d.get("fill_book") or {}).items()}
         self.more_cap = {str(k): dict(v) for k, v in (d.get("more_cap") or {}).items()}
+        self.engine_out = {str(x) for x in (d.get("engine_out") or [])}
+        for slug in self.engine_out:
+            self.fam.freeze_dyn.add(slug)
         for slug, lot in self.lots.items():
             if slug in self.more_cap:
                 continue

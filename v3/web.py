@@ -870,7 +870,7 @@ function bMore(r,b,sw){
  return '<div class="sub">'+h+'</div>';
 }
 function bSniper(r,b,sw){
- var hold=(r.hold_until&&r.hold_until>Date.now()/1000)?'<div class="sub">Engine held off here until '+when(r.hold_until)+' (our orders were cleared out of a take\'s way)</div>':'';
+ var hold='';
  var main=(r.calc&&r.calc.orders||[]).filter(function(o){return !o.decoy;});
  if(!main.length)return hold+'<div class="sub">Sniper: no resting order of ours here'+(sw.on?'':' (bonds switch off)')+'</div>';
  if(!r.front)return hold+'<div class="sub">Sniper: nothing in front of our order</div>';
@@ -897,10 +897,8 @@ function bLine(r){
  return '<div class="sub">'+line+'</div>';
 }
 function bFoot(r){
- var m=esc(r.market);var h='';
- if(r.uncounted>0.005)h+='<div class="muted">'+r.uncounted+' more '+r.bond+' here not counted as bond '+bField('bad-'+m,bKeep('bad-'+m)||r.uncounted,'5em')+' <button onclick="bAdopt(\''+m+'\')">Count in</button></div>';
- h+='<div><button class="off" onclick="if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')">Remove</button></div>';
- return h;
+ var m=esc(r.market);
+ return '<div><button class="off" onclick="if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')">Remove</button></div>';
 }
 function render(d){
  if(d.starting)return bootCard(d);
@@ -932,7 +930,8 @@ function render(d){
  out+='<div>'+bField('bbud',bKeep('bbud'),'7em')+' <button onclick="bBudget()">Set budget</button>'+(tax?'':' <button onclick="bOp(\'bonds_budget_tax\',\'-\')">Follow taxes owed</button>')+' <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
  out+='<details class="how"><summary>how this works</summary>'
   +'<div>A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO.</div>'
-  +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. Your own orders are never counted; the engine\'s and the bond\'s own orders in the way are pulled first and the engine is held off that market for ten minutes. A hand order in the way stops the take.</div>'
+  +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. A hand order of yours in the way stops the take.</div>'
+  +'<div>From your first purchase in a market until you hold nothing there, the engine is cleared out of it: its orders are pulled and it places nothing. Everything you hold on the bond side there counts as bond.</div>'
   +'<div>Held bonds get one resting order, as far back as it can sit keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under the price paid. The cost shown counts the purchase\'s commission in.</div>'
   +'<div>A second order buys more on the thin side, up to an amount you set per market (your first purchase there by default, reset when you no longer hold it), at the cheapest price that captures '+Math.round((b.more_share||0.3)*100)+'% of its side, never dearer than the price you first paid there. It moves when it no longer captures that; when no price at or under your first price can, it comes off.</div>'
   +'<div>A small order (25 or fewer) in front of it gets a decoy joining it. Sits two hours, moves over three times, reaches the touch or goes under cost: bought, joins the bond.</div>'
