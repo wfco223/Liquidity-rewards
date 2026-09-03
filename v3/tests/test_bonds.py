@@ -757,3 +757,77 @@ class TestTheBudgetFollowsTaxes(Base):
         b3 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
         b3.restore(self.b.to_dict())
         self.assertEqual((b3.budget_mode, b3.budget), ("fixed", 50.0))
+
+
+class TestEarnings(Base):
+    """Owner, 2026-09-03: "the bonds page should reflect the overall
+    earnings from the bonds which is the profit from sales and the
+    liquidity rewards payments ... it should try and differentiate the
+    liquidity payments from engine resting orders.\""""
+
+    def setUp(self):
+        super().setUp()
+        self.paid = {}
+        self.b.paid = lambda day, slug: self.paid.get((day, slug))
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+
+    def test_profit_on_a_sale_by_our_order_is_counted(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        ask = self.orders(AL, "SELL")[0]
+        self.r.exchange.live.pop(ask.id, None)          # the exchange filled it
+        self.r.fam.orders.pop(ask.id, None)
+        self.exch(AL, 0.0, 0.0)
+        self.r.fam.inventory.pop(AL, None)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        e = self.b.view(self.now + 60)["earned"]
+        self.assertAlmostEqual(e["sales"], 100 * (ask.price - 0.90), places=2)
+        self.assertAlmostEqual(e["sold_usd"], 100 * ask.price, places=2)
+        self.assertAlmostEqual(e["total"], e["sales"], places=2)
+        self.assertEqual(e["rewards"], 0.0)
+
+    def test_a_days_payment_splits_by_measured_share_with_the_engine(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)   # day 1: bond only
+        bond = self.orders(AL, "SELL")[0]
+        bond.live_est = 1.0
+        self.r.fam.orders["E1"] = FamilyOrder(
+            id="E1", market=AL, side="BUY", price=0.90, qty=50.0,
+            intent=BUY_LONG, placed_ts=self.now, purpose="earn", live_est=3.0)
+        t2 = self.now + 86400
+        self.b.cycle(t2, self.positions(), on=True)         # day 2: 1 of 4
+        d2 = Bonds._day(t2)
+        self.assertAlmostEqual(self.b.share_day[d2][AL][0] / self.b.share_day[d2][AL][1], 0.25)
+        self.assertEqual(self.b.view(t2)["earned"]["rewards"], 0.0)   # unpaid yet
+        self.paid[(d2, AL)] = 4.0
+        e = self.b.view(t2 + 60)["earned"]
+        self.assertAlmostEqual(e["rewards"], 1.0, places=2)
+        self.assertAlmostEqual(e["engine"], 3.0, places=2)
+        self.assertAlmostEqual(e["paid"], 4.0, places=2)
+        self.assertAlmostEqual(e["total"], 1.0, places=2)
+        row = self.b.view(t2 + 60)["rows"][0]
+        self.assertAlmostEqual(row["rewards"], 1.0, places=2)
+
+    def test_a_bond_alone_in_its_market_gets_the_whole_payment(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.paid[(Bonds._day(self.now), AL)] = 2.5
+        e = self.b.view(self.now + 60)["earned"]
+        self.assertAlmostEqual(e["rewards"], 2.5, places=2)
+        self.assertEqual(e["engine"], 0.0)
+
+    def test_old_days_fold_into_the_booked_total_and_persist(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        d1 = Bonds._day(self.now)
+        self.paid[(d1, AL)] = 2.0
+        later = self.now + 10 * 86400
+        self.b.cycle(later, self.positions(), on=True)
+        self.assertNotIn(d1, self.b.share_day)
+        self.assertAlmostEqual(self.b.rewards_booked, 2.0, places=2)
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(self.b.to_dict())                     # no paid map at all
+        v = b2.view(later)
+        self.assertAlmostEqual(v["earned"]["rewards"], 2.0, places=2)
+        self.assertAlmostEqual(v["rows"][0]["rewards"], 2.0, places=2)
