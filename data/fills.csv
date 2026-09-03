@@ -3963,3 +3963,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788460611.8,politics,ussewc-usse-ky-2026-11-03-rep,SELL,1,0.94,backfill,,3.43,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C91XZ307CMVY
 1788460611.8,politics,ewc-usgub-ca-2026-11-03-stehil,BUY,37.45,0.06,backfill,,6.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZG7EZ3MMVG
 1788460611.8,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,0.01,0.07,backfill,,12.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8SXK0772MVY
+1788461058.0,politics,usgubewc-usgub-al-2026-11-03-dem,BUY,2,0.11,backfill,,2.66,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C93795DTJMVF
+1788461992.2,politics,ewc-usp-2028-11-07-jdvan,BUY,20,0.21,manual,0,6.85,,21,24,0.376,0.21,0.23,-0.02,71,the owner's own order — the engine leaves it alone,C8ZS6ASNEMVP
+1788461993.9,cfb,aachc-cfb-wins-ou-2026-11-28-okl,BUY,0.5,0.69,backfill,,0.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C95144E4WMVG
+1788463732.5,cfb,aachc-cfb-wins-2026-11-28-okst-8pt5wins,SELL,1,0.17,sell,7.0093,0.6,,16,20,0.692,0.16,0.17,0.01,0,selling filled stock — it earns while it waits,C95JN3Z6PMVR
+1788463852.5,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,9.99,0.84,bond,0,0.02,0.99895,93,97,0.397,0.73,0.84,0.159,15.01,bond decoy: joined the 0.01 in front at 84c; move 0,C96410662MVY
+1788464212.5,politics,usgubewc-usgub-al-2026-11-03-dem,BUY,2,0.11,backfill,,2.66,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C93795DTJMVF
+1788464212.5,cfb,aachc-cfb-wins-2026-11-28-tx-10pt5wins,SELL,2.2,0.29,void,0,0,,33,38,0.141,0.29,0.3,0.06,0.8,voided: the exchange has no trade for order C95NF23ZWMVZ — the row of 09-03 18:5,C95NF23ZWMVZ
+1788464212.5,cfb,aachc-cfb-wins-ou-2026-11-28-okl,BUY,0.5,0.69,backfill,,0.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C95144E4WMVG
