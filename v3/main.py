@@ -2675,6 +2675,8 @@ class Monitor:
             market = market or "-"
         elif not market:
             return {"ok": False, "note": "no market given"}
+        elif op == "bonds_adopt":
+            r = self.bonds.adopt(market, value)
         elif op == "bonds_approve":
             r = self.bonds.approve(market, now)
         elif op == "bonds_ignore":
