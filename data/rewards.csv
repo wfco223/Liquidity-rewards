@@ -6662,6 +6662,7 @@ date,market,program_type,reward_usd,status
 2026-09-01,aachc-cfb-wins-2026-11-28-bayl-4pt5wins,liquidityProgram,0.03,PENDING
 2026-09-01,aachc-cfb-wins-2026-11-28-bayl-7pt5wins,liquidityProgram,0.1,PENDING
 2026-09-01,aachc-cfb-wins-2026-11-28-col-6pt5wins,liquidityProgram,0.05,PENDING
+2026-09-01,aachc-cfb-wins-2026-11-28-ga-8pt5wins,liquidityProgram,0.07,PENDING
 2026-09-01,aachc-cfb-wins-2026-11-28-hou-10pt5wins,liquidityProgram,0.18,PENDING
 2026-09-01,aachc-cfb-wins-2026-11-28-hou-6pt5wins,liquidityProgram,0.08,PENDING
 2026-09-01,aachc-cfb-wins-2026-11-28-ill-8pt5wins,liquidityProgram,0.01,PENDING
@@ -6689,6 +6690,7 @@ date,market,program_type,reward_usd,status
 2026-09-01,aachc-cfb-wins-2026-11-28-vtech-8pt5wins,liquidityProgram,0.04,PENDING
 2026-09-01,aachc-cfb-wins-2026-11-28-washst-4pt5wins,liquidityProgram,0.11,PENDING
 2026-09-01,aachc-cfb-wins-2026-11-28-wisc-6pt5wins,liquidityProgram,0.05,PENDING
+2026-09-01,aachc-cfb-wins-ou-2026-11-28-flst,liquidityProgram,0.01,PENDING
 2026-09-01,aachc-cfb-wins-ou-2026-11-28-ill,liquidityProgram,0.02,PENDING
 2026-09-01,enwc-usgubp-ri-2026-09-09-dem-greste,liquidityProgram,0.16,PENDING
 2026-09-01,enwc-usgubp-ri-2026-09-09-rep-elapel,liquidityProgram,0.3,PENDING
