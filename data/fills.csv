@@ -3479,3 +3479,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788439368.7,cfb,aachc-cfb-wins-2026-11-28-stan-5pt5wins,BUY,0.01,0.39,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C46KGNGRMFSQ
 1788439368.7,cfb,aachc-cfb-wins-2026-11-28-vtech-5pt5wins,SELL,1,0.75,hand,,20.6,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C3N5T9790FSN
 1788439368.7,cfb,aachc-cfb-wins-ou-2026-11-28-ohiost,BUY,0.01,0.35,hand,,39.26,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C36E54CQJFSK
+1788441122.5,cfb,aachc-cfb-wins-2026-11-28-okst-8pt5wins,SELL,0.5,0.2,manual,0,10.77,,13,18,0.458,0.14,0.2,-0.04,-0.5,the owner's own order — the engine leaves it alone,C8QD9FQKMMVZ
+1788442760.6,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,0.05,0.02,backfill,,1.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZVWPCG0MW0
+1788442802.5,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,1,0.02,earn,6.2195,1.44,0.001175,1,4,0.501,0.01,0.02,-0.0188,-1,joins the touch — the book has been quiet,C8ZVWPCG0MW0
+1788442982.5,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,0.05,0.02,backfill,,1.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZVWPCG0MW0
+1788442982.5,cfb,aachc-cfb-wins-2026-11-28-tx-10pt5wins,SELL,1.2,0.29,void,0,0,,33,38,0.158,0.29,0.3,0.06,1.8,voided: the exchange has no trade for order C8ZXKK7CYMW0 — the row of 09-03 12:1,C8ZXKK7CYMW0
