@@ -56,7 +56,8 @@ class Base(unittest.TestCase):
         self.pings = []
         self.b = Bonds(self.r.fam, self.r.exchange,
                        lambda s: self.odds.get(s), clock=lambda: self.r.now,
-                       alert=lambda t, m: self.pings.append((t, m)))
+                       alert=lambda t, m: self.pings.append((t, m)),
+                       sleep=lambda s: None)
         for s in (AL, TN, GA):
             self.seed(s, yes_book(self.r.now))
         self.seed(ALD, no_book(self.r.now))
@@ -462,16 +463,29 @@ class TestTheOwnersEntry(Base):
         def __init__(self, asks, now):
             self.asks, self.now = list(asks), now
             self.books = {}
+            self.trades = []
 
         def book(self, slug, fetched_at=None):
             return Book(bids=((0.90, 50.0), (0.50, 20000.0)),
                         asks=tuple(self.asks) + ((0.999, 20000.0),),
                         tick=0.01, fetched_at=fetched_at or self.now)
 
-        def post(self, *a, **k):
-            # the take fills: the touch level is gone from the book
+        def post(self, url, body, **k):
+            # the take fills: the touch level is gone from the book, and
+            # the exchange's trade record shows the fill
             self.asks.pop(0)
-            return {"id": "T%d" % (10 - len(self.asks))}
+            oid = "T%d" % (10 - len(self.asks))
+            self.fill(oid, body)
+            return {"id": oid}
+
+        def fill(self, oid, body):
+            self.trades.append({"id": "a" + oid, "trade": {"aggressorExecution": {
+                "order": {"id": oid, "intent": body["intent"]},
+                "lastShares": float(body["quantity"]),
+                "lastPx": float(body["price"]["value"])}}})
+
+        def recent_trades(self, limit=25):
+            return list(self.trades)
 
         def __getattr__(self, name):
             return lambda *a, **k: []
@@ -624,13 +638,15 @@ class TestOurOwnOrdersAreNotForSale(Base):
             [(0.95, 20.0), (0.96, 30.0), (0.97, 40.0), (0.98, 500.0)], self.now)
         mine = {0.95}
 
-        def post(*a, **k):
+        def post(url, body, **k):
             # a take fills against OTHERS: the first level not ours goes
             for i, (p, q) in enumerate(sweep.asks):
                 if p not in mine:
                     sweep.asks.pop(i)
                     break
-            return {"id": "T%d" % len(sweep.asks)}
+            oid = "T%d" % len(sweep.asks)
+            sweep.fill(oid, body)
+            return {"id": oid}
 
         sweep.post = post
         self.b.client = sweep
@@ -831,3 +847,137 @@ class TestEarnings(Base):
         v = b2.view(later)
         self.assertAlmostEqual(v["earned"]["rewards"], 2.0, places=2)
         self.assertAlmostEqual(v["rows"][0]["rewards"], 2.0, places=2)
+
+
+class TestYourBondsFirst(Base):
+    """Owner, 2026-09-03: "Take the markets I'm actually in and put them
+    at the top. Show me the calculations for how much it's earning and
+    any minnow / sniper info ... reserve a websocket for each of the
+    markets I'm in.\""""
+
+    def setUp(self):
+        super().setUp()
+        for s in (AL, TN, ALD):
+            self.b.approve(s, self.now)
+        self.b.set_budget(1000.0)
+
+    def test_the_markets_he_is_in_sort_first(self):
+        self.bond(TN, "YES", 100.0, 0.98)
+        rows = self.b.view(self.now, self.positions())["rows"]
+        self.assertEqual(rows[0]["market"], TN)
+        self.assertEqual({r["market"] for r in rows[1:]}, {AL, ALD})
+        self.assertEqual(self.b.held_markets(), [TN])
+        self.assertEqual(self.b.held_markets(), sorted(self.b.live_rows(self.now)))
+
+    def test_the_calculation_behind_the_estimate(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)     # rests the earning ask
+        row = self.b.live_rows(self.now)[AL]
+        c = row["calc"]
+        self.assertEqual(c["side"], "SELL")
+        self.assertAlmostEqual(c["side_pool"], c["pool_day"] / c["event_n"] / 2, places=4)
+        main = [o for o in c["orders"] if not o["decoy"]]
+        self.assertEqual(len(main), 1)
+        o = main[0]
+        self.assertEqual(o["price"], self.orders(AL, "SELL")[0].price)
+        self.assertAlmostEqual(o["est"], o["share"] * c["side_pool"] if o["qualifies"] else 0.0,
+                               places=2)
+        self.assertGreater(o["est"], 0.0)
+        self.assertIsNotNone(c["touch"])
+        self.assertGreaterEqual(c["touch"]["est"], o["est"] * 0.99)
+        self.assertNotIn(TN, self.b.live_rows(self.now))       # not held: not on the line
+        self.assertIsNone(self.b.view(self.now)["rows"][1]["calc"])
+
+    def test_a_big_order_in_front_shows_but_is_no_minnow(self):
+        self.r.cache.put(AL, minnow_book(self.now, minnows=0.0, ask=0.99))
+        self.bond(AL, "YES", 1500.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        main = self.orders(AL, "SELL", decoy=False)[0]
+        px = round(main.price - 0.01, 2)
+        merged = {}
+        for p, q in [(o.price, o.qty) for o in self.orders(AL, "SELL")] + [
+                (px, 300.0), (0.99, 20000.0)]:
+            merged[round(p, 4)] = merged.get(round(p, 4), 0.0) + q
+        self.r.cache.put(AL, Book(
+            bids=((0.88, 50.0), (0.50, 20000.0)),
+            asks=tuple(sorted((p, q) for p, q in merged.items() if q > 0)),
+            tick=0.01, fetched_at=self.now + 60))
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        row = self.b.view(self.now + 60, self.positions())["rows"][0]
+        self.assertEqual(row["front"], {"price": px, "qty": 300.0})
+        self.assertIsNone(row["minnow"])
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        self.assertEqual(self.b.view(self.now + 60)["minnow_max"], MINNOW_MAX)
+
+
+class TestTheExchangeIsTheTruth(Base):
+    """Owner, 2026-09-03: "It is saying that I hold 10 shares that I do
+    not hold. That should not be possible. The api is the source of
+    truth and nothing should be making up holdings or transactions."
+    The Hawaii case: two Enter taps each booked 5 NO shares the
+    exchange never filled."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+
+    def test_a_take_the_exchange_never_filled_books_nothing(self):
+        self.r.exchange.recent_trades = lambda limit=25: []    # no fill on record
+        r = self.b.enter(AL, 0.99, self.now, self.positions())
+        self.assertFalse(r["ok"])
+        self.assertEqual(self.b.lots, {})
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertEqual(self.b.budget, 1000.0)             # nothing spent
+        ev = [e for e in self.b.log if e["event"] == "take_unfilled"]
+        self.assertEqual(len(ev), 1)
+        self.assertIn("no fill", ev[0]["note"])
+        self.assertEqual(self.r.exchange.live, {})          # it was pulled, not left resting
+
+    def test_a_take_books_exactly_what_the_record_shows(self):
+        # the record shows 7 of the 10 asked, at a better price
+        real = self.r.exchange.post
+
+        def post(url, body, **k):
+            out = real(url, body, **k)
+            t = self.r.exchange.trades[-1]["trade"]["aggressorExecution"]
+            t["lastShares"] = 7.0
+            t["lastPx"] = 0.985
+            return out
+        self.r.exchange.post = post
+        self.r.cache.put(AL, yes_book(self.now, ask=0.99, ask_q=10.0))
+        r = self.b.enter(AL, 0.99, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 7.0)
+        self.assertAlmostEqual(self.b.cost_basis(AL, "YES"), 0.985, places=4)
+        self.assertAlmostEqual(self.b.budget, 1000 - 7 * 0.985, places=2)
+
+    def test_the_ledger_is_trimmed_to_the_position_feed(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)     # the exchange showed 100
+        self.exch(AL, 60.0, 0.98)                              # 40 sold by hand
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)        # the feed gets a grace
+        self.b.cycle(self.now + 600, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 60.0)         # then it is the truth
+        self.assertEqual(self.b.cash, 0.0)                     # a hand sale: not reinvested
+        self.assertEqual(self.b.budget, 1000.0)                # and nothing refunded
+        ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"]
+        self.assertEqual((ev[0]["qty"], ev[0]["refund"]), (40.0, 0.0))
+
+    def test_shares_the_exchange_never_showed_go_back_to_the_money(self):
+        # the Hawaii state: a lot booked, paid for, never on the exchange
+        self.b._book_lot(AL, "YES", 10.0, 9.3)
+        self.b._pay(9.3)
+        self.assertEqual(self.b.budget, 1000 - 9.3)
+        self.b.cycle(self.now + 600, {GA: (5.0, 3.0)}, on=True)   # a live feed, AL absent
+        self.assertEqual(self.b.lots, {})
+        self.assertAlmostEqual(self.b.budget, 1000.0, places=2)
+        self.assertEqual(self.b.spent, 0.0)
+        ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"]
+        self.assertAlmostEqual(ev[0]["refund"], 9.3, places=2)
+
+    def test_an_empty_feed_is_not_believed(self):
+        self.b._book_lot(AL, "YES", 10.0, 9.3)
+        self.b.cycle(self.now + 600, {}, on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 10.0)

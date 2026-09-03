@@ -1054,6 +1054,13 @@ class Monitor:
                     seen.add(s)
                     out.append(s)
 
+        # the bonds he is in hold seats before everything (owner,
+        # 2026-09-03: "reserve a websocket for each of the markets I'm
+        # in") — the bonds page's live line reads their books from the
+        # cache this stream feeds
+        bonds = getattr(self, "bonds", None)
+        if bonds is not None:
+            take(sorted(bonds.held_markets()), room=SUB_CAP)
         for key in ("politics", "cfb", "nfl", "nba"):
             fam = self.families.get(key)
             if fam is not None:
@@ -1849,6 +1856,12 @@ class Monitor:
                 "position": ({"qty": round(inv.get("qty", 0), 2),
                               "cost": round(inv.get("cost", 0), 2)}
                              if inv else None)}
+
+    def bonds_live(self) -> dict:
+        """One tick of the bonds page's live line: the rows of the
+        markets he is in, on the books the stream has in the cache."""
+        return self.bonds.live_rows(time.time(),
+                                    getattr(self, "_bond_positions", None))
 
     def _kick_tracker(self) -> None:
         """Ask 1.0 (same container) to refresh rewards.csv on GitHub so
@@ -3701,6 +3714,7 @@ class Monitor:
         try:      # the bonds, after the families: count sales, keep every
                   # held bond earning, reinvest — only with its switch on
             on_b = self.master.on and self.switches["bonds"].on and self._floor_ok
+            self._bond_positions = dict(positions) if positions else {}
             self.bonds.cycle(now, positions, on_b)
         except Exception as e:  # noqa: BLE001 — never breaks the cycle
             self._note(f"bonds: {type(e).__name__}: {e}")

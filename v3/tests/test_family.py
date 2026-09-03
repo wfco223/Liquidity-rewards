@@ -28,6 +28,7 @@ class FakeClient:
         self.prog_raw: dict[str, dict] = {}
         self.events: list[dict] = []
         self.programs_fail = False
+        self.trades: list[dict] = []     # the exchange's own trade record
 
     # -- desk side ----------------------------------------------------------
     def post(self, url, body, path=None, **kw):
@@ -40,6 +41,13 @@ class FakeClient:
                 "price": float(body["price"]["value"]),
                 "size": float(body["quantity"]), "intent": body["intent"],
             }
+            if body.get("participateDontInitiate") is False:
+                # a taker order fills: the trade record shows it
+                self.trades.append({"id": f"a{oid}", "trade": {
+                    "aggressorExecution": {
+                        "order": {"id": oid, "intent": body["intent"]},
+                        "lastShares": float(body["quantity"]),
+                        "lastPx": float(body["price"]["value"])}}})
             return {"order": {"id": oid}}
         if "/cancel" in url:
             self.live.pop(url.rstrip("/cancel").rsplit("/", 1)[-1], None)
@@ -48,6 +56,9 @@ class FakeClient:
 
     def open_orders(self):
         return [dict(o) for o in self.live.values()]
+
+    def recent_trades(self, limit=25):
+        return list(self.trades)[-limit:]
 
     # -- read side ----------------------------------------------------------
     def book(self, slug, fetched_at=None):

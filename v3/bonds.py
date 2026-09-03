@@ -82,6 +82,8 @@ DROPPED_KEEP = 30
 ENTER_MAX_LEVELS = 20       # the owner's entry sweeps at most this many levels
 LADDER_SHOW = 8             # entry-side levels the page shows to enter at
 SHARE_KEEP_DAYS = 7         # a day's reward split is held this long, then booked
+FILL_WAIT_S = 8.0           # how long a take's fill is awaited in the trade record
+TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed to show it
 
 
 def side_for(odds: float | None) -> str | None:
@@ -106,11 +108,12 @@ def scan_due(now: float, last_day: str, hour: int = SCAN_HOUR_UTC) -> str | None
 
 class Bonds:
     def __init__(self, fam, client, fair, clock=None, alert=None, tax_owed=None,
-                 paid=None):
+                 paid=None, sleep=None):
         self.fam = fam                  # the politics family
         self.client = client
         self.fair = fair                # slug -> Silver's YES odds, or None
         self._clock = clock or time.time
+        self._sleep = sleep or time.sleep
         self.alert = alert or (lambda title, msg: None)
         self.approved: dict[str, dict] = {}   # slug -> {added, odds, side}
         self.proposed: dict[str, dict] = {}   # slug -> {odds, side, since}
@@ -142,6 +145,13 @@ class Bonds:
         self.engine_booked: float = 0.0       # the engine's share, same days
         self.paid_booked: float = 0.0
         self.rewards_by_market: dict[str, float] = {}
+        # the exchange is the source of truth for holdings (owner,
+        # 2026-09-03: "nothing should be making up holdings or
+        # transactions"): a take books only what the trade record shows
+        # filled under its order id, and the ledger is trimmed to the
+        # position feed whenever the feed shows less
+        self.lot_ts: dict[str, float] = {}     # slug -> last booking time
+        self.exch_max: dict[str, float] = {}   # slug -> most the exchange ever showed
         self.unpinged: float = 0.0            # bought since the last ping
         self.moved_at: dict[str, float] = {}
         self.slot: dict[str, dict] = {}
@@ -245,6 +255,7 @@ class Bonds:
                              if abs(float(l.get("qty") or 0.0)) > 0.005}
 
     def _book_lot(self, slug: str, side: str, qty: float, usd: float) -> None:
+        self.lot_ts[slug] = self._clock()
         lot = self.lots.setdefault(slug, {"qty": 0.0, "cost": 0.0})
         lot["qty"] = round(lot["qty"] + (qty if side == "YES" else -qty), 4)
         lot["cost"] = round(lot["cost"] + usd, 4)
@@ -308,6 +319,44 @@ class Bonds:
                        f"${self.budget:,.2f} of the deploy budget left, "
                        f"${self.cash:,.2f} of proceeds waiting")
             self.unpinged = 0.0
+
+    def _trim_to_exchange(self, positions: dict | None, now: float) -> None:
+        """The position feed is the truth for holdings: a lot the feed
+        shows less of is cut to what it shows. Shares the exchange NEVER
+        showed were never bought, so their cost goes back to the money;
+        shares it once showed and now does not were sold by hand, and
+        that money is his, not the bond ledger's. A fresh lot gets
+        TRIM_GRACE_S for the feed to catch up, and an empty feed (no
+        positions at all while the engine holds stock) is not believed."""
+        if not positions:
+            return
+        for slug in list(self.lots):
+            lot = self.lots.get(slug) or {}
+            q = float(lot.get("qty") or 0.0)
+            side = "YES" if q >= 0 else "NO"
+            ledger = abs(q)
+            exch = self.exchange_held(slug, side, positions)
+            before = self.exch_max.get(slug, 0.0)
+            self.exch_max[slug] = max(before, exch)
+            if ledger <= 0.005 or exch + 0.005 >= ledger:
+                continue
+            if now - self.lot_ts.get(slug, 0.0) < TRIM_GRACE_S:
+                continue
+            removed = round(ledger - exch, 4)
+            never_seen = round(max(ledger - max(before, exch), 0.0), 4)
+            cost = self._unbook_lot(slug, side, removed)
+            refund = round(cost * min(never_seen / removed, 1.0), 4) if removed > 0 else 0.0
+            if refund > 0:
+                self.spent = round(max(self.spent - refund, 0.0), 4)
+                if self.budget_mode != "tax":
+                    self.budget = round(self.budget + refund, 4)
+            self._follow_tax()
+            self._log(event="trimmed_to_exchange", market=slug, side=side,
+                      qty=removed, cost=round(cost, 2), refund=round(refund, 2),
+                      note=f"the exchange shows {exch:g}, the ledger had "
+                           f"{ledger:g}; {never_seen:g} of those it never "
+                           f"showed at all")
+        self._mark_engine()
 
     # ------------------------------------------------------------ earnings
 
@@ -553,6 +602,7 @@ class Bonds:
                               proceeds=round(proceeds, 2),
                               gain=round(proceeds - cost, 2),
                               cash=round(self.cash, 2))
+        self._trim_to_exchange(positions, now)
         if on:
             for slug in sorted(self.approved):
                 side = self.approved[slug]["side"]
@@ -722,9 +772,9 @@ class Bonds:
 
     # -- the sniper ----------------------------------------------------------
 
-    def _minnow_in_front(self, slug: str, side: str, book):
-        """The nearest small order sitting between the touch and our
-        main order (in the way of its rewards): (price, size) or None."""
+    def _front(self, slug: str, side: str, book):
+        """The nearest order of OTHERS sitting between the touch and our
+        main order, any size: (price, size) or None."""
         bs, _ = self.earn(side)
         main = self._orders(slug, bs, decoy=False)
         if not main:
@@ -735,8 +785,65 @@ class Bonds:
             ahead = (p < cur - tick / 2) if side == "YES" else (p > cur + tick / 2)
             if not ahead:
                 break
-            return (p, q_others) if q_others <= MINNOW_MAX else None
+            return (p, q_others)
         return None
+
+    def _minnow_in_front(self, slug: str, side: str, book):
+        """The nearest small order sitting between the touch and our
+        main order (in the way of its rewards): (price, size) or None."""
+        f = self._front(slug, side, book)
+        return f if (f is not None and f[1] <= MINNOW_MAX) else None
+
+    def held_markets(self) -> list[str]:
+        """Where the ledger holds bond shares — the markets he is in."""
+        return sorted(s for s, l in self.lots.items()
+                      if abs(float(l.get("qty") or 0.0)) > 0.005)
+
+    def _calc(self, slug: str, side: str, book, held: float) -> dict | None:
+        """The earning math on this book, shown on the page (owner,
+        2026-09-03: "show me the calculations for how much it's
+        earning"): an order's share of its side's score x the side's
+        daily pool, which is the program pool ÷ markets in the event ÷ 2
+        sides — the exchange's own arithmetic."""
+        from .scoring import estimate_join
+        prog = self.fam.terms.get(slug)
+        if book is None or prog is None:
+            return None
+        ebs, _ = self.earn(side)
+        pool = self.fam._side_pool(slug, prog)
+        n = (self.fam.universe.get(slug) or {}).get("event_n")
+        levels = [(p, q) for p, q in book.side(ebs) if q > 1e-9]
+        tick = book.tick or 0.01
+        orders = []
+        for o in self._orders(slug, ebs):
+            lv = [(p, q - o.qty if abs(p - o.price) < tick / 2 else q)
+                  for p, q in levels]
+            lv = [(p, q) for p, q in lv if q > 1e-9]
+            j = estimate_join(ebs, lv, tick, float(prog.df), float(prog.target),
+                              o.price, o.qty)
+            ok = bool(j.qualifies and j.in_window)
+            orders.append({"price": o.price, "qty": o.qty,
+                           "share": round(j.share, 4), "qualifies": ok,
+                           "ticks": int(j.ticks),
+                           "est": round(j.share * pool, 4) if (ok and pool) else 0.0,
+                           "decoy": str(o.why or "").startswith("bond decoy")})
+        touch = None
+        if levels:
+            mine = {round(o.price, 4): o.qty for o in self._orders(slug, ebs)}
+            lv = [(p, q - mine.get(round(p, 4), 0.0)) for p, q in levels]
+            lv = [(p, q) for p, q in lv if q > 1e-9]
+            tp = levels[0][0]
+            j = estimate_join(ebs, lv, tick, float(prog.df), float(prog.target),
+                              tp, max(held, 1.0))
+            ok = bool(j.qualifies and j.in_window)
+            touch = {"price": tp, "share": round(j.share, 4), "qualifies": ok,
+                     "est": round(j.share * pool, 4) if (ok and pool) else 0.0}
+        return {"side": ebs, "pool_day": round(float(prog.daily_pool or 0.0), 2),
+                "event_n": n,
+                "side_pool": (round(pool, 4) if pool is not None else None),
+                "target": float(prog.target), "df": float(prog.df),
+                "side_size": round(sum(q for _, q in levels), 1),
+                "orders": orders, "touch": touch}
 
     def _work_minnows(self, slug: str, side: str, positions: dict,
                       now: float) -> dict | None:
@@ -847,9 +954,21 @@ class Bonds:
         if not (r.ok and r.order_id):
             self._log(event="snap_refused", market=slug, note=r.note[:120])
             return None
+        # the exchange's trade record says what filled, at what price;
+        # the ledger books THAT and nothing else (owner, 2026-09-03)
+        filled, fill_px, note = self._filled(r.order_id, qty, (r.price or px), slug)
+        if filled < 0.01:
+            self._log(event="take_unfilled", market=slug, side=side, price=px,
+                      qty=qty, order_id=r.order_id,
+                      note=f"the exchange shows no fill for this order"
+                           f"{'; ' + note if note else ''}")
+            return None
+        qty = filled
+        px = fill_px
+        cost = px if side == "YES" else round(1.0 - px, 4)
         # on the book as ours so the fill is journaled as a bond purchase
         self.fam.orders[r.order_id] = FamilyOrder(
-            id=r.order_id, market=slug, side=bs, price=(r.price or px),
+            id=r.order_id, market=slug, side=bs, price=px,
             qty=qty, intent=(r.intent or intent), placed_ts=now, purpose="bond",
             why=f"bond: took {qty:g} {side} at {px * 100:g}c — it was in the "
                 f"way of our resting order")
@@ -858,13 +977,83 @@ class Bonds:
         self._pay(usd)
         self._log(event="snapped", market=slug, side=side, price=px, qty=qty,
                   cost=round(usd, 2), cash=round(self.cash, 2),
-                  budget=round(self.budget, 2))
+                  budget=round(self.budget, 2), order_id=r.order_id,
+                  **({"note": note} if note else {}))
         self._ping_maybe(usd)
         # the decoy has done its job
         self._pull_decoys(slug, side)
         self.dance.pop(slug, None)
         return {"market": slug, "bond": side, "side": bs, "price": px,
                 "qty": qty, "taken": True, "usd": round(usd, 2)}
+
+    @staticmethod
+    def _px_of(*cands) -> float | None:
+        for c in cands:
+            if isinstance(c, dict):
+                c = c.get("value")
+            if c in (None, ""):
+                continue
+            try:
+                return float(c)
+            except (TypeError, ValueError):
+                continue
+        return None
+
+    def _filled(self, order_id: str, want: float, posted_px: float,
+                slug: str) -> tuple[float, float, str]:
+        """What the exchange's trade record shows filled under this
+        order id: (shares, average price, note). Polled for FILL_WAIT_S
+        because the feed lags a placement by a few seconds. An order
+        that shows resting instead of filled is cancelled — a take was
+        never meant to rest. Nothing is assumed."""
+        seen: set = set()
+        shares = usd = 0.0
+        note = ""
+        for attempt in range(int(FILL_WAIT_S) + 1):
+            if attempt:
+                self._sleep(1.0)
+            try:
+                for a in self.client.recent_trades(limit=50):
+                    aid = str(a.get("id") or "")
+                    t = a.get("trade") or {}
+                    for exk in ("passiveExecution", "aggressorExecution"):
+                        ex = t.get(exk) or {}
+                        o = ex.get("order") or {}
+                        if str(o.get("id") or "") != order_id:
+                            continue
+                        key = (aid, exk)
+                        if key in seen:
+                            continue
+                        seen.add(key)
+                        sh = self._px_of(ex.get("lastShares"), ex.get("shares"),
+                                         ex.get("quantity")) or 0.0
+                        px = self._px_of(ex.get("lastPx"), ex.get("lastPrice"),
+                                         ex.get("price"), t.get("lastPx"),
+                                         t.get("price"), o.get("price"))
+                        if px is None:
+                            px = posted_px
+                            note = "price taken from the order (the record gave none)"
+                        if sh > 0:
+                            shares = round(shares + sh, 4)
+                            usd = round(usd + sh * px, 6)
+            except Exception as e:  # noqa: BLE001 — the record is the truth; keep asking
+                note = f"trade record: {str(e)[:80]}"
+            if shares + 1e-9 >= want:
+                break
+        if shares + 1e-9 < want:
+            # not (fully) filled: if it is resting, pull it — a take
+            # must not sit on the book as a bid nobody asked for
+            try:
+                for o in self.client.open_orders():
+                    if str(o.get("id") or "") == order_id:
+                        r = self.fam.desk.cancel(order_id, slug, initiator="owner")
+                        note = (f"{o.get('size')} rested instead of filling — "
+                                f"cancelled ({'ok' if r.ok else r.note[:60]})")
+                        break
+            except Exception as e:  # noqa: BLE001
+                note = f"open orders: {str(e)[:80]}"
+        avg = round(usd / shares, 4) if shares > 0 else posted_px
+        return shares, avg, note
 
     def _take_price(self, side: str, book, slug: str) -> tuple[float | None, float, float]:
         """(YES price to take, bond cost per dollar, size OTHERS show) for
@@ -955,68 +1144,91 @@ class Bonds:
 
     # ------------------------------------------------------------ the page
 
+    def _row(self, slug: str, meta: dict, now: float,
+             positions: dict | None) -> dict:
+        side = meta["side"]
+        book = self.fam.cache.any_age(slug)
+        bid = book.bids[0][0] if book is not None and book.bids else None
+        ask = book.asks[0][0] if book is not None and book.asks else None
+        px, cost, size = (self._take_price(side, book, slug) if book is not None
+                          else (None, 0.0, 0.0))
+        held = self.held(slug, side)
+        exch = self.exchange_held(slug, side, positions)
+        days = slug_days_out(slug, now)
+        ytr = ((1.0 - cost) / cost) if cost else None
+        ann = (ytr * 365.0 / max(days, 1)) if (ytr is not None and days) else None
+        prog = self.fam.terms.get(slug)
+        ebs, _ = self.earn(side)
+        earn = None
+        if book is not None and prog is not None and prog.is_live():
+            p = self._probe(slug, book, prog, ebs, qty=max(held, 1.0))
+            if p is not None:
+                earn = {"est_day": round(p.est_day, 4),
+                        "share": round(p.share, 4),
+                        "qualifies": bool(p.qualifies), "note": p.note}
+        front = self._front(slug, side, book) if book is not None else None
+        minnow = front if (front is not None and front[1] <= MINNOW_MAX) else None
+        ladder = []
+        if book is not None:
+            cum_q = cum_usd = 0.0
+            far = "SELL" if side == "YES" else "BUY"
+            for p, q in self._others(slug, far, book)[:LADDER_SHOW]:
+                c = p if side == "YES" else round(1.0 - p, 4)
+                cum_q += q
+                cum_usd += q * c
+                ladder.append({"px": p, "cost": round(c, 4), "qty": round(q, 1),
+                               "cum_qty": round(cum_q, 1),
+                               "cum_usd": round(cum_usd, 2)})
+        return {
+            "ladder": ladder,
+            "market": slug, "bond": side, "odds": meta.get("odds"),
+            "bid": bid, "ask": ask,
+            "cost": (round(cost, 4) if cost else None),
+            "size": round(size, 1),
+            "days": days,
+            "yield": (round(ytr, 4) if ytr is not None else None),
+            "annual": (round(ann, 4) if ann is not None else None),
+            "qty": round(held, 2),
+            "cost_px": self.cost_basis(slug, side),
+            "uncounted": round(max(exch - held, 0.0), 2),
+            "rewards": round(self._market_rewards(slug), 2),
+            "earn": earn,
+            "earn_order": ([{"price": o.price, "qty": o.qty,
+                             "est": round(o.live_est or 0.0, 4)}
+                            for o in self._orders(slug, ebs, decoy=False)]
+                           or None),
+            "decoy": ([{"price": o.price, "qty": o.qty}
+                       for o in self._orders(slug, ebs, decoy=True)] or None),
+            "minnow": ({"price": minnow[0], "qty": round(minnow[1], 1)}
+                       if minnow else None),
+            "front": ({"price": front[0], "qty": round(front[1], 1)}
+                      if front else None),
+            "calc": (self._calc(slug, side, book, held)
+                     if (held > 0.005 or self._orders(slug)) else None),
+            "dance": self.dance.get(slug),
+            "stale": (book is None or now - book.fetched_at > 600.0),
+            "slot": self.slot.get(slug),
+        }
+
+    def live_rows(self, now: float, positions: dict | None = None) -> dict:
+        """The live line's payload: the rows of the markets he is in
+        (bond shares held, or a bond order resting), keyed by market.
+        Books come from the cache the exchange's stream feeds."""
+        out = {}
+        for slug, meta in list(self.approved.items()):
+            if self.held(slug, meta["side"]) > 0.005 or self._orders(slug):
+                out[slug] = self._row(slug, meta, now, positions)
+        return out
+
     def view(self, now: float, positions: dict | None = None) -> dict:
-        rows = []
-        for slug, meta in self.approved.items():
-            side = meta["side"]
-            book = self.fam.cache.any_age(slug)
-            bid = book.bids[0][0] if book is not None and book.bids else None
-            ask = book.asks[0][0] if book is not None and book.asks else None
-            px, cost, size = (self._take_price(side, book, slug) if book is not None
-                              else (None, 0.0, 0.0))
-            held = self.held(slug, side)
-            exch = self.exchange_held(slug, side, positions)
-            days = slug_days_out(slug, now)
-            ytr = ((1.0 - cost) / cost) if cost else None
-            ann = (ytr * 365.0 / max(days, 1)) if (ytr is not None and days) else None
-            prog = self.fam.terms.get(slug)
-            ebs, _ = self.earn(side)
-            earn = None
-            if book is not None and prog is not None and prog.is_live():
-                p = self._probe(slug, book, prog, ebs, qty=max(held, 1.0))
-                if p is not None:
-                    earn = {"est_day": round(p.est_day, 4),
-                            "share": round(p.share, 4),
-                            "qualifies": bool(p.qualifies), "note": p.note}
-            minnow = self._minnow_in_front(slug, side, book) if book is not None else None
-            ladder = []
-            if book is not None:
-                cum_q = cum_usd = 0.0
-                far = "SELL" if side == "YES" else "BUY"
-                for p, q in self._others(slug, far, book)[:LADDER_SHOW]:
-                    c = p if side == "YES" else round(1.0 - p, 4)
-                    cum_q += q
-                    cum_usd += q * c
-                    ladder.append({"px": p, "cost": round(c, 4), "qty": round(q, 1),
-                                   "cum_qty": round(cum_q, 1),
-                                   "cum_usd": round(cum_usd, 2)})
-            rows.append({
-                "ladder": ladder,
-                "market": slug, "bond": side, "odds": meta.get("odds"),
-                "bid": bid, "ask": ask,
-                "cost": (round(cost, 4) if cost else None),
-                "size": round(size, 1),
-                "days": days,
-                "yield": (round(ytr, 4) if ytr is not None else None),
-                "annual": (round(ann, 4) if ann is not None else None),
-                "qty": round(held, 2),
-                "cost_px": self.cost_basis(slug, side),
-                "uncounted": round(max(exch - held, 0.0), 2),
-                "rewards": round(self._market_rewards(slug), 2),
-                "earn": earn,
-                "earn_order": ([{"price": o.price, "qty": o.qty,
-                                 "est": round(o.live_est or 0.0, 4)}
-                                for o in self._orders(slug, ebs, decoy=False)]
-                               or None),
-                "decoy": ([{"price": o.price, "qty": o.qty}
-                           for o in self._orders(slug, ebs, decoy=True)] or None),
-                "minnow": ({"price": minnow[0], "qty": round(minnow[1], 1)}
-                           if minnow else None),
-                "dance": self.dance.get(slug),
-                "stale": (book is None or now - book.fetched_at > 600.0),
-                "slot": self.slot.get(slug),
-            })
-        rows.sort(key=lambda r: (r["cost"] is None, r["cost"] or 1.0))
+        rows = [self._row(slug, meta, now, positions)
+                for slug, meta in list(self.approved.items())]
+        # the markets he is in first, largest at cost first; then the
+        # rest cheapest per dollar (owner, 2026-09-03: "take the markets
+        # I'm actually in and put them at the top")
+        rows.sort(key=lambda r: (0 if r["qty"] > 0.005 else 1,
+                                 -(r["qty"] * (r["cost_px"] or 0.0)),
+                                 r["cost"] is None, r["cost"] or 1.0))
         proposed = [{"market": s, "odds": m.get("odds"), "bond": m.get("side"),
                      "since": m.get("since")}
                     for s, m in sorted(self.proposed.items(),
@@ -1039,6 +1251,7 @@ class Bonds:
                 "held_cost": held_cost,
                 "high": HIGH_ODDS, "low": LOW_ODDS, "price_cap": PRICE_CAP,
                 "keep": KEEP_FRACTION,
+                "dance_wait_s": DANCE_WAIT_S, "minnow_max": MINNOW_MAX,
                 "scan_day": self.scan_day, "scan_hour_utc": SCAN_HOUR_UTC,
                 "log": self.log[-12:]}
 
@@ -1058,6 +1271,7 @@ class Bonds:
                 "engine_booked": round(self.engine_booked, 4),
                 "paid_booked": round(self.paid_booked, 4),
                 "rewards_by_market": self.rewards_by_market,
+                "lot_ts": self.lot_ts, "exch_max": self.exch_max,
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
                 "exch_seen": getattr(self, "_exch_seen", {}),
@@ -1088,6 +1302,8 @@ class Bonds:
         self.paid_booked = float(d.get("paid_booked") or 0.0)
         self.rewards_by_market = {str(k): float(v) for k, v
                                   in (d.get("rewards_by_market") or {}).items()}
+        self.lot_ts = {str(k): float(v) for k, v in (d.get("lot_ts") or {}).items()}
+        self.exch_max = {str(k): float(v) for k, v in (d.get("exch_max") or {}).items()}
         self.scan_day = str(d.get("scan_day") or "")
         self._earn_seen = {str(k): float(v) for k, v in (d.get("earn_seen") or {}).items()}
         self._earn_px = {str(k): float(v) for k, v in (d.get("earn_px") or {}).items()}
