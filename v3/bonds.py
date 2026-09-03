@@ -197,6 +197,22 @@ class Bonds:
     def _snap_down(px: float, tick: float) -> float:
         return round(math.floor(px / tick + 1e-9) * tick, 4)
 
+    def _own_at(self, slug: str, book_side: str, px: float) -> float:
+        """Shares of OURS resting at a level — engine, hand and bond
+        alike. We cannot buy our own orders (owner, 2026-09-02)."""
+        return sum(o.qty for o in list(self.fam.orders.values())
+                   if o.market == slug and o.side == book_side
+                   and abs(o.price - px) < 1e-9)
+
+    def _others(self, slug: str, book_side: str, book) -> list:
+        """The far side's levels net of our own orders, best first."""
+        out = []
+        for p, q in book.side(book_side):
+            avail = q - self._own_at(slug, book_side, p)
+            if avail > 1e-9:
+                out.append((p, avail))
+        return out
+
     def _mark_engine(self) -> None:
         """The engine keeps quoting bond markets; it just never rests its
         own exits on the BOND shares (and never touches a bond order)."""
@@ -587,14 +603,10 @@ class Bonds:
             return None
         cur = main[0].price
         tick = book.tick or 0.01
-        mine = {round(o.price, 4): o.qty for o in self._orders(slug, bs)}
-        for p, q in book.side(bs):
+        for p, q_others in self._others(slug, bs, book):
             ahead = (p < cur - tick / 2) if side == "YES" else (p > cur + tick / 2)
             if not ahead:
                 break
-            q_others = q - mine.get(round(p, 4), 0.0)
-            if q_others <= 1e-9:
-                continue
             return (p, q_others) if q_others <= MINNOW_MAX else None
         return None
 
@@ -726,18 +738,15 @@ class Bonds:
         return {"market": slug, "bond": side, "side": bs, "price": px,
                 "qty": qty, "taken": True, "usd": round(usd, 2)}
 
-    def _take_price(self, side: str, book) -> tuple[float | None, float, float]:
-        """(YES price to take, bond cost per dollar, size showing) for
-        opening a bond of this side at the touch."""
-        if side == "YES":
-            if not book.asks:
-                return None, 0.0, 0.0
-            a, q = book.asks[0]
-            return a, a, q
-        if not book.bids:
+    def _take_price(self, side: str, book, slug: str) -> tuple[float | None, float, float]:
+        """(YES price to take, bond cost per dollar, size OTHERS show) for
+        opening a bond of this side at the best level that is not ours."""
+        far = "SELL" if side == "YES" else "BUY"
+        lv = self._others(slug, far, book)
+        if not lv:
             return None, 0.0, 0.0
-        b, q = book.bids[0]
-        return b, round(1.0 - b, 4), q
+        p, q = lv[0]
+        return p, (p if side == "YES" else round(1.0 - p, 4)), q
 
     def _probe(self, slug: str, book, prog, book_side: str, qty: float | None = None):
         from . import survey as sv
@@ -785,7 +794,7 @@ class Bonds:
                           note=f"could not read the book: {str(e)[:80]}")
                 break
             self.fam.cache.put(slug, book)
-            px, cost, size = self._take_price(side, book)
+            px, cost, size = self._take_price(side, book, slug)
             if px is None or size < 1.0:
                 break
             past = ((side == "YES" and px > limit_px + 1e-9)
@@ -825,7 +834,7 @@ class Bonds:
             book = self.fam.cache.any_age(slug)
             bid = book.bids[0][0] if book is not None and book.bids else None
             ask = book.asks[0][0] if book is not None and book.asks else None
-            px, cost, size = (self._take_price(side, book) if book is not None
+            px, cost, size = (self._take_price(side, book, slug) if book is not None
                               else (None, 0.0, 0.0))
             held = self.held(slug, side)
             exch = self.exchange_held(slug, side, positions)
@@ -845,8 +854,8 @@ class Bonds:
             ladder = []
             if book is not None:
                 cum_q = cum_usd = 0.0
-                lv = list(book.asks if side == "YES" else book.bids)[:LADDER_SHOW]
-                for p, q in lv:
+                far = "SELL" if side == "YES" else "BUY"
+                for p, q in self._others(slug, far, book)[:LADDER_SHOW]:
                     c = p if side == "YES" else round(1.0 - p, 4)
                     cum_q += q
                     cum_usd += q * c
