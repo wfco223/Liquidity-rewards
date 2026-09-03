@@ -1075,6 +1075,9 @@ class Monitor:
         bonds = getattr(self, "bonds", None)
         if bonds is not None:
             take(sorted(bonds.held_markets()), room=SUB_CAP)
+            # and every listed bond market: the bonds page reads their
+            # books (owner, 2026-09-03: "A lot of the books are stale")
+            take(sorted(bonds.approved), room=SUB_CAP)
         for key in ("politics", "cfb", "nfl", "nba"):
             fam = self.families.get(key)
             if fam is not None:

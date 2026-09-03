@@ -82,6 +82,8 @@ DROPPED_KEEP = 30
 ENTER_MAX_LEVELS = 20       # the owner's entry sweeps at most this many levels
 LADDER_SHOW = 8             # entry-side levels the page shows to enter at
 ACCRUE_GAP_MAX_S = 600.0    # a gap between cycles longer than this counts as this
+BOOK_MAX_AGE_S = 300.0      # a listed market's book older than this is read again
+BOOK_READS_PER_CYCLE = 4    # at most this many such reads per cycle
 ACCRUE_KEEP_DAYS = 120
 FILL_WAIT_S = 8.0           # how long a take's fill is awaited in the trade record
 TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed to show it
@@ -722,6 +724,7 @@ class Bonds:
         self.dots.append([round(now, 1), round(rate, 2)])
         del self.dots[:-DOTS_KEEP]
         self._accrue(now)
+        self._refresh_books(now)
         if not hasattr(self, "_exch_seen"):
             self._exch_seen = {}
         for slug in set(self.approved) | set(self.lots):
@@ -966,6 +969,33 @@ class Bonds:
                   reserve=round(max(lot_qty - qty, 0.0), 2))
         return {"market": slug, "bond": side, "side": bs,
                 "price": (r.price or want), "qty": qty, "ticks": ticks}
+
+    # -- fresh books for the page ------------------------------------------
+
+    def _refresh_books(self, now: float) -> int:
+        """The stream sends a book only when it changes, so a quiet
+        market's cached book just ages, and a listed market nothing
+        else works is never read at all (owner, 2026-09-03: "A lot of
+        the books are stale"). Every cycle the oldest listed books past
+        BOOK_MAX_AGE_S are read again, a few at a time."""
+        due = []
+        for slug in self.approved:
+            age = self.fam.cache.age(slug, now) if hasattr(self.fam.cache, "age") else None
+            if age is None:
+                b = self.fam.cache.any_age(slug)
+                age = (now - b.fetched_at) if b is not None else float("inf")
+            if age > BOOK_MAX_AGE_S:
+                due.append((-age, slug))
+        n = 0
+        for _, slug in sorted(due)[:BOOK_READS_PER_CYCLE]:
+            try:
+                book = self.client.book(slug, fetched_at=now)
+            except Exception:  # noqa: BLE001 — next cycle
+                continue
+            self.fam.cache.put(slug, book)
+            n += 1
+        self._books_read = n
+        return n
 
     # -- the engine, out of the way --------------------------------------------
 
