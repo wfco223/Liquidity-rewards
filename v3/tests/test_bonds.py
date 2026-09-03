@@ -480,10 +480,13 @@ class TestTheOwnersEntry(Base):
             return {"id": oid}
 
         def fill(self, oid, body):
-            self.trades.append({"id": "a" + oid, "trade": {"aggressorExecution": {
-                "order": {"id": oid, "intent": body["intent"]},
-                "lastShares": float(body["quantity"]),
-                "lastPx": float(body["price"]["value"])}}})
+            q = float(body["quantity"])
+            px = float(body["price"]["value"])
+            self.trades.append({"trade": {"id": "t" + oid, "aggressorExecution": {
+                "id": "x" + oid,
+                "order": {"id": oid, "intent": body["intent"], "quantity": q,
+                          "cumQuantity": q, "avgPx": {"value": f"{px:.4f}"}},
+                "lastShares": f"{q:.4f}", "lastPx": {"value": f"{px:.4f}"}}}})
 
         def recent_trades(self, limit=25):
             return list(self.trades)
@@ -945,8 +948,10 @@ class TestTheExchangeIsTheTruth(Base):
         def post(url, body, **k):
             out = real(url, body, **k)
             t = self.r.exchange.trades[-1]["trade"]["aggressorExecution"]
-            t["lastShares"] = 7.0
-            t["lastPx"] = 0.985
+            t["order"]["cumQuantity"] = 7
+            t["order"]["avgPx"] = {"value": "0.9850"}
+            t["lastShares"] = "7.0000"
+            t["lastPx"] = {"value": "0.9850"}
             return out
         self.r.exchange.post = post
         self.r.cache.put(AL, yes_book(self.now, ask=0.99, ask_q=10.0))
@@ -1098,3 +1103,80 @@ class TestOnlyConfirmedFillsAreHeld(Base):
         self.assertTrue(r["ok"], r["note"])
         self.assertNotIn("B1", self.r.fam.orders)
         self.assertNotIn(ALD, self.r.fam.hold_until)
+
+
+class TestFiveExecutionsAreFive(Base):
+    """Owner, 2026-09-03: "I definitely just purchased 5 shares. Only
+    three are the engine stock, can it not tell the difference?" The
+    take C8RG6TS1CMVR filled in five executions; the rows carry no
+    top-level id, so a duplicate check keyed on it saw one execution
+    and booked one share. The order's own running total is the read."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.r.cache.put(AL, yes_book(self.now, ask=0.99, ask_q=5.0))
+
+    @staticmethod
+    def rows(oid, n, px=0.99):
+        # one row per execution, as the exchange sends them: no activity
+        # id, an execution id each, the order's running total inside
+        out = []
+        for i in range(1, n + 1):
+            out.append({"type": "ACTIVITY_TYPE_TRADE", "trade": {
+                "id": f"T{i}", "aggressorExecution": {
+                    "id": f"X{i}",
+                    "order": {"id": oid, "intent": BUY_LONG, "quantity": n,
+                              "cumQuantity": i, "leavesQuantity": n - i,
+                              "avgPx": {"value": f"{px:.4f}"}},
+                    "lastShares": "1.0000", "lastPx": {"value": f"{px:.4f}"}}}})
+        return out
+
+    def test_the_orders_running_total_is_read(self):
+        real = self.r.exchange.post
+        holder = {}
+
+        def post(url, body, **k):
+            out = real(url, body, **k)
+            holder["oid"] = out["order"]["id"]
+            return out
+        self.r.exchange.post = post
+        self.r.exchange.recent_trades = lambda limit=25: self.rows(holder.get("oid", "?"), 5)
+        r = self.b.enter(AL, 0.99, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 5.0)
+        self.assertAlmostEqual(self.b.cost_basis(AL, "YES"), 0.99, places=4)
+        self.assertEqual(self.b.fill_book[holder["oid"]]["qty"], 5.0)
+
+    def test_rows_without_a_running_total_are_summed_per_execution(self):
+        rows = self.rows("O1", 3)
+        for r in rows:
+            r["trade"]["aggressorExecution"]["order"].pop("cumQuantity")
+        rows.append(rows[-1])                            # the same execution twice
+        shares, avg, note = self.b._record_of("O1", rows)
+        self.assertEqual(shares, 3.0)
+        self.assertAlmostEqual(avg, 0.99, places=4)
+        self.assertIn("summed", note)
+        self.assertIsNone(self.b._record_of("O9", rows))
+
+    def test_a_fill_booked_short_is_corrected_from_the_record(self):
+        # the Hawaii state as left: 1 booked on an order that filled 5
+        self.b._book_lot(AL, "YES", 1.0, 0.99, ref="C8R")
+        self.b._pay(0.99)
+        d = self.b.to_dict()
+        d.pop("fill_book", None)                         # state from before fills were kept
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
+                   clock=lambda: self.now, sleep=lambda s: None)
+        b2.restore(d)
+        self.assertEqual(b2.fill_book["C8R"]["qty"], 1.0)
+        self.r.exchange.recent_trades = lambda limit=25: self.rows("C8R", 5)
+        b2.cycle(self.now + 30, self.positions(), on=False)
+        self.assertEqual(b2.held(AL, "YES"), 5.0)
+        self.assertAlmostEqual(b2.lots[AL]["cost"], 5 * 0.99, places=2)
+        self.assertAlmostEqual(b2.spent, 5 * 0.99, places=2)
+        ev = [e for e in b2.log if e["event"] == "fill_corrected"][0]
+        self.assertEqual((ev["qty"], ev["order_id"]), (5.0, "C8R"))
+        # and nothing changes once it agrees
+        b2.cycle(self.now + 60, self.positions(), on=False)
+        self.assertEqual(len([e for e in b2.log if e["event"] == "fill_corrected"]), 1)
