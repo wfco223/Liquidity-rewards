@@ -460,6 +460,11 @@ class Family:
         # 2026-09-02). Same rule as freeze_tokens — the engine places
         # nothing, rests no exits, sells nothing there.
         self.freeze_dyn: set[str] = set()
+        # a timed hold: the engine does nothing in the market until the
+        # time given (owner, 2026-09-03: "when you clear out, it might
+        # make sense to tell the engine to hold off on that market for
+        # 10 minutes") — set by the bonds module before a take
+        self.hold_until: dict[str, float] = {}
         # the owner's bond shares per market, signed YES (owner,
         # 2026-09-02: "the engine does not need to ignore these
         # markets, only the orders I place"; "I only want to know for a
@@ -499,6 +504,7 @@ class Family:
         Unlike an avoided market, nothing is pulled: whatever rests
         here stays exactly as it is, and the engine adds nothing."""
         return (slug in self.freeze_dyn
+                or self.hold_until.get(slug, 0.0) > self._clock()
                 or any(t in slug for t in self.cfg.freeze_tokens))
 
     def enterable(self, slug: str) -> bool:
