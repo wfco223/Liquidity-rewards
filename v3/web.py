@@ -836,6 +836,8 @@ function render(d){
  var tx=b.tax||{};var tax=b.budget_mode==='tax';
  out+='<div class="sub">Money <b>'+usd(b.money||0)+'</b> = budget '+usd(b.budget||0)+' + proceeds '+usd(b.cash||0)+' · held at cost '+usd(b.held_cost||0)+' · Silver checked '+(b.scan_day?esc(b.scan_day):'never')+'</div>';
  out+='<div class="sub">Budget '+(tax?'= taxes owed '+usd(tx.owed||0)+' ('+Math.round((tx.rate||0.22)*100)+'% of '+usd(tx.gross||0)+' paid)':'fixed by you')+(b.spent?' − '+usd(b.spent)+' spent':'')+'</div>';
+ var e=b.earned||{};
+ out+='<div class="sub">Earned <b>'+usd(e.total||0)+'</b> = '+usd(e.sales||0)+' profit on sales ('+usd(e.sold_usd||0)+' sold) + '+usd(e.rewards||0)+' rewards'+(e.paid?' · the exchange paid '+usd(e.paid)+' on these markets; the engine\'s own orders there earned the other '+usd(e.engine||0):'')+'</div>';
  out+='<div id="bmsg">'+(window._bNote||'')+'</div>';
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
  out+='<div>'+bField('bbud',bKeep('bbud'),'7em')+' <button onclick="bBudget()">Set budget</button>'+(tax?'':' <button onclick="bOp(\'bonds_budget_tax\',\'-\')">Follow taxes owed</button>')+' <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
@@ -844,7 +846,8 @@ function render(d){
   +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. Your own orders are never counted.</div>'
   +'<div>Held bonds get one resting order, as far back as it can sit keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under cost.</div>'
   +'<div>A small order (25 or fewer) in front of it gets a decoy joining it. Sits two hours, moves over three times, reaches the touch or goes under cost: bought, joins the bond.</div>'
-  +'<div>Sale proceeds go back into Money. A phone note every $100 bought.</div></details>';
+  +'<div>Sale proceeds go back into Money. A phone note every $100 bought.</div>'
+  +'<div>Rewards are paid per market and the engine quotes bond markets too, so a day\'s payment is split between the bond order and the engine\'s orders by their measured share of what all our orders there earn. An estimate.</div></details>';
  out+='</div>';
  var rows=b.rows||[];
  out+='<div class="card"><b>Bond list</b> <span class="muted">cheapest first</span>';
@@ -857,7 +860,7 @@ function render(d){
   if(r.cost!=null)line+=' · take '+pc(r.cost)+', '+r.size+' avail'+(r.days!=null?' · '+bPct(r['yield'])+' in '+r.days+'d ≈ '+bPct(r.annual)+'/yr':'');
   else line+=' · nothing to take';
   out+='<div class="sub">'+line+'</div>';
-  if(r.earn)out+='<div class="sub">Resting at the touch: '+usd(r.earn.est_day)+'/day'+(r.earn.qualifies?'':' <span class="warn">(side under Target Size, pays nobody)</span>')+'</div>';
+  if(r.earn)out+='<div class="sub">Resting at the touch: '+usd(r.earn.est_day)+'/day'+(r.earn.qualifies?'':' <span class="warn">(side under Target Size, pays nobody)</span>')+(r.rewards?' · rewards so far '+usd(r.rewards):'')+'</div>';
   if(r.qty>0.005){
    var h='<b>Held '+r.qty+' @ '+pc(r.cost_px)+'</b>';
    if(r.earn_order&&r.earn_order.length)h+=' · resting '+r.earn_order.map(function(o){return o.qty+' @ '+pc(o.price)+(o.est?' ~'+usd(o.est)+'/day':'');}).join(', ')+(r.slot?(r.slot.ticks?' ('+r.slot.ticks+' back, '+Math.round((r.slot.keep||1)*100)+'%)':' (at touch)'):'');
