@@ -3893,3 +3893,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788446182.9,cfb,aachc-cfb-wins-2026-11-28-ncst-6pt5wins,SELL,1,0.38,hand,,0.07,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C4G650HVEGNE
 1788446182.9,cfb,aachc-cfb-wins-2026-11-28-ncar-6pt5wins,SELL,2,0.02,hand,,0.17,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C4G33R2G0GNK
 1788446182.9,cfb,aachc-cfb-wins-2026-11-28-ore-8pt5wins,BUY,0.98,0.9,backfill,,25.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8AY2X7QAMW0
+1788446384.1,politics,ussewc-usse-fl-2026-11-03-dem,SELL,20,0.12,manual,0.2816,3.93,0.10245,9,13,0.272,0.11,0.16,-0.0176,-20,the owner's own order — the engine leaves it alone,C8YGTKPR0MVZ
+1788446444.1,cfb,aachc-cfb-wins-2026-11-28-okst-8pt5wins,BUY,1,0.34,sell,0,0.03,,15,19,0.62,0.15,0.35,0.17,2,buying back the short at or under what it sold for — the bid earns while it wait,C91Y6Q1ERMW1
+1788447348.0,politics,usgubewc-usgub-nh-2026-11-03-rep,SELL,10,0.79,sell,1.8145,0.3,0.933775,79,82,0.79,0.78,0.79,0.1438,17,selling filled stock — it earns while it waits,C91XW0KAJMVV
+1788448068.3,cfb,aachc-cfb-wins-2026-11-28-miss-8pt5wins,SELL,0.05,0.46,manual,0.0004,8.75,,43,47,0,0.45,0.46,-0.01,-0.05,the owner's own order — the engine leaves it alone,C8TS81JC0MVP
+1788448068.3,cfb,aachc-cfb-wins-2026-11-28-fl-9pt5wins,SELL,0.5,0.1,earn,3.2328,0.52,,6,13,0,0.09,0.1,0,-0.5,joins the touch — the book has been quiet,C91YBZ5D8MVF
+1788448148.1,politics,ussewc-usse-al-2026-11-03-dem,SELL,2,0.02,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C923W0R3CMVV
+1788448188.3,politics,ussewc-usse-al-2026-11-03-dem,SELL,18,0.02,earn,2.5573,0.3,0.001825,1,2,0.374,0.01,0.02,-0.0182,-18,at the touch — a fill here is 1 ticks inside value (Silver + evidence),C923W0R3CMVV
+1788448908.3,politics,ussewc-usse-ky-2026-11-03-dem,SELL,8,0.04,bond,0,0,0.00335,3,6,0.862,0.04,0.08,-0.0367,-8,bond: took 8 NO at 4c — it was in the way of our resting order,C92JZ3FERMVZ
+1788449057.0,politics,enwc-uspres-nom-rep-2028-ranpau,BUY,0.25,0.04,backfill,,5.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8XW3X2RPMVK
+1788449088.3,politics,enwc-uspres-nom-rep-2028-ranpau,BUY,136,0.04,earn,1.8577,5.48,,2,7,0,0.04,0.05,0,136,joins the touch — the book has been quiet,C8XW3X2RPMVK
+1788449448.3,politics,ewc-usse-ia-2026-11-03-dem,BUY,20,0.37,earn,0.1918,11.02,0.446125,38,43,0,0.36,0.37,-0.0761,20,at the touch — a fill here is 8 ticks inside value (Silver + evidence),C8S78CZRTMVP
+1788449448.3,politics,ewc-usse-ia-2026-11-03-dem,BUY,20,0.37,manual,0.1918,11,0.446125,38,43,0,0.36,0.37,-0.0761,40,the owner's own order — the engine leaves it alone,C8S78CYZ0MVP
+1788449568.4,cfb,aachc-cfb-wins-2026-11-28-ucf-6pt5wins,SELL,1,0.41,sell,0.0323,5.25,,39,44,0.691,0.37,0.42,0.01,0,selling filled stock — it earns while it waits,C8Y6GB8CAMVG
+1788449808.4,politics,enwc-ussep-nh-2026-09-08-dem-karman,SELL,-46.39,0.05,fix,0.3846,6.74,,6,9,0.625,0.04,0.05,0.03,0.39,size trimmed by 46.39 to the exchange's count (order C8CP4Y0YAMVG),C8CP4Y0YAMVG
+1788449808.4,politics,usgubewc-usgub-tn-2026-11-03-dem,SELL,-7.46,0.04,fix,0.9155,2.33,0.001875,1,4,0.206,0.03,0.04,-0.0381,-12,size trimmed by 7.46 to the exchange's count (order C8G5M5V5CMW0),C8G5M5V5CMW0
+1788449808.4,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,-4,0.96,fix,2.7871,2.6,0.998325,95,98,0.598,0.95,0.96,0.0383,18,size trimmed by 4 to the exchange's count (order C8ZN2ZH3MMW1),C8ZN2ZH3MMW1
+1788449808.4,politics,ussewc-usse-al-2026-11-03-dem,SELL,2,0.02,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C923W0R3CMVV
+1788449808.4,politics,enwc-uspres-nom-rep-2028-ranpau,BUY,0.25,0.04,backfill,,5.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8XW3X2RPMVK
