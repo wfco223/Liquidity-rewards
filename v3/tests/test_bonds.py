@@ -391,15 +391,58 @@ class TestTheSniper(Base):
         self.assertIn("$106.80", self.pings[0][1])
         self.assertAlmostEqual(self.b.unpinged, 0.0)
 
-    def test_no_minnow_means_no_decoy_and_a_stale_decoy_is_pulled(self):
+    def test_a_decoy_holds_until_nothing_foreign_shows_for_five_minutes(self):
+        # owner, 2026-09-03: "if someone is placing and immediately
+        # removing their small order, it will never happen. Put the decoy
+        # and then don't remove it until you've seen several minutes of
+        # no foreign shares"
         m_px = round(self.main.price - 0.01, 2)
         self.book_with_minnow(m_px, 20.0, 60)
         self.cyc(60)
         self.assertEqual(len(self.orders(AL, "SELL", decoy=True)), 1)
         self.book_with_minnow(m_px, 0.0, 120)                  # the minnow left
         self.cyc(120)
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=True)), 1)   # the decoy stays
+        self.assertEqual(self.b.dance[AL]["clear_since"], self.now + 120)
+        self.book_with_minnow(m_px, 20.0, 200)                 # back again: the clock resets
+        self.cyc(200)
+        self.assertIsNone(self.b.dance[AL]["clear_since"])
+        self.book_with_minnow(m_px, 0.0, 260)
+        self.cyc(260)
+        self.book_with_minnow(m_px, 0.0, 500)
+        self.cyc(500)                                          # 240 s clear: still holding
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=True)), 1)
+        self.book_with_minnow(m_px, 0.0, 600)
+        self.cyc(600)                                          # 340 s clear: done
         self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
         self.assertNotIn(AL, self.b.dance)
+        self.assertIn("decoy_done", [e["event"] for e in self.b.log])
+
+    def test_a_minnow_seen_then_gone_still_gets_its_decoy(self):
+        # seen on one cycle, gone by the next: the decoy joins where it
+        # flickered and holds
+        m_px = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m_px, 5.0, 60)
+        self.b.dance[AL] = {"px": m_px, "moves": 0, "since": self.now + 60,
+                            "last_px": m_px, "last_q": 5.0, "last_seen": self.now + 60,
+                            "clear_since": None}
+        self.book_with_minnow(m_px, 0.0, 90)                   # gone again
+        self.cyc(90)
+        decoys = self.orders(AL, "SELL", decoy=True)
+        self.assertEqual(len(decoys), 1)
+        self.assertAlmostEqual(decoys[0].price, m_px)
+
+    def test_dust_in_front_is_never_snapped_the_decoy_holds(self):
+        m_px = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m_px, 0.5, 60)                   # half a share
+        self.cyc(60)
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=True)), 1)
+        self.book_with_minnow(m_px, 0.5, 60 + DANCE_WAIT_S + 10)
+        self.cyc(60 + DANCE_WAIT_S + 10)                       # "stayed put": nothing to take
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=True)), 1)
+        ev = [e["event"] for e in self.b.log]
+        self.assertNotIn("snapped", ev)
+        self.assertEqual(ev.count("dance_holds"), 1)
 
     def test_more_than_25_shares_in_front_is_not_a_minnow(self):
         self.book_with_minnow(round(self.main.price - 0.01, 2), 26.0, 60)

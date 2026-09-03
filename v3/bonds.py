@@ -76,6 +76,7 @@ DECOY_QTY = 10.0            # the decoy that leads a minnow down
 MINNOW_MAX = 25.0           # a level in front this small is a minnow to lead
 DANCE_WAIT_S = 2 * 3600.0   # after each decoy move, how long the minnow gets to move again
 DANCE_MAX_MOVES = 3         # a minnow that moves more than this is taken at once
+DECOY_LINGER_S = 300.0      # a decoy stays until nothing foreign has shown in front for this long
 SCAN_HOUR_UTC = 7           # 3 am Eastern: the nightly Silver check
 LOG_KEEP = 200
 DROPPED_KEEP = 30
@@ -1476,16 +1477,46 @@ class Bonds:
         decoys = self._orders(slug, bs, decoy=True)
         # the sniper works only where a bond sale of ours is resting
         # (owner, 2026-09-02) — no resting order, no minnow, no decoy
-        minnow = (self._minnow_in_front(slug, side, book)
-                  if self._orders(slug, bs, decoy=False) else None)
+        main = self._orders(slug, bs, decoy=False)
+        minnow = self._minnow_in_front(slug, side, book) if main else None
+        st = self.dance.get(slug)
         if minnow is None:
-            self._pull_decoys(slug, side)
-            self.dance.pop(slug, None)
-            return None
+            # A minnow that is placed and pulled again within seconds
+            # never met a decoy, and a decoy pulled the moment the minnow
+            # vanished was back off the book before it reappeared
+            # (owner, 2026-09-03: "Put the decoy and then don't remove it
+            # until you've seen several minutes of no foreign shares").
+            # So: a minnow seen within the linger still gets its decoy,
+            # and a decoy stays until nothing foreign has shown in front
+            # for DECOY_LINGER_S.
+            if not main or st is None:
+                if decoys:
+                    self._pull_decoys(slug, side)
+                self.dance.pop(slug, None)
+                return None
+            if st.get("clear_since") is None:
+                st["clear_since"] = round(now, 1)
+            if now - float(st["clear_since"]) >= DECOY_LINGER_S:
+                if decoys:
+                    self._pull_decoys(slug, side)
+                    self._log(event="decoy_done", market=slug,
+                              note=f"nothing foreign in front for "
+                                   f"{DECOY_LINGER_S / 60:.0f} minutes")
+                self.dance.pop(slug, None)
+                return None
+            if decoys or st.get("last_px") is None:
+                return None                        # holding, or nothing to join
+            minnow = (float(st["last_px"]), float(st.get("last_q") or 0.0))   # join where it flickers
+        else:
+            if st is None:
+                st = self.dance[slug] = {"px": minnow[0], "moves": 0, "since": round(now, 1)}
+            st["clear_since"] = None
+            st["last_px"] = minnow[0]
+            st["last_q"] = round(minnow[1], 2)
+            st["last_seen"] = round(now, 1)
         if self._money() < MONEY_MIN_USD:
             return None                            # nothing to snap with
         m_px, m_q = minnow
-        st = self.dance.get(slug)
         moved = st is not None and abs(m_px - st["px"]) > tick / 2
         moves = (st["moves"] + 1 if (st and moved) else (st["moves"] if st else 0))
         bound = self._bound(slug, side, tick)
@@ -1500,12 +1531,21 @@ class Bonds:
                else "reached the far touch" if at_far_touch
                else "under our cost" if past_cost
                else "stayed put for the wait" if stayed else None)
+        if why and m_q < 1.0:
+            # dust, or a level that only flickers: nothing to buy; the
+            # decoy holds the touch instead
+            if not st.get("noted"):
+                st["noted"] = True
+                self._log(event="dance_holds", market=slug, why=why,
+                          note="under one share in front — nothing to take; "
+                               "the decoy holds until it is gone for good")
+            return None
         if why:
             self._log(event="dance_over", market=slug, why=why, moves=moves,
                       minnow_px=m_px)
             r = self._snap(slug, side, book, m_px, m_q, positions, now)
             return None if (r and r.get("retry")) else r
-        if st is not None and not moved:
+        if decoys and not moved:
             return None                            # the clock is running
         # (re)join the minnow at its price
         held = min(self.held(slug, side), self.exchange_held(slug, side, positions))
@@ -1534,7 +1574,11 @@ class Bonds:
             qty=qty, intent=(r.intent or intent), placed_ts=now, purpose="bond",
             why=f"bond decoy: joined the {m_q:g} in front at {m_px * 100:g}c, "
                 f"move {moves}")
-        self.dance[slug] = {"px": m_px, "moves": moves, "since": round(now, 1)}
+        keep = self.dance.get(slug) or {}
+        self.dance[slug] = {"px": m_px, "moves": moves, "since": round(now, 1),
+                            "last_px": m_px, "last_q": round(m_q, 2),
+                            "last_seen": keep.get("last_seen", round(now, 1)),
+                            "clear_since": None}
         self._log(event="decoy", market=slug, side=side, price=(r.price or m_px),
                   minnow_px=m_px, minnow_q=round(m_q, 1), moves=moves)
         return {"market": slug, "bond": side, "side": bs,
@@ -2074,6 +2118,7 @@ class Bonds:
                 "high": HIGH_ODDS, "low": LOW_ODDS, "price_cap": PRICE_CAP,
                 "keep": KEEP_FRACTION,
                 "dance_wait_s": DANCE_WAIT_S, "minnow_max": MINNOW_MAX,
+                "decoy_linger_s": DECOY_LINGER_S,
                 "more_share": MORE_SHARE,
                 "scan_day": self.scan_day, "scan_hour_utc": SCAN_HOUR_UTC,
                 "log": self.log[-12:]}
