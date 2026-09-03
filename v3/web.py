@@ -60,8 +60,8 @@ def authed(get_header, query_string: str, password: str) -> bool:
 # routes still answer for a bookmark, but they are off the bar. Fills
 # and watch became sub-pages of quick look.
 NAV = (("quick look", "."), ("status", "status"), ("orders", "orders"),
-       ("pay", "pay"), ("survey", "survey"), ("log", "log"),
-       ("switch", "switch"))
+       ("pay", "pay"), ("bonds", "bonds"), ("survey", "survey"),
+       ("log", "log"), ("switch", "switch"))
 SUBNAV = {"quick": (("meter", "."), ("fills", "fills"), ("watch", "watch")),
           "orders": (("orders", "orders"),)}
 
@@ -809,6 +809,53 @@ function render(d){
 function tap(op,which){post({op:'switch_'+op,which:which});}
 """
 
+BONDS_JS = r"""
+function bPct(x){return x==null?'—':(x*100).toFixed(x>=0.1?0:1)+'%';}
+function bOp(op,m){post({op:op,market:m},function(j){
+ var el=document.getElementById('bmsg');if(el)el.innerHTML='<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';});}
+function render(d){
+ if(d.starting)return bootCard(d);
+ var b=d.bonds||{};var sw=((d.switch_view||{}).bonds)||{};
+ var out='<div class="card"><b>Bonds</b> <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
+ out+='<div class="hint">A bond market is a politics market Silver puts at '+bPct(b.odds_bar||0.99)+' or better for YES. Bought at 98–99¢ it pays the last cent or two at resolution and, held, it is not buying power — no engine fill can reach it. Bond-like across many; on any one, the price is the market’s own odds that the lot goes to zero. Nothing is added to the list without your tap. With the bonds switch on, every held bond gets a resting ask so it earns while it waits, and sale proceeds are reinvested in the cheapest listed market whose bid side pays.</div>';
+ out+='<div id="bmsg"></div>';
+ out+='<div class="sub">Proceeds awaiting reinvestment: <b>'+usd(b.cash||0)+'</b>'+(b.committed?' · '+usd(b.committed)+' behind a resting bid':'')+' · held at cost: '+usd(b.held_cost||0)+'</div>';
+ if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
+ out+='<div><button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
+ out+='</div>';
+ var pr=b.proposed||[];
+ out+='<div class="card"><b>Proposed by Silver — your call</b>';
+ if(!pr.length)out+='<div class="muted">Nothing new. Silver is checked every 10 minutes; a market crossing 99% shows up here and pings the phone.</div>';
+ pr.forEach(function(p){
+  out+='<div style="margin:6px 0;border-top:1px solid #2c3527;padding-top:6px"><div class="name">'+esc((d.labels||{})[p.market]||p.market)+'</div><div class="muted"><code>'+esc(p.market)+'</code> · Silver '+bPct(p.odds)+'</div>'
+   +'<div><button onclick="bOp(\'bonds_approve\',\''+esc(p.market)+'\')">Add to bonds</button> <button class="off" onclick="bOp(\'bonds_ignore\',\''+esc(p.market)+'\')">Ignore</button></div></div>';
+ });
+ out+='</div>';
+ var rows=b.rows||[];
+ out+='<div class="card"><b>Bond list — cheapest first</b>';
+ if(!rows.length)out+='<div class="muted">Empty. Add markets from the proposals above.</div>';
+ rows.forEach(function(r){
+  out+='<div style="margin:8px 0;border-top:1px solid #2c3527;padding-top:6px">';
+  out+='<div class="name">'+esc((d.labels||{})[r.market]||r.market)+(r.flag?' <span class="warn">Silver now '+bPct(r.odds)+'</span>':'')+'</div>';
+  out+='<div class="muted"><code>'+esc(r.market)+'</code> · Silver '+bPct(r.odds)+'</div>';
+  var bk='book '+(r.bid!=null?pc(r.bid):'—')+' / '+(r.ask!=null?pc(r.ask):'—')+(r.ask_size?' ('+r.ask_size+' at the ask)':'')+(r.stale?' <span class="warn">stale</span>':'');
+  out+='<div>'+bk+'</div>';
+  if(r.ask!=null&&r.days!=null)out+='<div>To resolution: <b>'+bPct(r["yield"])+'</b> in '+r.days+' days ≈ '+bPct(r.annual)+' a year, before rewards. The market’s own odds this lot goes to zero: about '+((1-(r.odds||0))*100).toFixed(1)+'%.</div>';
+  if(r.sell){out+='<div>A resting ask at the touch would earn <b>'+usd(r.sell.est_day)+'/day</b>'+(r.sell.qualifies?' ('+(r.sell.share*100).toFixed(1)+'% of the side)':' — <span class="warn">that side is under Target Size and pays nobody right now</span>')+'.</div>';}
+  if(r.qty>0.005){out+='<div><b>Held: '+r.qty+' at '+pc(r.cost_px)+'</b>'+(r.ask_order?' · ask resting '+r.ask_order.map(function(o){return o.qty+' @ '+pc(o.price)+(o.est?' earning ~'+usd(o.est)+'/day':'');}).join(', '):' · <span class="warn">no ask resting</span>'+(sw.on?'':' (bonds switch is off)'))+'</div>';}
+  if(r.bid_order)out+='<div>Reinvesting: bid resting '+r.bid_order.map(function(o){return o.qty+' @ '+pc(o.price);}).join(', ')+'</div>';
+  out+='<div><button class="off" onclick="if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+esc(r.market)+'\')">Remove</button></div>';
+  out+='</div>';
+ });
+ out+='</div>';
+ var ig=b.ignored||[];
+ if(ig.length){out+='<details class="how"><summary>ignored ('+ig.length+')</summary>';ig.forEach(function(m){out+='<div class="muted"><code>'+esc(m)+'</code> <button onclick="bOp(\'bonds_unignore\',\''+esc(m)+'\')">un-ignore</button></div>';});out+='</details>';}
+ var lg=b.log||[];
+ if(lg.length){out+='<details class="how"><summary>recent bond actions</summary>';lg.slice().reverse().forEach(function(r){out+='<div class="muted">'+when(r.ts)+' — '+esc(r.event)+(r.market?' '+esc(r.market):'')+(r.price!=null?' @ '+pc(r.price):'')+(r.qty!=null?' x'+r.qty:'')+(r.note?' — '+esc(r.note):'')+'</div>';});out+='</details>';}
+ return out;
+}
+"""
+
 LOG_JS = """
 function render(d){
  var rows=[];
@@ -1508,6 +1555,7 @@ PAGES = {
     "/pay": ("Pay", "pay", PAY_JS, ""),
     "/grades": ("Pay", "pay", PAY_JS, ""),
     "/survey": ("Survey", "survey", SURVEY_JS, ""),
+    "/bonds": ("Bonds", "bonds", BONDS_JS, ""),
     "/switch": ("Switches", "switch", SWITCH_JS, ""),
     "/log": ("Log", "log", LOG_JS, ""),
     "/plan": ("Plan", "", PLAN_JS, ""),
@@ -1609,6 +1657,8 @@ class WebServer:
             return self.monitor.close_position(str(body.get("market") or ""))
         if op == "qualify_ask":
             return self.monitor.qualify_ask(str(body.get("market") or ""))
+        if op.startswith("bonds_"):
+            return self.monitor.bonds_op(op, str(body.get("market") or ""))
         if op == "backfill":
             return self.monitor.backfill_journal(
                 days=float(body.get("days") or 3.0),

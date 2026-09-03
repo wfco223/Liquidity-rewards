@@ -456,6 +456,10 @@ class Family:
         # hourly journal reconciliation reads the DIRECTION of a hand
         # trade off the move nearest its time (owner, 2026-09-02)
         self.pos_moves: list[list] = []
+        # frozen ground set at runtime: the owner's bond markets (owner,
+        # 2026-09-02). Same rule as freeze_tokens — the engine places
+        # nothing, rests no exits, sells nothing there.
+        self.freeze_dyn: set[str] = set()
         self.priority: set = set()   # markets to re-check first
         self.pending_pages: list = []   # open fills awaiting a mark
         self.log: list[dict] = []
@@ -488,7 +492,8 @@ class Family:
         """Hands off entirely (owner, 2026-08-24: "don't touch those").
         Unlike an avoided market, nothing is pulled: whatever rests
         here stays exactly as it is, and the engine adds nothing."""
-        return any(t in slug for t in self.cfg.freeze_tokens)
+        return (slug in self.freeze_dyn
+                or any(t in slug for t in self.cfg.freeze_tokens))
 
     def enterable(self, slug: str) -> bool:
         if self._avoided(slug) or self._frozen(slug) \
@@ -1116,7 +1121,7 @@ class Family:
                 already = any(
                     o for o in list(self.orders.values())
                     if o.market == slug and o.side == side
-                    and o.purpose not in ("manual", "sell")
+                    and o.purpose not in ("manual", "sell", "bond")
                     and (own is None or o.id != own.id)   # re-planning
                     and (o.price - touch) * sign > 1e-9)  # the probe
                                                           # itself must
@@ -1888,7 +1893,7 @@ class Family:
         and pull the owner's exits (2026-08-20 23:12Z) and counted their
         collateral against the rebuild ceiling. Idempotent, every cycle."""
         for rec in list(self.orders.values()):
-            if rec.purpose in ("sell", "manual"):
+            if rec.purpose in ("sell", "manual", "bond"):
                 continue
             net = (positions.get(rec.market) or (0.0, 0.0))[0]
             if ((rec.side == "SELL" and net > 0.005)
@@ -1988,7 +1993,7 @@ class Family:
         for rec in list(self.orders.values()):
             if actions <= 0:
                 break
-            if rec.purpose == "manual" or self._frozen(rec.market):
+            if rec.purpose in ("manual", "bond") or self._frozen(rec.market):
                 continue      # owner, 2026-08-22: never cancel the owner's
                               # own orders — no rule outranks the hand;
                               # 2026-08-24: nor anything in frozen ground
@@ -2085,7 +2090,7 @@ class Family:
             self._track_est(rec, now)
             self.fillmodel.observe_order_age(rec.market, now - rec.placed_ts,
                                              60.0)
-            if (rec.purpose not in ("manual", "sell")
+            if (rec.purpose not in ("manual", "sell", "bond")
                     and (self.fairs is None
                          or self.fairs(rec.market) is None)
                     and now - rec.placed_ts >= 86400.0
@@ -2238,7 +2243,7 @@ class Family:
                               # placement holds until the release rule
                               # (checked in _read_live) or the nurse ends it
             if (self.cfg.whole_shares
-                    and rec.purpose not in ("sell", "manual")
+                    and rec.purpose not in ("sell", "manual", "bond")
                     and abs(rec.qty - round(rec.qty)) > 1e-9):
                 r = self.desk.cancel(rec.id, rec.market)
                 if r.ok:
@@ -2250,7 +2255,7 @@ class Family:
                                    "quotes whole shares now")
                     actions -= 1
                 continue
-            if rec.purpose == "manual" or self._frozen(rec.market):
+            if rec.purpose in ("manual", "bond") or self._frozen(rec.market):
                 continue          # frozen ground: never repriced,
                                   # never pulled, never resized
             if self._avoided(rec.market) or (
@@ -2618,7 +2623,7 @@ class Family:
                     # comparison have to be the same book.
                     search_orders = [o for o in list(self.orders.values())
                                      if o.market not in self.proven
-                                     and o.purpose != "manual"]
+                                     and o.purpose not in ("manual", "bond")]
                     if (self.family_spent() + plan_charge
                             > self.cfg.capital_usd + 1e-9):
                         continue      # the EXPECTED-risk ceiling
@@ -2671,7 +2676,7 @@ class Family:
             if not over_exp and not over_gross:
                 break
             cands = [o for o in list(self.orders.values())
-                     if o.purpose not in ("sell", "manual")
+                     if o.purpose not in ("sell", "manual", "bond")
                      and not o.pinned
                      and not self._frozen(o.market)]
             if not cands:
@@ -2947,7 +2952,7 @@ class Family:
         ground is skipped wholesale."""
         watch = []
         for rec in list(self.orders.values()):
-            if rec.purpose == "manual":
+            if rec.purpose in ("manual", "bond"):
                 continue
             if rec.purpose == "sell" and not rec.pinned:
                 continue
@@ -3272,7 +3277,7 @@ class Family:
         put to work, not the average of the best of it."""
         rates = []
         for o in list(self.orders.values()):
-            if o.purpose in ("sell", "manual", "probe"):
+            if o.purpose in ("sell", "manual", "probe", "bond"):
                 continue
             risk = capital_at_risk(o.intent, o.price, o.qty)
             if risk > 0.005 and (o.live_est or 0.0) > 0:
@@ -3372,7 +3377,7 @@ class Family:
                 bid_l, bidsz_l = book.bids[0]
                 manual_l = sum(o.qty for o in list(self.orders.values())
                                if o.market == slug and o.side == "SELL"
-                               and o.purpose == "manual")
+                               and o.purpose in ("manual", "bond"))
                 dq_l = round(min(qty - manual_l, bidsz_l), 2)
                 if dq_l < 0.01:
                     continue
@@ -3420,7 +3425,7 @@ class Family:
                 # offers the same shares twice (owner, 2026-08-22)
                 manual_cover = sum(
                     o.qty for o in list(self.orders.values())
-                    if o.market == slug and o.purpose == "manual"
+                    if o.market == slug and o.purpose in ("manual", "bond")
                     and o.side == "SELL")
                 covered = manual_cover + sum(
                     o.qty for o in list(self.orders.values())
@@ -3626,7 +3631,7 @@ class Family:
                 covered = sum(
                     o.qty for o in list(self.orders.values())
                     if o.market == slug and o.side == "BUY"
-                    and o.purpose in ("sell", "manual"))
+                    and o.purpose in ("sell", "manual", "bond"))
                 rest = -qty - covered
                 if covered > -qty + 0.01:
                     self._prune_excess_exits(slug, "BUY", covered + qty, now)
