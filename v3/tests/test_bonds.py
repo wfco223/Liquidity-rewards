@@ -14,8 +14,9 @@ import calendar
 import copy
 import unittest
 
-from v3.bonds import (DECOY_QTY, HIGH_ODDS, KEEP_FRACTION, LOW_ODDS,
-                      PING_EVERY_USD, Bonds, scan_due, side_for)
+from v3.bonds import (DANCE_MAX_MOVES, DANCE_WAIT_S, DECOY_QTY, HIGH_ODDS,
+                      KEEP_FRACTION, LOW_ODDS, MINNOW_MAX, PING_EVERY_USD,
+                      Bonds, scan_due, side_for)
 from v3.family import FamilyConfig, FamilyOrder
 from v3.intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 from v3.scoring import Book
@@ -114,6 +115,9 @@ class TestTheBand(unittest.TestCase):
         self.assertEqual(KEEP_FRACTION, 0.6)
         self.assertEqual(PING_EVERY_USD, 100.0)
         self.assertEqual(DECOY_QTY, 10.0)
+        self.assertEqual(MINNOW_MAX, 25.0)
+        self.assertEqual(DANCE_WAIT_S, 7200.0)
+        self.assertEqual(DANCE_MAX_MOVES, 3)
 
 
 class TestTheList(Base):
@@ -254,97 +258,142 @@ class TestTheRestingOrder(Base):
 
 class TestTheSniper(Base):
     """Owner: "purchasing anything that is in the way of our sell orders
-    collecting rewards... gradually lead the minnow down until it is
-    priced more cheaply. Then snap and buy their shares."""
+    collecting rewards"; then: "the decoy joins the minnow instead of
+    beating it. Each time the decoy moves wait 2 hours to see if the
+    minnow will move again, then, if not kill the decoy and snap up the
+    minnow. If the minnow moves more than 3 times or reaches the touch
+    or below cost, snap it up immediately." Minnows are 25 shares or
+    fewer."""
 
     def setUp(self):
         super().setUp()
         self.b.approve(AL, self.now)
         self.b.set_budget(1000.0)
-        self.b.set_max(0.95)                  # the bar: lead minnows down to here
         self.r.cache.put(AL, minnow_book(self.now, minnows=0.0, ask=0.99))
         self.bond(AL, "YES", 1500.0, 0.90)
         self.b.cycle(self.now, self.positions(), on=True)   # rests the main ask
         self.main = self.orders(AL, "SELL", decoy=False)[0]
 
-    def book_with_minnow(self, px, q=20.0, t=0.0):
-        # our main ask stays on the book; a minnow appears in front of it
-        asks = ((px, q), (self.main.price, self.main.qty), (0.99, 20000.0))
-        d = Book(bids=((0.88, 50.0), (0.50, 20000.0)),
-                 asks=tuple(sorted(asks)), tick=0.01, fetched_at=self.now + t)
+    def book_with_minnow(self, px, q=20.0, t=0.0, bid=0.88):
+        # our main ask (and any decoy) stay on the book; a minnow sits in front
+        mine = [(o.price, o.qty) for o in self.orders(AL, "SELL")]
+        asks = [(px, q)] + mine + [(0.99, 20000.0)]
+        merged = {}
+        for p, qq in asks:
+            merged[round(p, 4)] = merged.get(round(p, 4), 0.0) + qq
+        d = Book(bids=((bid, 50.0), (0.50, 20000.0)),
+                 asks=tuple(sorted((p, qq) for p, qq in merged.items() if qq > 0)),
+                 tick=0.01, fetched_at=self.now + t)
         self.r.cache.put(AL, d)
         return d
 
-    def test_a_minnow_in_front_draws_a_decoy_a_tick_ahead_of_it(self):
+    def cyc(self, t):
+        return self.b.cycle(self.now + t, self.positions(), on=True)
+
+    def test_the_decoy_joins_the_minnow_at_its_own_price(self):
         m_px = round(self.main.price - 0.01, 2)
         self.book_with_minnow(m_px, 20.0, 60)
-        out = self.b.cycle(self.now + 60, self.positions(), on=True)
+        out = self.cyc(60)
         decoys = self.orders(AL, "SELL", decoy=True)
         self.assertEqual(len(decoys), 1)
-        self.assertAlmostEqual(decoys[0].price, round(m_px - 0.01, 2))
+        self.assertAlmostEqual(decoys[0].price, m_px)          # joins, not beats
         self.assertEqual(decoys[0].qty, DECOY_QTY)
         self.assertTrue(out["placed"][0]["decoy"])
-        self.assertIn(self.main.id, self.r.fam.orders)             # main untouched
+        self.assertEqual(self.b.dance[AL]["moves"], 0)
+        self.assertIn(self.main.id, self.r.fam.orders)
         v = self.b.view(self.now + 60, self.positions())
-        self.assertEqual(v["rows"][0]["minnow"]["price"], m_px)
+        self.assertEqual(v["rows"][0]["dance"]["px"], m_px)
 
-    def test_the_decoy_follows_the_minnow_down_but_never_under_cost(self):
+    def test_a_minnow_that_stays_put_for_two_hours_is_taken(self):
         m_px = round(self.main.price - 0.01, 2)
         self.book_with_minnow(m_px, 20.0, 60)
-        self.b.cycle(self.now + 60, self.positions(), on=True)
-        d1 = self.orders(AL, "SELL", decoy=True)[0]
-        # the minnow re-undercuts the decoy: the decoy steps again
-        m2 = round(d1.price - 0.01, 2)
-        self.book_with_minnow(m2, 20.0, 120)
-        self.b.cycle(self.now + 120, self.positions(), on=True)
-        d2 = self.orders(AL, "SELL", decoy=True)[0]
-        self.assertAlmostEqual(d2.price, round(m2 - 0.01, 2))
-        self.assertNotEqual(d1.id, d2.id)
-        # ...but never under cost (90c): with the bar below cost, a
-        # minnow sitting at 90c can neither be led (89c is under cost)
-        # nor taken (over the bar) — the decoy stays where it was
-        self.b.set_max(0.85)
-        self.book_with_minnow(0.90, 20.0, 180)
-        self.b.cycle(self.now + 180, self.positions(), on=True)
-        self.assertEqual(self.orders(AL, "SELL", decoy=True)[0].id, d2.id)
-        self.assertEqual([o for o in self.r.fam.orders.values()
-                          if o.side == "BUY"], [])
-
-    def test_at_or_under_the_bar_the_minnow_is_taken_and_joins_the_bond(self):
-        self.book_with_minnow(0.95, 20.0, 60)         # led down to the bar
-        out = self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.cyc(60)
+        self.book_with_minnow(m_px, 20.0, 60 + 3600)          # still there
+        self.cyc(60 + 3600)
+        self.assertEqual([o for o in self.r.fam.orders.values() if o.side == "BUY"], [])
+        self.book_with_minnow(m_px, 20.0, 60 + 7200 + 5)      # two hours on
+        out = self.cyc(60 + 7200 + 5)
         takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
         self.assertEqual(len(takes), 1)
-        self.assertEqual((takes[0].purpose, takes[0].intent), ("bond", BUY_LONG))
-        self.assertAlmostEqual(takes[0].price, 0.95)   # AT the minnow's price
-        self.assertEqual(takes[0].qty, 20.0)           # never more than it shows
+        self.assertAlmostEqual(takes[0].price, m_px)           # at ITS price
+        self.assertEqual(takes[0].qty, 20.0)
         self.assertTrue(out["placed"][0]["taken"])
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])   # decoy killed
+        self.assertNotIn(AL, self.b.dance)
         self.assertEqual(self.b.held(AL, "YES"), 1520.0)
-        self.assertAlmostEqual(self.b.budget, 1000.0 - 19.0, places=2)
+
+    def test_each_move_restarts_the_clock_and_the_decoy_follows(self):
+        m1 = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m1, 20.0, 60)
+        self.cyc(60)
+        m2 = round(m1 - 0.01, 2)
+        self.book_with_minnow(m2, 20.0, 60 + 5400)              # moved at 1.5h
+        self.cyc(60 + 5400)
+        d = self.orders(AL, "SELL", decoy=True)
+        self.assertEqual(len(d), 1)
+        self.assertAlmostEqual(d[0].price, m2)
+        self.assertEqual(self.b.dance[AL]["moves"], 1)
+        # 1.5h after the FIRST join is not two hours after the second
+        self.book_with_minnow(m2, 20.0, 60 + 7300)
+        self.cyc(60 + 7300)
+        self.assertEqual([o for o in self.r.fam.orders.values() if o.side == "BUY"], [])
+
+    def test_a_fourth_move_is_taken_at_once(self):
+        px = round(self.main.price - 0.01, 2)
+        t = 60
+        for i in range(4):                                     # join, then 3 moves
+            self.book_with_minnow(round(px - 0.01 * i, 2), 20.0, t)
+            self.cyc(t)
+            t += 600
+        self.assertEqual(self.b.dance[AL]["moves"], 3)
+        self.assertEqual([o for o in self.r.fam.orders.values() if o.side == "BUY"], [])
+        self.book_with_minnow(round(px - 0.04, 2), 20.0, t)   # the fourth move
+        self.cyc(t)
+        takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
+        self.assertEqual(len(takes), 1)
+        self.assertAlmostEqual(takes[0].price, round(px - 0.04, 2))
+
+    def test_reaching_the_far_touch_is_taken_at_once(self):
+        # a minnow one tick over the best bid has nowhere left to go
+        self.book_with_minnow(0.95, 20.0, 60, bid=0.94)
+        self.cyc(60)
+        takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
+        self.assertEqual(len(takes), 1)
+        self.assertAlmostEqual(takes[0].price, 0.95)
+
+    def test_under_our_cost_is_taken_at_once_and_never_joined(self):
+        self.book_with_minnow(0.89, 20.0, 60)                  # cost is 90c
+        self.cyc(60)
+        takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
+        self.assertEqual(len(takes), 1)
+        self.assertAlmostEqual(takes[0].price, 0.89)
         self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
-        self.assertEqual(self.pings, [])               # under $100 so far
 
     def test_a_note_only_after_a_hundred_dollars(self):
         for i in range(6):
-            self.book_with_minnow(0.95, 20.0, 60 * (i + 1))
-            self.b.cycle(self.now + 60 * (i + 1), self.positions(), on=True)
-        self.assertEqual(len(self.pings), 1)           # 6 x $19 = $114
-        self.assertIn("$114.00", self.pings[0][1])
+            self.book_with_minnow(0.89, 20.0, 60 * (i + 1))
+            self.cyc(60 * (i + 1))
+        self.assertEqual(len(self.pings), 1)                   # 6 x $17.80 = $106.80
+        self.assertIn("$106.80", self.pings[0][1])
         self.assertAlmostEqual(self.b.unpinged, 0.0)
 
     def test_no_minnow_means_no_decoy_and_a_stale_decoy_is_pulled(self):
         m_px = round(self.main.price - 0.01, 2)
         self.book_with_minnow(m_px, 20.0, 60)
-        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.cyc(60)
         self.assertEqual(len(self.orders(AL, "SELL", decoy=True)), 1)
-        self.book_with_minnow(m_px, 0.0, 120)          # the minnow left
-        self.b.cycle(self.now + 120, self.positions(), on=True)
+        self.book_with_minnow(m_px, 0.0, 120)                  # the minnow left
+        self.cyc(120)
         self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        self.assertNotIn(AL, self.b.dance)
 
-    def test_a_wall_in_front_is_not_a_minnow(self):
-        self.book_with_minnow(round(self.main.price - 0.01, 2), 5000.0, 60)
-        self.b.cycle(self.now + 60, self.positions(), on=True)
+    def test_more_than_25_shares_in_front_is_not_a_minnow(self):
+        self.book_with_minnow(round(self.main.price - 0.01, 2), 26.0, 60)
+        self.cyc(60)
         self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        self.book_with_minnow(round(self.main.price - 0.01, 2), 25.0, 120)
+        self.cyc(120)
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=True)), 1)
 
 
 class TestEntryAndSales(Base):
