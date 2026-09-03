@@ -931,6 +931,9 @@ function render(d){
  var rest=rows.filter(function(r){return !(r.qty>0.005);});
  if(held.length)bLiveOpen();else bLiveShut();
  var live=window._bLiveAt&&(Date.now()-window._bLiveAt)<15000;
+ var eh=b.earned||{};
+ out+='<div class="card"><div class="hero">'+usd(eh.invested||0)+'<span class="u"> in bonds</span></div>'
+  +'<div class="sub"><b>'+(eh.return_pct==null?'—':bPct(eh.return_pct))+' return to date</b> = '+usd(eh.total||0)+' earned on '+usd(eh.deployed||0)+' put in'+(eh.days>=1?' over '+Math.round(eh.days)+' day'+(Math.round(eh.days)===1?'':'s'):'')+(eh.annual_pct!=null?' ≈ '+bPct(eh.annual_pct)+' a year':'')+'</div></div>';
  out+='<div class="card"><b>Your bonds</b> '+(held.length?(live?'<span class="ok" style="font-size:12px">● LIVE</span>':'<span class="muted" style="font-size:12px">live line opening…</span>'):'')+' <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
  if(!held.length)out+='<div class="muted">None yet. Open a market below and tap Enter.</div>';
  held.forEach(function(r){out+=bRow(r,d,b,sw,true);});
