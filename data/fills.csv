@@ -5212,3 +5212,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788474725.3,cfb,aachc-cfb-wins-2026-11-28-ore-9pt5wins,BUY,0.01,0.8,hand,,0.45,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C4MWT5QB8GNE
 1788474725.3,cfb,aachc-cfb-wins-2026-11-28-frest-6pt5wins,SELL,1,0.53,hand,,1.92,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C4KSYAJNAGNK
 1788474725.3,cfb,aachc-cfb-wins-2026-11-28-ucf-4pt5wins,BUY,0.01,0.83,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C4P65VR82GNC
+1788474830.6,politics,enwc-uspres-nom-rep-2028-dontrujr,SELL,10,0.05,sell,0,0,,5,10,0.341,0.05,0.07,0.02,40,taker dump — sold into the bid (the carved exception),C98RQ3PZGMVF
+1788476224.3,politics,scc-senate-gop-2026-11-03-52,SELL,0.34,0.11,backfill,,8.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C920RC5K8MVR
+1788476229.4,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,24.99,0.04,backfill,,2.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C96R89CRTMVR
+1788476231.6,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,7.01,0.03,backfill,,8.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C91YTYWR6MVP
+1788476281.0,politics,scc-senate-gop-2026-11-03-52,SELL,6,0.11,earn,2.4305,8.25,0.095975,7,12,0.167,0.09,0.11,-0.014,-6,2 ticks in front of the touch — we would hold 57% of the ask side,C920RC5K8MVR
+1788476281.0,politics,ussewc-usse-sc-2026-11-03-dem,SELL,3,0.17,earn,5.2083,0.56,0.07615,7,12,0.331,0.15,0.17,-0.0939,-3,2 ticks in front of the touch — we would hold 99% of the ask side,C98M9Y32AMVR
+1788476341.0,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,1.6,0.04,manual,0.0298,17.6,0.0018,5,9,0.632,0.03,0.09,0.0382,-3.4,the owner's own order — the engine leaves it alone,C8SY2CNF4MVR
+1788477241.0,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,sell,0,0,0.989475,95,99,0.385,0.96,0.97,0.0295,0,taker dump — sold into the bid (the carved exception),C99AXVRQJMW0
+1788477721.0,politics,ewc-usse-tx-2026-11-03-rep,SELL,20,0.52,earn,0.1654,7.87,0.383525,47,52,0.426,0.51,0.52,-0.1365,-20,at the touch — a fill here is 10 ticks inside value (Silver + evidence),C92PK8TSCMVZ
+1788478201.1,politics,ussewc-usse-tn-2026-11-03-rep,BUY,2,0.96,bond,0,0,0.998625,92,97,0.605,0.9,0.99,-0.0386,2,bond: took 2 YES at 96c — it was in the way of our resting order,C99M3QGHPMVG
+1788478355.9,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,148,0.97,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C99MPTJJTMW0
+1788478381.1,politics,ewc-usgub-az-2026-11-03-dem,BUY,-1,0.87,fix,0.0743,24.31,0.946975,87,91,0.371,0.85,0.87,-0.077,10,size trimmed by 1 to the exchange's count (order C8EJCJ070MVF),C8EJCJ070MVF
+1788478381.1,politics,ewc-usgub-az-2026-11-03-dem,BUY,-2,0.87,fix,,24.3,,,,,,,,,size trimmed by 2 to the exchange's count (order C8EJCJ070MVF),C8EJCJ070MVF
+1788478381.1,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,void,0,0,0.989475,95,99,0.39,0.96,0.97,0.0295,0,voided: the exchange has no trade for order C98ERK74MMVK — the row of 09-03 22:1,C98ERK74MMVK
+1788478381.1,politics,scc-senate-gop-2026-11-03-52,SELL,0.34,0.11,backfill,,8.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C920RC5K8MVR
+1788478381.1,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,24.99,0.04,backfill,,2.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C96R89CRTMVR
+1788478381.1,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,7.01,0.03,backfill,,8.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C91YTYWR6MVP
+1788478381.1,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,148,0.97,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C99MPTJJTMW0
