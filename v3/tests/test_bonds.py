@@ -184,7 +184,7 @@ class TestTheMoney(Base):
         self.b.cycle(self.now, self.positions(), on=False)
         self.assertEqual(self.r.exchange.live, {})
 
-    def test_a_held_yes_bond_gets_one_ask_at_the_touch_and_keeps_it(self):
+    def test_a_held_yes_bond_gets_one_ask_and_keeps_it(self):
         self.b.approve(AL, self.now)
         self.hold(AL, 1500.0, 0.98)
         self.b.cycle(self.now, self.positions(), on=True)
@@ -192,6 +192,8 @@ class TestTheMoney(Base):
         self.assertEqual(len(asks), 1)
         self.assertEqual((asks[0].purpose, asks[0].intent), ("bond", SELL_LONG))
         self.assertEqual(asks[0].qty, 1500.0)
+        # the fixture book has nothing on the grid behind the 99c touch
+        # (the wall is at 99.9c), so the ask joins it
         self.assertAlmostEqual(asks[0].price, 0.99)
         # minnows undercut to 98c: we are patient, the ask stays put
         self.r.cache.put(AL, yes_book(self.now + 700, bid=0.97, ask=0.98))
@@ -200,6 +202,80 @@ class TestTheMoney(Base):
         asks = self.orders(AL, "SELL")
         self.assertEqual(len(asks), 1)
         self.assertAlmostEqual(asks[0].price, 0.99)
+
+    def minnow_book(self, now, minnows=5.0, ask=0.90):
+        # a few rewards-seeking shares at the touch, the qualifying wall
+        # nine ticks back at 99c where it barely weighs: a 1,500-share
+        # lot two ticks behind still holds ~92% of the side's score
+        # (discount 0.2 a tick) and sells far more slowly
+        return Book(bids=((0.88, 50.0), (0.50, 20000.0)),
+                    asks=((ask, minnows), (0.99, 20000.0)),
+                    tick=0.01, fetched_at=now)
+
+    def test_a_big_lot_sits_behind_the_touch_keeping_most_of_the_reward(self):
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, self.minnow_book(self.now))
+        self.hold(AL, 1500.0, 0.89)
+        out = self.b.cycle(self.now, self.positions(), on=True)
+        ask = self.orders(AL, "SELL")[0]
+        self.assertAlmostEqual(ask.price, 0.92)               # two ticks back
+        self.assertEqual(out["placed"][0]["ticks"], 2)
+        slot = self.b.slot[AL]
+        self.assertGreaterEqual(slot["keep"], 0.8)
+        self.assertIn("behind the touch", ask.why)
+        v = self.b.view(self.now, self.positions())
+        self.assertEqual(v["rows"][0]["slot"]["ticks"], 2)
+
+    def test_a_wall_close_behind_the_touch_keeps_the_lot_at_the_touch(self):
+        # 97c touch, the 20,000-share wall at 99.9c: even one tick back
+        # the wall's weight takes a third of the reward, so it joins
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, Book(bids=((0.95, 50.0), (0.50, 20000.0)),
+                                  asks=((0.97, 5.0), (0.999, 20000.0)),
+                                  tick=0.01, fetched_at=self.now))
+        self.hold(AL, 1500.0, 0.96)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertAlmostEqual(self.orders(AL, "SELL")[0].price, 0.97)
+
+    def test_behind_the_touch_never_means_under_cost(self):
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, self.minnow_book(self.now))
+        self.hold(AL, 1500.0, 0.935)          # paid more than the 90c touch
+        self.b.cycle(self.now, self.positions(), on=True)
+        ask = self.orders(AL, "SELL")[0]
+        self.assertGreaterEqual(ask.price, 0.94 - 1e-9)       # cost, up onto the grid
+
+    def test_it_moves_back_only_when_it_has_become_the_touch(self):
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, self.minnow_book(self.now))
+        self.hold(AL, 1500.0, 0.89)
+        self.b.cycle(self.now, self.positions(), on=True)
+        first = self.orders(AL, "SELL")[0]                    # 92c, two back
+        # minnows undercut to 89c: three back now — we stay
+        self.r.cache.put(AL, self.minnow_book(self.now + 60, ask=0.89))
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertIn(first.id, self.r.fam.orders)
+        # the minnows fill and leave: our 92c IS the touch now, the
+        # place a bond sells fastest — the cooldown holds it a while...
+        alone = Book(bids=((0.88, 50.0), (0.50, 20000.0)),
+                     asks=((0.92, 1500.0), (0.99, 20000.0)),
+                     tick=0.01, fetched_at=self.now + 120)
+        self.r.cache.put(AL, alone)
+        self.b.cycle(self.now + 120, self.positions(), on=True)
+        self.assertIn(first.id, self.r.fam.orders)
+        # ...then it moves back to the farthest slot that keeps 80% of
+        # the reward against the wall, and no further
+        alone2 = Book(bids=((0.88, 50.0), (0.50, 20000.0)),
+                      asks=((0.92, 1500.0), (0.99, 20000.0)),
+                      tick=0.01, fetched_at=self.now + 2000)
+        self.r.cache.put(AL, alone2)
+        self.b.cycle(self.now + 2000, self.positions(), on=True)
+        asks = self.orders(AL, "SELL")
+        self.assertEqual(len(asks), 1)
+        self.assertNotEqual(asks[0].id, first.id)
+        self.assertAlmostEqual(asks[0].price, 0.96)
+        self.assertIn("moved back", asks[0].why)
+        self.assertGreaterEqual(self.b.slot[AL]["keep"], 0.8)
 
     def test_the_ask_never_rests_under_cost(self):
         self.b.approve(AL, self.now)
