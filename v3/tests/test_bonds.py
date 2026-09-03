@@ -1673,3 +1673,33 @@ class TestBait(Base):
         self.assertEqual(self.b._bait_orders(ALD), [])
         self.assertIn("nobody followed", self.b.bait[ALD]["note"])
         self.assertTrue(self.b.pull_bait(ALD)["ok"] is False)     # nothing left to pull
+
+
+class TestTheHeadline(Base):
+    """Owner, 2026-09-03: "Give me a top line number at the top for all
+    the bonds. The amount invested and the percentage return to date.\""""
+
+    def test_invested_and_return_to_date(self):
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.b._book_lot(AL, "YES", 100.0, 90.0, ref="T1", fee=0.5)      # $90.50 in, fees in
+        self.b.fill_book["T1"] = {"slug": AL, "side": "YES", "qty": 100.0, "px": 0.90,
+                                  "fee": 0.5, "ts": self.now - 10 * 86400}
+        e = self.b._earned()
+        self.assertEqual(e["invested"], 90.5)
+        self.assertEqual(e["deployed"], 90.5)
+        self.assertEqual(e["return_pct"], 0.0)
+        self.assertEqual(round(e["days"]), 10)
+        # rewards accrue and a sale of 40 at 95c takes profit
+        self.b.accrued["2026-09-03"] = 1.81
+        self.b.realized = round(40 * (0.95 - 0.905), 4)                  # 1.80
+        self.b.sold_usd = 40 * 0.95
+        self.b._unbook_lot(AL, "YES", 40.0)
+        e = self.b._earned()
+        self.assertAlmostEqual(e["invested"], 60 * 0.905, places=2)       # what is still in
+        self.assertAlmostEqual(e["deployed"], 90.5, places=2)             # everything put in
+        self.assertAlmostEqual(e["total"], 3.61, places=2)
+        self.assertAlmostEqual(e["return_pct"], 3.61 / 90.5, places=4)
+        self.assertAlmostEqual(e["annual_pct"], 3.61 / 90.5 * 365 / 10, places=3)
+        v = self.b.view(self.now)
+        self.assertEqual(v["earned"]["invested"], e["invested"])

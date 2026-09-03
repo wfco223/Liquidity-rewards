@@ -512,12 +512,32 @@ class Bonds:
             del self.accrued[d]
 
     def _earned(self) -> dict:
+        """The headline (owner, 2026-09-03: "the amount invested and the
+        percentage return to date"): what is in bonds now at cost, and
+        everything earned — profit on sales plus the rewards the bond
+        orders measured — over everything ever put in (what is held
+        plus what the sold shares had cost)."""
         rewards = sum(self.accrued.values())
-        return {"total": round(self.realized + rewards, 2),
+        total = self.realized + rewards
+        invested = sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
+                       for l in self.lots.values())
+        sold_cost = max(self.sold_usd - self.realized, 0.0)
+        deployed = invested + sold_cost
+        first = [float(f.get("ts") or 0.0) for f in self.fill_book.values()
+                 if float(f.get("qty") or 0.0) > 0] + list(self.lot_ts.values())
+        since = min([t for t in first if t > 0] or [0.0])
+        days = (self._clock() - since) / 86400.0 if since else 0.0
+        return {"total": round(total, 2),
                 "sales": round(self.realized, 2),
                 "sold_usd": round(self.sold_usd, 2),
                 "rewards": round(rewards, 2),
-                "today": round(self.accrued.get(self._day(self._clock()), 0.0), 2)}
+                "today": round(self.accrued.get(self._day(self._clock()), 0.0), 2),
+                "invested": round(invested, 2),
+                "deployed": round(deployed, 2),
+                "return_pct": (round(total / deployed, 4) if deployed > 0.005 else None),
+                "annual_pct": (round(total / deployed * 365.0 / max(days, 1.0), 4)
+                               if deployed > 0.005 and days >= 1.0 else None),
+                "days": round(days, 1)}
 
     def _market_rewards(self, slug: str) -> float:
         return self.accrued_mkt.get(slug, 0.0)
