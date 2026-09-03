@@ -71,7 +71,9 @@ MONEY_MIN_USD = 5.0         # money below this waits
 PING_EVERY_USD = 100.0      # a phone ping per this much bought
 KEEP_FRACTION = 0.6         # the resting slot keeps this much of the best reward
 BEHIND_MAX_TICKS = 8
-MOVE_COOLDOWN_S = 1800.0    # a move back happens at most this often
+MOVE_COOLDOWN_S = 300.0     # an order moves at most this often (owner, 2026-09-03:
+                            # "taking 30 minutes to move out of this clearly bad
+                            # position is too long. Let's say 5 minutes tops")
 DECOY_QTY = 10.0            # the decoy that leads a minnow down
 MINNOW_MAX = 25.0           # a level in front this small is a minnow to lead
 DANCE_WAIT_S = 2 * 3600.0   # after each decoy move, how long the minnow gets to move again
