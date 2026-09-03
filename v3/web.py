@@ -884,7 +884,10 @@ function bCalc(r){
 function bSniper(r,b,sw){
  var main=bExit(r);
  if(!main.length)return '<div class="sub">Sniper: no exit resting'+(sw.on?'':' (bonds switch off)')+'</div>';
- if(!r.front)return '<div class="sub">Sniper: nothing in front of our exit</div>';
+ if(!r.front){
+  if(r.dance&&r.decoy&&r.decoy.length){var cs=r.dance.clear_since;var mins=cs?Math.floor((Date.now()/1000-cs)/60):0;return '<div class="sub">Sniper: decoy holding @ '+pc(r.decoy[0].price)+' · nothing foreign in front for '+mins+' min (comes off after '+Math.round((b.decoy_linger_s||300)/60)+')</div>';}
+  return '<div class="sub">Sniper: nothing in front of our exit</div>';
+ }
  var h='Sniper: '+r.front.qty+' @ '+pc(r.front.price)+' in front';
  if(!r.minnow)return '<div class="sub">'+h+' — too big to lead (over '+(b.minnow_max||25)+')</div>';
  if(r.dance){var snap=(r.dance.since||0)+(b.dance_wait_s||7200);h+=' · decoy joined at '+pc(r.dance.px)+', move '+r.dance.moves+' of 3 · bought at '+when(snap)+' if it stays put';}
