@@ -36,6 +36,7 @@ DEFAULT_BIND = "127.0.0.1"
 LIVE_TICK_S = 1.0
 LIVE_MAX_S = 900.0
 LIVE_MAX_STREAMS = 3
+BONDS_MAX_STREAMS = 2       # bonds pages open at once with a live line
 
 
 def authed(get_header, query_string: str, password: str) -> bool:
@@ -816,23 +817,99 @@ function bPill(s){return '<span class="pill">'+s+' bond</span>';}
 function bOp(op,m,v){var body={op:op,market:m};if(v!=null)body.value=v;window._bNote='';post(body,function(j){
  bSay('<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>');});}
 // typed fields instead of prompt() (owner, 2026-09-03: "Clicking set
-// budget does nothing"). A field keeps its text across the 30s redraw,
-// and holds the redraw while it has focus (the live-card hold in load()).
+// budget does nothing"). A field keeps its text across a redraw, and
+// holds the redraw while it has focus (the live-card hold in load()).
 function bKeep(id){var e=document.getElementById(id);return e&&e.value?e.value:'';}
 function bField(id,val,w){return '<input id="'+id+'" type="number" inputmode="decimal" step="0.01" style="width:'+w+'" value="'+esc(val)+'" onfocus="window._liveOpen=true" onblur="window._liveOpen=false">';}
 function bSay(h){window._bNote=h;var el=document.getElementById('bmsg');if(el)el.innerHTML=h;}
 function bBudget(){var x=parseFloat(bKeep('bbud'));if(!(x>=0)){bSay('<div class="bad">type the budget in dollars first</div>');return;}var f=document.getElementById('bbud');if(f)f.value='';bOp('bonds_budget','-',x);}
 function bAdopt(m){var x=parseFloat(bKeep('bad-'+m));if(!(x>0)){bSay('<div class="bad">how many shares?</div>');return;}bOp('bonds_adopt',m,x);}
 function bEnter(m,px,qty,cost,money){if(confirm('Buy '+qty+' shares out to '+pc(px)+' for about '+usd(cost)+'? Money: '+usd(money)+'.'))bOp('bonds_enter',m,px);}
+// the live line (owner, 2026-09-03: "reserve a websocket for each of the
+// markets I'm in and you can automatically refresh the page if I'm at
+// the top. Hold off if I'm scrolling down"): one stream carries the held
+// markets' rows as their books move; the page redraws only while you
+// are at the top and no field has focus.
+function bLiveOpen(){
+ if(window._bEs)return;
+ var es=new EventSource('/bonds_live?key='+lvKey());
+ window._bEs=es;
+ es.onmessage=function(ev){var j;try{j=JSON.parse(ev.data);}catch(e){return;}
+  if(!j||!j.rows)return;window._bLive=j.rows;window._bLiveAt=Date.now();bLiveApply();};
+}
+function bLiveShut(){if(window._bEs){try{window._bEs.close();}catch(e){}window._bEs=null;}window._bLive=null;}
+function bLiveApply(){
+ var d=window._d;if(!d||!d.bonds||!window._bLive)return;
+ var rows=d.bonds.rows||[];
+ rows.forEach(function(r,i){var l=window._bLive[r.market];if(l)rows[i]=l;});
+ if((window.scrollY||0)>120||window._liveOpen)return;
+ document.getElementById('view').innerHTML=render(d);
+}
+function bCalc(r){
+ var c=r.calc;if(!c)return '<div class="muted">no reward program read for this market yet</div>';
+ var h='';var sideWord=(c.side==='SELL'?'ask':'bid');var pool=c.side_pool;
+ h+='<div class="muted">'+sideWord+' side: '+c.side_size+' shares resting, Target Size '+c.target+' · side pool '+(pool==null?'unconfirmed':usd(pool)+'/day = '+usd(c.pool_day)+' ÷ '+(c.event_n||'?')+' market'+(c.event_n===1?'':'s')+' ÷ 2 sides')+'</div>';
+ var mainEst=0;
+ (c.orders||[]).forEach(function(o){
+  if(!o.decoy)mainEst+=o.est||0;
+  h+='<div>'+(o.decoy?'decoy ':'resting ')+o.qty+' @ '+pc(o.price)+(o.ticks?', '+o.ticks+' tick'+(o.ticks>1?'s':'')+' behind the touch':', at the touch')+': '+(o.qualifies?bPct(o.share)+' of the '+sideWord+' side\'s score × '+(pool==null?'?':usd(pool))+' = <b>'+usd(o.est)+'/day</b>':'<span class="warn">earning nothing</span> ('+(o.share>0?'side under Target Size':'outside the scoring window')+')')+'</div>';
+ });
+ if(!(c.orders||[]).length)h+='<div class="warn">no order of ours resting on the '+sideWord+' side</div>';
+ if(c.touch)h+='<div class="muted">at the touch ('+pc(c.touch.price)+') the lot would score '+bPct(c.touch.share)+' = '+usd(c.touch.est)+'/day'+(mainEst>0&&c.touch.est>0?'; sitting back keeps '+bPct(mainEst/c.touch.est)+' of that and sells slower':'')+'</div>';
+ return h;
+}
+function bSniper(r,b,sw){
+ var main=(r.calc&&r.calc.orders||[]).filter(function(o){return !o.decoy;});
+ if(!main.length)return '<div class="sub">Sniper: no resting order of ours here'+(sw.on?'':' (bonds switch off)')+'</div>';
+ if(!r.front)return '<div class="sub">Sniper: nothing in front of our order</div>';
+ var h='Sniper: '+r.front.qty+' @ '+pc(r.front.price)+' in front';
+ if(!r.minnow)return '<div class="sub">'+h+' — too big to lead (over '+(b.minnow_max||25)+')</div>';
+ if(r.dance){
+  var snap=(r.dance.since||0)+(b.dance_wait_s||7200);
+  h+=' · decoy joined it at '+pc(r.dance.px)+', move '+r.dance.moves+' of 3 · if it stays put, bought at '+when(snap)+'; at once if it moves a 4th time, reaches the touch, or goes under our cost '+pc(r.cost_px);
+ } else h+=(sw.on?' · a decoy joins it next cycle':' · bonds switch off, nothing sent');
+ return '<div class="sub">'+h+'</div>';
+}
+function bLadder(r,b){
+ var lad=r.ladder||[];if(!lad.length)return '';
+ var m=esc(r.market);var last=lad[lad.length-1];
+ var h='<details class="how"><summary>'+(r.bond==='NO'?'bids':'asks')+' others have — '+last.cum_qty+' shares out to '+pc(last.px)+' for '+usd(last.cum_usd)+'</summary><table><tr><th class="r">price</th><th class="r">avail</th><th class="r">total</th><th class="r">cost</th><th></th></tr>';
+ lad.forEach(function(l){h+='<tr><td class="r">'+pc(l.px)+(l.cost!==l.px?' <span class="muted">('+pc(l.cost)+')</span>':'')+'</td><td class="r">'+l.qty+'</td><td class="r">'+l.cum_qty+'</td><td class="r">'+usd(l.cum_usd)+'</td><td><button onclick="bEnter(\''+m+'\','+l.px+','+l.cum_qty+','+l.cum_usd+','+(b.money||0)+')">Enter</button></td></tr>';});
+ return h+'</table></details>';
+}
+function bHead(r,L){return '<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+'</div>';}
+function bLine(r){
+ var line='Silver '+bOdds(r)+' · book '+(r.bid!=null?pc(r.bid):'—')+' / '+(r.ask!=null?pc(r.ask):'—')+(r.stale?' <span class="warn">stale</span>':'');
+ if(r.cost!=null)line+=' · take '+pc(r.cost)+', '+r.size+' avail'+(r.days!=null?' · '+bPct(r['yield'])+' in '+r.days+'d ≈ '+bPct(r.annual)+'/yr':'');
+ else line+=' · nothing to take';
+ return '<div class="sub">'+line+'</div>';
+}
+function bFoot(r){
+ var m=esc(r.market);var h='';
+ if(r.uncounted>0.005)h+='<div class="muted">'+r.uncounted+' more '+r.bond+' here not counted as bond '+bField('bad-'+m,bKeep('bad-'+m)||r.uncounted,'5em')+' <button onclick="bAdopt(\''+m+'\')">Count in</button></div>';
+ h+='<div><button class="off" onclick="if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')">Remove</button></div>';
+ return h;
+}
 function render(d){
  if(d.starting)return bootCard(d);
  var b=d.bonds||{};var sw=((d.switch_view||{}).bonds)||{};var L=d.labels||{};
  var out='';
- var pr=b.proposed||[];
- if(pr.length){out+='<div class="card"><b>New from Silver</b>';
-  pr.forEach(function(p){out+='<div class="sub">'+esc(L[p.market]||p.market)+' '+bPill(p.bond)+' · Silver '+bOdds(p)+' <button onclick="bOp(\'bonds_approve\',\''+esc(p.market)+'\')">Add</button> <button class="off" onclick="bOp(\'bonds_ignore\',\''+esc(p.market)+'\')">Ignore</button></div>';});
-  out+='</div>';}
- out+='<div class="card"><b>Bonds</b> <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
+ var rows=b.rows||[];
+ var held=rows.filter(function(r){return r.qty>0.005;});
+ var rest=rows.filter(function(r){return !(r.qty>0.005);});
+ if(held.length)bLiveOpen();else bLiveShut();
+ var live=window._bLiveAt&&(Date.now()-window._bLiveAt)<15000;
+ out+='<div class="card"><b>Your bonds</b> '+(held.length?(live?'<span class="ok" style="font-size:12px">● LIVE</span>':'<span class="muted" style="font-size:12px">live line opening…</span>'):'')+' <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
+ if(!held.length)out+='<div class="muted">None yet. Enter from a ladder below, or count shares in.</div>';
+ held.forEach(function(r){
+  out+='<div style="margin:8px 0;border-top:1px solid #2c3527;padding-top:6px">';
+  out+=bHead(r,L);
+  out+='<div class="sub"><b>Held '+r.qty+' @ '+pc(r.cost_px)+'</b>'+(r.rewards?' · rewards so far '+usd(r.rewards):'')+'</div>';
+  out+=bLine(r)+bCalc(r)+bSniper(r,b,sw)+bLadder(r,b)+bFoot(r);
+  out+='</div>';
+ });
+ out+='</div>';
+ out+='<div class="card"><b>Bonds</b>';
  var tx=b.tax||{};var tax=b.budget_mode==='tax';
  out+='<div class="sub">Money <b>'+usd(b.money||0)+'</b> = budget '+usd(b.budget||0)+' + proceeds '+usd(b.cash||0)+' · held at cost '+usd(b.held_cost||0)+' · Silver checked '+(b.scan_day?esc(b.scan_day):'never')+'</div>';
  out+='<div class="sub">Budget '+(tax?'= taxes owed '+usd(tx.owed||0)+' ('+Math.round((tx.rate||0.22)*100)+'% of '+usd(tx.gross||0)+' paid)':'fixed by you')+(b.spent?' − '+usd(b.spent)+' spent':'')+'</div>';
@@ -847,36 +924,20 @@ function render(d){
   +'<div>Held bonds get one resting order, as far back as it can sit keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under cost.</div>'
   +'<div>A small order (25 or fewer) in front of it gets a decoy joining it. Sits two hours, moves over three times, reaches the touch or goes under cost: bought, joins the bond.</div>'
   +'<div>Sale proceeds go back into Money. A phone note every $100 bought.</div>'
-  +'<div>Rewards are paid per market and the engine quotes bond markets too, so a day\'s payment is split between the bond order and the engine\'s orders by their measured share of what all our orders there earn. An estimate.</div></details>';
+  +'<div>Rewards are paid per market and the engine quotes bond markets too, so a day\'s payment is split between the bond order and the engine\'s orders by their measured share of what all our orders there earn. An estimate.</div>'
+  +'<div>Your markets hold seats on the exchange stream; this page redraws as their books move while you are at the top, and holds still while you are scrolled down.</div></details>';
  out+='</div>';
- var rows=b.rows||[];
+ var pr=b.proposed||[];
+ if(pr.length){out+='<div class="card"><b>New from Silver</b>';
+  pr.forEach(function(p){out+='<div class="sub">'+esc(L[p.market]||p.market)+' '+bPill(p.bond)+' · Silver '+bOdds(p)+' <button onclick="bOp(\'bonds_approve\',\''+esc(p.market)+'\')">Add</button> <button class="off" onclick="bOp(\'bonds_ignore\',\''+esc(p.market)+'\')">Ignore</button></div>';});
+  out+='</div>';}
  out+='<div class="card"><b>Bond list</b> <span class="muted">cheapest first</span>';
- if(!rows.length)out+='<div class="muted">Empty.</div>';
- rows.forEach(function(r){
-  var m=esc(r.market);
+ if(!rest.length)out+='<div class="muted">Empty.</div>';
+ rest.forEach(function(r){
   out+='<div style="margin:8px 0;border-top:1px solid #2c3527;padding-top:6px">';
-  out+='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+'</div>';
-  var line='Silver '+bOdds(r)+' · book '+(r.bid!=null?pc(r.bid):'—')+' / '+(r.ask!=null?pc(r.ask):'—')+(r.stale?' <span class="warn">stale</span>':'');
-  if(r.cost!=null)line+=' · take '+pc(r.cost)+', '+r.size+' avail'+(r.days!=null?' · '+bPct(r['yield'])+' in '+r.days+'d ≈ '+bPct(r.annual)+'/yr':'');
-  else line+=' · nothing to take';
-  out+='<div class="sub">'+line+'</div>';
+  out+=bHead(r,L)+bLine(r);
   if(r.earn)out+='<div class="sub">Resting at the touch: '+usd(r.earn.est_day)+'/day'+(r.earn.qualifies?'':' <span class="warn">(side under Target Size, pays nobody)</span>')+(r.rewards?' · rewards so far '+usd(r.rewards):'')+'</div>';
-  if(r.qty>0.005){
-   var h='<b>Held '+r.qty+' @ '+pc(r.cost_px)+'</b>';
-   if(r.earn_order&&r.earn_order.length)h+=' · resting '+r.earn_order.map(function(o){return o.qty+' @ '+pc(o.price)+(o.est?' ~'+usd(o.est)+'/day':'');}).join(', ')+(r.slot?(r.slot.ticks?' ('+r.slot.ticks+' back, '+Math.round((r.slot.keep||1)*100)+'%)':' (at touch)'):'');
-   else h+=' · <span class="warn">no order resting</span>'+(sw.on?'':' (switch off)');
-   out+='<div class="sub">'+h+'</div>';
-   if(r.minnow)out+='<div class="sub">In front: '+r.minnow.qty+' @ '+pc(r.minnow.price)+(r.dance?' · decoy @ '+pc(r.dance.px)+', move '+r.dance.moves+'/3, since '+when(r.dance.since):(r.decoy&&r.decoy.length?' · decoy @ '+r.decoy.map(function(o){return pc(o.price);}).join(', '):''))+'</div>';
-  }
-  var lad=r.ladder||[];
-  if(lad.length){
-   var last=lad[lad.length-1];
-   out+='<details class="how"><summary>'+(r.bond==='NO'?'bids':'asks')+' others have — '+last.cum_qty+' shares out to '+pc(last.px)+' for '+usd(last.cum_usd)+'</summary><table><tr><th class="r">price</th><th class="r">avail</th><th class="r">total</th><th class="r">cost</th><th></th></tr>';
-   lad.forEach(function(l){out+='<tr><td class="r">'+pc(l.px)+(l.cost!==l.px?' <span class="muted">('+pc(l.cost)+')</span>':'')+'</td><td class="r">'+l.qty+'</td><td class="r">'+l.cum_qty+'</td><td class="r">'+usd(l.cum_usd)+'</td><td><button onclick="bEnter(\''+m+'\','+l.px+','+l.cum_qty+','+l.cum_usd+','+(b.money||0)+')">Enter</button></td></tr>';});
-   out+='</table></details>';
-  }
-  if(r.uncounted>0.005)out+='<div class="muted">'+r.uncounted+' more '+r.bond+' here not counted as bond '+bField('bad-'+m,bKeep('bad-'+m)||r.uncounted,'5em')+' <button onclick="bAdopt(\''+m+'\')">Count in</button></div>';
-  out+='<div><button class="off" onclick="if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')">Remove</button></div>';
+  out+=bLadder(r,b)+bFoot(r);
   out+='</div>';
  });
  out+='</div>';
@@ -1657,6 +1718,43 @@ class WebServer:
             with self._live_lock:
                 self._live_count -= 1
 
+    def stream_bonds(self, wfile) -> None:
+        """The bonds page's live line (owner, 2026-09-03): the rows of
+        the markets he is in, pushed whenever they change. The books
+        come from the cache the exchange's stream feeds — those markets
+        hold seats on it — so a tick costs no REST read."""
+        with self._live_lock:
+            if getattr(self, "_bonds_count", 0) >= BONDS_MAX_STREAMS:
+                try:
+                    wfile.write(b'data: {"ok": false, "note": "too many '
+                                b'bonds pages open at once"}\n\n')
+                    wfile.flush()
+                except OSError:
+                    pass
+                return
+            self._bonds_count = getattr(self, "_bonds_count", 0) + 1
+        try:
+            t0 = time.time()
+            last = None
+            while time.time() - t0 < LIVE_MAX_S:
+                try:
+                    body = json.dumps({"ok": True, "rows": self.monitor.bonds_live()})
+                except Exception as e:  # noqa: BLE001 — tell the phone, keep going
+                    body = json.dumps({"ok": False,
+                                       "note": f"{type(e).__name__}: {e}"})
+                if body != last:
+                    wfile.write(b"data: " + body.encode() + b"\n\n")
+                    last = body
+                else:
+                    wfile.write(b": hb\n\n")
+                wfile.flush()
+                time.sleep(LIVE_TICK_S)
+        except (BrokenPipeError, ConnectionResetError, OSError):
+            pass
+        finally:
+            with self._live_lock:
+                self._bonds_count -= 1
+
     def data_payload(self) -> dict:
         # boot-time fallback only: once the first cycle completes, the
         # handler serves monitor.payload_json — bytes frozen on the
@@ -1765,6 +1863,16 @@ class WebServer:
                     self.send_header("Cache-Control", "no-store")
                     self.end_headers()
                     server.stream_live(slug, self.wfile)
+                    return
+                if route == "/bonds_live":
+                    if not authed(self.headers.get, u.query, server.password):
+                        self._send(401, "application/json", b'{"error":"key required"}')
+                        return
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/event-stream")
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    server.stream_bonds(self.wfile)
                     return
                 if route == "/book.json":
                     if not authed(self.headers.get, u.query, server.password):
