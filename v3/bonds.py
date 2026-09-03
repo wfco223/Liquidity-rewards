@@ -23,8 +23,14 @@ And the corrections, same day:
   touches a bond order, and never rests its own exits on bond stock.
 - "The order could be very large >1000 shares. So we can afford to be
   patient... Minnows may move down to try and get more rewards, but
-  then I can just snap them up." — so a bond ask is rested once and
-  left alone; nothing chases the touch.
+  then I can just snap them up." And: "sit somewhere in between where
+  we are earning rewards, but not selling quickly. Behind the touch
+  may be good if our size can still earn considerable rewards...
+  selling at a loss is never an option." — so a bond's order rests at
+  the farthest slot behind the touch that still keeps most of the
+  reward (a big lot a tick or two back holds most of the side's score
+  against a few minnow shares), never past cost; it never chases
+  forward, and moves back only when it has become the touch itself.
 - "The goal would be to take a resting order for proceeds rather than
   place and potentially have that capital be used elsewhere." — so
   reinvestment LIFTS the touch (the second carved exception to
@@ -57,6 +63,15 @@ PRICE_CAP = 0.995           # never pay more than this per dollar of bond
 SNIPE_MAX_DEFAULT = 0.985   # the owner's bar for a "great opportunity",
                             # per dollar of bond; he sets it from the page
 REINVEST_MIN_USD = 5.0      # money below this waits
+# Where a held bond's resting order sits (owner, 2026-09-02: "sit
+# somewhere in between where we are earning rewards, but not selling
+# quickly. Behind the touch may be good if our size can still earn
+# considerable rewards... selling at a loss is never an option"): the
+# farthest slot behind the touch that still keeps KEEP_FRACTION of the
+# best reward on offer, never past cost, looked for BEHIND_MAX_TICKS deep.
+KEEP_FRACTION = 0.8
+BEHIND_MAX_TICKS = 8
+MOVE_COOLDOWN_S = 1800.0    # a move back happens at most this often
 SCAN_HOUR_UTC = 7           # 3 am Eastern: the nightly Silver check
 LOG_KEEP = 200
 DROPPED_KEEP = 30
@@ -98,6 +113,8 @@ class Bonds:
         self.budget: float = 0.0
         self.snipe_max: float = SNIPE_MAX_DEFAULT
         self.spent: float = 0.0
+        self.moved_at: dict[str, float] = {}
+        self.slot: dict[str, dict] = {}       # slug -> where the order sits and why
         self.approved: dict[str, dict] = {}   # slug -> {added, odds, side}
         self.proposed: dict[str, dict] = {}   # slug -> {odds, side, since}
         self.ignored: dict[str, float] = {}   # slug -> ts
@@ -346,39 +363,132 @@ class Bonds:
         now_q = sum(o.qty for o in self._orders(slug, bs))
         return min(max(seen - now_q, 0.0), gone)
 
+    def _best_slot(self, slug: str, side: str, book, qty: float,
+                   bound: float, start: float | None = None):
+        """Where a bond of `qty` shares should rest: the farthest slot
+        behind the touch that still keeps KEEP_FRACTION of the best
+        reward on offer, never past `bound` — cost rounded onto the grid
+        for a YES ask, the sale price for a NO cover bid. A big lot a
+        tick or two back still holds most of the side's score against a
+        few minnow shares at the touch, and sells far more slowly.
+        Returns (price, est_day, ticks_behind, keep) or None."""
+        from .scoring import estimate_join
+        prog = self.fam.terms.get(slug)
+        tick = book.tick or 0.01
+        bs, _ = self.earn(side)
+        # our own bond orders leave the book before scoring — they are
+        # not competition for the slot we are choosing for them
+        raw = list(book.side(bs))
+        for o in self._orders(slug, bs):
+            raw = [(p, (q - o.qty) if abs(p - o.price) < tick / 2 else q)
+                   for p, q in raw]
+        levels = [(p, q) for p, q in raw if q > 1e-9]
+        pool = self.fam._side_pool(slug, prog) if prog is not None else None
+        # "behind" is measured from the real touch — ours included when
+        # we are it (the move-back case passes our own price)
+        own = book.side(bs)
+        touch = start if start is not None else (own[0][0] if own else None)
+        if side == "YES":
+            origin = max(touch if touch is not None else bound, bound)
+            cands = [self._snap_up(origin + i * tick, tick)
+                     for i in range(BEHIND_MAX_TICKS + 1)]
+            cands = [p for p in cands if p <= 0.999
+                     and not (book.bids and p <= book.bids[0][0] + 1e-9)]
+        else:
+            origin = min(touch if touch is not None else bound, bound)
+            cands = [self._snap_down(origin - i * tick, tick)
+                     for i in range(BEHIND_MAX_TICKS + 1)]
+            cands = [p for p in cands if p >= 0.001
+                     and not (book.asks and p >= book.asks[0][0] - 1e-9)]
+        cands = list(dict.fromkeys(cands))       # nearest first, no repeats
+        if not cands:
+            return None
+        scored = []
+        for px in cands:
+            est = 0.0
+            if prog is not None and pool:
+                j = estimate_join(bs, levels, tick, float(prog.df),
+                                  float(prog.target), px, qty)
+                est = j.share * pool if (j.qualifies and j.in_window) else 0.0
+            ref = touch if touch is not None else px
+            scored.append((px, est, int(round(abs(px - ref) / tick))))
+        best = max(e for _, e, _ in scored)
+        if best <= 0:
+            px, est, ticks = scored[0]       # nothing pays yet: sit nearest
+            return px, est, ticks, 1.0
+        for px, est, ticks in reversed(scored):   # farthest back first
+            if est >= KEEP_FRACTION * best - 1e-12:
+                return px, est, ticks, est / best
+        px, est, ticks = scored[0]
+        return px, est, ticks, 1.0
+
     def _keep_earning(self, slug: str, side: str, positions: dict,
                       now: float) -> dict | None:
-        """A held bond gets ONE resting order and keeps it. YES: an ask
-        at the touch or at cost, whichever is higher. NO: a cover bid at
-        the touch or at the price the short was sold, whichever is
-        lower. Nothing chases the touch afterwards (owner: "we can
-        afford to be patient")."""
+        """A held bond gets a resting order at its best slot and keeps
+        it. It never chases minnows forward. It moves BACK, on a
+        cooldown, only when it has become the touch itself — the place
+        a bond sells fastest — and a slot behind still keeps the
+        reward. Never past cost, either way."""
         held = self.held(slug, side, positions)
         if held < 1.0:
             return None
         bs, intent = self.earn(side)
-        resting = sum(o.qty for o in self._orders(slug, bs))
-        qty = float(math.floor(held - resting))
-        if qty < 1.0:
-            return None
         book = self.fam.cache.fresh(slug, 120.0, now)
         if book is None:
             return None
         tick = book.tick or 0.01
         px_done = self._yes_px(slug)
         if side == "YES":
-            floor = self._snap_up(px_done, tick) if px_done > 0 else 0.0
-            touch = book.asks[0][0] if book.asks else 0.99
-            want = min(max(touch, floor), 0.999)
-            if book.bids and want <= book.bids[0][0] + 1e-9:
-                want = self._snap_up(book.bids[0][0] + tick, tick)
+            bound = self._snap_up(px_done, tick) if px_done > 0 else 0.0
         else:
-            cap = self._snap_down(px_done, tick) if px_done > 0 else 0.999
-            touch = book.bids[0][0] if book.bids else 0.01
-            want = max(min(touch, cap), 0.001)
-            if book.asks and want >= book.asks[0][0] - 1e-9:
-                want = self._snap_down(book.asks[0][0] - tick, tick)
+            bound = self._snap_down(px_done, tick) if px_done > 0 else 0.999
+        mine = self._orders(slug, bs)
+        resting = sum(o.qty for o in mine)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
+        if mine:
+            cur = mine[0]
+            own = book.side(bs)
+            touch = own[0][0] if own else None
+            at_front = touch is not None and (
+                (side == "YES" and cur.price <= touch + 1e-9)
+                or (side == "NO" and cur.price >= touch - 1e-9))
+            if (at_front and now - self.moved_at.get(slug, 0.0)
+                    >= MOVE_COOLDOWN_S):
+                slot = self._best_slot(slug, side, book, cur.qty, bound,
+                                       start=cur.price)
+                if slot and ((side == "YES" and slot[0] > cur.price + tick / 2)
+                             or (side == "NO" and slot[0] < cur.price - tick / 2)):
+                    r = self.fam.desk.reprice(
+                        {"id": cur.id, "market": slug, "side": bs,
+                         "price": cur.price, "size": cur.qty,
+                         "intent": cur.intent}, slot[0], initiator="owner")
+                    if r.ok and r.order_id:
+                        if not r.two_orders:
+                            self.fam.orders.pop(cur.id, None)
+                        self.fam.orders[r.order_id] = FamilyOrder(
+                            id=r.order_id, market=slug, side=bs,
+                            price=(r.price or slot[0]), qty=cur.qty,
+                            intent=cur.intent, placed_ts=now, purpose="bond",
+                            why="bond: moved back behind the touch — "
+                                "still earning, selling slower")
+                        self.moved_at[slug] = now
+                        self.slot[slug] = {"px": (r.price or slot[0]),
+                                           "ticks": slot[2],
+                                           "keep": round(slot[3], 3),
+                                           "est": round(slot[1], 4)}
+                        self._log(event="earn_moved_back", market=slug,
+                                  side=side, price=(r.price or slot[0]),
+                                  qty=cur.qty, ticks=slot[2])
+                        return {"market": slug, "bond": side, "side": bs,
+                                "price": (r.price or slot[0]), "qty": cur.qty,
+                                "moved": True}
+        qty = float(math.floor(held - resting))
+        if qty < 1.0:
+            return None
+        slot = self._best_slot(slug, side, book, qty, bound)
+        if slot is None:
+            return None
+        want, est, ticks, keep = slot
         r = self.fam.desk.place_resting(slug, bs, want, qty, net_position=pos,
                                         initiator="owner", intent=intent)
         if not (r.ok and r.order_id):
@@ -387,12 +497,17 @@ class Bonds:
         self.fam.orders[r.order_id] = FamilyOrder(
             id=r.order_id, market=slug, side=bs, price=(r.price or want),
             qty=qty, intent=r.intent or intent, placed_ts=now, purpose="bond",
-            why=("bond: the resting ask earns while it waits" if side == "YES"
-                 else "bond: the resting cover bid earns while it waits"))
+            why=(f"bond: resting {ticks} tick{'s' if ticks != 1 else ''} "
+                 f"behind the touch, keeping {keep:.0%} of the best reward"
+                 if ticks else "bond: resting at the touch — it earns while "
+                               "it waits"))
+        self.moved_at[slug] = now
+        self.slot[slug] = {"px": (r.price or want), "ticks": ticks,
+                           "keep": round(keep, 3), "est": round(est, 4)}
         self._log(event="earn_rested", market=slug, side=side,
-                  price=(r.price or want), qty=qty)
+                  price=(r.price or want), qty=qty, ticks=ticks)
         return {"market": slug, "bond": side, "side": bs,
-                "price": (r.price or want), "qty": qty}
+                "price": (r.price or want), "qty": qty, "ticks": ticks}
 
     def _take_price(self, side: str, book) -> tuple[float | None, float, float]:
         """(YES price to take, bond cost per dollar, size showing) for
@@ -528,6 +643,7 @@ class Bonds:
                                  for o in self._orders(slug, self.entry(side)[0])]
                                 or None),
                 "stale": (book is None or now - book.fetched_at > 600.0),
+                "slot": self.slot.get(slug),
             })
         rows.sort(key=lambda r: (r["cost"] is None, r["cost"] or 1.0))
         proposed = [{"market": s, "odds": m.get("odds"), "bond": m.get("side"),
@@ -561,6 +677,7 @@ class Bonds:
                 "pos_seen": self.pos_seen, "side_seen": self.side_seen,
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
+                "slot": self.slot, "moved_at": self.moved_at,
                 "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -577,5 +694,7 @@ class Bonds:
         self.scan_day = str(d.get("scan_day") or "")
         self._earn_seen = {str(k): float(v) for k, v in (d.get("earn_seen") or {}).items()}
         self._earn_px = {str(k): float(v) for k, v in (d.get("earn_px") or {}).items()}
+        self.slot = {str(k): dict(v) for k, v in (d.get("slot") or {}).items()}
+        self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
         self.log = list(d.get("log") or [])
         self._mark_engine()
