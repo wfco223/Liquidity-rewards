@@ -856,6 +856,7 @@ function bCalc(r){
  });
  if(!(c.orders||[]).length)h+='<div class="warn">no order of ours resting on the '+sideWord+' side</div>';
  if(c.touch)h+='<div class="muted">at the touch ('+pc(c.touch.price)+') the lot would score '+bPct(c.touch.share)+' = '+usd(c.touch.est)+'/day'+(mainEst>0&&c.touch.est>0?'; sitting back keeps '+bPct(mainEst/c.touch.est)+' of that and sells slower':'')+'</div>';
+ if(r.slot&&r.slot.reserve>0.5)h+='<div class="muted">'+r.slot.reserve+' shares kept back, not offered: they ride to resolution for the coupon</div>';
  return h;
 }
 function bMoreSet(m){var x=parseFloat(bKeep('bmore-'+m));if(!(x>=0)){bSay('<div class="bad">dollars, please</div>');return;}bOp('bonds_more_cap',m,x);}
