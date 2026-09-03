@@ -813,41 +813,54 @@ BONDS_JS = r"""
 function bPct(x){return x==null?'—':(x*100).toFixed(x>=0.1?0:1)+'%';}
 function bOp(op,m){post({op:op,market:m},function(j){
  var el=document.getElementById('bmsg');if(el)el.innerHTML='<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';});}
+function bSide(s){return s==='NO'?'<span class="pill">NO bond</span>':'<span class="pill">YES bond</span>';}
+function bSet(op,label,cur){
+ var v=prompt(label,cur);if(v==null)return;var x=parseFloat(v);
+ if(!(x>=0)){alert('a number, please');return;}
+ if(op==='bonds_max')x=x/100;
+ post({op:op,market:'-',value:x},function(j){
+  var el=document.getElementById('bmsg');if(el)el.innerHTML='<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';});
+}
 function render(d){
  if(d.starting)return bootCard(d);
  var b=d.bonds||{};var sw=((d.switch_view||{}).bonds)||{};
- var out='<div class="card"><b>Bonds</b> <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
- out+='<div class="hint">A bond market is a politics market Silver puts at '+bPct(b.odds_bar||0.99)+' or better for YES. Bought at 98–99¢ it pays the last cent or two at resolution and, held, it is not buying power — no engine fill can reach it. Bond-like across many; on any one, the price is the market’s own odds that the lot goes to zero. Nothing is added to the list without your tap. With the bonds switch on, every held bond gets a resting ask so it earns while it waits, and sale proceeds are reinvested in the cheapest listed market whose bid side pays.</div>';
- out+='<div id="bmsg"></div>';
- out+='<div class="sub">Proceeds awaiting reinvestment: <b>'+usd(b.cash||0)+'</b>'+(b.committed?' · '+usd(b.committed)+' behind a resting bid':'')+' · held at cost: '+usd(b.held_cost||0)+'</div>';
- if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
- out+='<div><button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
- out+='</div>';
+ var out='';
  var pr=b.proposed||[];
- out+='<div class="card"><b>Proposed by Silver — your call</b>';
- if(!pr.length)out+='<div class="muted">Nothing new. Silver is checked every 10 minutes; a market crossing 99% shows up here and pings the phone.</div>';
+ out+='<div class="card"><b>New from Silver — your call</b>';
+ if(!pr.length)out+='<div class="muted">Nothing new. Silver is checked once a night; a politics market at '+bPct(b.high||0.99)+'+ or '+bPct(b.low||0.01)+' or under for YES shows up here for you to add or ignore.</div>';
  pr.forEach(function(p){
-  out+='<div style="margin:6px 0;border-top:1px solid #2c3527;padding-top:6px"><div class="name">'+esc((d.labels||{})[p.market]||p.market)+'</div><div class="muted"><code>'+esc(p.market)+'</code> · Silver '+bPct(p.odds)+'</div>'
+  out+='<div style="margin:6px 0;border-top:1px solid #2c3527;padding-top:6px"><div class="name">'+esc((d.labels||{})[p.market]||p.market)+' '+bSide(p.bond)+'</div><div class="muted"><code>'+esc(p.market)+'</code> · Silver '+bPct(p.odds)+' for YES</div>'
    +'<div><button onclick="bOp(\'bonds_approve\',\''+esc(p.market)+'\')">Add to bonds</button> <button class="off" onclick="bOp(\'bonds_ignore\',\''+esc(p.market)+'\')">Ignore</button></div></div>';
  });
+ out+='</div>';
+ out+='<div class="card"><b>Bonds</b> <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
+ out+='<div class="hint">A YES bond is a politics market Silver puts at '+bPct(b.high||0.99)+'+ for YES, bought at 98–99¢; a NO bond is one at '+bPct(b.low||0.01)+' or under, bought as NO (a short of YES at 1–2¢). Each pays the last cent or two at resolution and, held, is not buying power — no engine fill can reach it. Bond-like across many; on any one, the price is the market’s own odds that the lot goes to zero. Markets that leave the band drop off the list by themselves. With the bonds switch on, every held bond gets one resting order that earns while it waits and is left alone, and sale proceeds take the touch of the cheapest listed market whose earning side pays — so the cash is a bond again the same minute.</div>';
+ out+='<div id="bmsg"></div>';
+ out+='<div class="sub">Deploy budget: <b>'+usd(b.budget||0)+'</b>'+(b.spent?' ('+usd(b.spent)+' spent since you set it)':'')+' · sale proceeds waiting: '+usd(b.cash||0)+' · held at cost: '+usd(b.held_cost||0)+(b.scan_day?' · last night’s check: '+esc(b.scan_day):' · not checked yet')+'</div>';
+ out+='<div class="sub">Takes anything at <b>'+pc(b.snipe_max||0.985)+'</b> or better per dollar of bond, cheapest listed market first, never more than the touch shows. Each take pings the phone so you can top the account up.</div>';
+ if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
+ out+='<div><button onclick="bSet(\'bonds_budget\',\'Deploy budget in dollars:\',(b.budget||0).toFixed(2))">Set budget</button> <button onclick="bSet(\'bonds_max\',\'Take at this price or better (cents per dollar of bond):\',((b.snipe_max||0.985)*100).toFixed(1))">Set price bar</button> <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
  out+='</div>';
  var rows=b.rows||[];
  out+='<div class="card"><b>Bond list — cheapest first</b>';
  if(!rows.length)out+='<div class="muted">Empty. Add markets from the proposals above.</div>';
  rows.forEach(function(r){
   out+='<div style="margin:8px 0;border-top:1px solid #2c3527;padding-top:6px">';
-  out+='<div class="name">'+esc((d.labels||{})[r.market]||r.market)+(r.flag?' <span class="warn">Silver now '+bPct(r.odds)+'</span>':'')+'</div>';
-  out+='<div class="muted"><code>'+esc(r.market)+'</code> · Silver '+bPct(r.odds)+'</div>';
-  var bk='book '+(r.bid!=null?pc(r.bid):'—')+' / '+(r.ask!=null?pc(r.ask):'—')+(r.ask_size?' ('+r.ask_size+' at the ask)':'')+(r.stale?' <span class="warn">stale</span>':'');
-  out+='<div>'+bk+'</div>';
-  if(r.ask!=null&&r.days!=null)out+='<div>To resolution: <b>'+bPct(r["yield"])+'</b> in '+r.days+' days ≈ '+bPct(r.annual)+' a year, before rewards. The market’s own odds this lot goes to zero: about '+((1-(r.odds||0))*100).toFixed(1)+'%.</div>';
-  if(r.sell){out+='<div>A resting ask at the touch would earn <b>'+usd(r.sell.est_day)+'/day</b>'+(r.sell.qualifies?' ('+(r.sell.share*100).toFixed(1)+'% of the side)':' — <span class="warn">that side is under Target Size and pays nobody right now</span>')+'.</div>';}
-  if(r.qty>0.005){out+='<div><b>Held: '+r.qty+' at '+pc(r.cost_px)+'</b>'+(r.ask_order?' · ask resting '+r.ask_order.map(function(o){return o.qty+' @ '+pc(o.price)+(o.est?' earning ~'+usd(o.est)+'/day':'');}).join(', '):' · <span class="warn">no ask resting</span>'+(sw.on?'':' (bonds switch is off)'))+'</div>';}
-  if(r.bid_order)out+='<div>Reinvesting: bid resting '+r.bid_order.map(function(o){return o.qty+' @ '+pc(o.price);}).join(', ')+'</div>';
+  out+='<div class="name">'+esc((d.labels||{})[r.market]||r.market)+' '+bSide(r.bond)+'</div>';
+  out+='<div class="muted"><code>'+esc(r.market)+'</code> · Silver '+bPct(r.odds)+' for YES</div>';
+  out+='<div>YES book '+(r.bid!=null?pc(r.bid):'—')+' / '+(r.ask!=null?pc(r.ask):'—')+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
+  if(r.cost!=null)out+='<div>Costs <b>'+pc(r.cost)+'</b> per dollar to take now'+(r.size?' ('+r.size+' showing)':'')+(r.days!=null?': <b>'+bPct(r["yield"])+'</b> to resolution in '+r.days+' days ≈ '+bPct(r.annual)+' a year, before rewards':'')+'. The market’s own odds this lot goes to zero: about '+((r.bond==='NO'?(r.odds||0):(1-(r.odds||0)))*100).toFixed(1)+'%.</div>';
+  if(r.earn){out+='<div>The resting '+(r.bond==='NO'?'cover bid':'ask')+' at the touch would earn <b>'+usd(r.earn.est_day)+'/day</b>'+(r.earn.qualifies?' ('+(r.earn.share*100).toFixed(1)+'% of the side)':' — <span class="warn">that side is under Target Size and pays nobody right now</span>')+'.</div>';}
+  if(r.qty>0.005){out+='<div><b>Held: '+r.qty+' at '+pc(r.cost_px)+'</b>'+(r.earn_order?' · resting '+r.earn_order.map(function(o){return o.qty+' @ '+pc(o.price)+(o.est?' earning ~'+usd(o.est)+'/day':'');}).join(', '):' · <span class="warn">no order resting</span>'+(sw.on?'':' (bonds switch is off)'))+'</div>';}
+  if(r.entry_order)out+='<div>Taking: '+r.entry_order.map(function(o){return o.qty+' @ '+pc(o.price);}).join(', ')+' — not filled yet</div>';
   out+='<div><button class="off" onclick="if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+esc(r.market)+'\')">Remove</button></div>';
   out+='</div>';
  });
  out+='</div>';
+ var dr=b.dropped||[];
+ if(dr.length){out+='<div class="card"><b>Dropped from the list</b><div class="muted">Left the band, or removed by you. A bond order still resting stays yours.</div>';
+  dr.forEach(function(x){out+='<div class="muted" style="margin:4px 0"><code>'+esc(x.market)+'</code> · Silver '+bPct(x.odds)+' · '+(x.by==='owner'?'removed by you':'left the band')+(x.held>0.005?' · <b>still holding '+x.held+'</b>':'')+'</div>';});
+  out+='</div>';}
  var ig=b.ignored||[];
  if(ig.length){out+='<details class="how"><summary>ignored ('+ig.length+')</summary>';ig.forEach(function(m){out+='<div class="muted"><code>'+esc(m)+'</code> <button onclick="bOp(\'bonds_unignore\',\''+esc(m)+'\')">un-ignore</button></div>';});out+='</details>';}
  var lg=b.log||[];
@@ -1658,7 +1671,8 @@ class WebServer:
         if op == "qualify_ask":
             return self.monitor.qualify_ask(str(body.get("market") or ""))
         if op.startswith("bonds_"):
-            return self.monitor.bonds_op(op, str(body.get("market") or ""))
+            return self.monitor.bonds_op(op, str(body.get("market") or ""),
+                                         body.get("value"))
         if op == "backfill":
             return self.monitor.backfill_journal(
                 days=float(body.get("days") or 3.0),
