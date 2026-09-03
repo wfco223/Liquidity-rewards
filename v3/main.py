@@ -2676,6 +2676,9 @@ class Monitor:
             return {"ok": False, "note": "no market given"}
         elif op == "bonds_adopt":
             r = self.bonds.adopt(market, value)
+        elif op == "bonds_enter":
+            # his own purchase: sweep the resting orders out to his price
+            r = self.bonds.enter(market, value, now)
         elif op == "bonds_approve":
             r = self.bonds.approve(market, now)
         elif op == "bonds_ignore":
