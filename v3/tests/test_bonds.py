@@ -6,8 +6,8 @@ owner alone adds; the engine keeps quoting bond markets but exits only
 its own non-bond stock; the bond ledger is the module's own; a held
 bond's order sits behind the touch keeping 60% of the best reward and
 never under cost; a minnow in front is led down by a decoy and taken
-at the bar; new ground is entered at the bar; a hand sale is never
-reinvested; one ping per $100 bought.
+at its price; a hand sale is never reinvested; one ping per $100 bought;
+nothing is bought where no bond sale of ours rests.
 """
 
 import calendar
@@ -397,18 +397,19 @@ class TestTheSniper(Base):
 
 
 class TestEntryAndSales(Base):
-    def test_new_ground_is_entered_at_the_bar_cheapest_first(self):
+    def test_nothing_is_bought_where_no_bond_sale_of_ours_rests(self):
+        # owner, 2026-09-02: "the sniper should only work where I have
+        # bond sales resting" — a listed market with a cheap touch and
+        # money in hand is NOT entered by itself, and a minnow-sized
+        # order there draws no decoy either
         self.b.approve(AL, self.now)
         self.b.approve(TN, self.now)
         self.b.set_budget(500.0)
-        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=200.0))
+        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=20.0))
         self.b.cycle(self.now, self.positions(), on=True)
-        takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
-        self.assertEqual(len(takes), 1)
-        self.assertEqual(takes[0].market, TN)          # AL at 99c is over the bar
-        self.assertEqual(takes[0].qty, 200.0)
-        self.assertEqual(self.b.held(TN, "YES"), 200.0)
-        self.assertAlmostEqual(self.b.budget, 500.0 - 196.0, places=2)
+        self.assertEqual(self.r.exchange.live, {})
+        self.assertEqual(self.b.budget, 500.0)
+        self.assertEqual(self.b.lots, {})
 
     def test_a_sale_by_our_order_leaves_the_ledger_and_the_cash_waits(self):
         self.b.approve(AL, self.now)
@@ -438,13 +439,14 @@ class TestEntryAndSales(Base):
         self.b.approve(ALD, self.now)
         self.bond(AL, "YES", 50.0, 0.98)
         self.b.set_budget(250.0)
-        self.b.set_max(0.99)
         self.b.unpinged = 33.0
+        self.b.dance[AL] = {"px": 0.97, "moves": 1, "since": 5.0}
         d = self.b.to_dict()
         b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
         b2.restore(d)
         self.assertEqual(b2.held(AL, "YES"), 50.0)
-        self.assertEqual((b2.budget, b2.snipe_max, b2.unpinged), (250.0, 0.99, 33.0))
+        self.assertEqual((b2.budget, b2.unpinged), (250.0, 33.0))
+        self.assertEqual(b2.dance[AL]["moves"], 1)
         self.assertEqual(self.r.fam.bond_qty, {AL: 50.0})
 
 
