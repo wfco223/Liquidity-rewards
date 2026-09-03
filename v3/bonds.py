@@ -84,6 +84,9 @@ LADDER_SHOW = 8             # entry-side levels the page shows to enter at
 ACCRUE_GAP_MAX_S = 600.0    # a gap between cycles longer than this counts as this
 BOOK_MAX_AGE_S = 300.0      # a listed market's book older than this is read again
 BOOK_READS_PER_CYCLE = 4    # at most this many such reads per cycle
+BAIT_QTY = 1.0              # the bait: one share a tick inside their best on the buy side
+BAIT_WAIT_S = 2 * 3600.0    # nobody followed in this long: the bait comes off
+BOOK_SHOW = 6               # levels per side the page shows
 ACCRUE_KEEP_DAYS = 120
 FILL_WAIT_S = 8.0           # how long a take's fill is awaited in the trade record
 TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed to show it
@@ -175,6 +178,11 @@ class Bonds:
         # everything he holds on the bond side there counts as bond
         self.engine_out: set[str] = set()
         self._over_since: dict[str, tuple] = {}   # slug -> (excess, since)
+        # bait (owner, 2026-09-03: "place bait orders on the buy side
+        # (only one share) to entice people to move their buy offers
+        # some"): his tap rests one share a tick inside their best on
+        # the side that buys the bond; when they follow, it comes off
+        self.bait: dict[str, dict] = {}   # slug -> {px, since, steps, followed, note}
         self.moved_more_at: dict[str, float] = {}
         self._more_note: dict[str, str] = {}
         self.dots: list = []                   # [ts, $/day of every bond order] for the graph
@@ -719,6 +727,8 @@ class Bonds:
                 r = self._keep_buying(slug, side, positions, now)
                 if r:
                     placed.append(r)
+        for slug in sorted(self.approved):
+            self._watch_bait(slug, self.approved[slug]["side"], now)
         rate = sum(o.live_est or 0.0 for o in list(self.fam.orders.values())
                    if o.purpose == "bond")
         self.dots.append([round(now, 1), round(rate, 2)])
@@ -969,6 +979,118 @@ class Bonds:
                   reserve=round(max(lot_qty - qty, 0.0), 2))
         return {"market": slug, "bond": side, "side": bs,
                 "price": (r.price or want), "qty": qty, "ticks": ticks}
+
+    # -- bait ----------------------------------------------------------------
+
+    def _bait_orders(self, slug: str) -> list[FamilyOrder]:
+        return [o for o in list(self.fam.orders.values())
+                if o.purpose == "bond" and o.market == slug
+                and str(o.why or "").startswith("bond bait")]
+
+    def place_bait(self, slug: str, now: float, positions: dict | None = None) -> dict:
+        """His tap: one share on the side that buys the bond, a tick
+        inside their best, never reaching our own exit and never dearer
+        than his first price here."""
+        meta = self.approved.get(slug)
+        if meta is None:
+            return {"ok": False, "note": "not on the bond list"}
+        side = meta["side"]
+        if self._bait_orders(slug):
+            return {"ok": False, "note": "a bait already rests here — pull it first"}
+        book = self.fam.cache.fresh(slug, 120.0, now)
+        if book is None:
+            return {"ok": False, "note": "no fresh book — try again in a moment"}
+        far, intent = self.entry(side)
+        tick = book.tick or 0.01
+        others = self._others(slug, far, book)
+        if not others:
+            return {"ok": False, "note": "nobody is buying on that side"}
+        touch = others[0][0]
+        ebs, _ = self.earn(side)
+        exits = self._orders(slug, ebs, decoy=False)
+        px0 = self._first_px(slug)
+        if side == "YES":
+            px = self._snap_up(touch + tick, tick)
+            wall = min([o.price for o in exits] + ([book.asks[0][0]] if book.asks else []))
+            if px >= wall - 1e-9:
+                return {"ok": False, "note": "no room: their best bid is already a tick under the ask"}
+            if px0 > 0 and px > px0 + 1e-9:
+                return {"ok": False, "note": f"a bait at {px * 100:g}c would pay more than "
+                                             f"your first price here ({px0 * 100:g}c)"}
+        else:
+            px = self._snap_down(touch - tick, tick)
+            wall = max([o.price for o in exits] + ([book.bids[0][0]] if book.bids else []))
+            if px <= wall + 1e-9:
+                return {"ok": False, "note": "no room: their best is already a tick over the bid"}
+            if px0 > 0 and px < px0 - 1e-9:
+                return {"ok": False, "note": f"a bait at {px * 100:g}c would pay more than "
+                                             f"your first price here ({px0 * 100:g}c)"}
+        pos = float(((positions or {}).get(slug) or (0.0, 0.0))[0]) if positions else float(
+            (self.fam.inventory.get(slug) or {}).get("qty") or 0.0)
+        r = self.fam.desk.place_resting(slug, far, px, BAIT_QTY, net_position=pos,
+                                        initiator="owner", intent=intent)
+        if not (r.ok and r.order_id):
+            return {"ok": False, "note": f"the exchange refused: {r.note[:100]}"}
+        px = r.price or px
+        prev = self.bait.get(slug) or {}
+        self.fam.orders[r.order_id] = FamilyOrder(
+            id=r.order_id, market=slug, side=far, price=px, qty=BAIT_QTY,
+            intent=(r.intent or intent), placed_ts=now, purpose="bond",
+            why=f"bond bait: one share a tick inside their best at {px * 100:g}c")
+        self.fill_book[r.order_id] = {"slug": slug, "side": side, "qty": 0.0,
+                                      "px": px, "ts": round(now, 1), "open": True}
+        self.bait[slug] = {"px": px, "since": round(now, 1),
+                           "steps": int(prev.get("steps") or 0) + 1,
+                           "followed": int(prev.get("followed") or 0), "note": ""}
+        self._log(event="bait_placed", market=slug, side=far, price=px, qty=BAIT_QTY)
+        return {"ok": True, "note": f"bait resting: 1 share at {px * 100:g}c, a tick "
+                                    f"inside their best ({touch * 100:g}c)"}
+
+    def pull_bait(self, slug: str, why: str = "pulled by you") -> dict:
+        got = False
+        for o in self._bait_orders(slug):
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if r.ok:
+                self.fam.orders.pop(o.id, None)
+                f = self.fill_book.get(o.id)
+                if f is not None:
+                    f["open"] = False
+                    f["ts"] = round(self._clock(), 1)
+                got = True
+        if slug in self.bait:
+            self.bait[slug]["note"] = why
+            self.bait[slug]["px"] = None
+        if got:
+            self._log(event="bait_pulled", market=slug, note=why)
+        return {"ok": got, "note": ("bait pulled" if got else "no bait resting here")}
+
+    def _watch_bait(self, slug: str, side: str, now: float) -> None:
+        """When others join the bait's price, it has done its job and
+        comes off; when nobody follows for BAIT_WAIT_S, it comes off
+        too. A bait that vanished was taken — the record books it."""
+        cur = self._bait_orders(slug)
+        st = self.bait.get(slug)
+        if not cur:
+            if st and st.get("px") is not None:
+                st["note"] = f"the bait at {st['px'] * 100:g}c was taken — one share bought"
+                st["px"] = None
+            return
+        o = cur[0]
+        book = self.fam.cache.any_age(slug)
+        if book is None:
+            return
+        far, _ = self.entry(side)
+        joined = self._own_at(slug, far, o.price)   # ours at the level (the bait itself)
+        showing = sum(q for p, q in book.side(far) if abs(p - o.price) < 1e-9)
+        if showing - joined >= 1.0:
+            if st is not None:
+                st["followed"] = int(st.get("followed") or 0) + 1
+            self.pull_bait(slug, why=f"they followed to {o.price * 100:g}c — tap Bait "
+                                     f"again for the next step")
+            self._log(event="bait_followed", market=slug, price=o.price,
+                      qty=round(showing - joined, 1))
+        elif st and now - float(st.get("since") or now) >= BAIT_WAIT_S:
+            self.pull_bait(slug, why="nobody followed in two hours")
 
     # -- fresh books for the page ------------------------------------------
 
@@ -1798,7 +1920,36 @@ class Bonds:
                            if self.fam.hold_until.get(slug, 0.0) > now else None),
             "more": self._more_view(slug, side, book, held),
             "floor": self._floor_view(slug, side, book),
+            "book": self._book_view(slug, side, book),
+            "bait": self._bait_view(slug),
         }
+
+    def _book_view(self, slug: str, side: str, book) -> dict | None:
+        """Both sides, best first, in the bond's own terms (a NO bond
+        shows NO prices: 100 minus the YES price, sides swapped), with
+        what is ours at each level."""
+        if book is None:
+            return None
+
+        def lv(book_side):
+            out = []
+            for p, q in list(book.side(book_side))[:BOOK_SHOW]:
+                ours = self._own_at(slug, book_side, p)
+                px = p if side == "YES" else round(1.0 - p, 4)
+                out.append([px, round(q, 1), round(ours, 1)])
+            return out
+        if side == "YES":
+            return {"bids": lv("BUY"), "asks": lv("SELL"), "terms": "YES"}
+        # buying NO is selling YES: the NO bids are the YES asks
+        return {"bids": lv("SELL"), "asks": lv("BUY"), "terms": "NO"}
+
+    def _bait_view(self, slug: str) -> dict:
+        st = dict(self.bait.get(slug) or {})
+        cur = self._bait_orders(slug)
+        st["resting"] = bool(cur)
+        if cur:
+            st["px"] = cur[0].price
+        return st
 
     def _floor_view(self, slug: str, side: str, book) -> float | None:
         """The lowest bond price the exit will sell at — the price paid,
@@ -1895,6 +2046,7 @@ class Bonds:
                 "fill_book": self.fill_book,
                 "more_cap": self.more_cap, "moved_more_at": self.moved_more_at,
                 "engine_out": sorted(self.engine_out),
+                "bait": self.bait,
                 "dots": self.dots[-DOTS_KEEP:],
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
@@ -1945,6 +2097,7 @@ class Bonds:
         self.fill_book = {str(k): dict(v) for k, v in (d.get("fill_book") or {}).items()}
         self.more_cap = {str(k): dict(v) for k, v in (d.get("more_cap") or {}).items()}
         self.engine_out = {str(x) for x in (d.get("engine_out") or [])}
+        self.bait = {str(k): dict(v) for k, v in (d.get("bait") or {}).items()}
         for slug in self.engine_out:
             self.fam.freeze_dyn.add(slug)
         for slug, lot in self.lots.items():

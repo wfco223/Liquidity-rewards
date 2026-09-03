@@ -2747,6 +2747,10 @@ class Monitor:
             r = self.bonds.adopt(market, value)
         elif op == "bonds_more_cap":
             r = self.bonds.set_more_cap(market, value)
+        elif op == "bonds_bait":
+            r = self.bonds.place_bait(market, now, getattr(self, "_bond_positions", None))
+        elif op == "bonds_pull_bait":
+            r = self.bonds.pull_bait(market)
         elif op == "bonds_enter":
             # his own purchase: sweep the resting orders out to his price
             r = self.bonds.enter(market, value, now)
