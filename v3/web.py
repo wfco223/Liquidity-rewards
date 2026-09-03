@@ -915,7 +915,7 @@ function render(d){
  held.forEach(function(r){
   out+='<div style="margin:8px 0;border-top:1px solid #2c3527;padding-top:6px">';
   out+=bHead(r,L);
-  out+='<div class="sub"><b>Held '+r.qty+' @ '+pc(r.cost_px)+'</b>'+(r.rewards?' · rewards so far '+usd(r.rewards):'')+'</div>';
+  out+='<div class="sub"><b>Held '+r.qty+' @ '+pc(r.cost_px)+'</b> <span class="muted">(fees in)</span>'+(r.floor!=null?' · sells at '+pc(r.floor)+' or better only':'')+(r.rewards?' · rewards so far '+usd(r.rewards):'')+'</div>';
   out+=bLine(r)+bCalc(r)+bMore(r,b,sw)+bSniper(r,b,sw)+bLadder(r,b)+bFoot(r);
   out+='</div>';
  });
@@ -932,7 +932,7 @@ function render(d){
  out+='<details class="how"><summary>how this works</summary>'
   +'<div>A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO.</div>'
   +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. Your own orders are never counted; the engine\'s and the bond\'s own orders in the way are pulled first and the engine is held off that market for ten minutes. A hand order in the way stops the take.</div>'
-  +'<div>Held bonds get one resting order, as far back as it can sit keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under cost.</div>'
+  +'<div>Held bonds get one resting order, as far back as it can sit keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under the price paid. The cost shown counts the purchase\'s commission in.</div>'
   +'<div>A second order buys more on the thin side, up to an amount you set per market (your first purchase there by default, reset when you no longer hold it), at the cheapest price that captures '+Math.round((b.more_share||0.3)*100)+'% of its side, never past 99.5¢. It moves when it no longer captures that; when no price inside the cap can, it comes off.</div>'
   +'<div>A small order (25 or fewer) in front of it gets a decoy joining it. Sits two hours, moves over three times, reaches the touch or goes under cost: bought, joins the bond.</div>'
   +'<div>Sale proceeds go back into Money. A phone note every $100 bought.</div>'
