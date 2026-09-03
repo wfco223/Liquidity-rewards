@@ -3933,3 +3933,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788453410.1,politics,usgubewc-usgub-il-2026-11-03-dem,SELL,2.4,0.95,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C93B947DYMVZ
 1788453410.1,cfb,aachc-cfb-wins-2026-11-28-vir-6pt5wins,BUY,1.02,0.91,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C92VY3N8RMVV
 1788453410.1,cfb,aachc-cfb-wins-2026-11-28-smu-7pt5wins,BUY,0.39,0.72,backfill,,4.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZQY18F8MVF
+1788453470.1,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,72,0.04,bond,0,0.01,0.00035,1,5,0.437,0.03,0.05,-0.0396,-103,bond: took 72 NO at 4c — it was in the way of our resting order,C93NT362JMVY
+1788453896.6,cfb,aachc-cfb-wins-2026-11-28-wisc-7pt5wins,SELL,1,0.22,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,C93SHJA6EMW0
+1788453950.1,cfb,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,BUY,0.98,0.23,manual,0.0044,12.28,,27,31,0.357,0.29,0.3,-0.06,0.98,the owner's own order — the engine leaves it alone,C8S6YVBREMW0
+1788454550.1,politics,ewc-usgub-ia-2026-11-03-dem,SELL,10,0.74,sell,0.2229,2.32,0.85075,75,80,0.356,0.73,0.74,0.1108,8,selling filled stock — it earns while it waits,C91YBYZZYMVF
+1788455690.6,cfb,aachc-cfb-wins-2026-11-28-col-6pt5wins,SELL,1,0.27,sell,1.9086,1.52,,25,32,0.055,0.26,0.27,0.01,0,selling filled stock — it earns while it waits,C92XJMDZ4MVR
+1788456710.8,cfb,aachc-cfb-wins-2026-11-28-ill-7pt5wins,BUY,1,0.46,earn,7.4257,1.35,,57,71,0.506,0.46,0.49,-0.17,1,1 tick behind the touch — we would hold 91% of the bid side,C93A39VATMVR
+1788456770.8,cfb,aachc-cfb-wins-2026-11-28-ucla-7pt5wins,SELL,0.02,0.56,earn,0.0742,0.9,,47,56,0.465,0.52,0.56,-0.05,-0.02,5 ticks in front of the touch — we would hold 70% of the ask side,C93PJG1NWMVK
+1788457011.2,cfb,aachc-cfb-wins-2026-11-28-wisc-7pt5wins,SELL,1,0.22,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,C93SHJA6EMW0
