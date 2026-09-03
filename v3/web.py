@@ -890,8 +890,11 @@ function bSniper(r,b,sw){
  }
  var h='Sniper: '+r.front.qty+' @ '+pc(r.front.price)+' in front';
  if(!r.minnow)return '<div class="sub">'+h+' — too big to lead (over '+(b.minnow_max||25)+')</div>';
- if(r.dance){var snap=(r.dance.since||0)+(b.dance_wait_s||7200);h+=' · decoy joined at '+pc(r.dance.px)+', move '+r.dance.moves+' of 3 · bought at '+when(snap)+' if it stays put';}
- else h+=(sw.on?' · a decoy joins it next cycle':' · bonds switch off');
+ var dq=(r.decoy&&r.decoy.length)?r.decoy[0]:null;
+ if(dq){var snap=(r.dance?(r.dance.since||0):0)+(b.dance_wait_s||7200);h+=' · decoy '+dq.qty+' @ '+pc(dq.price)+(r.dance?', move '+r.dance.moves+' of 3':'')+((r.front.qty>=1&&r.dance)?' · bought at '+when(snap)+' if it stays put':' · dust: nothing to buy, the decoy holds');}
+ else if(r.dance&&r.dance.idle)h+=' · dust at the far touch, nowhere for it to move: no decoy; the exit steps up on the cooldown';
+ else if(r.dance&&r.dance.note)h+=' · <span class="warn">no decoy resting: '+esc(r.dance.note)+'</span>';
+ else h+=(sw.on?' · <span class="warn">no decoy resting yet</span>':' · bonds switch off');
  return '<div class="sub">'+h+'</div>';
 }
 function bMore(r,b,sw){

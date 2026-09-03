@@ -778,6 +778,20 @@ class Bonds:
 
     # -- the resting order ----------------------------------------------------
 
+    def _est_at(self, slug: str, bs: str, book, px: float, qty: float) -> float:
+        """What `qty` of ours at `px` on the earn side is measured to
+        earn on this book, net of our own bond orders."""
+        from .scoring import estimate_join
+        prog = self.fam.terms.get(slug)
+        if prog is None:
+            return 0.0
+        pool = self.fam._side_pool(slug, prog)
+        if not pool:
+            return 0.0
+        j = estimate_join(bs, self._levels_net(slug, bs, book), book.tick or 0.01,
+                          float(prog.df), float(prog.target), px, qty)
+        return j.share * pool if (j.qualifies and j.in_window) else 0.0
+
     def _levels_net(self, slug: str, bs: str, book) -> list:
         tick = book.tick or 0.01
         raw = list(book.side(bs))
@@ -931,13 +945,24 @@ class Bonds:
             at_front = touch is not None and (
                 (side == "YES" and cur.price <= touch + 1e-9)
                 or (side == "NO" and cur.price >= touch - 1e-9))
-            slot = self._best_slot(slug, side, book, max(lot_qty, 1.0), bound,
-                                   start=(cur.price if at_front else None))
+            # the slot, measured from cost outward: the farthest price
+            # keeping KEEP_FRACTION of the best, and the size that does
+            slot = self._best_slot(slug, side, book, max(lot_qty, 1.0), bound)
             if slot is None:
                 return None
+            best = slot[1] / max(slot[3], 1e-9)
+            est_cur = self._est_at(slug, bs, book, cur.price, cur.qty)
             back = ((side == "YES" and slot[0] > cur.price + tick / 2)
                     or (side == "NO" and slot[0] < cur.price - tick / 2))
-            new_px = slot[0] if (at_front and back) else cur.price
+            forward = ((side == "YES" and slot[0] < cur.price - tick / 2)
+                       or (side == "NO" and slot[0] > cur.price + tick / 2))
+            # a step UP only when where it sits no longer keeps the
+            # target (owner, 2026-09-03: "shouldn't a contingent of my
+            # orders resting a step back move up since I'm not at 60%"):
+            # the size that keeps it moves to the slot, never past cost;
+            # the rest is kept back. A step back only from the touch.
+            move = (forward and est_cur < KEEP_FRACTION * best - 1e-12) or (back and at_front)
+            new_px = slot[0] if move else cur.price
             if new_px == cur.price:
                 # not moving: only the size may change, and only when
                 # it is off by a real margin
@@ -965,16 +990,20 @@ class Bonds:
                 price=(r.price or new_px), qty=size,
                 intent=cur.intent, placed_ts=now, purpose="bond",
                 why=("bond: moved back behind the touch — still earning, "
-                     "selling slower" if moved else
+                     "selling slower" if (moved and back) else
+                     "bond: a contingent moved up to keep 60% of the best "
+                     "reward — the rest is kept back" if moved else
                      "bond: resized to what earns — the rest is held for "
                      "the coupon"))
             self.moved_at[slug] = now
             self.slot[slug] = {"px": (r.price or new_px), "ticks": slot[2],
                                "keep": round(slot[3], 3), "est": round(slot[1], 4),
                                "size": size, "reserve": round(max(lot_qty - size, 0.0), 2)}
-            self._log(event=("earn_moved_back" if moved else "earn_resized"),
+            self._log(event=("earn_moved_back" if (moved and back)
+                             else "earn_moved_up" if moved else "earn_resized"),
                       market=slug, side=side, price=(r.price or new_px),
-                      qty=size, ticks=slot[2], reserve=round(max(lot_qty - size, 0.0), 2))
+                      qty=size, ticks=slot[2], reserve=round(max(lot_qty - size, 0.0), 2),
+                      keep=round(est_cur / best, 3) if best > 0 else None)
             return {"market": slug, "bond": side, "side": bs,
                     "price": (r.price or new_px), "qty": size, "moved": moved}
         qty = lot_qty
@@ -1531,15 +1560,32 @@ class Bonds:
                else "reached the far touch" if at_far_touch
                else "under our cost" if past_cost
                else "stayed put for the wait" if stayed else None)
-        if why and m_q < 1.0:
-            # dust, or a level that only flickers: nothing to buy; the
-            # decoy holds the touch instead
+        if m_q < 1.0:
+            # dust, or a level that only flickers: nothing to buy, so
+            # none of the snap rules apply (the Maryland case: 0.01 share
+            # read as "reached the far touch" every cycle, the snap had
+            # nothing to take, and no decoy was ever placed)
+            why = None
+            if at_far_touch:
+                # and a tick under the other side it has nowhere to move
+                # (owner, 2026-09-03: "there wouldn't be much for the
+                # decoy to do anyways"): no decoy; the exit's contingent
+                # steps up to join it on the cooldown instead
+                if decoys:
+                    self._pull_decoys(slug, side)
+                st["idle"] = True
+                if not st.get("noted_idle"):
+                    st["noted_idle"] = True
+                    self._log(event="dance_idle", market=slug, minnow_px=m_px,
+                              note="dust at the far touch: nowhere for it to move, "
+                                   "nothing for a decoy to do; the exit steps up instead")
+                return None
+            st["idle"] = False
             if not st.get("noted"):
                 st["noted"] = True
-                self._log(event="dance_holds", market=slug, why=why,
+                self._log(event="dance_holds", market=slug, minnow_px=m_px,
                           note="under one share in front — nothing to take; "
-                               "the decoy holds until it is gone for good")
-            return None
+                               "a decoy joins it and holds until it is gone for good")
         if why:
             self._log(event="dance_over", market=slug, why=why, moves=moves,
                       minnow_px=m_px)
@@ -1567,7 +1613,9 @@ class Bonds:
             r = self.fam.desk.place_resting(slug, bs, m_px, qty, net_position=pos,
                                             initiator="owner", intent=intent)
             if not (r.ok and r.order_id):
-                self._log(event="decoy_refused", market=slug, note=r.note[:120])
+                if st.get("note") != r.note[:120]:
+                    self._log(event="decoy_refused", market=slug, note=r.note[:120])
+                st["note"] = r.note[:120]          # the page says why none rests
                 return None
         self.fam.orders[r.order_id] = FamilyOrder(
             id=r.order_id, market=slug, side=bs, price=(r.price or m_px),
@@ -1578,6 +1626,7 @@ class Bonds:
         self.dance[slug] = {"px": m_px, "moves": moves, "since": round(now, 1),
                             "last_px": m_px, "last_q": round(m_q, 2),
                             "last_seen": keep.get("last_seen", round(now, 1)),
+                            "noted": keep.get("noted", False),
                             "clear_since": None}
         self._log(event="decoy", market=slug, side=side, price=(r.price or m_px),
                   minnow_px=m_px, minnow_q=round(m_q, 1), moves=moves)

@@ -444,6 +444,52 @@ class TestTheSniper(Base):
         self.assertNotIn("snapped", ev)
         self.assertEqual(ev.count("dance_holds"), 1)
 
+    def test_dust_at_the_far_touch_gets_no_decoy(self):
+        # the Maryland case (2026-09-03): 0.01 share a tick under the ask.
+        # It has nowhere to move, so a decoy has nothing to do ("there
+        # wouldn't be much for the decoy to do anyways"); the exit's
+        # contingent steps up instead
+        m_px = round(self.main.price - 0.01, 2)
+        bid = round(m_px - 0.01, 2)                            # the far touch is a tick away
+        self.book_with_minnow(m_px, 0.01, 60, bid=bid)
+        self.cyc(60)
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        ev = [e["event"] for e in self.b.log]
+        self.assertNotIn("dance_over", ev)
+        self.assertNotIn("snapped", ev)
+        self.assertEqual(ev.count("dance_idle"), 1)
+        self.book_with_minnow(m_px, 0.01, 120, bid=bid)
+        self.cyc(120)
+        self.assertEqual([e["event"] for e in self.b.log].count("dance_idle"), 1)   # noted once
+        v = self.b.view(self.now + 120, self.positions())["rows"][0]
+        self.assertIsNone(v["decoy"])
+        self.assertTrue(v["dance"]["idle"])
+
+    def test_dust_with_room_to_move_gets_its_decoy(self):
+        m_px = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m_px, 0.01, 60, bid=round(m_px - 0.05, 2))   # room in front of it
+        self.cyc(60)
+        decoys = self.orders(AL, "SELL", decoy=True)
+        self.assertEqual(len(decoys), 1)
+        self.assertAlmostEqual(decoys[0].price, m_px)
+        self.assertFalse(self.b.dance[AL].get("idle"))
+
+    def test_a_refused_decoy_says_so_on_the_page(self):
+        m_px = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m_px, 20.0, 60)
+        real = self.r.fam.desk.place_resting
+        from v3.orders import OrderResult
+        self.r.fam.desk.place_resting = lambda *a, **k: OrderResult(ok=False, note="no buying power")
+        try:
+            self.cyc(60)
+        finally:
+            self.r.fam.desk.place_resting = real
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        self.assertEqual(self.b.dance[AL]["note"], "no buying power")
+        v = self.b.view(self.now + 60, self.positions())["rows"][0]
+        self.assertIsNone(v["decoy"])
+        self.assertEqual(v["dance"]["note"], "no buying power")
+
     def test_more_than_25_shares_in_front_is_not_a_minnow(self):
         self.book_with_minnow(round(self.main.price - 0.01, 2), 26.0, 60)
         self.cyc(60)
@@ -1813,3 +1859,57 @@ class TestInTheBlack(Base):
         m = [r for r in self.b.view(self.now, self.positions())["rows"] if r["market"] == ALD][0]["mark"]
         self.assertEqual((m["bid"], m["black"]), (0.96, True))
         self.assertIsNone([r for r in self.b.view(self.now, self.positions())["rows"] if r["market"] == AL][0]["mark"])
+
+
+class TestAContingentMovesUp(Base):
+    """Owner, 2026-09-03: "shouldn't a contingent of my orders resting a
+    step back move up since I'm not at 60%." The Maryland exit sat a
+    tick behind a dust order, earning 14% against 63% at the touch."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+        self.b.more_cap[ALD] = {"usd": 0.0, "by": "owner", "first": "", "px": 0.05}
+        self.bond(ALD, "NO", 265.0, 0.05)                    # NO at 95c: the cover bid may sit up to 5c
+        self.book = Book(bids=((0.04, 5.0), (0.03, 500.0), (0.02, 8000.0), (0.01, 4000.0)),
+                         asks=((0.05, 430.0), (0.08, 7.0)),
+                         tick=0.01, fetched_at=self.now)
+        self.seed(ALD, self.book)
+        self.r.fam.refresh_terms(self.r.exchange, self.r.now)
+
+    def test_the_exit_steps_up_when_it_no_longer_keeps_60_percent(self):
+        # the exit was left a tick behind the touch with the whole lot
+        self.r.fam.orders["X1"] = FamilyOrder(id="X1", market=ALD, side="BUY", price=0.03,
+                                              qty=256.0, intent=SELL_SHORT, placed_ts=self.now,
+                                              purpose="bond", why="bond: resting")
+        self.r.exchange.live["X1"] = {"id": "X1", "market": ALD, "side": "BUY", "price": 0.03,
+                                      "size": 256.0, "intent": SELL_SHORT}
+        self.b.moved_at[ALD] = self.now - 3600                  # the cooldown is over
+        slot = self.b._best_slot(ALD, "NO", self.book, 265.0, self.b._bound(ALD, "NO", 0.01))
+        self.assertGreater(slot[0], 0.03)                       # the slot is closer than where it sits
+        est_before = self.b._est_at(ALD, "BUY", self.book, 0.03, 256.0)
+        best = slot[1] / slot[3]
+        self.assertLess(est_before, 0.6 * best)                 # under the target where it sits
+        self.b.cycle(self.now, self.positions(), on=True)
+        ex = self.orders(ALD, "BUY", decoy=False)
+        self.assertEqual(len(ex), 1)
+        self.assertAlmostEqual(ex[0].price, slot[0])
+        self.assertEqual(ex[0].qty, slot[4])
+        self.assertLessEqual(ex[0].price, 0.05 + 1e-9)          # never past cost
+        self.assertLess(ex[0].qty, 256.0)                       # the contingent, the rest kept back
+        self.assertIn("earn_moved_up", [e["event"] for e in self.b.log])
+        self.assertEqual(self.b.slot[ALD]["reserve"], 265.0 - ex[0].qty)
+
+    def test_an_exit_keeping_its_share_does_not_chase(self):
+        # sitting at the slot already: nothing to do
+        slot = self.b._best_slot(ALD, "NO", self.book, 265.0, self.b._bound(ALD, "NO", 0.01))
+        self.r.fam.orders["X2"] = FamilyOrder(id="X2", market=ALD, side="BUY", price=slot[0],
+                                              qty=slot[4], intent=SELL_SHORT, placed_ts=self.now,
+                                              purpose="bond", why="bond: resting")
+        self.r.exchange.live["X2"] = {"id": "X2", "market": ALD, "side": "BUY", "price": slot[0],
+                                      "size": slot[4], "intent": SELL_SHORT}
+        self.b.moved_at[ALD] = self.now - 3600
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertIn("X2", self.r.fam.orders)
+        self.assertNotIn("earn_moved_up", [e["event"] for e in self.b.log])
