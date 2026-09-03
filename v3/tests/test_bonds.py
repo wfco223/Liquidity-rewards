@@ -1956,3 +1956,46 @@ class TestTheBuyMoreOrderStepsBack(Base):
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertIn("M1", self.r.fam.orders)
         self.assertNotIn("more_pulled", [e["event"] for e in self.b.log])
+
+
+class TestADecoyNeverRestsUnderCost(Base):
+    """Idaho, 2026-09-03: a decoy joined 0.01 share at 84c against a 94c
+    cost, was filled, and sold ten shares at a ten-cent loss. A decoy
+    is an exit order too."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": "", "px": 0.94}
+        # cost 94c; the exit will rest at or above it
+        self.r.cache.put(AL, Book(bids=((0.80, 50.0), (0.50, 20000.0)),
+                                  asks=((0.96, 100.0), (0.99, 20000.0)),
+                                  tick=0.01, fetched_at=self.now))
+        self.bond(AL, "YES", 100.0, 0.94)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.main = self.orders(AL, "SELL", decoy=False)[0]
+        self.assertGreaterEqual(self.main.price, 0.94)
+
+    def book(self, front_px, front_q, t):
+        asks = {round(o.price, 4): o.qty for o in self.orders(AL, "SELL")}
+        asks[round(front_px, 4)] = asks.get(round(front_px, 4), 0.0) + front_q
+        asks[0.99] = asks.get(0.99, 0.0) + 20000.0
+        self.r.cache.put(AL, Book(bids=((0.80, 50.0), (0.50, 20000.0)),
+                                  asks=tuple(sorted(asks.items())), tick=0.01,
+                                  fetched_at=self.now + t))
+
+    def test_dust_under_cost_gets_no_decoy(self):
+        self.book(0.84, 0.01, 60)                            # dust ten ticks under cost
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        ev = [e for e in self.b.log if e["event"] == "dance_idle"]
+        self.assertEqual(len(ev), 1)
+        self.assertIn("under our cost", ev[0]["note"])
+        self.assertNotIn("snapped", [e["event"] for e in self.b.log])
+
+    def test_a_real_minnow_under_cost_is_taken_not_joined(self):
+        self.book(0.90, 5.0, 60)                             # 5 shares under cost: bought at once
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        self.assertIn("snapped", [e["event"] for e in self.b.log])
