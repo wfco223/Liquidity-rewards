@@ -667,7 +667,7 @@ def pair_fills(fills: list) -> list:
                       else (r["px"] - lot["px"])) * take
                 lot["closes"].append({
                     "ts": r["ts"], "px": r["px"], "qty": round(take, 2),
-                    "pl": round(pl, 4)})
+                    "pl": round(pl, 4), "kind": r.get("purpose") or ""})
                 lot["realized"] = round(lot["realized"] + pl, 4)
                 lot["open_qty"] = round(lot["open_qty"] - take, 2)
                 lot["last_ts"] = r["ts"]
@@ -680,7 +680,14 @@ def pair_fills(fills: list) -> list:
                 lot["closes"] = []
                 lot["realized"] = 0.0
                 lot["last_ts"] = r["ts"]
-                if r.get("purpose") == "sell":
+                # the owner's own trade (from the exchange record) with
+                # no lot to match: a closing intent, or a sliver under
+                # a share, closed stock the journal never saw bought
+                hand_close = (r.get("purpose") == "hand" and (
+                    str(r.get("intent") or "") in (
+                        "ORDER_INTENT_SELL_LONG", "ORDER_INTENT_BUY_SHORT")
+                    or qty < 1.0))
+                if r.get("purpose") == "sell" or hand_close:
                     # an exit with no purchase to match: it closed stock
                     # bought before the journal — not a new position
                     lot["stray_close"] = True
@@ -947,6 +954,11 @@ class Monitor:
         # has been written, and which markets earned recently so a
         # market that STOPS earning still gets its "after" picture
         self.ladder_day: str = ""
+        # journal corrections waiting for the fills.csv archive: the
+        # archive is append-only, so a fixed or voided row is written as
+        # a new line at correction time, never rewritten in place
+        self.journal_fixes: list = []
+        self._last_trade_rows: list = []
         self.ladder_seen: dict[str, str] = {}
         self.rw_last: dict | None = None      # latest payout-check result
         self._rw_at = 0.0
@@ -1904,6 +1916,190 @@ class Monitor:
                   "and grades (estimate vs. what actually paid).", ""]
         return "\n".join(lines)
 
+    RECONCILE_GRACE_S = 1800.0     # a fresh fill's trade may lag the feed
+    RECONCILE_EDGE_S = 600.0       # never judge a row at the pull's edge
+
+    def reconcile_journal(self, rows: list, now: float) -> dict:
+        """Every hour the exchange's own transaction record is matched
+        against the fills journal by ORDER ID and the journal is made to
+        agree with it (owner, 2026-09-02: "every so often, just pull the
+        new transactions and match them up... the goal is to accurately
+        portray fills").
+
+        The Alabama case that asked for this: the owner sold 40 shares
+        by hand at 90c; the engine's 98c ask vanished in the same minute
+        as the position, and reconcile booked a 98c fill that never
+        happened. Three moves, per family, inside the window the pull
+        covers:
+        - a journal row whose order the exchange shows at another price
+          or size takes the exchange's figures;
+        - a journal row older than the grace whose order the exchange
+          never traded is voided — a cancel, not a fill;
+        - executions under order ids the journal lacks are added: the
+          engine's own as "backfill" (a missed fill), anyone else's as
+          "hand" — the owner's trade — with the side read off the
+          position move nearest in time, since the exchange's intent
+          labels on a hand sale do not say which way the shares went.
+        Inventory is untouched except the cost of a still-held lot whose
+        price was corrected; the position feed stays the authority. The
+        fills.csv archive is append-only, so every change is also queued
+        as a dated correction line rather than rewritten in place."""
+        from collections import defaultdict
+        trades = [r for r in rows or []
+                  if r.get("type") == "ACTIVITY_TYPE_TRADE"
+                  and r.get("market") and r.get("order_id")
+                  and r.get("price") and r.get("shares") and r.get("ts")]
+        if not trades:
+            return {"ok": True, "fixed": 0, "voided": 0, "added": 0,
+                    "note": "no trades in the pull"}
+        oldest = min(r["ts"] for r in trades)
+        ex: dict = {}
+        for r in trades:
+            g = ex.setdefault(r["order_id"], {
+                "shares": 0.0, "notional": 0.0, "ts": 0.0,
+                "market": r["market"], "side": r.get("side") or "",
+                "intent": r.get("intent") or "",
+                "placed_ts": r.get("placed_ts")})
+            g["shares"] += float(r["shares"])
+            g["notional"] += float(r["shares"]) * float(r["price"])
+            g["ts"] = max(g["ts"], float(r["ts"]))
+        for g in ex.values():
+            g["px"] = round(g["notional"] / g["shares"], 4)
+        fixed = voided = added = 0
+        for tag, fam in self.families.items():
+            by_oid: dict = defaultdict(list)
+            for row in fam.fills:
+                if row.get("oid"):
+                    by_oid[row["oid"]].append(row)
+            # 1. rows the exchange shows differently
+            for oid, jrows in by_oid.items():
+                g = ex.get(oid)
+                if g is None:
+                    continue
+                for row in jrows:
+                    old = float(row.get("px") or 0.0)
+                    if abs(old - g["px"]) > 0.0005:
+                        row["px"] = g["px"]
+                        row["why"] = (str(row.get("why") or "")
+                                      + f" · price corrected to "
+                                      f"{g['px'] * 100:g}c from the "
+                                      f"exchange's record")
+                        inv = fam.inventory.get(row["market"])
+                        if inv is not None:
+                            sign = 1.0 if row.get("side") == "BUY" else -1.0
+                            inv["cost"] = round(
+                                inv.get("cost", 0.0)
+                                + sign * (g["px"] - old)
+                                * float(row.get("qty") or 0.0), 4)
+                        fam._log(event="journal_fixed", market=row["market"],
+                                 side=row.get("side"), price=g["px"],
+                                 qty=row.get("qty"), id=oid,
+                                 note=f"was {old * 100:g}c in the journal")
+                        self.journal_fixes.append((now, tag, dict(
+                            row, purpose="fix",
+                            why=f"price corrected {old * 100:g}c -> "
+                                f"{g['px'] * 100:g}c per the exchange "
+                                f"record (order {oid})")))
+                        fixed += 1
+                have = sum(float(r.get("qty") or 0.0) for r in jrows)
+                over = have - g["shares"]
+                if over > 0.005:
+                    for row in sorted(jrows, key=lambda r: -(r.get("ts") or 0)):
+                        cut = min(over, float(row.get("qty") or 0.0))
+                        if cut <= 0.005:
+                            continue
+                        row["qty"] = round(float(row["qty"]) - cut, 2)
+                        over -= cut
+                        fam._log(event="journal_fixed", market=row["market"],
+                                 side=row.get("side"), price=row.get("px"),
+                                 qty=-round(cut, 2), id=oid,
+                                 note="size trimmed to the exchange's count")
+                        self.journal_fixes.append((now, tag, dict(
+                            row, purpose="fix", qty=-round(cut, 2),
+                            why=f"size trimmed by {cut:g} to the exchange's "
+                                f"count (order {oid})")))
+                        fixed += 1
+                        if over <= 0.005:
+                            break
+                    fam.fills[:] = [r for r in fam.fills
+                                    if float(r.get("qty") or 0.0) > 0.005]
+            # 2. rows the exchange never traded: a cancel, not a fill
+            lo_ts = oldest + self.RECONCILE_EDGE_S
+            hi_ts = now - self.RECONCILE_GRACE_S
+            keep = []
+            for row in fam.fills:
+                oid = row.get("oid")
+                ts = float(row.get("ts") or 0.0)
+                if oid and oid not in ex and lo_ts <= ts <= hi_ts:
+                    fam._log(event="journal_void", market=row["market"],
+                             side=row.get("side"), price=row.get("px"),
+                             qty=row.get("qty"), id=oid,
+                             note="no exchange trade for this order — "
+                                  "it was cancelled, not filled")
+                    self.journal_fixes.append((now, tag, dict(
+                        row, purpose="void",
+                        why=f"voided: the exchange has no trade for order "
+                            f"{oid} — the row of "
+                            f"{time.strftime('%m-%d %H:%M', time.gmtime(ts))}Z "
+                            f"was a cancel, not a fill")))
+                    voided += 1
+                    continue
+                keep.append(row)
+            fam.fills[:] = keep
+            # 3. executions the journal lacks
+            journaled: dict = defaultdict(float)
+            for row in fam.fills:
+                if row.get("oid"):
+                    journaled[row["oid"]] += float(row.get("qty") or 0.0)
+            mine = {r.get("market") for r in fam.fills}
+            for oid, g in sorted(ex.items(), key=lambda kv: kv[1]["ts"]):
+                m = g["market"]
+                if not (m in mine or fam.knows(m)):
+                    continue
+                short = g["shares"] - journaled.get(oid, 0.0)
+                if short <= 0.005:
+                    continue
+                engine = oid in fam.placed_at
+                side = g["side"]
+                why = ("recovered from the exchange's transaction history "
+                       "— this fill was never journaled")
+                if not engine:
+                    moved = sum(d for t, mk, d in fam.pos_moves
+                                if mk == m and g["ts"] - 120.0 <= t
+                                <= g["ts"] + 600.0)
+                    if abs(moved) > 0.005:
+                        side = "BUY" if moved > 0 else "SELL"
+                        why = ("your own trade — from the exchange's "
+                               "record; direction from the position move")
+                    else:
+                        why = ("your own trade — from the exchange's "
+                               "record; direction from its order intent")
+                placed = g.get("placed_ts") or fam.placed_at.get(oid)
+                row = {"ts": round(g["ts"], 1), "market": m, "side": side,
+                       "qty": round(short, 2), "px": g["px"], "oid": oid,
+                       "intent": g.get("intent") or "",
+                       "purpose": "backfill" if engine else "hand",
+                       "why": why, "est_day": None,
+                       "rested_h": (round((g["ts"] - placed) / 3600.0, 2)
+                                    if placed and g["ts"] > placed else None),
+                       "fair": None, "band": None, "conf": None,
+                       "touch_bid": None, "touch_ask": None, "conc": None,
+                       "pos_after": None}
+                fam.fills.append(row)
+                journaled[oid] += short
+                fam._log(event="journal_added", market=m, side=side,
+                         price=g["px"], qty=round(short, 2), id=oid,
+                         note=row["purpose"])
+                self.journal_fixes.append((now, tag, dict(row)))
+                added += 1
+            fam.fills.sort(key=lambda x: x.get("ts") or 0.0)
+        del self.journal_fixes[:-400]
+        if fixed or voided or added:
+            self._note(f"journal reconciled against the exchange record: "
+                       f"{fixed} corrected, {voided} voided, {added} added")
+            self.freeze_payload()
+        return {"ok": True, "fixed": fixed, "voided": voided, "added": added}
+
     def publish_trades(self, now: float, deep: bool = False) -> dict:
         """The definitive transaction record: the exchange's own
         activity history, published to data/trades.csv (owner,
@@ -1917,6 +2113,7 @@ class Monitor:
             self._note(f"trades history: {e}")
             return {"ok": False, "note": str(e)[:120]}
         rows = parse_activities(raw)
+        self._last_trade_rows = rows      # the hourly reconciliation reads these
         # One-time shape probe: if the exchange's order object already
         # carries a creation time, resting periods come free for
         # history too — no ledger needed for the past. Written once so
@@ -2663,6 +2860,12 @@ class Monitor:
             self._trades_deep = True
         except Exception as e:  # noqa: BLE001
             self._note(f"trades: {e}")
+        try:      # ...and the journal is made to agree with that record
+                  # (owner, 2026-09-02: "pull the new transactions and
+                  # match them up")
+            self.reconcile_journal(self._last_trade_rows, now)
+        except Exception as e:  # noqa: BLE001 — a correction, never a blocker
+            self._note(f"journal reconcile: {type(e).__name__}: {e}")
         # one-shot recovery of fills the journal never recorded (owner,
         # 2026-08-23: "Do it"). Runs once, then the flag is persisted;
         # the fills page keeps a button for later runs. Additive and
@@ -2700,12 +2903,21 @@ class Monitor:
             frows = [(r.get("ts", 0.0), tag, r)
                      for tag, fam in self.families.items()
                      for r in fam.fills]
+            # corrections ride along as dated lines: the archive is
+            # append-only, so a fixed or voided row is never rewritten
+            fixes = list(getattr(self, "journal_fixes", []))
+            frows += fixes
             if frows:
                 existing, sha = self._gh_file("data/fills.csv")
                 text, added = fills_csv_append(existing, frows)
                 if added:
-                    self._gh_put("data/fills.csv", text, sha,
-                                 f"fills archive: +{added} rows [skip ci]")
+                    if self._gh_put("data/fills.csv", text, sha,
+                                    f"fills archive: +{added} rows [skip ci]"):
+                        self.journal_fixes = [
+                            f for f in self.journal_fixes if f not in fixes]
+                elif fixes:
+                    self.journal_fixes = [
+                        f for f in self.journal_fixes if f not in fixes]
         except Exception as e:  # noqa: BLE001
             self._note(f"fills.csv publish: {e}")
         try:

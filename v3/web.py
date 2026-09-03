@@ -1301,10 +1301,12 @@ function fBack(f,p){
  out+='<div style="margin:2px 0">'+cl+'</div>';
  if((f.closes||[]).length){
   out+='<div style="margin:2px 0">'+f.closes.map(function(c){
-   return '\\u21b3 '+(f.side==='BUY'?'sold':'bought back')+' '+c.qty+' @ '+pc(c.px)+' \\u00b7 '+fWhen(c.ts)+' \\u2192 '+fUsd(c.pl);
+   return '\\u21b3 '+(f.side==='BUY'?'sold':'bought back')+' '+c.qty+' @ '+pc(c.px)+' \\u00b7 '+fWhen(c.ts)+' \\u2192 '+fUsd(c.pl)+(c.kind==='hand'?' \\u00b7 your own trade':'');
   }).join('<br>')+'</div>';
  }
- if(f.stray_close){
+ if(f.stray_close&&f.purpose==='hand'){
+  out+='<div class="muted" style="margin:2px 0">Your own trade, from the exchange\\u2019s record \\u2014 no matching purchase in the journal, so no round-trip math.</div>';
+ }else if(f.stray_close){
   out+='<div class="muted" style="margin:2px 0">This closed stock bought before the journal began \\u2014 no matching purchase on record, so no round-trip math.</div>';
  }else if(p.reconciled){
   out+='<div style="margin:2px 0"><b>Closed by reconciliation</b> \\u2014 the exchange shows this market flat, so the remaining '+p.oq+' closed outside the journal (a correction or an untracked fill; no price recorded). Realized covers only the recorded closes: '+fUsd(f.realized||0)+'.</div>';
