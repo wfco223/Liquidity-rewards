@@ -2962,13 +2962,22 @@ class Monitor:
                         continue
                     a = per.setdefault((day, o.market, key),
                                        {"est": 0.0, "n": 0})
-                    a["est"] += o.live_est or 0.0
                     a["n"] += 1
             cal = {}
             for key in self.families:
                 est = self.samplers.get(key)
-                if est is not None:
-                    cal.update(est.calibration())
+                if est is None:
+                    continue
+                cal.update(est.calibration())
+                # est_day_usd is what the market ACCRUED today — the
+                # meter's rate integrated over the hours the order was
+                # live — not the rate at the moment of writing. The rate
+                # made a market whose order rested 12 minutes at $12/day
+                # read as a $12 miss (Washington 7.5 wins, 2026-09-01:
+                # written $12.58, accrued $0.10, paid $0.07)
+                for m, v in est.per_market.items():
+                    a = per.setdefault((day, m, key), {"est": 0.0, "n": 0})
+                    a["est"] = v
             for (d_, m_, _f), a_ in per.items():
                 self.mkt_claim_day[f"{d_}|{m_}"] = round(a_["est"], 4)
             if len(self.mkt_claim_day) > 8000:
