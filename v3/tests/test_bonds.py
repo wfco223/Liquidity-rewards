@@ -704,3 +704,56 @@ class TestTheMinnowCheckNetsAllOurOrders(Base):
         self.book(3.0, 61)                       # the book now shows the decoy too
         v = self.b.view(self.now + 61, self.positions())["rows"][0]
         self.assertAlmostEqual(v["minnow"]["qty"], 3.0)
+
+
+class TestTheBudgetFollowsTaxes(Base):
+    """Owner, 2026-09-03: "set the budget to whatever I currently owe in
+    taxes." The budget follows what he owes, less what the engine has
+    spent of it, unless he types a fixed figure."""
+
+    def setUp(self):
+        super().setUp()
+        self.tax = {"owed": 220.0, "gross": 1000.0, "rate": 0.22}
+        self.b.tax_owed = lambda: self.tax
+
+    def test_the_budget_is_what_he_owes_less_what_was_spent(self):
+        self.assertEqual(self.b.budget_mode, "tax")
+        self.b.cycle(self.now, self.positions(), on=False)
+        self.assertEqual(self.b.budget, 220.0)
+        self.tax["owed"] = 264.0                        # more paid, more owed
+        self.assertEqual(self.b.view(self.now)["budget"], 264.0)
+        self.b._pay(64.0)
+        self.assertEqual((self.b.budget, self.b.spent), (200.0, 64.0))
+        self.b.cycle(self.now + 1, self.positions(), on=False)
+        self.assertEqual(self.b.budget, 200.0)          # spent stays spent
+        v = self.b.view(self.now + 1)
+        self.assertEqual(v["budget_mode"], "tax")
+        self.assertEqual(v["tax"]["gross"], 1000.0)
+        self.assertEqual(v["money"], 200.0)
+
+    def test_a_fixed_budget_overrides_and_follow_returns(self):
+        self.b.set_budget(50.0)
+        self.assertEqual(self.b.budget_mode, "fixed")
+        self.b.cycle(self.now, self.positions(), on=False)
+        self.assertEqual(self.b.budget, 50.0)
+        r = self.b.follow_tax()
+        self.assertTrue(r["ok"])
+        self.assertEqual((self.b.budget_mode, self.b.budget), ("tax", 220.0))
+
+    def test_no_pay_data_yet_means_no_budget(self):
+        self.b.tax_owed = lambda: None
+        self.b.approve(AL, self.now)
+        self.b.cycle(self.now, self.positions(), on=False)
+        self.assertEqual(self.b.budget, 0.0)
+        self.assertIn("budget", self.b.enter(AL, 0.97, self.now)["note"])
+
+    def test_old_state_without_the_mode_follows_taxes(self):
+        d = self.b.to_dict()
+        d.pop("budget_mode", None)
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(d)
+        self.assertEqual(b2.budget_mode, "tax")
+        self.b.set_budget(50.0)
+        b3 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b3.restore(self.b.to_dict())
+        self.assertEqual((b3.budget_mode, b3.budget), ("fixed", 50.0))

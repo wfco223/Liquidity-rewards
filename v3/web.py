@@ -813,10 +813,16 @@ BONDS_JS = r"""
 function bPct(x){return x==null?'—':(x*100).toFixed(x>=0.1?0:1)+'%';}
 function bOdds(r){return r.bond==='NO'?'NO '+bPct(1-(r.odds||0)):'YES '+bPct(r.odds);}
 function bPill(s){return '<span class="pill">'+s+' bond</span>';}
-function bOp(op,m,v){var body={op:op,market:m};if(v!=null)body.value=v;post(body,function(j){
- var el=document.getElementById('bmsg');if(el)el.innerHTML='<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';});}
-function bSet(op,label,cur){var v=prompt(label,cur);if(v==null)return;var x=parseFloat(v);if(!(x>=0)){alert('a number, please');return;}bOp(op,'-',x);}
-function bAdopt(m,room){var v=prompt('How many of the '+room+' shares count as bond?',room);if(v==null)return;var x=parseFloat(v);if(!(x>0)){alert('a number, please');return;}bOp('bonds_adopt',m,x);}
+function bOp(op,m,v){var body={op:op,market:m};if(v!=null)body.value=v;window._bNote='';post(body,function(j){
+ bSay('<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>');});}
+// typed fields instead of prompt() (owner, 2026-09-03: "Clicking set
+// budget does nothing"). A field keeps its text across the 30s redraw,
+// and holds the redraw while it has focus (the live-card hold in load()).
+function bKeep(id){var e=document.getElementById(id);return e&&e.value?e.value:'';}
+function bField(id,val,w){return '<input id="'+id+'" type="number" inputmode="decimal" step="0.01" style="width:'+w+'" value="'+esc(val)+'" onfocus="window._liveOpen=true" onblur="window._liveOpen=false">';}
+function bSay(h){window._bNote=h;var el=document.getElementById('bmsg');if(el)el.innerHTML=h;}
+function bBudget(){var x=parseFloat(bKeep('bbud'));if(!(x>=0)){bSay('<div class="bad">type the budget in dollars first</div>');return;}var f=document.getElementById('bbud');if(f)f.value='';bOp('bonds_budget','-',x);}
+function bAdopt(m){var x=parseFloat(bKeep('bad-'+m));if(!(x>0)){bSay('<div class="bad">how many shares?</div>');return;}bOp('bonds_adopt',m,x);}
 function bEnter(m,px,qty,cost,money){if(confirm('Buy '+qty+' shares out to '+pc(px)+' for about '+usd(cost)+'? Money: '+usd(money)+'.'))bOp('bonds_enter',m,px);}
 function render(d){
  if(d.starting)return bootCard(d);
@@ -827,10 +833,12 @@ function render(d){
   pr.forEach(function(p){out+='<div class="sub">'+esc(L[p.market]||p.market)+' '+bPill(p.bond)+' · Silver '+bOdds(p)+' <button onclick="bOp(\'bonds_approve\',\''+esc(p.market)+'\')">Add</button> <button class="off" onclick="bOp(\'bonds_ignore\',\''+esc(p.market)+'\')">Ignore</button></div>';});
   out+='</div>';}
  out+='<div class="card"><b>Bonds</b> <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
- out+='<div class="sub">Money <b>'+usd(b.money||0)+'</b> · budget '+usd(b.budget||0)+(b.spent?' ('+usd(b.spent)+' spent)':'')+' · proceeds '+usd(b.cash||0)+' · held at cost '+usd(b.held_cost||0)+' · Silver checked '+(b.scan_day?esc(b.scan_day):'never')+'</div>';
- out+='<div id="bmsg"></div>';
+ var tx=b.tax||{};var tax=b.budget_mode==='tax';
+ out+='<div class="sub">Money <b>'+usd(b.money||0)+'</b> = budget '+usd(b.budget||0)+' + proceeds '+usd(b.cash||0)+' · held at cost '+usd(b.held_cost||0)+' · Silver checked '+(b.scan_day?esc(b.scan_day):'never')+'</div>';
+ out+='<div class="sub">Budget '+(tax?'= taxes owed '+usd(tx.owed||0)+' ('+Math.round((tx.rate||0.22)*100)+'% of '+usd(tx.gross||0)+' paid)':'fixed by you')+(b.spent?' − '+usd(b.spent)+' spent':'')+'</div>';
+ out+='<div id="bmsg">'+(window._bNote||'')+'</div>';
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
- out+='<div><button onclick="bSet(\'bonds_budget\',\'Deploy budget in dollars:\',(b.budget||0).toFixed(2))">Set budget</button> <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
+ out+='<div>'+bField('bbud',bKeep('bbud'),'7em')+' <button onclick="bBudget()">Set budget</button>'+(tax?'':' <button onclick="bOp(\'bonds_budget_tax\',\'-\')">Follow taxes owed</button>')+' <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
  out+='<details class="how"><summary>how this works</summary>'
   +'<div>A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO.</div>'
   +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. Your own orders are never counted.</div>'
@@ -864,7 +872,7 @@ function render(d){
    lad.forEach(function(l){out+='<tr><td class="r">'+pc(l.px)+(l.cost!==l.px?' <span class="muted">('+pc(l.cost)+')</span>':'')+'</td><td class="r">'+l.qty+'</td><td class="r">'+l.cum_qty+'</td><td class="r">'+usd(l.cum_usd)+'</td><td><button onclick="bEnter(\''+m+'\','+l.px+','+l.cum_qty+','+l.cum_usd+','+(b.money||0)+')">Enter</button></td></tr>';});
    out+='</table></details>';
   }
-  if(r.uncounted>0.005)out+='<div class="muted">'+r.uncounted+' more '+r.bond+' here not counted as bond <button onclick="bAdopt(\''+m+'\','+r.uncounted+')">Count in</button></div>';
+  if(r.uncounted>0.005)out+='<div class="muted">'+r.uncounted+' more '+r.bond+' here not counted as bond '+bField('bad-'+m,bKeep('bad-'+m)||r.uncounted,'5em')+' <button onclick="bAdopt(\''+m+'\')">Count in</button></div>';
   out+='<div><button class="off" onclick="if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')">Remove</button></div>';
   out+='</div>';
  });

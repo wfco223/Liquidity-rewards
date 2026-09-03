@@ -20,8 +20,10 @@ And the corrections, same day, in order:
   has become the touch.
 - "I will leave the money out of my account. When there is a great
   opportunity the bond engine makes the purchase and I top off the
-  money for the engine." A deploy budget he sets and tops up; a ping
-  only after $100 of purchases.
+  money for the engine." A deploy budget; a ping only after $100 of
+  purchases. Since 2026-09-03 the budget follows what he owes in taxes
+  (the pay page's 22% of everything paid), less what this engine has
+  spent of it, unless he types a fixed figure.
 - "Remove all of the information from shares held from non-bond
   purchases. I only want to know for a market what the bond purchases
   are." So this module keeps its OWN ledger of bond shares per market
@@ -102,7 +104,7 @@ def scan_due(now: float, last_day: str, hour: int = SCAN_HOUR_UTC) -> str | None
 
 
 class Bonds:
-    def __init__(self, fam, client, fair, clock=None, alert=None):
+    def __init__(self, fam, client, fair, clock=None, alert=None, tax_owed=None):
         self.fam = fam                  # the politics family
         self.client = client
         self.fair = fair                # slug -> Silver's YES odds, or None
@@ -118,6 +120,11 @@ class Bonds:
         self.cash: float = 0.0                # sale proceeds awaiting use
         self.budget: float = 0.0              # the owner's deploy money
         self.spent: float = 0.0               # from the budget, since set
+        # the budget follows what he owes in taxes (owner, 2026-09-03:
+        # "set the budget to whatever I currently owe in taxes") unless
+        # he types a fixed figure; tax_owed() -> {owed, gross, rate} or None
+        self.budget_mode: str = "tax"
+        self.tax_owed = tax_owed or (lambda: None)
         self.unpinged: float = 0.0            # bought since the last ping
         self.moved_at: dict[str, float] = {}
         self.slot: dict[str, dict] = {}
@@ -247,7 +254,23 @@ class Bonds:
         return usd
 
     def _money(self) -> float:
+        self._follow_tax()
         return self.cash + self.budget
+
+    def _follow_tax(self) -> None:
+        """In tax mode the budget is what he owes, less what this engine
+        has spent of it since the mode began."""
+        if self.budget_mode != "tax":
+            return
+        t = self.tax_owed()
+        if not t:
+            return
+        owed = float(t.get("owed") or 0.0)
+        self.budget = round(max(owed - self.spent, 0.0), 4)
+
+    def _budget_now(self) -> float:
+        self._follow_tax()
+        return self.budget
 
     def _pay(self, usd: float) -> float:
         """Proceeds first, then the budget. Returns what came from the
@@ -389,8 +412,17 @@ class Bonds:
             return {"ok": False, "note": "budget must be $0 to $100,000"}
         self.budget = round(amount, 2)
         self.spent = 0.0
+        self.budget_mode = "fixed"
         self._log(event="budget_set", usd=self.budget)
         return {"ok": True, "note": f"deploy budget set to ${self.budget:,.2f}"}
+
+    def follow_tax(self) -> dict:
+        """The budget goes back to following what he owes in taxes."""
+        self.budget_mode = "tax"
+        self.spent = 0.0
+        self._follow_tax()
+        self._log(event="budget_follows_tax", usd=self.budget)
+        return {"ok": True, "note": f"budget follows taxes owed: ${self.budget:,.2f}"}
 
     # ------------------------------------------------------------ the money
 
@@ -399,6 +431,7 @@ class Bonds:
         every held bond earning, work the minnows, enter new ground.
         Places nothing unless the bonds switch is on."""
         self.scan(now)
+        self._follow_tax()
         self._mark_engine()
         placed: list[dict] = []
         # sales: our earning order gave up shares and the ledger shrinks
@@ -902,7 +935,8 @@ class Bonds:
         return {"rows": rows, "proposed": proposed, "dropped": dropped,
                 "ignored": sorted(self.ignored),
                 "cash": round(self.cash, 2),
-                "budget": round(self.budget, 2), "spent": round(self.spent, 2),
+                "budget": round(self._budget_now(), 2), "spent": round(self.spent, 2),
+                "budget_mode": self.budget_mode, "tax": self.tax_owed() or None,
                 "money": round(self._money(), 2),
                 "unpinged": round(self.unpinged, 2),
                 "held_cost": held_cost,
@@ -919,6 +953,7 @@ class Bonds:
                 "lots": self.lots,
                 "cash": round(self.cash, 4),
                 "budget": round(self.budget, 4), "spent": round(self.spent, 4),
+                "budget_mode": self.budget_mode,
                 "unpinged": round(self.unpinged, 4),
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
@@ -938,6 +973,7 @@ class Bonds:
         self.cash = float(d.get("cash") or 0.0)
         self.budget = float(d.get("budget") or 0.0)
         self.spent = float(d.get("spent") or 0.0)
+        self.budget_mode = str(d.get("budget_mode") or "tax")
         self.unpinged = float(d.get("unpinged") or 0.0)
         self.scan_day = str(d.get("scan_day") or "")
         self._earn_seen = {str(k): float(v) for k, v in (d.get("earn_seen") or {}).items()}
