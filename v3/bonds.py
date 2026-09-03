@@ -2067,7 +2067,7 @@ class Bonds:
                 "budget_mode": self.budget_mode,
                 "unpinged": round(self.unpinged, 4),
                 "realized": round(self.realized, 4), "sold_usd": round(self.sold_usd, 4),
-                "money_in": round(self.money_in, 4),
+                "money_in": round(self.money_in, 4), "money_in_v": 2,
                 "accrued": self.accrued, "accrued_mkt": self.accrued_mkt,
                 "accrued_at": round(self._accrued_at, 1),
                 "lot_ts": self.lot_ts, "exch_max": self.exch_max,
@@ -2117,14 +2117,17 @@ class Bonds:
         self.unpinged = float(d.get("unpinged") or 0.0)
         self.realized = float(d.get("realized") or 0.0)
         self.sold_usd = float(d.get("sold_usd") or 0.0)
-        if "money_in" in d:
+        if int(d.get("money_in_v") or 0) >= 2:
             self.money_in = float(d.get("money_in") or 0.0)
         else:
-            # state from before this was kept: what is held plus what the
-            # sold shares had cost — nothing had been reinvested yet
+            # state from before this was kept right: outside money is
+            # what is held plus the proceeds waiting, less the profit
+            # taken — the first seed added the sold shares' cost on top
+            # of lots already bought with those proceeds (2026-09-03:
+            # $973.55 "put in" against $897.75 held)
             self.money_in = round(sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
                                       for l in self.lots.values())
-                                  + max(self.sold_usd - self.realized, 0.0), 4)
+                                  + self.cash - self.realized, 4)
         self.accrued = {str(k): float(v) for k, v in (d.get("accrued") or {}).items()}
         self.accrued_mkt = {str(k): float(v) for k, v in (d.get("accrued_mkt") or {}).items()}
         self._accrued_at = float(d.get("accrued_at") or 0.0)

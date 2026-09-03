@@ -1715,8 +1715,16 @@ class TestTheHeadline(Base):
         self.b._book_lot(GA, "YES", 10.0, 7.0, ref="T3")
         self.b._pay(7.0)
         self.assertAlmostEqual(self.b._earned()["deployed"], 97.5, places=2)
-        # and a lot the engine's stock was counted in at is his money too
+        # an older state, or one seeded the wrong way, is re-seeded from
+        # what holds: held + proceeds waiting − profit taken
         b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
-        d = self.b.to_dict(); d.pop("money_in")
-        b2.restore(d)                                                    # older state: seeded
-        self.assertAlmostEqual(b2.money_in, b2._earned()["invested"] + 36.2, places=1)
+        d = self.b.to_dict()
+        d["money_in"] = 999.0
+        d.pop("money_in_v")
+        b2.restore(d)
+        inv = b2._earned()["invested"]
+        self.assertAlmostEqual(b2.money_in, inv + b2.cash - b2.realized, places=2)
+        self.assertAlmostEqual(b2.money_in, self.b.money_in, places=2)   # the same as the live figure
+        b3 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b3.restore(self.b.to_dict())                                     # current state: kept as is
+        self.assertAlmostEqual(b3.money_in, self.b.money_in, places=4)
