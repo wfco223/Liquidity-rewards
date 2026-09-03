@@ -1365,3 +1365,45 @@ class TestCommissionsInTheCost(Base):
         self.bond(ALD, "NO", 100.0, 0.03)
         self.assertEqual(self.b._bound(ALD, "NO", 0.01), 0.03)
         self.assertEqual(self.b.view(self.now, self.positions())["rows"][1]["floor"], 0.97)
+
+
+class TestBuyMoreNeverDearerThanTheFirstPrice(Base):
+    """Owner, 2026-09-03: "the buy price cap is also the price I
+    originally bought at. Not 99.5. I never want to buy that high.\""""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def test_a_yes_bond_never_bids_above_its_first_price(self):
+        self.bond(AL, "YES", 100.0, 0.97)                 # first bought at 97c; book 98/99
+        self.assertEqual(self.b.more_cap[AL]["px"], 0.97)
+        book = self.r.cache.fresh(AL, 120.0, self.now)
+        slot = self.b._more_slot(AL, "YES", book, 97.0)
+        if slot:
+            self.assertLessEqual(slot[0], 0.97 + 1e-9)
+        self.b.cycle(self.now, self.positions(), on=True)
+        for o in self.b._more_orders(AL):
+            self.assertLessEqual(o.price, 0.97 + 1e-9)
+        v = self.b.view(self.now, self.positions())["rows"][0]["more"]
+        self.assertEqual(v["cap_px"], 0.97)
+        self.b.set_more_cap(AL, 500)                      # the amount changes, the price cap does not
+        self.assertEqual(self.b.more_cap[AL]["px"], 0.97)
+
+    def test_a_no_bond_never_pays_more_than_its_first_price(self):
+        self.bond(ALD, "NO", 100.0, 0.03)                 # NO at 97c: asks must be 3c or higher
+        self.assertEqual(self.b.more_cap[ALD]["px"], 0.03)
+        self.r.cache.put(ALD, no_book(self.now, bid=0.01, ask=0.02))
+        self.b.cycle(self.now, self.positions(), on=True)
+        for o in self.b._more_orders(ALD):
+            self.assertGreaterEqual(o.price, 0.03 - 1e-9)
+        v = self.b.view(self.now, self.positions())["rows"]
+        row = [r for r in v if r["market"] == ALD][0]
+        self.assertEqual(row["more"]["cap_px"], 0.97)
+
+    def test_a_lot_from_before_the_price_was_kept_uses_the_price_paid(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.more_cap[AL].pop("px")                     # state from the earlier deploy
+        self.assertEqual(self.b._first_px(AL), 0.98)
