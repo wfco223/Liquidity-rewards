@@ -1554,3 +1554,44 @@ class TestTheEngineIsOutOfHeldBondMarkets(Base):
         self.assertEqual(self.b.held(AL, "YES"), 140.0)
         self.b.cycle(self.now + 1300, self.positions(), on=True)
         self.assertEqual(self.b.held(AL, "YES"), 155.0)
+
+
+class TestFreshBooks(Base):
+    """Owner, 2026-09-03: "A lot of the books are stale. What's up with
+    that." The stream sends a book only when it changes; a listed
+    market nothing else works was never read at all."""
+
+    def setUp(self):
+        super().setUp()
+        for slug in (AL, TN, ALD, GA):
+            self.b.approve(slug, self.now) if slug != GA else None
+
+    def test_old_listed_books_are_read_again_a_few_per_cycle(self):
+        old = self.now - 1000.0
+        for slug in (AL, TN, ALD):
+            b = self.r.cache.any_age(slug)
+            self.r.cache.put(slug, Book(bids=b.bids, asks=b.asks, tick=b.tick, fetched_at=old))
+        self.r.cache.put(GA, Book(bids=((0.5, 1.0),), asks=((0.6, 1.0),), tick=0.01, fetched_at=old))
+        n = self.b._refresh_books(self.now)
+        self.assertEqual(n, 3)                                    # the listed ones, not GA
+        for slug in (AL, TN, ALD):
+            self.assertEqual(self.r.cache.any_age(slug).fetched_at, self.now)
+        self.assertEqual(self.r.cache.any_age(GA).fetched_at, old)
+        # fresh enough: nothing read
+        self.assertEqual(self.b._refresh_books(self.now + 60), 0)
+        # never more than a few per cycle, oldest first
+        for i, slug in enumerate((AL, TN, ALD)):
+            b = self.r.cache.any_age(slug)
+            self.r.cache.put(slug, Book(bids=b.bids, asks=b.asks, tick=b.tick,
+                                        fetched_at=self.now - 400 - i))
+        import v3.bonds as bm
+        keep = bm.BOOK_READS_PER_CYCLE
+        bm.BOOK_READS_PER_CYCLE = 1
+        try:
+            self.assertEqual(self.b._refresh_books(self.now + 100), 1)
+            self.assertEqual(self.r.cache.any_age(ALD).fetched_at, self.now + 100)   # the oldest
+            self.assertEqual(self.r.cache.any_age(AL).fetched_at, self.now - 400)
+        finally:
+            bm.BOOK_READS_PER_CYCLE = keep
+        v = self.b.view(self.now + 100)
+        self.assertFalse(any(r["stale"] for r in v["rows"]))
