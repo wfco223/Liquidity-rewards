@@ -858,6 +858,16 @@ function bCalc(r){
  if(c.touch)h+='<div class="muted">at the touch ('+pc(c.touch.price)+') the lot would score '+bPct(c.touch.share)+' = '+usd(c.touch.est)+'/day'+(mainEst>0&&c.touch.est>0?'; sitting back keeps '+bPct(mainEst/c.touch.est)+' of that and sells slower':'')+'</div>';
  return h;
 }
+function bMoreSet(m){var x=parseFloat(bKeep('bmore-'+m));if(!(x>=0)){bSay('<div class="bad">dollars, please</div>');return;}bOp('bonds_more_cap',m,x);}
+function bMore(r,b,sw){
+ var mo=r.more;if(!mo)return '';
+ var m=esc(r.market);var pct=Math.round((b.more_share||0.3)*100);
+ var h='Buy more: up to $'+bField('bmore-'+m,bKeep('bmore-'+m)||(mo.cap_usd||0).toFixed(2),'6em')+' <button onclick="bMoreSet(\''+m+'\')">Set</button>'+(mo.by==='default'?' <span class="muted">(your first purchase here)</span>':'');
+ if(mo.order)h+='<br>resting '+mo.order.qty+' @ '+pc(mo.order.price)+': '+bPct(mo.order.share)+' of its side = <b>'+usd(mo.order.est)+'/day</b>'+(mo.order.share<(b.more_share||0.3)?' <span class="warn">(under '+pct+'%: moves at the next cooldown)</span>':'');
+ else if(mo.slot)h+='<br>would rest '+mo.slot.qty+' @ '+pc(mo.slot.price)+' ('+bPct(mo.slot.share)+' of its side, '+usd(mo.slot.est)+'/day)'+(sw.on?'':' — bonds switch off');
+ else h+='<br><span class="muted">not resting: no price inside the cap captures '+pct+'% of its side</span>';
+ return '<div class="sub">'+h+'</div>';
+}
 function bSniper(r,b,sw){
  var hold=(r.hold_until&&r.hold_until>Date.now()/1000)?'<div class="sub">Engine held off here until '+when(r.hold_until)+' (our orders were cleared out of a take\'s way)</div>':'';
  var main=(r.calc&&r.calc.orders||[]).filter(function(o){return !o.decoy;});
@@ -906,7 +916,7 @@ function render(d){
   out+='<div style="margin:8px 0;border-top:1px solid #2c3527;padding-top:6px">';
   out+=bHead(r,L);
   out+='<div class="sub"><b>Held '+r.qty+' @ '+pc(r.cost_px)+'</b>'+(r.rewards?' · rewards so far '+usd(r.rewards):'')+'</div>';
-  out+=bLine(r)+bCalc(r)+bSniper(r,b,sw)+bLadder(r,b)+bFoot(r);
+  out+=bLine(r)+bCalc(r)+bMore(r,b,sw)+bSniper(r,b,sw)+bLadder(r,b)+bFoot(r);
   out+='</div>';
  });
  out+='</div>';
@@ -923,6 +933,7 @@ function render(d){
   +'<div>A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO.</div>'
   +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. Your own orders are never counted; the engine\'s and the bond\'s own orders in the way are pulled first and the engine is held off that market for ten minutes. A hand order in the way stops the take.</div>'
   +'<div>Held bonds get one resting order, as far back as it can sit keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under cost.</div>'
+  +'<div>A second order buys more on the thin side, up to an amount you set per market (your first purchase there by default, reset when you no longer hold it), at the cheapest price that captures '+Math.round((b.more_share||0.3)*100)+'% of its side, never past 99.5¢. It moves when it no longer captures that; when no price inside the cap can, it comes off.</div>'
   +'<div>A small order (25 or fewer) in front of it gets a decoy joining it. Sits two hours, moves over three times, reaches the touch or goes under cost: bought, joins the bond.</div>'
   +'<div>Sale proceeds go back into Money. A phone note every $100 bought.</div>'
   +'<div>Rewards are paid per market and the engine quotes bond markets too, so a day\'s payment is split between the bond order and the engine\'s orders by their measured share of what all our orders there earn. An estimate.</div>'
@@ -1181,7 +1192,8 @@ function render(d){
 
 GRAPH_JS = """
 function fmtT(ts){var d=new Date(ts*1000);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
-var FAMS=[['Politics','est_politics','#7fd77f'],['College football','est_cfb','#e0b83a'],
+var FAMS=[['Politics','est_politics','#7fd77f'],['Bonds','est_bonds','#4a90e2'],
+          ['College football','est_cfb','#e0b83a'],
           ['NFL','est_nfl','#6fa8dc'],['NBA','est_nba','#c08fd0']];
 function stacked(d,win){
  var now=Date.now()/1000, series=[], names=[];
@@ -1199,6 +1211,11 @@ function stacked(d,win){
   var m={};ds.forEach(function(x){m[Math.round(x[0]/20)*20]=x[1];});
   var last=0;return ts.map(function(t){if(m[t]!=null)last=m[t];return last;});
  });
+ // bonds are politics orders too (owner, 2026-09-03: "separate out
+ // earnings from bonds, in blue, vs politics"): their rate comes out
+ // of the politics band so the stack still totals the same
+ var ip=-1,ib=-1;names.forEach(function(f,i){if(f[1]==='est_politics')ip=i;if(f[1]==='est_bonds')ib=i;});
+ if(ip>=0&&ib>=0)vals[ip]=vals[ip].map(function(v,i){return Math.max(v-vals[ib][i],0);});
  var tot=ts.map(function(_,i){var v=0;vals.forEach(function(col){v+=col[i];});return v;});
  var ymax=Math.max.apply(null,tot)*1.08||1;
  var W=340,H=190,PL=36,PB=18,PT=8,PR=6,t0=ts[0],t1=ts[ts.length-1],span=Math.max(t1-t0,60);

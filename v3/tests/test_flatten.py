@@ -3099,6 +3099,25 @@ class TestTransactionHistory(unittest.TestCase):
         self.assertEqual(rows[1]["role"], "aggressor")
         self.assertGreater(rows[0]["ts"], 1_700_000_000)
 
+    def test_a_known_order_id_wins_when_both_sides_carry_intents(self):
+        # the Tennessee case (2026-09-03): our 3c take was the aggressor,
+        # the stranger's passive order carried a real intent too, and the
+        # passive side was read first — the stranger became a "hand" sale
+        from v3.main import parse_activities
+        row = {"type": "ACTIVITY_TYPE_TRADE", "trade": {
+            "marketSlug": "mkt-tn",
+            "passiveExecution": {"order": {"id": "STRANGER",
+                                           "intent": "ORDER_INTENT_BUY_LONG"},
+                                 "lastShares": "18.75", "lastPx": "0.03"},
+            "aggressorExecution": {"order": {"id": "OURS",
+                                             "intent": "ORDER_INTENT_BUY_SHORT"},
+                                   "lastShares": "18.75", "lastPx": "0.03"}}}
+        rows = parse_activities([row], known_ids={"OURS"})
+        self.assertEqual([(r["order_id"], r["role"]) for r in rows],
+                         [("OURS", "aggressor")])
+        # with nothing known, the old rule still applies
+        self.assertEqual(parse_activities([row])[0]["order_id"], "STRANGER")
+
     def test_trade_entirely_the_counterpartys_is_skipped(self):
         from v3.main import parse_activities
         rows = parse_activities([{"type": "ACTIVITY_TYPE_TRADE", "trade": {

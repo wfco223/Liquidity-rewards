@@ -272,6 +272,7 @@ class TestTheSniper(Base):
         self.b.set_budget(1000.0)
         self.r.cache.put(AL, minnow_book(self.now, minnows=0.0, ask=0.99))
         self.bond(AL, "YES", 1500.0, 0.90)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}   # no buy-more here
         self.b.cycle(self.now, self.positions(), on=True)   # rests the main ask
         self.main = self.orders(AL, "SELL", decoy=False)[0]
 
@@ -694,6 +695,7 @@ class TestTheMinnowCheckNetsAllOurOrders(Base):
         self.b.set_budget(1000.0)
         self.r.cache.put(AL, minnow_book(self.now, minnows=0.0, ask=0.99))
         self.bond(AL, "YES", 1500.0, 0.90)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}
         self.b.cycle(self.now, self.positions(), on=True)
         self.main = self.orders(AL, "SELL", decoy=False)[0]
         self.m_px = round(self.main.price - 0.01, 2)
@@ -1090,7 +1092,7 @@ class TestOnlyConfirmedFillsAreHeld(Base):
         self.b.cycle(self.now + 60, self.positions(), on=True)
         self.assertNotIn(ask.id, self.r.fam.orders)
         self.assertNotIn(ask.id, self.r.exchange.live)
-        self.assertEqual([e["event"] for e in self.b.log][-1], "earn_pulled")
+        self.assertIn("earn_pulled", [e["event"] for e in self.b.log])
         self.assertEqual(self.b.view(self.now + 61, self.positions())["rows"][0]["qty"], 0.0)
 
     def test_clearing_only_our_own_bond_order_does_not_hold_the_engine(self):
@@ -1180,3 +1182,138 @@ class TestFiveExecutionsAreFive(Base):
         # and nothing changes once it agrees
         b2.cycle(self.now + 60, self.positions(), on=False)
         self.assertEqual(len([e for e in b2.log if e["event"] == "fill_corrected"]), 1)
+
+
+class TestBuyingMore(Base):
+    """Owner, 2026-09-03: "Yes to 2, but only up to an amount I set
+    defaulting to my original purchase price and quantity in that
+    market. This default resets when I no longer hold bond shares in
+    that market. And the order should place at the lowest price where
+    it can capture at least 30% of the earnings for its side. Otherwise
+    it should not place at all. It should move when it no longer
+    captures 30% or it can no longer move up without crossing my price
+    cap."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def more(self, slug):
+        return self.b._more_orders(slug)
+
+    def with_ours(self, slug, t, extra_bids=()):
+        """The cached book as the exchange would show it: our resting
+        orders merged in (the fixture's book never has them)."""
+        bk = self.r.cache.any_age(slug)
+        bids = {}
+        for p, q in list(bk.bids) + list(extra_bids):
+            bids[round(p, 4)] = bids.get(round(p, 4), 0.0) + q
+        asks = {round(p, 4): q for p, q in bk.asks}
+        for o in self.r.fam.orders.values():
+            if o.market != slug:
+                continue
+            d = bids if o.side == "BUY" else asks
+            d[round(o.price, 4)] = d.get(round(o.price, 4), 0.0) + o.qty
+        nb = Book(bids=tuple(sorted(bids.items(), reverse=True)),
+                  asks=tuple(sorted(asks.items())), tick=0.01, fetched_at=t)
+        self.r.cache.put(slug, nb)
+        return nb
+
+    def test_the_default_amount_is_his_first_purchase_and_resets(self):
+        self.bond(AL, "YES", 100.0, 0.98)                 # 100 @ 98c = $98
+        self.assertEqual(self.b.more_cap[AL]["usd"], 98.0)
+        self.assertEqual(self.b.more_cap[AL]["by"], "default")
+        self.bond(AL, "YES", 50.0, 0.97)                  # a later lot changes nothing
+        self.assertEqual(self.b.more_cap[AL]["usd"], 98.0)
+        r = self.b.set_more_cap(AL, 250)
+        self.assertTrue(r["ok"])
+        self.assertEqual((self.b.more_cap[AL]["usd"], self.b.more_cap[AL]["by"]), (250.0, "owner"))
+        self.assertFalse(self.b.set_more_cap(GA, 10)["ok"])
+        self.b.lots.clear()                               # no longer held
+        self.b.cycle(self.now, self.positions(), on=False)
+        self.assertNotIn(AL, self.b.more_cap)
+        self.bond(AL, "YES", 20.0, 0.99)                  # a new first purchase: a new default
+        self.assertEqual(self.b.more_cap[AL]["usd"], 19.8)
+
+    def test_it_rests_at_the_cheapest_price_that_captures_30_percent(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        before = self.r.cache.fresh(AL, 120.0, self.now)
+        slot = self.b._more_slot(AL, "YES", before, 98.0)
+        self.assertIsNotNone(slot)
+        px, qty, share, est = slot
+        self.b.cycle(self.now, self.positions(), on=True)
+        book = self.with_ours(AL, self.now + 1)               # the exchange now shows our bid too
+        self.assertGreaterEqual(share, 0.30)
+        self.assertEqual(qty, float(int(98.0 / px)))
+        # nothing cheaper captures 30%
+        for p in [c for c in (round(px - k * 0.01, 2) for k in range(1, 4)) if c > 0]:
+            q = float(int(98.0 / p))
+            self.assertLess(self.b._share_at(AL, "BUY", book, p, q)[0], 0.30)
+        o = self.more(AL)
+        self.assertEqual(len(o), 1)
+        self.assertEqual((o[0].side, o[0].price, o[0].qty), ("BUY", px, qty))
+        self.assertTrue(o[0].why.startswith("bond more"))
+        self.assertLess(o[0].price, book.asks[0][0])       # inside the spread: post-only
+        v = self.b.view(self.now + 1, self.positions())["rows"][0]["more"]
+        self.assertEqual((v["cap_usd"], v["order"]["price"]), (98.0, px))
+        self.assertGreaterEqual(v["order"]["share"], 0.30)
+        # a fill on it books through the record, at any time while it rests
+        oid = o[0].id
+        self.assertTrue(self.b.fill_book[oid]["open"])
+        self.r.exchange.recent_trades = lambda limit=25: TestFiveExecutionsAreFive.rows(oid, 3, px)
+        self.exch(AL, 103.0, 0.98)                          # the exchange shows the 3 too
+        self.with_ours(AL, self.now + 5000)
+        self.b.cycle(self.now + 5000, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 103.0)
+        self.assertIn("bought_more", [e["event"] for e in self.b.log])
+
+    def test_a_no_bond_buys_more_on_the_ask_side(self):
+        self.bond(ALD, "NO", 100.0, 0.02)                 # 100 NO @ 98c
+        self.b.cycle(self.now, self.positions(), on=True)
+        o = self.more(ALD)
+        self.assertEqual(len(o), 1)
+        self.assertEqual(o[0].side, "SELL")
+        self.assertGreater(o[0].price, 0.01)               # above the 1c bid
+        self.assertLessEqual(1.0 - o[0].price, 0.995)      # inside the price cap
+
+    def test_nothing_rests_when_no_price_captures_30_percent(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.set_more_cap(AL, 0.5)                       # not even one share
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.more(AL), [])
+        self.assertEqual(self.b.view(self.now)["rows"][0]["more"]["order"], None)
+
+    def test_it_moves_when_it_no_longer_captures_30_percent(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        o = self.more(AL)[0]
+        # a big competitor joins at our price: our share collapses
+        self.with_ours(AL, self.now + 60, extra_bids=[(o.price, 5000.0)])
+        self.b.cycle(self.now + 60, self.positions(), on=True)   # inside the cooldown: stays
+        self.assertIn(o.id, self.r.fam.orders)
+        self.with_ours(AL, self.now + 1900, extra_bids=[(o.price, 5000.0)])
+        self.b.cycle(self.now + 1900, self.positions(), on=True)  # cooldown over: moves or comes off
+        self.assertNotIn(o.id, self.r.fam.orders)
+        ev = [e["event"] for e in self.b.log]
+        self.assertTrue("more_moved" in ev or "more_pulled" in ev)
+        now_o = self.more(AL)
+        if now_o:
+            self.assertGreaterEqual(
+                self.b._share_at(AL, "BUY", self.r.cache.fresh(AL, 120.0, self.now + 1900),
+                                 now_o[0].price, now_o[0].qty)[0], 0.30)
+
+    def test_the_graph_gets_the_bond_rate(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        for o in self.r.fam.orders.values():
+            if o.purpose == "bond":
+                o.live_est = 0.5
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.b.dots[-1][0], self.now + 60)
+        self.assertAlmostEqual(self.b.dots[-1][1], 0.5 * len(self.b._orders(AL)), places=2)
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(self.b.to_dict())
+        self.assertEqual(b2.dots, self.b.dots)
+        self.assertEqual(b2.more_cap[AL]["usd"], 98.0)
