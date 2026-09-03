@@ -768,6 +768,7 @@ def touch_snapshot(fam: Family, now: float, cap: int = 400) -> dict:
 # full ladders of every market the meter has us earning in, and of
 # every market that earned in the last week, go to data/ladders/ so
 # the next drop can be read from the record instead of the touch.
+TAX_RATE = 0.22             # the pay page's "set aside — tax at 22%"
 LADDER_HOUR_UTC = 16      # noon ET — inside every family's quiet hours
 LADDER_KEEP_DAYS = 7
 LADDER_LEVELS = 20        # nearest the touch; the deepest 4 ride along
@@ -1016,7 +1017,8 @@ class Monitor:
                                               name="Bonds switch",
                                               scope="Bonds")
         self.bonds = Bonds(self.families["politics"], self.client,
-                           self.silver.model_fair, alert=self.alerts.notify)
+                           self.silver.model_fair, alert=self.alerts.notify,
+                           tax_owed=self._tax_owed)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
@@ -1229,6 +1231,16 @@ class Monitor:
                  "unmeasured_min": round(
                      est_by_day.get(d, {}).get("stale_s", 0.0) / 60.0, 1)}
                 for d in days]
+
+    def _tax_owed(self) -> dict | None:
+        """What he owes on everything paid so far, at the pay page's
+        rate. The bonds budget follows it (owner, 2026-09-03: "set the
+        budget to whatever I currently owe in taxes")."""
+        pt = self._paid_total()
+        if not pt:
+            return None
+        return {"owed": round(pt["usd"] * TAX_RATE, 2), "gross": pt["usd"],
+                "rate": TAX_RATE, "days": pt["days"], "since": pt["since"]}
 
     def _paid_total(self) -> dict | None:
         """All-time posted rewards: EVERY day in rewards.csv, not just
@@ -2677,6 +2689,9 @@ class Monitor:
         now = time.time()
         if op == "bonds_budget":
             r = self.bonds.set_budget(value)
+            market = market or "-"
+        elif op == "bonds_budget_tax":
+            r = self.bonds.follow_tax()
             market = market or "-"
         elif not market:
             return {"ok": False, "note": "no market given"}
