@@ -81,7 +81,8 @@ LOG_KEEP = 200
 DROPPED_KEEP = 30
 ENTER_MAX_LEVELS = 20       # the owner's entry sweeps at most this many levels
 LADDER_SHOW = 8             # entry-side levels the page shows to enter at
-SHARE_KEEP_DAYS = 7         # a day's reward split is held this long, then booked
+ACCRUE_GAP_MAX_S = 600.0    # a gap between cycles longer than this counts as this
+ACCRUE_KEEP_DAYS = 120
 FILL_WAIT_S = 8.0           # how long a take's fill is awaited in the trade record
 TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed to show it
 HOLD_ENGINE_S = 600.0       # after clearing our orders out of a take's way, the engine waits this long
@@ -113,7 +114,7 @@ def scan_due(now: float, last_day: str, hour: int = SCAN_HOUR_UTC) -> str | None
 
 class Bonds:
     def __init__(self, fam, client, fair, clock=None, alert=None, tax_owed=None,
-                 paid=None, sleep=None):
+                 sleep=None):
         self.fam = fam                  # the politics family
         self.client = client
         self.fair = fair                # slug -> Silver's YES odds, or None
@@ -137,19 +138,16 @@ class Bonds:
         self.tax_owed = tax_owed or (lambda: None)
         # earnings (owner, 2026-09-03: "the overall earnings from the
         # bonds which is the profit from sales and the liquidity rewards
-        # payments ... differentiate the liquidity payments from engine
-        # resting orders"). Rewards are paid per MARKET, and the engine
-        # quotes bond markets too, so each cycle samples the bond orders'
-        # share of what all our orders in the market are measured to
-        # earn; a day's payment splits by the day's average share.
-        self.paid = paid or (lambda day, slug: None)   # (day, slug) -> usd paid
+        # payments"; then "It shouldn't be based on market, it should be
+        # based on orders"). Rewards are paid per MARKET and the engine
+        # quotes bond markets too, so the bond's rewards are what its
+        # OWN orders measured while resting: each cycle, every bond
+        # order's live $/day times the time since the last cycle.
         self.realized: float = 0.0            # profit on sales by our orders
         self.sold_usd: float = 0.0
-        self.share_day: dict[str, dict[str, list]] = {}   # day -> slug -> [sum, n]
-        self.rewards_booked: float = 0.0      # bond share of days folded away
-        self.engine_booked: float = 0.0       # the engine's share, same days
-        self.paid_booked: float = 0.0
-        self.rewards_by_market: dict[str, float] = {}
+        self.accrued: dict[str, float] = {}   # day -> usd the bond orders earned
+        self.accrued_mkt: dict[str, float] = {}
+        self._accrued_at: float = 0.0
         # the exchange is the source of truth for holdings (owner,
         # 2026-09-03: "nothing should be making up holdings or
         # transactions"): a take books only what the trade record shows
@@ -477,73 +475,36 @@ class Bonds:
     def _day(ts: float) -> str:
         return time.strftime("%Y-%m-%d", time.gmtime(ts))
 
-    def _sample_share(self, now: float) -> None:
-        """Once a cycle: in each bond market, the bond orders' share of
-        what ALL our resting orders there are measured to earn (the
-        family's live $/day per order; by size when nothing measures)."""
+    def _accrue(self, now: float) -> None:
+        """What the bond's own orders earned since the last cycle: each
+        one's measured $/day (the family's live read) times the time
+        elapsed, capped so a gap after downtime is not counted as
+        earned. Order-based, never a market's payout."""
+        last = self._accrued_at
+        self._accrued_at = now
+        if not last or now <= last:
+            return
+        dt = min(now - last, ACCRUE_GAP_MAX_S)
         day = self._day(now)
-        for slug in set(self.approved) | set(self.lots):
-            ours = [o for o in list(self.fam.orders.values()) if o.market == slug]
-            if not ours:
+        for o in list(self.fam.orders.values()):
+            if o.purpose != "bond" or not o.live_est or o.live_est <= 0:
                 continue
-            bond = [o for o in ours if o.purpose == "bond"]
-            tot = sum(o.live_est or 0.0 for o in ours)
-            if tot > 1e-9:
-                share = sum(o.live_est or 0.0 for o in bond) / tot
-            else:
-                tq = sum(o.qty for o in ours)
-                share = sum(o.qty for o in bond) / tq if tq > 1e-9 else 0.0
-            rec = self.share_day.setdefault(day, {}).setdefault(slug, [0.0, 0])
-            rec[0] += share
-            rec[1] += 1
-
-    def _attributed(self) -> tuple[dict, float, float, float]:
-        """(bond rewards by market, bond total, engine total, paid total)
-        over the days still held, from the exchange's own payments."""
-        by: dict[str, float] = {}
-        bond = eng = paid = 0.0
-        for day, mk in self.share_day.items():
-            for slug, (ssum, n) in mk.items():
-                p = self.paid(day, slug)
-                if p is None or n <= 0:
-                    continue
-                sh = ssum / n
-                by[slug] = by.get(slug, 0.0) + p * sh
-                bond += p * sh
-                eng += p * (1.0 - sh)
-                paid += p
-        return by, bond, eng, paid
-
-    def _fold_rewards(self, now: float) -> None:
-        """Days older than SHARE_KEEP_DAYS are booked at what the
-        exchange has paid by then and dropped."""
-        cut = self._day(now - SHARE_KEEP_DAYS * 86400)
-        for day in [d for d in self.share_day if d < cut]:
-            for slug, (ssum, n) in self.share_day[day].items():
-                p = self.paid(day, slug)
-                if p is None or n <= 0:
-                    continue
-                sh = ssum / n
-                self.rewards_booked = round(self.rewards_booked + p * sh, 4)
-                self.engine_booked = round(self.engine_booked + p * (1.0 - sh), 4)
-                self.paid_booked = round(self.paid_booked + p, 4)
-                self.rewards_by_market[slug] = round(
-                    self.rewards_by_market.get(slug, 0.0) + p * sh, 4)
-            del self.share_day[day]
+            usd = o.live_est * dt / 86400.0
+            self.accrued[day] = round(self.accrued.get(day, 0.0) + usd, 6)
+            self.accrued_mkt[o.market] = round(self.accrued_mkt.get(o.market, 0.0) + usd, 6)
+        for d in sorted(self.accrued)[:-ACCRUE_KEEP_DAYS]:
+            del self.accrued[d]
 
     def _earned(self) -> dict:
-        _, bond, eng, paid = self._attributed()
-        rewards = self.rewards_booked + bond
+        rewards = sum(self.accrued.values())
         return {"total": round(self.realized + rewards, 2),
                 "sales": round(self.realized, 2),
                 "sold_usd": round(self.sold_usd, 2),
                 "rewards": round(rewards, 2),
-                "engine": round(self.engine_booked + eng, 2),
-                "paid": round(self.paid_booked + paid, 2)}
+                "today": round(self.accrued.get(self._day(self._clock()), 0.0), 2)}
 
     def _market_rewards(self, slug: str) -> float:
-        by, *_ = self._attributed()
-        return self.rewards_by_market.get(slug, 0.0) + by.get(slug, 0.0)
+        return self.accrued_mkt.get(slug, 0.0)
 
     # ------------------------------------------------------------ the list
 
@@ -703,7 +664,6 @@ class Bonds:
         Places nothing unless the bonds switch is on."""
         self.scan(now)
         self._follow_tax()
-        self._fold_rewards(now)
         self._mark_engine()
         placed: list[dict] = []
         # sales: our earning order gave up shares and the ledger shrinks
@@ -754,7 +714,7 @@ class Bonds:
                    if o.purpose == "bond")
         self.dots.append([round(now, 1), round(rate, 2)])
         del self.dots[:-DOTS_KEEP]
-        self._sample_share(now)
+        self._accrue(now)
         if not hasattr(self, "_exch_seen"):
             self._exch_seen = {}
         for slug in set(self.approved) | set(self.lots):
@@ -1741,11 +1701,8 @@ class Bonds:
                 "budget_mode": self.budget_mode,
                 "unpinged": round(self.unpinged, 4),
                 "realized": round(self.realized, 4), "sold_usd": round(self.sold_usd, 4),
-                "share_day": self.share_day,
-                "rewards_booked": round(self.rewards_booked, 4),
-                "engine_booked": round(self.engine_booked, 4),
-                "paid_booked": round(self.paid_booked, 4),
-                "rewards_by_market": self.rewards_by_market,
+                "accrued": self.accrued, "accrued_mkt": self.accrued_mkt,
+                "accrued_at": round(self._accrued_at, 1),
                 "lot_ts": self.lot_ts, "exch_max": self.exch_max,
                 "fill_book": self.fill_book,
                 "more_cap": self.more_cap, "moved_more_at": self.moved_more_at,
@@ -1791,18 +1748,28 @@ class Bonds:
         self.unpinged = float(d.get("unpinged") or 0.0)
         self.realized = float(d.get("realized") or 0.0)
         self.sold_usd = float(d.get("sold_usd") or 0.0)
-        self.share_day = {str(day): {str(k): [float(v[0]), int(v[1])]
-                                     for k, v in (mk or {}).items()}
-                          for day, mk in (d.get("share_day") or {}).items()}
-        self.rewards_booked = float(d.get("rewards_booked") or 0.0)
-        self.engine_booked = float(d.get("engine_booked") or 0.0)
-        self.paid_booked = float(d.get("paid_booked") or 0.0)
-        self.rewards_by_market = {str(k): float(v) for k, v
-                                  in (d.get("rewards_by_market") or {}).items()}
+        self.accrued = {str(k): float(v) for k, v in (d.get("accrued") or {}).items()}
+        self.accrued_mkt = {str(k): float(v) for k, v in (d.get("accrued_mkt") or {}).items()}
+        self._accrued_at = float(d.get("accrued_at") or 0.0)
         self.lot_ts = {str(k): float(v) for k, v in (d.get("lot_ts") or {}).items()}
         self.exch_max = {str(k): float(v) for k, v in (d.get("exch_max") or {}).items()}
         self.fill_book = {str(k): dict(v) for k, v in (d.get("fill_book") or {}).items()}
         self.more_cap = {str(k): dict(v) for k, v in (d.get("more_cap") or {}).items()}
+        for slug, lot in self.lots.items():
+            if slug in self.more_cap:
+                continue
+            # a lot from before buying more existed (the Arkansas row,
+            # 2026-09-03): his purchase there is the default, its
+            # average price the cap
+            q = abs(float(lot.get("qty") or 0.0))
+            side = "YES" if float(lot.get("qty") or 0.0) >= 0 else "NO"
+            if q < 0.005:
+                continue
+            per = float(lot.get("cost") or 0.0) / q
+            self.more_cap[slug] = {"usd": round(float(lot.get("cost") or 0.0), 2),
+                                   "by": "default",
+                                   "first": (lot.get("fills") or ["adopt"])[0],
+                                   "px": round(per if side == "YES" else 1.0 - per, 4)}
         self.moved_more_at = {str(k): float(v) for k, v
                               in (d.get("moved_more_at") or {}).items()}
         self.dots = [list(x) for x in (d.get("dots") or [])][-DOTS_KEEP:]

@@ -1033,8 +1033,7 @@ class Monitor:
                                               scope="Bonds")
         self.bonds = Bonds(self.families["politics"], self.client,
                            self.silver.model_fair, alert=self.alerts.notify,
-                           tax_owed=self._tax_owed,
-                           paid=lambda day, slug: self.paid_seen.get(f"{day}|{slug}"))
+                           tax_owed=self._tax_owed)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
