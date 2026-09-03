@@ -4776,3 +4776,25 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788466589.3,cfb,aachc-cfb-wins-2026-11-28-ucf-3pt5wins,SELL,0.01,0.76,hand,,42.78,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C16V6GBV4DK2
 1788466589.3,cfb,aachc-cfb-wins-2026-11-28-vir-7pt5wins,BUY,1,0.66,hand,,17.09,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C1WRYJAM2DK0
 1788466589.3,cfb,aachc-cfb-wins-2026-11-28-wvir-7pt5wins,BUY,0.01,0.38,hand,,24.48,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C1PJVZ200DK1
+1788466678.3,politics,ussewc-usse-ky-2026-11-03-rep,BUY,7,0.96,bond,0,0.02,0.99735,91,94,0.909,0.92,0.96,-0.0373,79,bond: took 7 YES at 96c — it was in the way of our resting order,C96TXEJ68MVP
+1788466858.5,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,14,0.95,bond,0,0.01,0.9999,95,98,0.76,0.95,0.98,-0.0499,57,bond: took 14 YES at 95c — it was in the way of our resting order,C96VPSK14MVR
+1788466918.5,politics,usgubewc-usgub-id-2026-11-03-rep,BUY,21,0.94,bond,0,0,0.9992,93,97,0.594,0.93,0.94,-0.0592,36.01,bond: took 21 YES at 94c — it was in the way of our resting order,C96WNEWWWMVF
+1788467429.1,politics,ewc-usgub-ca-2026-11-03-stehil,BUY,49.28,0.06,backfill,,2.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C94YX95JGMVG
+1788467513.9,politics,ewc-usgub-ca-2026-11-03-stehil,BUY,29.55,0.06,manual,0.2457,8.71,0.000725,5,8,0.584,0.06,0.07,0.0593,34.55,the owner's own order — the engine leaves it alone,C8ZG7EZ3MMVG
+1788467513.9,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,5.89,0.8,earn,0.2076,9.61,0.821425,80,83,0.587,0.8,0.82,-0.0214,5.89,1 tick behind the touch — we would hold 83% of the bid side,C8YPA6CBTMVZ
+1788467783.9,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,2,0.96,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C96WJ47K0MVR
+1788467847.8,politics,ewc-usp-2028-11-07-gavnew,SELL,40,0.09,sell,0,0,,10,13,0.739,0.09,0.1,0.02,0,taker dump — sold into the bid (the carved exception),C973EMN7MMW1
+1788469566.9,politics,usgubewc-usgub-il-2026-11-03-dem,SELL,226,0.95,bond,0.9587,0.89,0.998725,92,95,0.705,0.94,0.95,0.0487,13,bond: resting 1 tick behind the touch; keeping 100% of the best reward,C96RR1EF6MVV
+1788469746.9,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,sell,0,0,0.989475,95,99,0.395,0.96,0.97,0.0295,0,taker dump — sold into the bid (the carved exception),C97GX9AA0MW0
+1788469806.9,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,20,0.88,earn,1.4302,4.75,0.990325,93,97,0.753,0.82,0.9,-0.1103,40,1 tick behind the touch — we would hold 42% of the bid side,C93GWPWQ6MVF
+1788469889.7,politics,usgubewc-usgub-tn-2026-11-03-dem,SELL,12,0.03,backfill,,1.54,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C967TE0VRMW0
+1788470212.5,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,0.49,0.07,backfill,,15.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8SXK0772MVY
+1788470215.6,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,5.51,0.07,backfill,,2.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C95C8WP76MW1
+1788470226.9,politics,ewc-usgub-az-2026-11-03-dem,BUY,-3,0.87,fix,0.0743,24.31,0.946975,87,91,0.371,0.85,0.87,-0.077,10,size trimmed by 3 to the exchange's count (order C8EJCJ070MVF),C8EJCJ070MVF
+1788470226.9,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,void,0,0,0.989475,95,99,0.4,0.96,0.97,0.0295,0,voided: the exchange has no trade for order C96P8D3EGMW0 — the row of 09-03 20:0,C96P8D3EGMW0
+1788470226.9,politics,usgubewc-usgub-wy-2026-11-03-rep,SELL,1,0.97,void,0,0,0.99985,98,99,0.376,0.97,0.99,0.0299,0,voided: the exchange has no trade for order C973GS4M6MVZ — the row of 09-03 20:3,C973GS4M6MVZ
+1788470226.9,politics,ewc-usgub-ca-2026-11-03-stehil,BUY,49.28,0.06,backfill,,2.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C94YX95JGMVG
+1788470226.9,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,2,0.96,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C96WJ47K0MVR
+1788470226.9,politics,usgubewc-usgub-tn-2026-11-03-dem,SELL,12,0.03,backfill,,1.54,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C967TE0VRMW0
+1788470226.9,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,0.49,0.07,backfill,,15.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8SXK0772MVY
+1788470226.9,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,5.51,0.07,backfill,,2.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C95C8WP76MW1
