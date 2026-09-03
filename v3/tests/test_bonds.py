@@ -1317,3 +1317,51 @@ class TestBuyingMore(Base):
         b2.restore(self.b.to_dict())
         self.assertEqual(b2.dots, self.b.dots)
         self.assertEqual(b2.more_cap[AL]["usd"], 98.0)
+
+
+class TestCommissionsInTheCost(Base):
+    """Owner, 2026-09-03: commissions must count — then "Never mind on
+    the new price floor ... Holding at cost is fine." So a take's
+    commission is in the cost shown and in the profit math, and the
+    exit's floor stays the price paid."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def test_the_takes_commission_is_in_the_cost_and_the_money(self):
+        real = self.r.exchange.post
+        holder = {}
+
+        def post(url, body, **k):
+            out = real(url, body, **k)
+            holder["oid"] = out["order"]["id"]
+            return out
+        self.r.exchange.post = post
+
+        def rows(limit=25):
+            rs = TestFiveExecutionsAreFive.rows(holder.get("oid", "?"), 5)
+            for r in rs:
+                r["trade"]["aggressorExecution"]["commissionNotionalCollected"] = {"value": "0.0600"}
+            return rs
+        self.r.exchange.recent_trades = rows
+        self.r.cache.put(AL, yes_book(self.now, ask=0.99, ask_q=5.0))
+        r = self.b.enter(AL, 0.99, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertAlmostEqual(self.b.lots[AL]["cost"], 5 * 0.99, places=4)
+        self.assertAlmostEqual(self.b.lots[AL]["fees"], 0.30, places=4)
+        self.assertAlmostEqual(self.b.cost_basis(AL, "YES"), 0.99 + 0.06, places=4)   # shown, fees in
+        self.assertAlmostEqual(self.b.price_basis(AL, "YES"), 0.99, places=4)         # the floor
+        self.assertAlmostEqual(self.b.budget, 1000 - 5 * 0.99 - 0.30, places=2)
+        # a sale by our order measures profit from the cost with fees
+        self.assertAlmostEqual(self.b._unbook_lot(AL, "YES", 5.0), 5 * 0.99 + 0.30, places=4)
+
+    def test_holding_at_cost_is_fine(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.assertEqual(self.b._bound(AL, "YES", 0.01), 0.98)
+        self.assertEqual(self.b.view(self.now, self.positions())["rows"][0]["floor"], 0.98)
+        self.bond(ALD, "NO", 100.0, 0.03)
+        self.assertEqual(self.b._bound(ALD, "NO", 0.01), 0.03)
+        self.assertEqual(self.b.view(self.now, self.positions())["rows"][1]["floor"], 0.97)
