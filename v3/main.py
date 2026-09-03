@@ -2669,9 +2669,8 @@ class Monitor:
         between a tap and the next save must not undo it."""
         market = str(market or "").strip()
         now = time.time()
-        if op in ("bonds_budget", "bonds_max"):
-            r = (self.bonds.set_budget(value) if op == "bonds_budget"
-                 else self.bonds.set_max(value))
+        if op == "bonds_budget":
+            r = self.bonds.set_budget(value)
             market = market or "-"
         elif not market:
             return {"ok": False, "note": "no market given"}
