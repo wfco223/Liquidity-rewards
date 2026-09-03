@@ -32,11 +32,13 @@ And the corrections, same day, in order:
   And the way to do it is gradually lead the minnow down until it is
   priced more cheaply. Then snap and buy their shares, adding them to
   our total in that market." So: when a small order (a minnow) rests
-  IN FRONT of our earning order, a small DECOY order of ours steps a
-  tick in front of it; the minnow re-undercuts; the decoy steps again
-  — never past our cost — until the minnow sits at or under the price
-  bar, and then the engine takes the minnow's shares at that price.
-  They join the bond, and our main order has one competitor fewer.
+  IN FRONT of our earning order, a small DECOY order of ours JOINS it
+  at its price and waits two hours for it to move; each time it moves
+  the decoy joins it again. When it stays put for the wait, the decoy
+  comes off and its shares are taken at its price; when it moves more
+  than three times, reaches the far touch, or crosses under our cost,
+  it is taken at once. They join the bond, and our main order has one
+  competitor fewer. (The price bar governs only new ground.)
   A market where we hold no bond yet is entered the plain way: the
   touch taken when it is at or under the bar.
 
@@ -68,7 +70,9 @@ KEEP_FRACTION = 0.6         # the resting slot keeps this much of the best rewar
 BEHIND_MAX_TICKS = 8
 MOVE_COOLDOWN_S = 1800.0    # a move back happens at most this often
 DECOY_QTY = 10.0            # the decoy that leads a minnow down
-MINNOW_MAX = 100.0          # a level in front this small is a minnow to lead
+MINNOW_MAX = 25.0           # a level in front this small is a minnow to lead
+DANCE_WAIT_S = 2 * 3600.0   # after each decoy move, how long the minnow gets to move again
+DANCE_MAX_MOVES = 3         # a minnow that moves more than this is taken at once
 SCAN_HOUR_UTC = 7           # 3 am Eastern: the nightly Silver check
 LOG_KEEP = 200
 DROPPED_KEEP = 30
@@ -115,6 +119,7 @@ class Bonds:
         self.snipe_max: float = SNIPE_MAX_DEFAULT
         self.moved_at: dict[str, float] = {}
         self.slot: dict[str, dict] = {}
+        self.dance: dict[str, dict] = {}      # slug -> {px, moves, since}
         self.scan_day: str = ""
         self.log: list[dict] = []
         self._earn_seen: dict[str, float] = {}
@@ -610,9 +615,14 @@ class Bonds:
 
     def _work_minnows(self, slug: str, side: str, positions: dict,
                       now: float) -> dict | None:
-        """Lead the minnow in front of our order down with a small decoy
-        a tick ahead of it, and when it sits at or under the bar, take
-        its shares at that price. No minnow in front: no decoy."""
+        """The dance (owner, 2026-09-02): a decoy JOINS the minnow in
+        front of our order at its own price and waits DANCE_WAIT_S for
+        it to move again. Each time the minnow moves the decoy joins it
+        again and the clock restarts. When the minnow stays put for the
+        wait, the decoy comes off and the minnow's shares are taken at
+        its price. When the minnow moves more than DANCE_MAX_MOVES
+        times, reaches the far touch, or crosses under our cost, it is
+        taken at once. No minnow in front: no decoy, no dance."""
         book = self.fam.cache.fresh(slug, 120.0, now)
         if book is None:
             return None
@@ -621,28 +631,34 @@ class Bonds:
         decoys = self._orders(slug, bs, decoy=True)
         minnow = self._minnow_in_front(slug, side, book)
         if minnow is None:
-            for d in decoys:                       # nothing to lead: pull it
-                r = self.fam.desk.cancel(d.id, slug, initiator="owner")
-                if r.ok:
-                    self.fam.orders.pop(d.id, None)
-                    self._log(event="decoy_pulled", market=slug, price=d.price)
+            self._pull_decoys(slug, side)
+            self.dance.pop(slug, None)
             return None
-        m_px, m_q = minnow
-        m_cost = m_px if side == "YES" else round(1.0 - m_px, 4)
-        bar = min(self.snipe_max, PRICE_CAP)
-        if m_cost <= bar + 1e-9:
-            return self._snap(slug, side, book, m_px, m_q, positions, now)
         if self._money() < MONEY_MIN_USD:
-            return None                            # no money to snap with
+            return None                            # nothing to snap with
+        m_px, m_q = minnow
+        st = self.dance.get(slug)
+        moved = st is not None and abs(m_px - st["px"]) > tick / 2
+        moves = (st["moves"] + 1 if (st and moved) else (st["moves"] if st else 0))
         bound = self._bound(slug, side, tick)
         if side == "YES":
-            want = self._snap_down(m_px - tick, tick)
-            if want < bound - 1e-9 or (book.bids and want <= book.bids[0][0] + 1e-9):
-                return None                        # cannot lead past cost
+            at_far_touch = bool(book.bids) and m_px <= book.bids[0][0] + tick + 1e-9
+            past_cost = bound > 0 and m_px < bound - 1e-9
         else:
-            want = self._snap_up(m_px + tick, tick)
-            if want > bound + 1e-9 or (book.asks and want >= book.asks[0][0] - 1e-9):
-                return None
+            at_far_touch = bool(book.asks) and m_px >= book.asks[0][0] - tick - 1e-9
+            past_cost = m_px > bound + 1e-9
+        stayed = st is not None and not moved and now - st["since"] >= DANCE_WAIT_S
+        why = ("moved more than %d times" % DANCE_MAX_MOVES if moves > DANCE_MAX_MOVES
+               else "reached the far touch" if at_far_touch
+               else "under our cost" if past_cost
+               else "stayed put for the wait" if stayed else None)
+        if why:
+            self._log(event="dance_over", market=slug, why=why, moves=moves,
+                      minnow_px=m_px)
+            return self._snap(slug, side, book, m_px, m_q, positions, now)
+        if st is not None and not moved:
+            return None                            # the clock is running
+        # (re)join the minnow at its price
         held = min(self.held(slug, side), self.exchange_held(slug, side, positions))
         qty = float(min(DECOY_QTY, math.floor(held)))
         if qty < 1.0:
@@ -650,31 +666,38 @@ class Bonds:
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
         if decoys:
             d = decoys[0]
-            if abs(d.price - want) < tick / 2:
-                return None                        # already leading from there
             r = self.fam.desk.reprice(
                 {"id": d.id, "market": slug, "side": bs, "price": d.price,
-                 "size": d.qty, "intent": d.intent}, want, initiator="owner")
+                 "size": d.qty, "intent": d.intent}, m_px, initiator="owner")
             if not (r.ok and r.order_id):
                 return None
             if not r.two_orders:
                 self.fam.orders.pop(d.id, None)
             qty = d.qty
         else:
-            r = self.fam.desk.place_resting(slug, bs, want, qty, net_position=pos,
+            r = self.fam.desk.place_resting(slug, bs, m_px, qty, net_position=pos,
                                             initiator="owner", intent=intent)
             if not (r.ok and r.order_id):
                 self._log(event="decoy_refused", market=slug, note=r.note[:120])
                 return None
         self.fam.orders[r.order_id] = FamilyOrder(
-            id=r.order_id, market=slug, side=bs, price=(r.price or want),
+            id=r.order_id, market=slug, side=bs, price=(r.price or m_px),
             qty=qty, intent=(r.intent or intent), placed_ts=now, purpose="bond",
-            why=f"bond decoy: leading the {m_q:g} in front down from "
-                f"{m_px * 100:g}c")
-        self._log(event="decoy", market=slug, side=side, price=(r.price or want),
-                  minnow_px=m_px, minnow_q=round(m_q, 1))
+            why=f"bond decoy: joined the {m_q:g} in front at {m_px * 100:g}c, "
+                f"move {moves}")
+        self.dance[slug] = {"px": m_px, "moves": moves, "since": round(now, 1)}
+        self._log(event="decoy", market=slug, side=side, price=(r.price or m_px),
+                  minnow_px=m_px, minnow_q=round(m_q, 1), moves=moves)
         return {"market": slug, "bond": side, "side": bs,
-                "price": (r.price or want), "qty": qty, "decoy": True}
+                "price": (r.price or m_px), "qty": qty, "decoy": True,
+                "moves": moves}
+
+    def _pull_decoys(self, slug: str, side: str) -> None:
+        for d in self._orders(slug, self.earn(side)[0], decoy=True):
+            r = self.fam.desk.cancel(d.id, slug, initiator="owner")
+            if r.ok:
+                self.fam.orders.pop(d.id, None)
+                self._log(event="decoy_pulled", market=slug, price=d.price)
 
     def _snap(self, slug: str, side: str, book, px: float, size: float,
               positions: dict, now: float) -> dict | None:
@@ -707,10 +730,8 @@ class Bonds:
                   budget=round(self.budget, 2))
         self._ping_maybe(usd)
         # the decoy has done its job
-        for d in self._orders(slug, self.earn(side)[0], decoy=True):
-            rr = self.fam.desk.cancel(d.id, slug, initiator="owner")
-            if rr.ok:
-                self.fam.orders.pop(d.id, None)
+        self._pull_decoys(slug, side)
+        self.dance.pop(slug, None)
         return {"market": slug, "bond": side, "side": bs, "price": px,
                 "qty": qty, "taken": True, "usd": round(usd, 2)}
 
@@ -817,6 +838,7 @@ class Bonds:
                            for o in self._orders(slug, ebs, decoy=True)] or None),
                 "minnow": ({"price": minnow[0], "qty": round(minnow[1], 1)}
                            if minnow else None),
+                "dance": self.dance.get(slug),
                 "stale": (book is None or now - book.fetched_at > 600.0),
                 "slot": self.slot.get(slug),
             })
@@ -858,6 +880,7 @@ class Bonds:
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
                 "exch_seen": getattr(self, "_exch_seen", {}),
                 "slot": self.slot, "moved_at": self.moved_at,
+                "dance": self.dance,
                 "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -879,5 +902,6 @@ class Bonds:
         self._exch_seen = {str(k): float(v) for k, v in (d.get("exch_seen") or {}).items()}
         self.slot = {str(k): dict(v) for k, v in (d.get("slot") or {}).items()}
         self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
+        self.dance = {str(k): dict(v) for k, v in (d.get("dance") or {}).items()}
         self.log = list(d.get("log") or [])
         self._mark_engine()
