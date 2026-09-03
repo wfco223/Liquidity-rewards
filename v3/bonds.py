@@ -731,6 +731,14 @@ class Bonds:
 
     # -- the resting order ----------------------------------------------------
 
+    def _levels_net(self, slug: str, bs: str, book) -> list:
+        tick = book.tick or 0.01
+        raw = list(book.side(bs))
+        for o in self._orders(slug, bs):
+            raw = [(p, (q - o.qty) if abs(p - o.price) < tick / 2 else q)
+                   for p, q in raw]
+        return [(p, q) for p, q in raw if q > 1e-9]
+
     def _best_slot(self, slug: str, side: str, book, qty: float,
                    bound: float, start: float | None = None):
         """The farthest slot behind the touch that still keeps
@@ -747,19 +755,32 @@ class Bonds:
         levels = [(p, q) for p, q in raw if q > 1e-9]
         pool = self.fam._side_pool(slug, prog) if prog is not None else None
         own = book.side(bs)
-        touch = start if start is not None else (own[0][0] if own else None)
+        touch = own[0][0] if own else None
+        # the candidates run from the CLOSEST price allowed — cost, or
+        # the current price when moving back (never forward) — out to
+        # BEHIND_MAX_TICKS behind the touch; "the best reward" is the
+        # best of those, at cost included (owner, 2026-09-03: "resting
+        # beyond where they need to be to earn 60%")
         if side == "YES":
-            origin = max(touch if touch is not None else bound, bound)
-            cands = [self._snap_up(origin + i * tick, tick)
-                     for i in range(BEHIND_MAX_TICKS + 1)]
+            origin = start if start is not None else (
+                max(bound, 0.001) if bound > 0 else (touch if touch is not None else 0.999))
+            origin = max(origin, bound)
+            far = (touch if touch is not None else origin) + BEHIND_MAX_TICKS * tick
+            n = max(int(round((far - origin) / tick)), 0)
+            cands = [self._snap_up(origin + i * tick, tick) for i in range(n + 1)]
             cands = [p for p in cands if p <= 0.999
                      and not (book.bids and p <= book.bids[0][0] + 1e-9)]
+            ref = touch if touch is not None else origin
         else:
-            origin = min(touch if touch is not None else bound, bound)
-            cands = [self._snap_down(origin - i * tick, tick)
-                     for i in range(BEHIND_MAX_TICKS + 1)]
+            origin = start if start is not None else (
+                min(bound, 0.999) if bound < 0.999 else (touch if touch is not None else 0.001))
+            origin = min(origin, bound)
+            far = (touch if touch is not None else origin) - BEHIND_MAX_TICKS * tick
+            n = max(int(round((origin - far) / tick)), 0)
+            cands = [self._snap_down(origin - i * tick, tick) for i in range(n + 1)]
             cands = [p for p in cands if p >= 0.001
                      and not (book.asks and p >= book.asks[0][0] - 1e-9)]
+            ref = touch if touch is not None else origin
         cands = list(dict.fromkeys(cands))
         if not cands:
             return None
@@ -770,7 +791,6 @@ class Bonds:
                 j = estimate_join(bs, levels, tick, float(prog.df),
                                   float(prog.target), px, qty)
                 est = j.share * pool if (j.qualifies and j.in_window) else 0.0
-            ref = touch if touch is not None else px
             scored.append((px, est, int(round(abs(px - ref) / tick))))
         best = max(e for _, e, _ in scored)
         if best <= 0:
@@ -780,11 +800,35 @@ class Bonds:
             # the touch AT COST filled in 13 minutes for a gain of $0
             px, est, ticks = scored[-1]
             return px, est, ticks, 1.0
+        target = KEEP_FRACTION * best - 1e-12
         for px, est, ticks in reversed(scored):
-            if est >= KEEP_FRACTION * best - 1e-12:
-                return px, est, ticks, est / best
+            if est >= target:
+                size = self._min_size(bs, levels, tick, prog, pool, px, qty, target)
+                return px, est, ticks, est / best, size
         px, est, ticks = scored[0]
-        return px, est, ticks, 1.0
+        return px, est, ticks, 1.0, qty
+
+    @staticmethod
+    def _min_size(bs: str, levels, tick: float, prog, pool, px: float,
+                  qty: float, target: float) -> float:
+        """The smallest size at `px` that still earns `target` $/day —
+        what is worth offering; the rest of the lot stays for the
+        coupon. Monotone in size, so a binary search."""
+        from .scoring import estimate_join
+
+        def est_of(q: float) -> float:
+            j = estimate_join(bs, levels, tick, float(prog.df), float(prog.target), px, q)
+            return j.share * pool if (j.qualifies and j.in_window) else 0.0
+        lo, hi = 1.0, float(math.floor(qty))
+        if hi < 1.0 or est_of(hi) < target:
+            return hi
+        while hi - lo > 0.5:
+            mid = float(math.floor((lo + hi) / 2))
+            if est_of(mid) >= target:
+                hi = mid
+            else:
+                lo = mid + 1.0
+        return hi if est_of(hi) >= target else float(math.floor(qty))
 
     def _bound(self, slug: str, side: str, tick: float) -> float:
         """The YES price the exit may not cross: the price paid, on the
@@ -827,50 +871,73 @@ class Bonds:
         decoys = self._orders(slug, bs, decoy=True)
         resting = sum(o.qty for o in main) + sum(o.qty for o in decoys)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
+        lot_qty = float(math.floor(held - sum(o.qty for o in decoys)))
         if main:
+            # one exit order: it moves back on the cooldown when it has
+            # become the touch, and is resized to what earns when the
+            # lot or the book changed; never a second exit for the rest
             cur = main[0]
+            if now - self.moved_at.get(slug, 0.0) < MOVE_COOLDOWN_S or decoys:
+                return None
             own = book.side(bs)
             touch = own[0][0] if own else None
             at_front = touch is not None and (
                 (side == "YES" and cur.price <= touch + 1e-9)
                 or (side == "NO" and cur.price >= touch - 1e-9))
-            if (at_front and not decoys
-                    and now - self.moved_at.get(slug, 0.0) >= MOVE_COOLDOWN_S):
-                slot = self._best_slot(slug, side, book, cur.qty, bound,
-                                       start=cur.price)
-                if slot and ((side == "YES" and slot[0] > cur.price + tick / 2)
-                             or (side == "NO" and slot[0] < cur.price - tick / 2)):
-                    r = self.fam.desk.reprice(
-                        {"id": cur.id, "market": slug, "side": bs,
-                         "price": cur.price, "size": cur.qty,
-                         "intent": cur.intent}, slot[0], initiator="owner")
-                    if r.ok and r.order_id:
-                        if not r.two_orders:
-                            self.fam.orders.pop(cur.id, None)
-                        self.fam.orders[r.order_id] = FamilyOrder(
-                            id=r.order_id, market=slug, side=bs,
-                            price=(r.price or slot[0]), qty=cur.qty,
-                            intent=cur.intent, placed_ts=now, purpose="bond",
-                            why="bond: moved back behind the touch — "
-                                "still earning, selling slower")
-                        self.moved_at[slug] = now
-                        self.slot[slug] = {"px": (r.price or slot[0]),
-                                           "ticks": slot[2],
-                                           "keep": round(slot[3], 3),
-                                           "est": round(slot[1], 4)}
-                        self._log(event="earn_moved_back", market=slug,
-                                  side=side, price=(r.price or slot[0]),
-                                  qty=cur.qty, ticks=slot[2])
-                        return {"market": slug, "bond": side, "side": bs,
-                                "price": (r.price or slot[0]), "qty": cur.qty,
-                                "moved": True}
-        qty = float(math.floor(held - resting))
+            slot = self._best_slot(slug, side, book, max(lot_qty, 1.0), bound,
+                                   start=(cur.price if at_front else None))
+            if slot is None:
+                return None
+            back = ((side == "YES" and slot[0] > cur.price + tick / 2)
+                    or (side == "NO" and slot[0] < cur.price - tick / 2))
+            new_px = slot[0] if (at_front and back) else cur.price
+            if new_px == cur.price:
+                # not moving: only the size may change, and only when
+                # it is off by a real margin
+                size = self._min_size(bs, self._levels_net(slug, bs, book), tick,
+                                      self.fam.terms.get(slug),
+                                      self.fam._side_pool(slug, self.fam.terms.get(slug)),
+                                      cur.price, max(lot_qty, 1.0),
+                                      KEEP_FRACTION * slot[1] / max(slot[3], 1e-9) - 1e-12) \
+                    if slot[1] > 0 else max(lot_qty, 1.0)
+                if abs(size - cur.qty) < max(1.0, 0.25 * max(lot_qty, 1.0)):
+                    return None
+            else:
+                size = slot[4]
+            r = self.fam.desk.reprice(
+                {"id": cur.id, "market": slug, "side": bs,
+                 "price": cur.price, "size": cur.qty,
+                 "intent": cur.intent}, new_px, size, initiator="owner")
+            if not (r.ok and r.order_id):
+                return None
+            if not r.two_orders:
+                self.fam.orders.pop(cur.id, None)
+            moved = new_px != cur.price
+            self.fam.orders[r.order_id] = FamilyOrder(
+                id=r.order_id, market=slug, side=bs,
+                price=(r.price or new_px), qty=size,
+                intent=cur.intent, placed_ts=now, purpose="bond",
+                why=("bond: moved back behind the touch — still earning, "
+                     "selling slower" if moved else
+                     "bond: resized to what earns — the rest is held for "
+                     "the coupon"))
+            self.moved_at[slug] = now
+            self.slot[slug] = {"px": (r.price or new_px), "ticks": slot[2],
+                               "keep": round(slot[3], 3), "est": round(slot[1], 4),
+                               "size": size, "reserve": round(max(lot_qty - size, 0.0), 2)}
+            self._log(event=("earn_moved_back" if moved else "earn_resized"),
+                      market=slug, side=side, price=(r.price or new_px),
+                      qty=size, ticks=slot[2], reserve=round(max(lot_qty - size, 0.0), 2))
+            return {"market": slug, "bond": side, "side": bs,
+                    "price": (r.price or new_px), "qty": size, "moved": moved}
+        qty = lot_qty
         if qty < 1.0:
             return None
         slot = self._best_slot(slug, side, book, qty, bound)
         if slot is None:
             return None
-        want, est, ticks, keep = slot
+        want, est, ticks, keep, size = slot
+        qty = size
         r = self.fam.desk.place_resting(slug, bs, want, qty, net_position=pos,
                                         initiator="owner", intent=intent)
         if not (r.ok and r.order_id):
@@ -885,9 +952,11 @@ class Bonds:
                                "it waits"))
         self.moved_at[slug] = now
         self.slot[slug] = {"px": (r.price or want), "ticks": ticks,
-                           "keep": round(keep, 3), "est": round(est, 4)}
+                           "keep": round(keep, 3), "est": round(est, 4),
+                           "size": qty, "reserve": round(max(lot_qty - qty, 0.0), 2)}
         self._log(event="earn_rested", market=slug, side=side,
-                  price=(r.price or want), qty=qty, ticks=ticks)
+                  price=(r.price or want), qty=qty, ticks=ticks,
+                  reserve=round(max(lot_qty - qty, 0.0), 2))
         return {"market": slug, "bond": side, "side": bs,
                 "price": (r.price or want), "qty": qty, "ticks": ticks}
 
