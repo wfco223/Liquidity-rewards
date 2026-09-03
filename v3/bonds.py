@@ -84,6 +84,8 @@ LADDER_SHOW = 8             # entry-side levels the page shows to enter at
 SHARE_KEEP_DAYS = 7         # a day's reward split is held this long, then booked
 FILL_WAIT_S = 8.0           # how long a take's fill is awaited in the trade record
 TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed to show it
+HOLD_ENGINE_S = 600.0       # after clearing our orders out of a take's way, the engine waits this long
+CLEAR_WAIT_S = 5.0          # how long a cleared order gets to leave the open-order list
 
 
 def side_for(odds: float | None) -> str | None:
@@ -254,11 +256,19 @@ class Bonds:
                              for s, l in self.lots.items()
                              if abs(float(l.get("qty") or 0.0)) > 0.005}
 
-    def _book_lot(self, slug: str, side: str, qty: float, usd: float) -> None:
+    def _book_lot(self, slug: str, side: str, qty: float, usd: float,
+                  ref: str = "") -> None:
+        """A lot is booked only from something the exchange confirmed —
+        `ref` is the filled order's id, or "adopt" for shares the owner
+        counted in himself. A lot with no such backing is dropped at
+        restore (the Hawaii case, 2026-09-03)."""
         self.lot_ts[slug] = self._clock()
-        lot = self.lots.setdefault(slug, {"qty": 0.0, "cost": 0.0})
+        lot = self.lots.setdefault(slug, {"qty": 0.0, "cost": 0.0, "fills": []})
         lot["qty"] = round(lot["qty"] + (qty if side == "YES" else -qty), 4)
         lot["cost"] = round(lot["cost"] + usd, 4)
+        if ref:
+            lot.setdefault("fills", []).append(str(ref))
+            del lot["fills"][:-50]
         if abs(lot["qty"]) < 0.005:
             self.lots.pop(slug, None)
         self._mark_engine()
@@ -537,7 +547,7 @@ class Bonds:
         c = float(inv.get("cost") or 0.0)
         yes_px = abs(c / q) if abs(q) > 0.005 and c else 0.0
         per = yes_px if side == "YES" else (1.0 - yes_px if yes_px else 0.0)
-        self._book_lot(slug, side, qty, round(qty * per, 4))
+        self._book_lot(slug, side, qty, round(qty * per, 4), ref="adopt")
         self._log(event="adopted", market=slug, side=side, qty=qty,
                   cost=round(qty * per, 2))
         return {"ok": True, "note": f"counting {qty:g} {side} shares as bond "
@@ -692,11 +702,21 @@ class Bonds:
         more than the exchange shows), at its best slot, kept there. It
         never chases forward; it moves back, on a cooldown, only when
         it has become the touch."""
+        bs, intent = self.earn(side)
+        if self.held(slug, side) < 1.0:
+            # nothing in the ledger: an earn order or decoy of ours still
+            # resting here is stale (a lot trimmed away) — it comes off
+            for o in self._orders(slug, bs):
+                r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+                if r.ok:
+                    self.fam.orders.pop(o.id, None)
+                    self._log(event="earn_pulled", market=slug, price=o.price,
+                              qty=o.qty, note="no bond shares held here")
+            return None
         held = min(self.held(slug, side),
                    self.exchange_held(slug, side, positions))
         if held < 1.0:
             return None
-        bs, intent = self.earn(side)
         book = self.fam.cache.fresh(slug, 120.0, now)
         if book is None:
             return None
@@ -890,7 +910,8 @@ class Bonds:
         if why:
             self._log(event="dance_over", market=slug, why=why, moves=moves,
                       minnow_px=m_px)
-            return self._snap(slug, side, book, m_px, m_q, positions, now)
+            r = self._snap(slug, side, book, m_px, m_q, positions, now)
+            return None if (r and r.get("retry")) else r
         if st is not None and not moved:
             return None                            # the clock is running
         # (re)join the minnow at its price
@@ -945,6 +966,29 @@ class Bonds:
             return None
         bs, intent = self.entry(side)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
+        far = "SELL" if side == "YES" else "BUY"
+        blocked, cleared = self._clear_way(slug, far, px, now)
+        if blocked:
+            self._block_note = blocked
+            self._log(event="take_blocked", market=slug, side=side, price=px,
+                      note=blocked[:160])
+            return None
+        if cleared:
+            # the book we priced from still lists what we just pulled:
+            # read it again and take only what OTHERS still show there
+            try:
+                book = self.client.book(slug, fetched_at=now)
+                self.fam.cache.put(slug, book)
+            except Exception as e:  # noqa: BLE001
+                self._log(event="take_stopped", market=slug,
+                          note=f"could not re-read the book after clearing: {str(e)[:80]}")
+                return None
+            px2, _c2, size2 = self._take_price(side, book, slug)
+            if px2 is None or abs(px2 - px) > 1e-9 or size2 < 1.0:
+                return {"retry": True, "qty": 0.0, "usd": 0.0}   # the level moved: price it again
+            qty = float(min(qty, math.floor(size2)))
+            if qty < 1.0:
+                return None
         # a taker order fills and never rests, so it is not verified as
         # resting (the dump learned this): the fill shows up in the
         # position feed and the exchange's trade record
@@ -973,7 +1017,7 @@ class Bonds:
             why=f"bond: took {qty:g} {side} at {px * 100:g}c — it was in the "
                 f"way of our resting order")
         usd = round(qty * cost, 4)
-        self._book_lot(slug, side, qty, usd)
+        self._book_lot(slug, side, qty, usd, ref=r.order_id)
         self._pay(usd)
         self._log(event="snapped", market=slug, side=side, price=px, qty=qty,
                   cost=round(usd, 2), cash=round(self.cash, 2),
@@ -1055,6 +1099,60 @@ class Bonds:
         avg = round(usd / shares, 4) if shares > 0 else posted_px
         return shares, avg, note
 
+    def _clear_way(self, slug: str, far: str, px: float, now: float) -> str | None:
+        """Before a take: our own orders on the side it hits, at or
+        better than its price, would be matched first — the exchange
+        will not fill us against ourselves, and the take sits (the
+        Hawaii case, 2026-09-03: the engine's 3-share cover bid at 7c
+        was in the way of a 7c sell). The engine's and the bond's own
+        orders there are pulled and the engine is held off the market
+        for HOLD_ENGINE_S; a hand order in the way is never touched —
+        the take is refused and says which order. Returns the refusal
+        note and whether anything was cleared: (note, cleared)."""
+        def better(p):
+            return p <= px + 1e-9 if far == "SELL" else p >= px - 1e-9
+        in_way = [o for o in list(self.fam.orders.values())
+                  if o.market == slug and o.side == far and better(o.price)]
+        hand = [o for o in in_way if o.purpose == "manual"]
+        if hand:
+            h = hand[0]
+            return (f"your own order {h.id} ({h.qty:g} @ {h.price * 100:g}c) rests "
+                    f"in the way — the exchange would match you against "
+                    f"yourself; move it first"), False
+        if not in_way:
+            return None, False
+        engine = [o for o in in_way if o.purpose != "bond"]
+        if engine:
+            self.fam.hold_until[slug] = now + HOLD_ENGINE_S
+        gone = []
+        for o in in_way:
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if r.ok:
+                self.fam.orders.pop(o.id, None)
+                gone.append(o.id)
+            else:
+                return f"could not clear our {o.purpose} order {o.id}: {r.note[:80]}", True
+        # wait for the exchange to show them gone before the take
+        for attempt in range(int(CLEAR_WAIT_S) + 1):
+            try:
+                still = {str(o.get("id") or "") for o in self.client.open_orders()}
+            except Exception:  # noqa: BLE001
+                still = set()
+            if not (still & set(gone)):
+                break
+            if attempt == int(CLEAR_WAIT_S):
+                return (f"our cleared order{'s' if len(gone) > 1 else ''} "
+                        f"{', '.join(gone)} still show open — not taking into "
+                        f"our own order"), True
+            self._sleep(1.0)
+        self._log(event="cleared", market=slug, side=far, price=px,
+                  qty=round(sum(o.qty for o in in_way), 2), orders=gone,
+                  note=("our own orders in the take's way pulled"
+                        + (f"; engine held off here until "
+                           f"{time.strftime('%H:%M', time.gmtime(now + HOLD_ENGINE_S))}Z"
+                           if engine else "")))
+        return None, True
+
     def _take_price(self, side: str, book, slug: str) -> tuple[float | None, float, float]:
         """(YES price to take, bond cost per dollar, size OTHERS show) for
         opening a bond of this side at the best level that is not ours."""
@@ -1103,6 +1201,7 @@ class Bonds:
         bought = usd = 0.0
         lots = 0
         last = None
+        self._block_note = ""
         for _ in range(ENTER_MAX_LEVELS):
             try:
                 book = self.client.book(slug, fetched_at=now)
@@ -1126,12 +1225,17 @@ class Bonds:
             r = self._snap(slug, side, book, px, size, pos, now)
             if not r:
                 break
+            if r.get("retry"):
+                last = None                 # the book changed under us: price it again
+                continue
             bought += r["qty"]
             usd += r["usd"]
             lots += 1
             if self._money() < MONEY_MIN_USD:
                 break
         if bought <= 0.005:
+            if getattr(self, "_block_note", ""):
+                return {"ok": False, "note": f"nothing was bought — {self._block_note}"}
             return {"ok": False, "note": "nothing was bought — nothing resting "
                                          "at or inside that price, or no money"}
         self._log(event="entered", market=slug, side=side, qty=round(bought, 2),
@@ -1208,6 +1312,8 @@ class Bonds:
             "dance": self.dance.get(slug),
             "stale": (book is None or now - book.fetched_at > 600.0),
             "slot": self.slot.get(slug),
+            "hold_until": (self.fam.hold_until.get(slug)
+                           if self.fam.hold_until.get(slug, 0.0) > now else None),
         }
 
     def live_rows(self, now: float, positions: dict | None = None) -> dict:
@@ -1284,9 +1390,27 @@ class Bonds:
         self.proposed = {str(k): dict(v) for k, v in (d.get("proposed") or {}).items()}
         self.ignored = {str(k): float(v) for k, v in (d.get("ignored") or {}).items()}
         self.dropped = {str(k): dict(v) for k, v in (d.get("dropped") or {}).items()}
-        self.lots = {str(k): {"qty": float(v.get("qty") or 0.0),
-                              "cost": float(v.get("cost") or 0.0)}
-                     for k, v in (d.get("lots") or {}).items()}
+        self.lots = {}
+        unbooked: list[dict] = []
+        for k, v in (d.get("lots") or {}).items():
+            lot = {"qty": float(v.get("qty") or 0.0),
+                   "cost": float(v.get("cost") or 0.0),
+                   "fills": [str(x) for x in (v.get("fills") or [])]}
+            if not lot["fills"]:
+                # booked by the old code on the assumption a take filled:
+                # nothing the exchange confirmed backs it (owner,
+                # 2026-09-03). Dropped; what it charged goes back.
+                spent = float(d.get("spent") or 0.0)
+                d["spent"] = round(max(spent - lot["cost"], 0.0), 4)
+                if str(d.get("budget_mode") or "tax") != "tax":
+                    d["budget"] = round(float(d.get("budget") or 0.0) + lot["cost"], 4)
+                unbooked.append({"event": "unbooked_unconfirmed", "market": str(k),
+                                 "qty": abs(lot["qty"]), "cost": round(lot["cost"], 2),
+                                 "note": "no exchange-confirmed fill backs this lot; "
+                                         "dropped and its cost returned",
+                                 "ts": round(self._clock(), 1)})
+                continue
+            self.lots[str(k)] = lot
         self.cash = float(d.get("cash") or 0.0)
         self.budget = float(d.get("budget") or 0.0)
         self.spent = float(d.get("spent") or 0.0)
@@ -1312,4 +1436,6 @@ class Bonds:
         self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
         self.dance = {str(k): dict(v) for k, v in (d.get("dance") or {}).items()}
         self.log = list(d.get("log") or [])
+        self.log.extend(unbooked)
+        del self.log[:-LOG_KEEP]
         self._mark_engine()
