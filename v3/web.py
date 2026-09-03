@@ -862,10 +862,10 @@ function bMoreSet(m){var x=parseFloat(bKeep('bmore-'+m));if(!(x>=0)){bSay('<div 
 function bMore(r,b,sw){
  var mo=r.more;if(!mo)return '';
  var m=esc(r.market);var pct=Math.round((b.more_share||0.3)*100);
- var h='Buy more: up to $'+bField('bmore-'+m,bKeep('bmore-'+m)||(mo.cap_usd||0).toFixed(2),'6em')+' <button onclick="bMoreSet(\''+m+'\')">Set</button>'+(mo.by==='default'?' <span class="muted">(your first purchase here)</span>':'');
+ var h='Buy more: up to $'+bField('bmore-'+m,bKeep('bmore-'+m)||(mo.cap_usd||0).toFixed(2),'6em')+' <button onclick="bMoreSet(\''+m+'\')">Set</button>'+(mo.cap_px!=null?' at '+pc(mo.cap_px)+' or better (your first price here)':'')+(mo.by==='default'?' <span class="muted">· amount = your first purchase</span>':'');
  if(mo.order)h+='<br>resting '+mo.order.qty+' @ '+pc(mo.order.price)+': '+bPct(mo.order.share)+' of its side = <b>'+usd(mo.order.est)+'/day</b>'+(mo.order.share<(b.more_share||0.3)?' <span class="warn">(under '+pct+'%: moves at the next cooldown)</span>':'');
  else if(mo.slot)h+='<br>would rest '+mo.slot.qty+' @ '+pc(mo.slot.price)+' ('+bPct(mo.slot.share)+' of its side, '+usd(mo.slot.est)+'/day)'+(sw.on?'':' — bonds switch off');
- else h+='<br><span class="muted">not resting: no price inside the cap captures '+pct+'% of its side</span>';
+ else h+='<br><span class="muted">not resting: no price at or under your first price captures '+pct+'% of its side</span>';
  return '<div class="sub">'+h+'</div>';
 }
 function bSniper(r,b,sw){
@@ -933,7 +933,7 @@ function render(d){
   +'<div>A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO.</div>'
   +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. Your own orders are never counted; the engine\'s and the bond\'s own orders in the way are pulled first and the engine is held off that market for ten minutes. A hand order in the way stops the take.</div>'
   +'<div>Held bonds get one resting order, as far back as it can sit keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under the price paid. The cost shown counts the purchase\'s commission in.</div>'
-  +'<div>A second order buys more on the thin side, up to an amount you set per market (your first purchase there by default, reset when you no longer hold it), at the cheapest price that captures '+Math.round((b.more_share||0.3)*100)+'% of its side, never past 99.5¢. It moves when it no longer captures that; when no price inside the cap can, it comes off.</div>'
+  +'<div>A second order buys more on the thin side, up to an amount you set per market (your first purchase there by default, reset when you no longer hold it), at the cheapest price that captures '+Math.round((b.more_share||0.3)*100)+'% of its side, never dearer than the price you first paid there. It moves when it no longer captures that; when no price at or under your first price can, it comes off.</div>'
   +'<div>A small order (25 or fewer) in front of it gets a decoy joining it. Sits two hours, moves over three times, reaches the touch or goes under cost: bought, joins the bond.</div>'
   +'<div>Sale proceeds go back into Money. A phone note every $100 bought.</div>'
   +'<div>Rewards are paid per market and the engine quotes bond markets too, so a day\'s payment is split between the bond order and the engine\'s orders by their measured share of what all our orders there earn. An estimate.</div>'
