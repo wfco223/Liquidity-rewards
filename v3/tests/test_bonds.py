@@ -205,9 +205,8 @@ class TestTheLedger(Base):
         self.exch(AL, 250.0, 0.98)                       # exchange says 250
         self.b.cycle(self.now, self.positions(), on=True)
         ask = self.orders(AL, "SELL")[0]
-        self.assertLessEqual(ask.qty, 250.0)             # never more than the exchange shows
+        self.assertEqual(ask.qty, 250.0)                 # never more than the exchange shows
         self.assertEqual(ask.qty, self.b.slot[AL]["size"])
-        self.assertEqual(self.b.slot[AL]["reserve"], 250.0 - ask.qty)
 
 
 class TestThePage(Base):
@@ -239,15 +238,14 @@ class TestTheRestingOrder(Base):
         ask = self.orders(AL, "SELL", decoy=False)[0]
         self.assertEqual((ask.purpose, ask.intent), ("bond", SELL_LONG))
         # at 60% kept it sits three ticks back (0.2^3 x 1500 = 12 vs 5),
-        # and only as many shares as keep that 60% are offered; the rest
-        # ride to resolution (owner, 2026-09-03)
+        # with the whole lot (owner, 2026-09-03: "You don't have to
+        # reserve any shares to maturity")
         self.assertAlmostEqual(ask.price, 0.93)
         self.assertEqual(out["placed"][0]["ticks"], 3)
         self.assertGreaterEqual(self.b.slot[AL]["keep"], 0.6)
-        self.assertLess(ask.qty, 1500.0)
-        self.assertEqual(self.b.slot[AL]["reserve"], 1500.0 - ask.qty)
+        self.assertEqual(ask.qty, 1500.0)
         self.b.cycle(self.now + 60, self.positions(), on=True)
-        self.assertEqual(len(self.orders(AL, "SELL", decoy=False)), 1)   # no second exit for the rest
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=False)), 1)   # one exit
 
     def test_never_under_cost(self):
         self.b.approve(AL, self.now)
@@ -264,7 +262,7 @@ class TestTheRestingOrder(Base):
         self.assertEqual(len(bids), 1)
         self.assertEqual((bids[0].purpose, bids[0].intent), ("bond", SELL_SHORT))
         self.assertLessEqual(bids[0].price, 0.01 + 1e-9)
-        self.assertLessEqual(bids[0].qty, 1000.0)
+        self.assertEqual(bids[0].qty, 1000.0)
         self.assertEqual(bids[0].qty, self.b.slot[ALD]["size"])
 
 
@@ -1531,35 +1529,30 @@ class TestTheArkansasLesson(Base):
         self.bond(ALD, "NO", 195.0, 0.05)                 # 195 NO at 95c
         self.b.more_cap[ALD]["usd"] = 0.0
 
-    def test_only_what_earns_is_offered_and_the_rest_rides_to_maturity(self):
+    def test_the_whole_lot_rests_at_the_slot_that_keeps_60_percent(self):
+        # first: "either the quantity should be reduced ... or I should
+        # move the shares back"; then: "You don't have to reserve any
+        # shares to maturity" — so the price moves, the lot stays whole
         out = self.b.cycle(self.now, self.positions(), on=True)
         bids = self.orders(ALD, "BUY", decoy=False)
         self.assertEqual(len(bids), 1)
         o = bids[0]
         self.assertLessEqual(o.price, 0.05 + 1e-9)        # never over cost
+        self.assertEqual(o.qty, 195.0)                    # everything held is offered
         slot = self.b.slot[ALD]
         self.assertEqual(o.qty, slot["size"])
         self.assertGreaterEqual(slot["keep"], 0.6)
-        self.assertEqual(slot["reserve"], 195.0 - o.qty)
-        # the size is the least that keeps 60%: one share fewer does not
+        # the whole lot at cost would be the best; the slot keeps 60% of it
         prog = self.r.fam.terms.get(ALD)
         pool = self.r.fam._side_pool(ALD, prog)
         lv = self.b._levels_net(ALD, "BUY", self.book)
         from v3.scoring import estimate_join
-        def est(q):
-            j = estimate_join("BUY", lv, 0.01, float(prog.df), float(prog.target), o.price, q)
-            return j.share * pool if (j.qualifies and j.in_window) else 0.0
         full = estimate_join("BUY", lv, 0.01, float(prog.df), float(prog.target), 0.05, 195.0)
-        best = full.share * pool
-        self.assertGreaterEqual(est(o.qty), 0.6 * best - 1e-9)
-        if o.qty > 1:
-            self.assertLess(est(o.qty - 1), 0.6 * best)
-        # and no second exit for the reserved shares, cycle after cycle
+        here = estimate_join("BUY", lv, 0.01, float(prog.df), float(prog.target), o.price, 195.0)
+        self.assertGreaterEqual(here.share * pool, 0.6 * full.share * pool - 1e-9)
+        # one exit, cycle after cycle
         self.b.cycle(self.now + 60, self.positions(), on=True)
         self.assertEqual(len(self.orders(ALD, "BUY", decoy=False)), 1)
-        row = [r for r in self.b.view(self.now + 60, self.positions())["rows"]
-               if r["market"] == ALD][0]
-        self.assertEqual(row["slot"]["reserve"], 195.0 - o.qty)
 
 
 class TestTheEngineIsOutOfHeldBondMarkets(Base):
@@ -1895,11 +1888,9 @@ class TestAContingentMovesUp(Base):
         ex = self.orders(ALD, "BUY", decoy=False)
         self.assertEqual(len(ex), 1)
         self.assertAlmostEqual(ex[0].price, slot[0])
-        self.assertEqual(ex[0].qty, slot[4])
+        self.assertEqual(ex[0].qty, 265.0)                      # everything, nothing kept back
         self.assertLessEqual(ex[0].price, 0.05 + 1e-9)          # never past cost
-        self.assertLess(ex[0].qty, 256.0)                       # the contingent, the rest kept back
         self.assertIn("earn_moved_up", [e["event"] for e in self.b.log])
-        self.assertEqual(self.b.slot[ALD]["reserve"], 265.0 - ex[0].qty)
 
     def test_an_exit_keeping_its_share_does_not_chase(self):
         # sitting at the slot already: nothing to do
