@@ -1949,7 +1949,29 @@ class Bonds:
             "floor": self._floor_view(slug, side, book),
             "book": self._book_view(slug, side, book),
             "bait": self._bait_view(slug),
+            "mark": self._mark_view(slug, side, book, held),
         }
+
+    def _mark_view(self, slug: str, side: str, book, held: float) -> dict | None:
+        """In the black or not (owner, 2026-09-03: "highlight markets
+        where the bid price has moved above my average cost"): the best
+        bid OTHERS have for the bond right now, in the bond's own
+        terms, against what a share cost with fees in."""
+        if held < 0.005 or book is None:
+            return None
+        cost = self.cost_basis(slug, side)
+        if cost <= 0:
+            return None
+        if side == "YES":
+            lv = self._others(slug, "BUY", book)           # YES bids, best first
+            bid = lv[0][0] if lv else None
+        else:
+            lv = self._others(slug, "SELL", book)          # YES asks: a NO bid is 1 − ask
+            bid = round(1.0 - lv[0][0], 4) if lv else None
+        if bid is None:
+            return None
+        return {"bid": bid, "cost": cost, "edge": round(bid - cost, 4),
+                "black": bid > cost + 1e-9}
 
     def _book_view(self, slug: str, side: str, book) -> dict | None:
         """Both sides, best first, in the bond's own terms (a NO bond

@@ -849,8 +849,10 @@ window._bOpen=window._bOpen||{};
 function bTog(el,m){window._bOpen[m]=!!el.open;}
 function bExit(r){return (r.calc&&r.calc.orders||[]).filter(function(o){return !o.decoy;});}
 function bTop(r,L,held){
- var h='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
+ var mk=r.mark;var black=!!(mk&&mk.black);
+ var h='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+(black?' <span class="pill on">in the black</span>':'')+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
  if(held){
+  if(mk)h+='<div class="sub">bid <b class="'+(black?'ok':'warn')+'">'+pc(mk.bid)+'</b> vs your cost '+pc(mk.cost)+' ('+(mk.edge>=0?'+':'−')+(Math.abs(mk.edge)*100).toFixed(1)+'¢ a share)</div>';
   var ex=bExit(r);
   var e=ex.length?('exit '+ex[0].qty+' @ '+pc(ex[0].price)+' → <b>'+usd(ex[0].est)+'/day</b>'):'<span class="warn">no exit resting</span>';
   var mo=(r.more&&r.more.order)?(' · buying more '+r.more.order.qty+' @ '+pc(r.more.order.price)):'';
@@ -914,7 +916,8 @@ function bLadder(r,b){
 }
 function bRow(r,d,b,sw,held){
  var L=d.labels||{};var m=esc(r.market);var open=window._bOpen[r.market]?' open':'';
- var h='<div style="margin:8px 0;border-top:1px solid #2c3527;padding-top:6px">'+bTop(r,L,held);
+ var black=!!(r.mark&&r.mark.black);
+ var h='<div style="margin:8px 0;border-top:1px solid #2c3527;padding:6px 0 0 8px;border-left:4px solid '+(held?(black?'#7fd77f':'#2c3527'):'transparent')+'">'+bTop(r,L,held);
  h+='<details'+open+' ontoggle="bTog(this,\''+m+'\')"><summary style="font-size:16px;padding:8px 0;cursor:pointer">Details</summary>';
  h+=bBook(r);
  if(held)h+=bCalc(r)+bSniper(r,b,sw)+bMore(r,b,sw)+bBait(r);
@@ -934,7 +937,8 @@ function render(d){
  var eh=b.earned||{};
  out+='<div class="card"><div class="hero">'+usd(eh.invested||0)+'<span class="u"> in bonds</span></div>'
   +'<div class="sub"><b>'+(eh.return_pct==null?'—':bPct(eh.return_pct))+' return to date</b> = '+usd(eh.total||0)+' earned on '+usd(eh.deployed||0)+' put in'+(eh.days>=1?' over '+Math.round(eh.days)+' day'+(Math.round(eh.days)===1?'':'s'):'')+(eh.annual_pct!=null?' ≈ '+bPct(eh.annual_pct)+' a year':'')+'</div></div>';
- out+='<div class="card"><b>Your bonds</b> '+(held.length?(live?'<span class="ok" style="font-size:12px">● LIVE</span>':'<span class="muted" style="font-size:12px">live line opening…</span>'):'')+' <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>';
+ var nb=held.filter(function(r){return r.mark&&r.mark.black;}).length;
+ out+='<div class="card"><b>Your bonds</b> '+(held.length?(live?'<span class="ok" style="font-size:12px">● LIVE</span>':'<span class="muted" style="font-size:12px">live line opening…</span>'):'')+' <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>'+(held.length?' <span class="muted">'+nb+' of '+held.length+' in the black</span>':'');
  if(!held.length)out+='<div class="muted">None yet. Open a market below and tap Enter.</div>';
  held.forEach(function(r){out+=bRow(r,d,b,sw,true);});
  out+='</div>';
