@@ -9,29 +9,38 @@ list ask me first. Once I'm in the positions they should automatically
 sale goes through I'll want the money reinvested in the cheapest
 market where it can earn rewards."
 
-What this is and is not. A bond market is a politics market Silver's
-model puts at 99% or better for the YES side. Bought at 98-99c it pays
-the last cent or two at resolution — November 3 for most of them —
-and, held, it is not buying power, so no engine fill can reach it.
-It is bond-LIKE across many such markets; on any one of them the
-price is the market's own estimate of the chance the lot goes to
-zero. The page says so on every row.
+And the corrections, same day:
+- "Once per day in the night. No notification. When I go to the
+  screen, any new markets can be up top for me to add. Automatically
+  remove markets that fall outside the 99% range. Also include
+  anything that has less than a 1% chance." — so both ends: a market
+  Silver puts at 99%+ is a YES bond (buy YES at 98-99c); one at 1% or
+  under is a NO bond (buy NO, which on this exchange is opening a
+  short of YES at 1-2c). The list is checked once a night, silently.
+- "The engine does not need to ignore these markets, only the orders
+  I place... it can operate business as normal otherwise." — so no
+  frozen ground. The engine keeps quoting bond markets; it just never
+  touches a bond order, and never rests its own exits on bond stock.
+- "The order could be very large >1000 shares. So we can afford to be
+  patient... Minnows may move down to try and get more rewards, but
+  then I can just snap them up." — so a bond ask is rested once and
+  left alone; nothing chases the touch.
+- "The goal would be to take a resting order for proceeds rather than
+  place and potentially have that capital be used elsewhere." — so
+  reinvestment LIFTS the touch (the second carved exception to
+  post-only, owner's rail only, never past the touch, never more than
+  it shows) instead of resting a bid that leaves cash for the engine's
+  fills to eat.
 
-The list is the owner's. Silver's numbers PROPOSE a market; nothing
-joins the list until he taps Add. Approved markets are frozen ground
-for the engine — it places nothing there, rests no exits, sells
-nothing. Every order this module places is post-only, on the owner's
-rail, and carries purpose "bond", which the engine leaves alone like
-his hand orders. Nothing here places an order unless the bonds switch
-on /switch is ON (owner's standing rule: no automation without a
-switch, two taps on, one tap off).
-
-The money: sale proceeds are a ledger here, not the exchange's cash.
-A sale is counted only when OUR bond ask shrank or vanished while the
-position fell by that much — the owner selling by hand to pay the
-taxes is not reinvested behind his back. Reinvestment rests a bid at
-the touch of the cheapest approved market whose bid side pays
-rewards; a filled bid gets its own sell, and round it goes.
+What this is and is not. Bought at 98-99c a bond pays the last cent
+or two at resolution — November 3 for most — and, held, it is not
+buying power, so no engine fill can reach it. Bond-LIKE across many
+such markets; on any one the price is the market's own odds that the
+lot goes to zero, and the page says so on every row. Sale proceeds are
+a ledger here, not the exchange's cash: a sale counts only when OUR
+bond order gave up that much while the position moved, so the owner
+selling by hand to pay the taxes is never reinvested behind his back.
+Nothing here places an order unless the bonds switch on /switch is ON.
 """
 
 from __future__ import annotations
@@ -40,31 +49,54 @@ import math
 import time
 
 from .family import FamilyOrder, slug_days_out
-from .intents import BUY_LONG, SELL_LONG
+from .intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 
-BOND_ODDS = 0.99            # Silver's odds for the YES side to count
-PRICE_CAP = 0.995           # never buy above this: the last half cent is not worth the wait
+HIGH_ODDS = 0.99            # YES bond: Silver's odds for YES at or above
+LOW_ODDS = 0.01             # NO bond: Silver's odds for YES at or below
+PRICE_CAP = 0.995           # never pay more than this per dollar of bond
 REINVEST_MIN_USD = 5.0      # proceeds below this wait for the next sale
-SCAN_EVERY_S = 600.0        # the Silver check for new candidates
-MOVE_COOLDOWN_S = 600.0     # an ask is re-rested at most this often
+SCAN_HOUR_UTC = 7           # 3 am Eastern: the nightly Silver check
 LOG_KEEP = 200
+DROPPED_KEEP = 30
+
+
+def side_for(odds: float | None) -> str | None:
+    """Which side is the bond at these odds, if any."""
+    if odds is None:
+        return None
+    if odds >= HIGH_ODDS:
+        return "YES"
+    if odds <= LOW_ODDS:
+        return "NO"
+    return None
+
+
+def scan_due(now: float, last_day: str, hour: int = SCAN_HOUR_UTC) -> str | None:
+    """The night's scan: once per UTC day, after its hour."""
+    t = time.gmtime(now)
+    day = time.strftime("%Y-%m-%d", t)
+    if day == last_day or t.tm_hour < hour:
+        return None
+    return day
 
 
 class Bonds:
-    def __init__(self, fam, client, fair, alert=None, clock=None):
+    def __init__(self, fam, client, fair, clock=None):
         self.fam = fam                  # the politics family
         self.client = client
         self.fair = fair                # slug -> Silver's YES odds, or None
-        self.alert = alert or (lambda title, msg: None)
         self._clock = clock or time.time
-        self.approved: dict[str, dict] = {}   # slug -> {added, odds}
-        self.proposed: dict[str, dict] = {}   # slug -> {odds, since}
+        self.approved: dict[str, dict] = {}   # slug -> {added, odds, side}
+        self.proposed: dict[str, dict] = {}   # slug -> {odds, side, since}
         self.ignored: dict[str, float] = {}   # slug -> ts
-        self.cash: float = 0.0                # sale proceeds awaiting reinvestment
+        self.dropped: dict[str, dict] = {}    # slug -> {odds, side, ts}
+        self.cash: float = 0.0                # proceeds awaiting reinvestment
         self.pos_seen: dict[str, float] = {}
-        self.moved_at: dict[str, float] = {}
-        self.last_scan: float = 0.0
+        self.side_seen: dict[str, str] = {}
+        self.scan_day: str = ""
         self.log: list[dict] = []
+        self._earn_seen: dict[str, float] = {}   # slug -> size our earn orders showed
+        self._earn_px: dict[str, float] = {}
 
     # ------------------------------------------------------------ helpers
 
@@ -73,79 +105,125 @@ class Bonds:
         self.log.append(kw)
         del self.log[:-LOG_KEEP]
 
-    def _orders(self, slug: str, side: str | None = None) -> list[FamilyOrder]:
+    @staticmethod
+    def entry(side: str) -> tuple[str, str]:
+        """(book side, intent) that OPENS a bond of this side."""
+        return ("BUY", BUY_LONG) if side == "YES" else ("SELL", BUY_SHORT)
+
+    @staticmethod
+    def earn(side: str) -> tuple[str, str]:
+        """(book side, intent) of the resting order that earns while the
+        bond waits — and closes it if it fills."""
+        return ("SELL", SELL_LONG) if side == "YES" else ("BUY", SELL_SHORT)
+
+    def _orders(self, slug: str, book_side: str | None = None) -> list[FamilyOrder]:
         return [o for o in list(self.fam.orders.values())
                 if o.purpose == "bond" and o.market == slug
-                and (side is None or o.side == side)]
+                and (book_side is None or o.side == book_side)]
 
-    def _cost_px(self, slug: str) -> float:
+    def held(self, slug: str, side: str, positions: dict | None = None) -> float:
+        """Shares of this bond held: long YES for a YES bond, the short
+        of YES for a NO bond."""
+        if positions is not None and slug in positions:
+            pos = float((positions.get(slug) or (0.0, 0.0))[0])
+        else:
+            pos = float((self.fam.inventory.get(slug) or {}).get("qty") or 0.0)
+        return max(pos, 0.0) if side == "YES" else max(-pos, 0.0)
+
+    def _yes_px(self, slug: str) -> float:
+        """The YES price the position was done at, per share."""
         inv = self.fam.inventory.get(slug) or {}
         q = float(inv.get("qty") or 0.0)
         c = float(inv.get("cost") or 0.0)
-        return (c / q) if q > 0.005 and c > 0 else 0.0
+        return abs(c / q) if abs(q) > 0.005 and c else 0.0
+
+    def cost_basis(self, slug: str, side: str) -> float:
+        """What a dollar of this bond cost: the YES price paid, or one
+        minus the YES price the short was sold at."""
+        px = self._yes_px(slug)
+        if px <= 0:
+            return 0.0
+        return px if side == "YES" else round(1.0 - px, 4)
 
     @staticmethod
-    def _snap(px: float, tick: float) -> float:
-        return round(round(px / tick) * tick, 4)
+    def _snap_up(px: float, tick: float) -> float:
+        return round(math.ceil(px / tick - 1e-9) * tick, 4)
 
-    def _frozen(self) -> set:
-        """Markets the engine must leave alone: every approved one, and
-        any market still carrying bond stock or bond orders."""
-        out = set(self.approved)
-        for o in list(self.fam.orders.values()):
-            if o.purpose == "bond":
-                out.add(o.market)
-        return out
+    @staticmethod
+    def _snap_down(px: float, tick: float) -> float:
+        return round(math.floor(px / tick + 1e-9) * tick, 4)
+
+    def _mark_engine(self) -> None:
+        """The engine keeps quoting bond markets; it just never rests its
+        own exits on bond stock or touches a bond order."""
+        self.fam.bond_markets = set(self.approved) | set(self.dropped)
 
     # ------------------------------------------------------------ the list
 
     def scan(self, now: float, force: bool = False) -> list[str]:
-        """Silver's odds propose; the owner disposes. Returns the newly
-        proposed slugs (already alerted)."""
-        if not force and now - self.last_scan < SCAN_EVERY_S:
-            return []
-        self.last_scan = now
+        """Once a night (or on the page's button): Silver's odds propose
+        new markets, and drop listed ones that left the band. Silent —
+        the page shows what changed. Returns the newly proposed slugs."""
+        if not force:
+            day = scan_due(now, self.scan_day)
+            if day is None:
+                return []
+            self.scan_day = day
         new: list[str] = []
-        pool = set(self.fam.universe) | set(self.fam.inventory)
+        pool = set(self.fam.universe) | set(self.fam.inventory) | set(self.approved)
         for slug in sorted(pool):
             p = self.fair(slug)
-            if p is None:
-                continue
+            s = side_for(p)
             if slug in self.approved:
-                self.approved[slug]["odds"] = round(p, 4)
+                meta = self.approved[slug]
+                if p is not None:
+                    meta["odds"] = round(p, 4)
+                if p is not None and s != meta.get("side"):
+                    # outside the band now: off the list by itself (owner,
+                    # 2026-09-02); a position still held keeps its bond
+                    # order, and the engine still leaves that alone
+                    self.dropped[slug] = {"odds": round(p, 4),
+                                          "side": meta.get("side"),
+                                          "ts": round(now, 1)}
+                    for k in sorted(self.dropped, key=lambda k: self.dropped[k]["ts"])[:-DROPPED_KEEP]:
+                        self.dropped.pop(k, None)
+                    del self.approved[slug]
+                    self._log(event="dropped", market=slug, odds=round(p, 4))
                 continue
-            if slug in self.ignored:
+            if p is None or slug in self.ignored:
                 continue
-            if p >= BOND_ODDS:
-                if slug not in self.proposed:
-                    self.proposed[slug] = {"odds": round(p, 4), "since": now}
-                    new.append(slug)
-                else:
-                    self.proposed[slug]["odds"] = round(p, 4)
-            else:
+            if s is None:
                 self.proposed.pop(slug, None)
+                continue
+            if slug not in self.proposed:
+                self.proposed[slug] = {"odds": round(p, 4), "side": s,
+                                       "since": round(now, 1)}
+                new.append(slug)
+            else:
+                self.proposed[slug].update(odds=round(p, 4), side=s)
         if new:
             self._log(event="proposed", n=len(new), slugs=new[:6])
-            self.alert("Bond candidates",
-                       f"{len(new)} politics market{'s' if len(new) > 1 else ''} "
-                       f"now at 99%+ per Silver — open the bonds page to "
-                       f"add or ignore")
+        self._mark_engine()
         return new
 
     def approve(self, slug: str, now: float) -> dict:
         p = self.fair(slug)
+        s = side_for(p)
         if p is None:
             return {"ok": False, "note": "Silver has no odds for this market"}
-        if p < BOND_ODDS:
+        if s is None:
             return {"ok": False,
-                    "note": f"Silver puts it at {p:.1%} — under the 99% bar"}
-        self.approved[slug] = {"added": round(now, 1), "odds": round(p, 4)}
+                    "note": f"Silver puts YES at {p:.1%} — inside 1% to 99%, "
+                            f"not a bond"}
+        self.approved[slug] = {"added": round(now, 1), "odds": round(p, 4),
+                               "side": s}
         self.proposed.pop(slug, None)
         self.ignored.pop(slug, None)
-        self.fam.freeze_dyn.add(slug)
-        self._log(event="approved", market=slug, odds=round(p, 4))
-        return {"ok": True, "note": f"added — Silver {p:.1%}; the engine "
-                                    f"leaves this market alone from now on"}
+        self.dropped.pop(slug, None)
+        self._mark_engine()
+        self._log(event="approved", market=slug, odds=round(p, 4), side=s)
+        return {"ok": True, "note": f"added as a {s} bond — Silver {p:.1%} "
+                                    f"for YES"}
 
     def ignore(self, slug: str, now: float) -> dict:
         self.proposed.pop(slug, None)
@@ -156,202 +234,194 @@ class Bonds:
     def unignore(self, slug: str) -> dict:
         if self.ignored.pop(slug, None) is None:
             return {"ok": False, "note": "not on the ignore list"}
-        self.last_scan = 0.0
         return {"ok": True, "note": "back in the running — the next scan "
                                     "may propose it"}
 
     def remove(self, slug: str, now: float) -> dict:
-        if self.approved.pop(slug, None) is None:
+        meta = self.approved.pop(slug, None)
+        if meta is None:
             return {"ok": False, "note": "not on the bond list"}
+        self.dropped[slug] = {"odds": meta.get("odds"), "side": meta.get("side"),
+                              "ts": round(now, 1), "by": "owner"}
+        self._mark_engine()
         self._log(event="removed", market=slug)
-        # frozen ground until the stock and the bond orders are gone
-        return {"ok": True, "note": "removed — the engine stays out until "
-                                    "the position and bond orders are gone"}
+        return {"ok": True, "note": "removed — a bond order still resting "
+                                    "stays yours; the engine leaves it alone"}
 
     # ------------------------------------------------------------ the money
 
     def cycle(self, now: float, positions: dict, on: bool) -> dict:
-        """Once a cycle, after the family has run: count sales, keep
-        every held bond earning with a resting ask, reinvest proceeds.
-        Places nothing unless the bonds switch is on."""
+        """Once a cycle, after the family has run: count sales, give
+        every held bond its resting order, reinvest proceeds. Places
+        nothing unless the bonds switch is on."""
         self.scan(now)
-        self.fam.freeze_dyn = self._frozen()
+        self._mark_engine()
         placed: list[dict] = []
         for slug in sorted(set(self.approved) | set(self.pos_seen)):
-            pos = float((positions.get(slug) or (0.0, 0.0))[0])
+            side = (self.approved.get(slug) or {}).get("side") or self.side_seen.get(slug)
+            if not side:
+                continue
+            self.side_seen[slug] = side
+            now_h = self.held(slug, side, positions)
             prev = self.pos_seen.get(slug)
-            asks = self._orders(slug, "SELL")
-            if prev is not None and pos < prev - 0.005:
-                sold = prev - pos
-                # OUR ask must have given up that much for it to count
-                gave = self._ask_gave(slug, sold)
+            if prev is not None and now_h < prev - 0.005:
+                gone = prev - now_h
+                gave = self._earn_gave(slug, side, gone)
                 if gave > 0.005:
-                    px = self._last_ask_px.get(slug, 0.0) if hasattr(self, "_last_ask_px") else 0.0
-                    px = px or (asks[0].price if asks else self._cost_px(slug))
-                    self.cash = round(self.cash + gave * px, 4)
-                    self._log(event="sold", market=slug, qty=round(gave, 2),
-                              price=px, proceeds=round(gave * px, 2),
+                    px = self._earn_px.get(slug) or self._yes_px(slug)
+                    proceeds = gave * (px if side == "YES" else (1.0 - px))
+                    self.cash = round(self.cash + proceeds, 4)
+                    self._log(event="sold", market=slug, side=side,
+                              qty=round(gave, 2), price=px,
+                              proceeds=round(proceeds, 2),
                               cash=round(self.cash, 2))
-            self.pos_seen[slug] = pos
+            self.pos_seen[slug] = now_h
         if on:
             for slug in sorted(self.approved):
-                pos = float((positions.get(slug) or (0.0, 0.0))[0])
-                r = self._keep_earning(slug, pos, now)
+                side = self.approved[slug]["side"]
+                r = self._keep_earning(slug, side, positions, now)
                 if r:
                     placed.append(r)
             r = self._reinvest(now, positions)
             if r:
                 placed.append(r)
-        # what our asks show as this cycle ends is what next cycle's
-        # sale count is measured against — after any placement
         for slug in set(self.approved) | set(self.pos_seen):
-            self._remember_asks(slug)
+            side = self.side_seen.get(slug) or (self.approved.get(slug) or {}).get("side")
+            if side:
+                self._remember_earn(slug, side)
         return {"placed": placed, "cash": round(self.cash, 2)}
 
-    # the size our asks showed last cycle, so a hand sale by the owner
-    # (our ask untouched) is never counted as proceeds to reinvest
-    def _remember_asks(self, slug: str) -> None:
-        if not hasattr(self, "_ask_seen"):
-            self._ask_seen = {}
-            self._last_ask_px = {}
-        asks = self._orders(slug, "SELL")
-        self._ask_seen[slug] = sum(o.qty for o in asks)
-        if asks:
-            self._last_ask_px[slug] = asks[0].price
+    def _remember_earn(self, slug: str, side: str) -> None:
+        bs, _ = self.earn(side)
+        orders = self._orders(slug, bs)
+        self._earn_seen[slug] = sum(o.qty for o in orders)
+        if orders:
+            self._earn_px[slug] = orders[0].price
 
-    def _ask_gave(self, slug: str, sold: float) -> float:
-        seen = getattr(self, "_ask_seen", {}).get(slug, 0.0)
-        now_q = sum(o.qty for o in self._orders(slug, "SELL"))
-        gave = max(seen - now_q, 0.0)
-        return min(gave, sold)
+    def _earn_gave(self, slug: str, side: str, gone: float) -> float:
+        bs, _ = self.earn(side)
+        seen = self._earn_seen.get(slug, 0.0)
+        now_q = sum(o.qty for o in self._orders(slug, bs))
+        return min(max(seen - now_q, 0.0), gone)
 
-    def _keep_earning(self, slug: str, pos: float, now: float) -> dict | None:
-        """A held bond gets one resting ask at the best-earning price at
-        or above what it cost: the ask touch when that clears cost, else
-        a tick over cost. Re-rested only when the touch dropped under it
-        (we fell behind the queue) and the cooldown allows."""
-        if pos < 1.0:
+    def _keep_earning(self, slug: str, side: str, positions: dict,
+                      now: float) -> dict | None:
+        """A held bond gets ONE resting order and keeps it. YES: an ask
+        at the touch or at cost, whichever is higher. NO: a cover bid at
+        the touch or at the price the short was sold, whichever is
+        lower. Nothing chases the touch afterwards (owner: "we can
+        afford to be patient")."""
+        held = self.held(slug, side, positions)
+        if held < 1.0:
+            return None
+        bs, intent = self.earn(side)
+        resting = sum(o.qty for o in self._orders(slug, bs))
+        qty = float(math.floor(held - resting))
+        if qty < 1.0:
             return None
         book = self.fam.cache.fresh(slug, 120.0, now)
         if book is None:
             return None
         tick = book.tick or 0.01
-        # never under what it cost: at cost the ask still earns, and a
-        # fill there loses nothing (rounded UP onto the grid)
-        cost = self._cost_px(slug)
-        floor = (round(math.ceil(cost / tick - 1e-9) * tick, 4)
-                 if cost > 0 else 0.0)
-        touch = book.asks[0][0] if book.asks else None
-        want = max(touch if touch is not None else 0.99, floor)
-        want = min(self._snap(want, tick), 0.999)
-        if book.bids and want <= book.bids[0][0] + 1e-9:
-            want = self._snap(book.bids[0][0] + tick, tick)   # post-only
-        asks = self._orders(slug, "SELL")
-        resting = sum(o.qty for o in asks)
-        if asks:
-            cur = asks[0]
-            behind = touch is not None and cur.price > touch + tick / 2
-            if (behind and want < cur.price - tick / 2
-                    and now - self.moved_at.get(slug, 0.0) >= MOVE_COOLDOWN_S):
-                r = self.fam.desk.place_resting(
-                    slug, "SELL", want, cur.qty, net_position=pos,
-                    initiator="owner", intent=SELL_LONG)
-                if r.ok and r.order_id:
-                    self.fam.desk.cancel(cur.id, slug, initiator="owner")
-                    self.fam.orders.pop(cur.id, None)
-                    self.fam.orders[r.order_id] = FamilyOrder(
-                        id=r.order_id, market=slug, side="SELL",
-                        price=(r.price or want), qty=cur.qty, intent=r.intent,
-                        placed_ts=now, purpose="bond",
-                        why="bond: the resting ask earns while it waits — "
-                            "moved to the touch")
-                    self.moved_at[slug] = now
-                    self._log(event="ask_moved", market=slug,
-                              price=(r.price or want), qty=cur.qty)
-                    return {"market": slug, "side": "SELL",
-                            "price": (r.price or want), "qty": cur.qty,
-                            "moved": True}
-            return None
-        qty = float(math.floor(pos - resting))
-        if qty < 1.0:
-            return None
-        r = self.fam.desk.place_resting(slug, "SELL", want, qty,
-                                        net_position=pos, initiator="owner",
-                                        intent=SELL_LONG)
+        px_done = self._yes_px(slug)
+        if side == "YES":
+            floor = self._snap_up(px_done, tick) if px_done > 0 else 0.0
+            touch = book.asks[0][0] if book.asks else 0.99
+            want = min(max(touch, floor), 0.999)
+            if book.bids and want <= book.bids[0][0] + 1e-9:
+                want = self._snap_up(book.bids[0][0] + tick, tick)
+        else:
+            cap = self._snap_down(px_done, tick) if px_done > 0 else 0.999
+            touch = book.bids[0][0] if book.bids else 0.01
+            want = max(min(touch, cap), 0.001)
+            if book.asks and want >= book.asks[0][0] - 1e-9:
+                want = self._snap_down(book.asks[0][0] - tick, tick)
+        pos = float((positions.get(slug) or (0.0, 0.0))[0])
+        r = self.fam.desk.place_resting(slug, bs, want, qty, net_position=pos,
+                                        initiator="owner", intent=intent)
         if not (r.ok and r.order_id):
-            self._log(event="ask_refused", market=slug, note=r.note[:120])
+            self._log(event="earn_refused", market=slug, note=r.note[:120])
             return None
         self.fam.orders[r.order_id] = FamilyOrder(
-            id=r.order_id, market=slug, side="SELL", price=(r.price or want),
-            qty=qty, intent=r.intent, placed_ts=now, purpose="bond",
-            why="bond: the resting ask earns while it waits")
-        self.moved_at[slug] = now
-        self._log(event="ask_rested", market=slug, price=(r.price or want),
-                  qty=qty)
-        return {"market": slug, "side": "SELL", "price": (r.price or want),
-                "qty": qty}
+            id=r.order_id, market=slug, side=bs, price=(r.price or want),
+            qty=qty, intent=r.intent or intent, placed_ts=now, purpose="bond",
+            why=("bond: the resting ask earns while it waits" if side == "YES"
+                 else "bond: the resting cover bid earns while it waits"))
+        self._log(event="earn_rested", market=slug, side=side,
+                  price=(r.price or want), qty=qty)
+        return {"market": slug, "bond": side, "side": bs,
+                "price": (r.price or want), "qty": qty}
 
-    def _committed(self) -> float:
-        return sum(o.qty * o.price for o in list(self.fam.orders.values())
-                   if o.purpose == "bond" and o.side == "BUY")
+    def _take_price(self, side: str, book) -> tuple[float | None, float, float]:
+        """(YES price to take, bond cost per dollar, size showing) for
+        opening a bond of this side right now."""
+        if side == "YES":
+            if not book.asks:
+                return None, 0.0, 0.0
+            a, q = book.asks[0]
+            return a, a, q
+        if not book.bids:
+            return None, 0.0, 0.0
+        b, q = book.bids[0]
+        return b, round(1.0 - b, 4), q
 
     def _reinvest(self, now: float, positions: dict) -> dict | None:
-        """Proceeds go into the cheapest approved market whose bid side
-        pays: one post-only bid joining the touch, sized to the money."""
-        spend = self.cash - self._committed()
+        """Proceeds LIFT the touch of the cheapest listed market whose
+        earning side pays — a limit at the touch, never past it, never
+        more than it shows — so the cash is a bond again the same minute
+        (owner, 2026-09-02)."""
+        spend = self.cash
         if spend < REINVEST_MIN_USD:
             return None
         best = None
-        for slug in self.approved:
-            if self._orders(slug, "BUY"):
-                continue
+        for slug, meta in self.approved.items():
+            side = meta["side"]
             book = self.fam.cache.fresh(slug, 120.0, now)
-            if book is None or not book.asks:
+            if book is None:
                 continue
-            ask = book.asks[0][0]
-            if ask > PRICE_CAP:
+            px, cost, size = self._take_price(side, book)
+            if px is None or cost <= 0 or cost > PRICE_CAP or size < 1.0:
                 continue
             prog = self.fam.terms.get(slug)
             if prog is None or not prog.is_live():
                 continue
-            probe = self._probe(slug, book, prog, "BUY")
+            ebs, _ = self.earn(side)
+            probe = self._probe(slug, book, prog, ebs)
             if probe is None or not probe.qualifies or probe.est_day <= 0:
                 continue
-            if best is None or ask < best[0]:
-                best = (ask, slug, book, probe)
+            if best is None or cost < best[0]:
+                best = (cost, slug, side, px, size, book)
         if best is None:
             return None
-        ask, slug, book, probe = best
-        tick = book.tick or 0.01
-        px = book.bids[0][0] if book.bids else self._snap(ask - tick, tick)
-        if px >= ask - 1e-9:
-            px = self._snap(ask - tick, tick)
-        qty = float(math.floor(spend / px))
+        cost, slug, side, px, size, book = best
+        qty = float(min(math.floor(spend / cost), math.floor(size)))
         if qty < 1.0:
             return None
+        bs, intent = self.entry(side)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
-        r = self.fam.desk.place_resting(slug, "BUY", px, qty, net_position=pos,
-                                        initiator="owner", intent=BUY_LONG)
+        r = self.fam.desk.place_resting(slug, bs, px, qty, net_position=pos,
+                                        initiator="owner", intent=intent,
+                                        taker="bond")
         if not (r.ok and r.order_id):
-            self._log(event="bid_refused", market=slug, note=r.note[:120])
+            self._log(event="take_refused", market=slug, note=r.note[:120])
             return None
         self.fam.orders[r.order_id] = FamilyOrder(
-            id=r.order_id, market=slug, side="BUY", price=(r.price or px),
-            qty=qty, intent=r.intent, placed_ts=now, purpose="bond",
-            why="bond: reinvesting sale proceeds — the bid earns while it waits")
-        self.cash = round(self.cash - qty * (r.price or px), 4)
-        self._log(event="bid_rested", market=slug, price=(r.price or px),
-                  qty=qty, cash=round(self.cash, 2))
-        return {"market": slug, "side": "BUY", "price": (r.price or px),
-                "qty": qty}
+            id=r.order_id, market=slug, side=bs, price=(r.price or px),
+            qty=qty, intent=r.intent or intent, placed_ts=now, purpose="bond",
+            why=f"bond: reinvesting proceeds — took the {side} at the touch")
+        self.cash = round(self.cash - qty * cost, 4)
+        self._log(event="took", market=slug, side=side, price=(r.price or px),
+                  qty=qty, cost=round(qty * cost, 2), cash=round(self.cash, 2))
+        return {"market": slug, "bond": side, "side": bs,
+                "price": (r.price or px), "qty": qty, "taken": True}
 
-    def _probe(self, slug: str, book, prog, side: str, qty: float | None = None):
+    def _probe(self, slug: str, book, prog, book_side: str, qty: float | None = None):
         from . import survey as sv
         pool = self.fam._side_pool(slug, prog)
         if pool is None:
             return None
         try:
-            return sv.probe_side(book, prog, side, pool,
+            return sv.probe_side(book, prog, book_side, pool,
                                  **({"qty": qty} if qty else {}))
         except Exception:  # noqa: BLE001
             return None
@@ -361,74 +431,84 @@ class Bonds:
     def view(self, now: float, positions: dict | None = None) -> dict:
         rows = []
         for slug, meta in self.approved.items():
+            side = meta["side"]
             book = self.fam.cache.any_age(slug)
             bid = book.bids[0][0] if book is not None and book.bids else None
             ask = book.asks[0][0] if book is not None and book.asks else None
-            ask_size = book.asks[0][1] if book is not None and book.asks else 0.0
-            inv = self.fam.inventory.get(slug) or {}
-            qty = float(inv.get("qty") or 0.0)
+            px, cost, size = (self._take_price(side, book) if book is not None
+                              else (None, 0.0, 0.0))
+            held = self.held(slug, side, positions)
             days = slug_days_out(slug, now)
-            ytr = ((1.0 - ask) / ask) if ask else None
+            ytr = ((1.0 - cost) / cost) if cost else None
             ann = (ytr * 365.0 / max(days, 1)) if (ytr is not None and days) else None
             prog = self.fam.terms.get(slug)
-            sell = None
+            ebs, _ = self.earn(side)
+            earn = None
             if book is not None and prog is not None and prog.is_live():
-                p = self._probe(slug, book, prog, "SELL", qty=max(qty, 1.0))
+                p = self._probe(slug, book, prog, ebs, qty=max(held, 1.0))
                 if p is not None:
-                    sell = {"est_day": round(p.est_day, 4),
+                    earn = {"est_day": round(p.est_day, 4),
                             "share": round(p.share, 4),
                             "qualifies": bool(p.qualifies), "note": p.note}
-            asks = self._orders(slug, "SELL")
-            bids = self._orders(slug, "BUY")
             rows.append({
-                "market": slug, "odds": meta.get("odds"),
-                "flag": (meta.get("odds") is not None
-                         and meta["odds"] < BOND_ODDS),
-                "bid": bid, "ask": ask, "ask_size": round(ask_size, 1),
-                "days": days, "yield": (round(ytr, 4) if ytr is not None else None),
+                "market": slug, "bond": side, "odds": meta.get("odds"),
+                "bid": bid, "ask": ask,
+                "cost": (round(cost, 4) if cost else None),
+                "size": round(size, 1),
+                "days": days,
+                "yield": (round(ytr, 4) if ytr is not None else None),
                 "annual": (round(ann, 4) if ann is not None else None),
-                "qty": round(qty, 2), "cost_px": round(self._cost_px(slug), 4),
-                "sell": sell,
-                "ask_order": ([{"price": o.price, "qty": o.qty,
-                                "est": round(o.live_est or 0.0, 4)}
-                               for o in asks] or None),
-                "bid_order": ([{"price": o.price, "qty": o.qty}
-                               for o in bids] or None),
+                "qty": round(held, 2),
+                "cost_px": round(self.cost_basis(slug, side), 4),
+                "earn": earn,
+                "earn_order": ([{"price": o.price, "qty": o.qty,
+                                 "est": round(o.live_est or 0.0, 4)}
+                                for o in self._orders(slug, ebs)] or None),
+                "entry_order": ([{"price": o.price, "qty": o.qty}
+                                 for o in self._orders(slug, self.entry(side)[0])]
+                                or None),
                 "stale": (book is None or now - book.fetched_at > 600.0),
             })
-        rows.sort(key=lambda r: (r["ask"] is None, r["ask"] or 1.0))
-        proposed = [{"market": s, "odds": m.get("odds"),
+        rows.sort(key=lambda r: (r["cost"] is None, r["cost"] or 1.0))
+        proposed = [{"market": s, "odds": m.get("odds"), "bond": m.get("side"),
                      "since": m.get("since")}
                     for s, m in sorted(self.proposed.items(),
-                                       key=lambda kv: -(kv[1].get("odds") or 0))]
-        held = sum(r["qty"] * (r["cost_px"] or 0) for r in rows)
-        return {"rows": rows, "proposed": proposed,
+                                       key=lambda kv: -(kv[1].get("since") or 0))]
+        dropped = [{"market": s, "odds": m.get("odds"), "bond": m.get("side"),
+                    "ts": m.get("ts"), "by": m.get("by", "silver"),
+                    "held": round(self.held(s, m.get("side") or "YES", positions), 2)}
+                   for s, m in sorted(self.dropped.items(),
+                                      key=lambda kv: -(kv[1].get("ts") or 0))[:10]]
+        held_cost = sum(r["qty"] * (r["cost_px"] or 0) for r in rows)
+        return {"rows": rows, "proposed": proposed, "dropped": dropped,
                 "ignored": sorted(self.ignored),
                 "cash": round(self.cash, 2),
-                "committed": round(self._committed(), 2),
-                "held_cost": round(held, 2),
-                "odds_bar": BOND_ODDS, "price_cap": PRICE_CAP,
-                "last_scan": self.last_scan,
+                "held_cost": round(held_cost, 2),
+                "high": HIGH_ODDS, "low": LOW_ODDS, "price_cap": PRICE_CAP,
+                "scan_day": self.scan_day, "scan_hour_utc": SCAN_HOUR_UTC,
                 "log": self.log[-12:]}
 
     # ------------------------------------------------------------ persistence
 
     def to_dict(self) -> dict:
         return {"approved": self.approved, "proposed": self.proposed,
-                "ignored": self.ignored, "cash": round(self.cash, 4),
-                "pos_seen": self.pos_seen, "moved_at": self.moved_at,
-                "ask_seen": getattr(self, "_ask_seen", {}),
-                "last_ask_px": getattr(self, "_last_ask_px", {}),
+                "ignored": self.ignored, "dropped": self.dropped,
+                "cash": round(self.cash, 4),
+                "pos_seen": self.pos_seen, "side_seen": self.side_seen,
+                "scan_day": self.scan_day,
+                "earn_seen": self._earn_seen, "earn_px": self._earn_px,
                 "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
         self.approved = {str(k): dict(v) for k, v in (d.get("approved") or {}).items()}
         self.proposed = {str(k): dict(v) for k, v in (d.get("proposed") or {}).items()}
         self.ignored = {str(k): float(v) for k, v in (d.get("ignored") or {}).items()}
+        self.dropped = {str(k): dict(v) for k, v in (d.get("dropped") or {}).items()}
         self.cash = float(d.get("cash") or 0.0)
         self.pos_seen = {str(k): float(v) for k, v in (d.get("pos_seen") or {}).items()}
-        self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
-        self._ask_seen = {str(k): float(v) for k, v in (d.get("ask_seen") or {}).items()}
-        self._last_ask_px = {str(k): float(v) for k, v in (d.get("last_ask_px") or {}).items()}
+        self.side_seen = {str(k): str(v) for k, v in (d.get("side_seen") or {}).items()}
+        self.scan_day = str(d.get("scan_day") or "")
+        self._earn_seen = {str(k): float(v) for k, v in (d.get("earn_seen") or {}).items()}
+        self._earn_px = {str(k): float(v) for k, v in (d.get("earn_px") or {}).items()}
         self.log = list(d.get("log") or [])
-        self.fam.freeze_dyn = self._frozen()
+        self._mark_engine()

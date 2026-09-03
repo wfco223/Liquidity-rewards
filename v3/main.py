@@ -687,8 +687,12 @@ def pair_fills(fills: list) -> list:
                     str(r.get("intent") or "") in (
                         "ORDER_INTENT_SELL_LONG", "ORDER_INTENT_BUY_SHORT")
                     or qty < 1.0))
+                # a bond's earning order closes it: the YES ask, or the
+                # cover bid of a NO bond (a short of YES)
                 bond_close = (r.get("purpose") == "bond"
-                              and r.get("side") == "SELL")
+                              and str(r.get("intent") or "") in (
+                                  "ORDER_INTENT_SELL_LONG",
+                                  "ORDER_INTENT_SELL_SHORT"))
                 if r.get("purpose") == "sell" or bond_close or hand_close:
                     # an exit with no purchase to match: it closed stock
                     # bought before the journal — not a new position
@@ -1006,7 +1010,7 @@ class Monitor:
                                               name="Bonds switch",
                                               scope="Bonds")
         self.bonds = Bonds(self.families["politics"], self.client,
-                           self.silver.model_fair, alert=self.alerts.notify)
+                           self.silver.model_fair)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.

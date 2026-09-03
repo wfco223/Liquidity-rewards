@@ -151,6 +151,38 @@ class OrderDesk:
         book = self.fresh_book(slug)
         if book is None:
             return f"no book fresher than {BOOK_MAX_AGE:g}s — refusing to place blind"
+        if taker == "bond":
+            # the SECOND carved exception (owner, 2026-09-02: "take a
+            # resting order for proceeds rather than place and
+            # potentially have that capital be used elsewhere"): the
+            # bond reinvestment lifts the touch on purpose — owner's
+            # rail only, never past the touch, never more than it shows
+            from .intents import BUY_LONG, BUY_SHORT
+            if initiator != "owner":
+                return "bond taker orders are the owner's rail only"
+            if side == "BUY" and intent == BUY_LONG:
+                if not book.asks:
+                    return "no ask to take"
+                if price > book.asks[0][0] + 1e-12:
+                    return (f"taker bid {price * 100:g}c is above the ask "
+                            f"{book.asks[0][0] * 100:g}c — never worse than "
+                            f"the touch")
+                if qty > book.asks[0][1] + 1e-9:
+                    return (f"taker bid for {qty:g} exceeds the "
+                            f"{book.asks[0][1]:g} showing at the ask")
+                return None
+            if side == "SELL" and intent == BUY_SHORT:
+                if not book.bids:
+                    return "no bid to take"
+                if price < book.bids[0][0] - 1e-12:
+                    return (f"taker ask {price * 100:g}c is below the bid "
+                            f"{book.bids[0][0] * 100:g}c — never worse than "
+                            f"the touch")
+                if qty > book.bids[0][1] + 1e-9:
+                    return (f"taker ask for {qty:g} exceeds the "
+                            f"{book.bids[0][1]:g} showing at the bid")
+                return None
+            return "bond taker orders may only open a bond at the touch"
         if taker:
             # the ONE carved exception (owner, 2026-08-22): a SELL of
             # held stock limited AT the bid crosses on purpose — but
