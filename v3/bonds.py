@@ -294,9 +294,16 @@ class Bonds:
         lot = self.lots.setdefault(slug, {"qty": 0.0, "cost": 0.0, "fills": [], "fees": 0.0})
         lot["fees"] = round(float(lot.get("fees") or 0.0) + fee, 4)
         if fresh and slug not in self.more_cap:
-            # his first purchase here is the default for buying more
+            # his first purchase here is the default amount for buying
+            # more, and its price is the most the buy-more order ever
+            # pays (owner, 2026-09-03: "the buy price cap is also the
+            # price I originally bought at. Not 99.5. I never want to
+            # buy that high"). Kept in YES terms.
+            per = usd / qty if qty > 0.005 else 0.0
+            px0 = per if side == "YES" else round(1.0 - per, 4)
             self.more_cap[slug] = {"usd": round(usd, 2), "by": "default",
-                                   "first": str(ref or "adopt")}
+                                   "first": str(ref or "adopt"),
+                                   "px": round(px0, 4)}
         lot["qty"] = round(lot["qty"] + (qty if side == "YES" else -qty), 4)
         lot["cost"] = round(lot["cost"] + usd, 4)
         if ref:
@@ -675,7 +682,8 @@ class Bonds:
             return {"ok": False, "note": "$0 to $100,000"}
         cur = self.more_cap.get(slug) or {}
         self.more_cap[slug] = {"usd": round(usd, 2), "by": "owner",
-                               "first": cur.get("first", "")}
+                               "first": cur.get("first", ""),
+                               "px": cur.get("px", self._first_px(slug))}
         self._log(event="more_cap_set", market=slug, usd=round(usd, 2))
         return {"ok": True, "note": f"buying more here up to ${usd:,.2f}"}
 
@@ -925,6 +933,20 @@ class Bonds:
 
     # -- buying more ---------------------------------------------------------
 
+    def _first_px(self, slug: str) -> float:
+        """The YES price of his original purchase here — the buy-more
+        order's price cap. The average price paid stands in for a lot
+        booked before the price was kept."""
+        cap = self.more_cap.get(slug) or {}
+        if cap.get("px"):
+            return float(cap["px"])
+        side = (self.approved.get(slug) or {}).get("side") or (
+            "YES" if float((self.lots.get(slug) or {}).get("qty") or 0) >= 0 else "NO")
+        pb = self.price_basis(slug, side)
+        if pb <= 0:
+            return 0.0
+        return pb if side == "YES" else round(1.0 - pb, 4)
+
     def _more_orders(self, slug: str) -> list[FamilyOrder]:
         return [o for o in list(self.fam.orders.values())
                 if o.purpose == "bond" and o.market == slug
@@ -952,25 +974,29 @@ class Bonds:
         return float(j.share), (float(j.share) * pool if pool else 0.0)
 
     def _more_slot(self, slug: str, side: str, book, cap_usd: float):
-        """The cheapest bond price, inside the 99.5c cap and the spread,
-        where up to cap_usd of ours captures MORE_SHARE of its side:
-        (price, qty, share, est) or None."""
+        """The cheapest bond price, never dearer than his original
+        purchase here and inside the spread, where up to cap_usd of
+        ours captures MORE_SHARE of its side: (price, qty, share, est)
+        or None."""
         far, _ = self.entry(side)
         tick = book.tick or 0.01
         bids, asks = book.bids, book.asks
+        px0 = self._first_px(slug)
+        if px0 <= 0:
+            return None
         if side == "YES":
-            hi = (asks[0][0] - tick) if asks else 0.99
+            hi = min((asks[0][0] - tick) if asks else 0.99, px0)
             lo = ((bids[0][0] if bids else hi) - BEHIND_MAX_TICKS * tick)
             n = max(int(round((hi - lo) / tick)), 0)
             cands = [self._snap_down(lo + i * tick, tick) for i in range(n + 1)]
-            cands = [p for p in cands if 0.001 <= p <= min(PRICE_CAP, 0.999)]
+            cands = [p for p in cands if 0.001 <= p <= min(px0, PRICE_CAP, 0.999)]
             cands.sort()                                   # cheapest first
         else:
-            lo = (bids[0][0] + tick) if bids else 0.01
+            lo = max((bids[0][0] + tick) if bids else 0.01, px0)
             hi = ((asks[0][0] if asks else lo) + BEHIND_MAX_TICKS * tick)
             n = max(int(round((hi - lo) / tick)), 0)
             cands = [self._snap_up(lo + i * tick, tick) for i in range(n + 1)]
-            cands = [p for p in cands if max(0.001, 1.0 - PRICE_CAP) <= p <= 0.999]
+            cands = [p for p in cands if max(0.001, px0, 1.0 - PRICE_CAP) <= p <= 0.999]
             cands.sort(reverse=True)                       # cheapest NO first
         for px in list(dict.fromkeys(cands)):
             cost = px if side == "YES" else round(1.0 - px, 4)
@@ -1047,9 +1073,9 @@ class Bonds:
         self.fam.orders[r.order_id] = FamilyOrder(
             id=r.order_id, market=slug, side=far, price=px, qty=qty,
             intent=(r.intent or intent), placed_ts=now, purpose="bond",
-            why=f"bond more: buying up to ${cap_usd:,.2f} more — "
-                f"{share:.0%} of the {'bid' if far == 'BUY' else 'ask'} side "
-                f"at {px * 100:g}c")
+            why=f"bond more: buying up to ${cap_usd:,.2f} more, never dearer "
+                f"than his first price — {share:.0%} of the "
+                f"{'bid' if far == 'BUY' else 'ask'} side at {px * 100:g}c")
         self.fill_book[r.order_id] = {"slug": slug, "side": side, "qty": 0.0,
                                       "px": px, "ts": round(now, 1), "open": True}
         self.moved_more_at[slug] = now
@@ -1640,8 +1666,10 @@ class Bonds:
         if held < 0.005 or cap is None:
             return None
         far, _ = self.entry(side)
+        px0 = self._first_px(slug)
         out = {"cap_usd": round(float(cap.get("usd") or 0.0), 2),
-               "by": cap.get("by", "default"), "order": None, "slot": None}
+               "by": cap.get("by", "default"), "order": None, "slot": None,
+               "cap_px": (round(px0 if side == "YES" else 1.0 - px0, 4) if px0 > 0 else None)}
         cur = self._more_orders(slug)
         if cur:
             o = cur[0]
