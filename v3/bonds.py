@@ -1338,21 +1338,31 @@ class Bonds:
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
         if cur:
             o = cur[0]
+            tick = book.tick or 0.01
             cost = o.price if side == "YES" else round(1.0 - o.price, 4)
             want_qty = float(math.floor(cap_usd / cost)) if cost > 0 else 0.0
             share, _est = self._share_at(slug, far, book, o.price, o.qty)
-            if share + 1e-9 >= MORE_SHARE and abs(o.qty - want_qty) < 1.0:
-                return None
             if now - self.moved_more_at.get(slug, 0.0) < MOVE_COOLDOWN_S:
                 return None
             slot = self._more_slot(slug, side, book, cap_usd)
+            # a cheaper price that still captures the share (owner,
+            # 2026-09-03: "Couldn't the bid do better by standing a
+            # little further back"): on the cooldown the order steps
+            # back to it, as it steps up when its share falls short
+            cheaper = slot is not None and (
+                (side == "YES" and slot[0] < o.price - tick / 2)
+                or (side == "NO" and slot[0] > o.price + tick / 2))
+            if (share + 1e-9 >= MORE_SHARE and abs(o.qty - want_qty) < 1.0
+                    and not cheaper):
+                return None
             if slot is None:
                 self._pull_more(slug, f"no price inside the cap captures "
                                       f"{MORE_SHARE:.0%} of the side now")
                 return None
             if abs(slot[0] - o.price) < 1e-9 and abs(slot[1] - o.qty) < 1.0:
                 return None
-            self._pull_more(slug, "moving")
+            self._pull_more(slug, "stepping back to a cheaper price that still "
+                                  "captures the share" if cheaper else "moving")
         slot = self._more_slot(slug, side, book, cap_usd)
         if slot is None:
             note = f"no price inside the cap captures {MORE_SHARE:.0%} of its side"
