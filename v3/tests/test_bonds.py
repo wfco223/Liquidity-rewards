@@ -1904,3 +1904,55 @@ class TestAContingentMovesUp(Base):
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertIn("X2", self.r.fam.orders)
         self.assertNotIn("earn_moved_up", [e["event"] for e in self.b.log])
+
+
+class TestTheBuyMoreOrderStepsBack(Base):
+    """Owner, 2026-09-03, on Massachusetts (72 alone at 96c, 100% of
+    its side, nothing else until 93c): "Couldn't the bid do better by
+    standing a little further back." """
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+        self.bond(ALD, "NO", 175.0, 0.04)                    # NO at 96c: buys at 96c or cheaper
+        # NO bids (YES asks) in YES terms: nothing until 7c, then a wall
+        self.book = Book(bids=((0.03, 2582.0), (0.02, 0.2), (0.01, 2025.0)),
+                         asks=((0.07, 25.0), (0.08, 3055.0), (0.09, 50.0), (0.99, 2025.0)),
+                         tick=0.01, fetched_at=self.now)
+        self.seed(ALD, self.book)
+        self.r.fam.refresh_terms(self.r.exchange, self.r.now)
+
+    def rest_more_at(self, px, qty):
+        self.r.fam.orders["M1"] = FamilyOrder(id="M1", market=ALD, side="SELL", price=px,
+                                              qty=qty, intent=BUY_SHORT, placed_ts=self.now,
+                                              purpose="bond", why="bond more: buying")
+        self.r.exchange.live["M1"] = {"id": "M1", "market": ALD, "side": "SELL", "price": px,
+                                      "size": qty, "intent": BUY_SHORT}
+
+    def test_it_steps_back_to_the_cheapest_price_that_still_captures_the_share(self):
+        self.rest_more_at(0.04, 72.0)                        # at his first price, 100% of the side
+        self.b.more_cap[ALD] = {"usd": 69.12, "by": "owner", "first": "", "px": 0.04}
+        slot = self.b._more_slot(ALD, "NO", self.book, 69.12)
+        self.assertIsNotNone(slot)
+        self.assertGreater(slot[0], 0.04)                    # a cheaper NO (higher YES ask) still captures 30%
+        self.b.moved_more_at[ALD] = self.now - 60            # inside the cooldown: stays
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertIn("M1", self.r.fam.orders)
+        self.b.moved_more_at[ALD] = self.now - 3600          # cooldown over: steps back
+        self.b.cycle(self.now + 1, self.positions(), on=True)
+        cur = self.b._more_orders(ALD)
+        self.assertEqual(len(cur), 1)
+        self.assertAlmostEqual(cur[0].price, slot[0])
+        self.assertGreaterEqual(self.b._share_at(ALD, "SELL", self.book, cur[0].price, cur[0].qty)[0], 0.30)
+        ev = [e for e in self.b.log if e["event"] == "more_pulled"]
+        self.assertIn("stepping back", ev[-1]["note"])
+
+    def test_already_at_the_cheapest_slot_it_stays(self):
+        slot = self.b._more_slot(ALD, "NO", self.book, 69.12)
+        self.b.more_cap[ALD] = {"usd": 69.12, "by": "owner", "first": "", "px": 0.04}
+        self.rest_more_at(slot[0], slot[1])
+        self.b.moved_more_at[ALD] = self.now - 3600
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertIn("M1", self.r.fam.orders)
+        self.assertNotIn("more_pulled", [e["event"] for e in self.b.log])
