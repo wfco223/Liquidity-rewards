@@ -202,7 +202,10 @@ class TestTheLedger(Base):
         self.b._book_lot(AL, "YES", 400.0, 400 * 0.98)   # ledger says 400
         self.exch(AL, 250.0, 0.98)                       # exchange says 250
         self.b.cycle(self.now, self.positions(), on=True)
-        self.assertEqual(self.orders(AL, "SELL")[0].qty, 250.0)
+        ask = self.orders(AL, "SELL")[0]
+        self.assertLessEqual(ask.qty, 250.0)             # never more than the exchange shows
+        self.assertEqual(ask.qty, self.b.slot[AL]["size"])
+        self.assertEqual(self.b.slot[AL]["reserve"], 250.0 - ask.qty)
 
 
 class TestThePage(Base):
@@ -233,11 +236,16 @@ class TestTheRestingOrder(Base):
         out = self.b.cycle(self.now, self.positions(), on=True)
         ask = self.orders(AL, "SELL", decoy=False)[0]
         self.assertEqual((ask.purpose, ask.intent), ("bond", SELL_LONG))
-        self.assertEqual(ask.qty, 1500.0)
-        # at 60% kept it sits three ticks back (0.2^3 x 1500 = 12 vs 5)
+        # at 60% kept it sits three ticks back (0.2^3 x 1500 = 12 vs 5),
+        # and only as many shares as keep that 60% are offered; the rest
+        # ride to resolution (owner, 2026-09-03)
         self.assertAlmostEqual(ask.price, 0.93)
         self.assertEqual(out["placed"][0]["ticks"], 3)
         self.assertGreaterEqual(self.b.slot[AL]["keep"], 0.6)
+        self.assertLess(ask.qty, 1500.0)
+        self.assertEqual(self.b.slot[AL]["reserve"], 1500.0 - ask.qty)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=False)), 1)   # no second exit for the rest
 
     def test_never_under_cost(self):
         self.b.approve(AL, self.now)
@@ -254,7 +262,8 @@ class TestTheRestingOrder(Base):
         self.assertEqual(len(bids), 1)
         self.assertEqual((bids[0].purpose, bids[0].intent), ("bond", SELL_SHORT))
         self.assertLessEqual(bids[0].price, 0.01 + 1e-9)
-        self.assertEqual(bids[0].qty, 1000.0)
+        self.assertLessEqual(bids[0].qty, 1000.0)
+        self.assertEqual(bids[0].qty, self.b.slot[ALD]["size"])
 
 
 class TestTheSniper(Base):
@@ -419,14 +428,13 @@ class TestEntryAndSales(Base):
         self.bond(AL, "YES", 100.0, 0.98)
         self.b.cycle(self.now, self.positions(), on=True)
         ask = self.orders(AL, "SELL")[0]
+        sold = ask.qty                                    # the offered part; the rest is kept
         self.r.exchange.live.pop(ask.id, None)          # the exchange filled it
         self.r.fam.orders.pop(ask.id, None)
-        self.exch(AL, 0.0, 0.0)
-        self.r.fam.inventory.pop(AL, None)
+        self.exch(AL, 100.0 - sold, 0.98)
         self.b.cycle(self.now + 60, self.positions(), on=True)
-        self.assertEqual(self.b.held(AL, "YES"), 0.0)
-        self.assertAlmostEqual(self.b.cash, 100 * ask.price, places=2)
-        self.assertEqual(self.b.lots, {})
+        self.assertAlmostEqual(self.b.held(AL, "YES"), 100.0 - sold, places=4)
+        self.assertAlmostEqual(self.b.cash, sold * ask.price, places=2)
 
     def test_a_hand_sale_with_our_order_untouched_is_not_counted(self):
         self.b.approve(AL, self.now)
@@ -801,14 +809,14 @@ class TestEarnings(Base):
         self.b.more_cap[AL]["usd"] = 0.0
         self.b.cycle(self.now, self.positions(), on=True)
         ask = self.orders(AL, "SELL")[0]
+        sold = ask.qty
         self.r.exchange.live.pop(ask.id, None)          # the exchange filled it
         self.r.fam.orders.pop(ask.id, None)
-        self.exch(AL, 0.0, 0.0)
-        self.r.fam.inventory.pop(AL, None)
+        self.exch(AL, 100.0 - sold, 0.90)
         self.b.cycle(self.now + 60, self.positions(), on=True)
         e = self.b.view(self.now + 60)["earned"]
-        self.assertAlmostEqual(e["sales"], 100 * (ask.price - 0.90), places=2)
-        self.assertAlmostEqual(e["sold_usd"], 100 * ask.price, places=2)
+        self.assertAlmostEqual(e["sales"], sold * (ask.price - 0.90), places=2)
+        self.assertAlmostEqual(e["sold_usd"], sold * ask.price, places=2)
         self.assertAlmostEqual(e["total"], e["sales"], places=2)
         self.assertEqual(e["rewards"], 0.0)
 
@@ -1408,3 +1416,56 @@ class TestBuyMoreNeverDearerThanTheFirstPrice(Base):
         self.bond(AL, "YES", 100.0, 0.98)
         self.b.more_cap[AL].pop("px")                     # state from the earlier deploy
         self.assertEqual(self.b._first_px(AL), 0.98)
+
+
+class TestTheArkansasLesson(Base):
+    """Owner, 2026-09-03, with the official app's book: "my orders are
+    resting beyond where they need to be to earn 60%. So either the
+    quantity should be reduced so that I'm reserving some to maturity
+    when I would actually get the coupon or I should move the shares
+    back so that if they are filled I turn a profit. Holding all of
+    them out there like that does no good."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+        # the NO side of the official app, in YES terms
+        self.book = Book(bids=((0.03, 50.0), (0.02, 2080.0), (0.01, 4000.0)),
+                         asks=((0.06, 542.0), (0.09, 1.0), (0.14, 50.0),
+                               (0.19, 50.0), (0.99, 4025.0)),
+                         tick=0.01, fetched_at=self.now)
+        self.seed(ALD, self.book)
+        self.r.fam.refresh_terms(self.r.exchange, self.r.now)
+        self.bond(ALD, "NO", 195.0, 0.05)                 # 195 NO at 95c
+        self.b.more_cap[ALD]["usd"] = 0.0
+
+    def test_only_what_earns_is_offered_and_the_rest_rides_to_maturity(self):
+        out = self.b.cycle(self.now, self.positions(), on=True)
+        bids = self.orders(ALD, "BUY", decoy=False)
+        self.assertEqual(len(bids), 1)
+        o = bids[0]
+        self.assertLessEqual(o.price, 0.05 + 1e-9)        # never over cost
+        slot = self.b.slot[ALD]
+        self.assertEqual(o.qty, slot["size"])
+        self.assertGreaterEqual(slot["keep"], 0.6)
+        self.assertEqual(slot["reserve"], 195.0 - o.qty)
+        # the size is the least that keeps 60%: one share fewer does not
+        prog = self.r.fam.terms.get(ALD)
+        pool = self.r.fam._side_pool(ALD, prog)
+        lv = self.b._levels_net(ALD, "BUY", self.book)
+        from v3.scoring import estimate_join
+        def est(q):
+            j = estimate_join("BUY", lv, 0.01, float(prog.df), float(prog.target), o.price, q)
+            return j.share * pool if (j.qualifies and j.in_window) else 0.0
+        full = estimate_join("BUY", lv, 0.01, float(prog.df), float(prog.target), 0.05, 195.0)
+        best = full.share * pool
+        self.assertGreaterEqual(est(o.qty), 0.6 * best - 1e-9)
+        if o.qty > 1:
+            self.assertLess(est(o.qty - 1), 0.6 * best)
+        # and no second exit for the reserved shares, cycle after cycle
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(len(self.orders(ALD, "BUY", decoy=False)), 1)
+        row = [r for r in self.b.view(self.now + 60, self.positions())["rows"]
+               if r["market"] == ALD][0]
+        self.assertEqual(row["slot"]["reserve"], 195.0 - o.qty)
