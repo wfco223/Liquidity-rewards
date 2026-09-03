@@ -460,11 +460,12 @@ class Family:
         # 2026-09-02). Same rule as freeze_tokens — the engine places
         # nothing, rests no exits, sells nothing there.
         self.freeze_dyn: set[str] = set()
-        # the owner's bond markets (owner, 2026-09-02: "the engine does
-        # not need to ignore these markets, only the orders I place"):
-        # the engine quotes them as normal, but never rests its own
-        # exits on the stock held there and never touches a bond order
-        self.bond_markets: set[str] = set()
+        # the owner's bond shares per market, signed YES (owner,
+        # 2026-09-02: "the engine does not need to ignore these
+        # markets, only the orders I place"; "I only want to know for a
+        # market what the bond purchases are"): the engine quotes those
+        # markets as normal and exits only the stock that is NOT bond
+        self.bond_qty: dict[str, float] = {}
         self.priority: set = set()   # markets to re-check first
         self.pending_pages: list = []   # open fills awaiting a mark
         self.log: list[dict] = []
@@ -3368,9 +3369,11 @@ class Family:
                 continue      # the owner works these by hand: the engine
                               # rests NO exits here (owner, 2026-08-22),
                               # and a FROZEN market is not even tidied
-            if slug in self.bond_markets:
-                continue      # bond stock: the bonds module rests its
-                              # own order on it (owner, 2026-09-02)
+            # the bond shares are the bonds module's to exit (owner,
+            # 2026-09-02); the engine works only what is left over
+            qty = round(qty - self.bond_qty.get(slug, 0.0), 4)
+            if abs(qty) < 0.01:
+                continue
             book = self.cache.fresh(slug, BOOK_MAX_AGE, now)
             if book is None:
                 continue

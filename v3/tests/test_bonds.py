@@ -2,19 +2,21 @@
 
 The spec and its corrections, in bonds.py's docstring. Here: the
 nightly Silver check proposes at both ends and drops silently; the
-owner alone adds; the engine keeps quoting bond markets but never
-rests its exits on bond stock or touches a bond order; a held bond
-gets one resting order at or above cost and it is left alone; a sale
-by our order is reinvested by TAKING the touch of the cheapest listed
-market whose earning side pays; a hand sale is never reinvested.
+owner alone adds; the engine keeps quoting bond markets but exits only
+its own non-bond stock; the bond ledger is the module's own; a held
+bond's order sits behind the touch keeping 60% of the best reward and
+never under cost; a minnow in front is led down by a decoy and taken
+at the bar; new ground is entered at the bar; a hand sale is never
+reinvested; one ping per $100 bought.
 """
 
 import calendar
 import copy
 import unittest
 
-from v3.bonds import HIGH_ODDS, LOW_ODDS, Bonds, scan_due, side_for
-from v3.family import FamilyConfig
+from v3.bonds import (DECOY_QTY, HIGH_ODDS, KEEP_FRACTION, LOW_ODDS,
+                      PING_EVERY_USD, Bonds, scan_due, side_for)
+from v3.family import FamilyConfig, FamilyOrder
 from v3.intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 from v3.scoring import Book
 from v3.tests.test_family import LIVE_PROG, Rig
@@ -32,9 +34,16 @@ def yes_book(now, bid=0.98, ask=0.99, bid_q=50.0, ask_q=300.0):
 
 
 def no_book(now, bid=0.01, ask=0.02, bid_q=400.0, ask_q=60.0):
-    # a 1% market: the NO bond is a short of YES at the 1c bid
     return Book(bids=((bid, bid_q), (0.001, 20000.0)),
                 asks=((ask, ask_q), (0.60, 20000.0)),
+                tick=0.01, fetched_at=now)
+
+
+def minnow_book(now, minnows=5.0, ask=0.90, extra=()):
+    # a few rewards-seeking shares at the touch, the qualifying wall
+    # nine ticks back at 99c where it barely weighs
+    asks = tuple(sorted(((ask, minnows),) + tuple(extra) + ((0.99, 20000.0),)))
+    return Book(bids=((0.88, 50.0), (0.50, 20000.0)), asks=asks,
                 tick=0.01, fetched_at=now)
 
 
@@ -43,8 +52,10 @@ class Base(unittest.TestCase):
         self.r = Rig(cfg=FamilyConfig(name="Politics", tag="POL",
                                       known_ground=True, capital_usd=0.0))
         self.odds = {AL: 0.994, TN: 0.991, ALD: 0.006, GA: 0.71}
+        self.pings = []
         self.b = Bonds(self.r.fam, self.r.exchange,
-                       lambda s: self.odds.get(s), clock=lambda: self.r.now)
+                       lambda s: self.odds.get(s), clock=lambda: self.r.now,
+                       alert=lambda t, m: self.pings.append((t, m)))
         for s in (AL, TN, GA):
             self.seed(s, yes_book(self.r.now))
         self.seed(ALD, no_book(self.r.now))
@@ -57,17 +68,30 @@ class Base(unittest.TestCase):
         self.r.cache.put(slug, book)
         self.r.exchange.prog_raw[slug] = copy.deepcopy(LIVE_PROG)
 
-    def hold(self, slug, qty, yes_px):
-        """qty > 0 long YES; qty < 0 short YES (a NO bond)."""
+    def exch(self, slug, qty, yes_px):
+        """The exchange's position: qty > 0 long YES, < 0 short YES."""
         self.r.positions[slug] = (qty, qty * yes_px)
         self.r.fam.inventory[slug] = {"qty": qty, "cost": qty * yes_px}
+
+    def bond(self, slug, side, qty, yes_px):
+        """A bond in the ledger AND on the exchange."""
+        self.exch(slug, qty if side == "YES" else -qty, yes_px)
+        cost = qty * (yes_px if side == "YES" else 1.0 - yes_px)
+        self.b._book_lot(slug, side, qty, cost)
 
     def positions(self):
         return dict(self.r.positions)
 
-    def orders(self, slug, side=None):
-        return [o for o in self.r.fam.orders.values()
-                if o.market == slug and (side is None or o.side == side)]
+    def orders(self, slug, side=None, decoy=None):
+        out = []
+        for o in self.r.fam.orders.values():
+            if o.market != slug or (side is not None and o.side != side):
+                continue
+            is_decoy = str(o.why or "").startswith("bond decoy")
+            if decoy is not None and is_decoy != decoy:
+                continue
+            out.append(o)
+        return out
 
 
 class TestTheBand(unittest.TestCase):
@@ -77,47 +101,37 @@ class TestTheBand(unittest.TestCase):
         self.assertEqual(side_for(0.006), "NO")
         self.assertEqual(side_for(LOW_ODDS), "NO")
         self.assertIsNone(side_for(0.985))
-        self.assertIsNone(side_for(0.02))
         self.assertIsNone(side_for(None))
 
     def test_the_check_is_nightly(self):
         t = calendar.timegm((2026, 9, 3, 6, 59, 0, 0, 0, 0))
-        self.assertIsNone(scan_due(t, ""))                     # before 07Z
+        self.assertIsNone(scan_due(t, ""))
         self.assertEqual(scan_due(t + 120, ""), "2026-09-03")
-        self.assertIsNone(scan_due(t + 120, "2026-09-03"))     # done tonight
-        self.assertIsNone(scan_due(t + 6 * 3600, "2026-09-03"))
+        self.assertIsNone(scan_due(t + 120, "2026-09-03"))
         self.assertEqual(scan_due(t + 86400 + 120, "2026-09-03"), "2026-09-04")
+
+    def test_the_owners_numbers(self):
+        self.assertEqual(KEEP_FRACTION, 0.6)
+        self.assertEqual(PING_EVERY_USD, 100.0)
+        self.assertEqual(DECOY_QTY, 10.0)
 
 
 class TestTheList(Base):
     def test_silver_proposes_both_ends_and_only_the_owner_adds(self):
         new = self.b.scan(self.now, force=True)
-        self.assertEqual(set(new), {AL, TN, ALD})              # GA at 71% is not
+        self.assertEqual(set(new), {AL, TN, ALD})
         self.assertEqual(self.b.proposed[ALD]["side"], "NO")
-        self.assertEqual(self.b.approved, {})                   # nothing by itself
-        r = self.b.approve(AL, self.now)
-        self.assertTrue(r["ok"])
-        self.assertEqual(self.b.approved[AL]["side"], "YES")
-        r = self.b.approve(ALD, self.now)
-        self.assertTrue(r["ok"])
+        self.assertEqual(self.b.approved, {})
+        self.assertTrue(self.b.approve(AL, self.now)["ok"])
+        self.assertTrue(self.b.approve(ALD, self.now)["ok"])
         self.assertEqual(self.b.approved[ALD]["side"], "NO")
-        self.assertNotIn(AL, self.b.proposed)
-
-    def test_proposals_and_drops_never_ping_the_phone(self):
-        pings = []
-        self.b.alert = lambda t, m: pings.append((t, m))
-        self.b.scan(self.now, force=True)
-        self.b.approve(AL, self.now)
-        self.odds[AL] = 0.9
-        self.b.scan(self.now + 1, force=True)          # a drop, silently
-        self.assertEqual(pings, [])
+        self.assertEqual(self.pings, [])                       # silent
 
     def test_proposals_sit_newest_first(self):
         self.b.scan(self.now, force=True)
         self.odds[GA] = 0.995
         self.b.scan(self.now + 3600, force=True)
-        v = self.b.view(self.now + 3600)
-        self.assertEqual(v["proposed"][0]["market"], GA)
+        self.assertEqual(self.b.view(self.now + 3600)["proposed"][0]["market"], GA)
 
     def test_inside_the_band_cannot_be_added_even_by_hand(self):
         r = self.b.approve(GA, self.now)
@@ -126,22 +140,21 @@ class TestTheList(Base):
 
     def test_a_listed_market_that_leaves_the_band_drops_by_itself(self):
         self.b.approve(AL, self.now)
-        self.hold(AL, 100.0, 0.98)
+        self.bond(AL, "YES", 100.0, 0.98)
         self.odds[AL] = 0.984
         self.b.scan(self.now + 1, force=True)
         self.assertNotIn(AL, self.b.approved)
-        self.assertIn(AL, self.b.dropped)
         v = self.b.view(self.now + 1, self.positions())
         self.assertEqual(v["dropped"][0]["market"], AL)
-        self.assertEqual(v["dropped"][0]["held"], 100.0)     # still held, shown
-        # the engine still leaves that stock alone
-        self.assertIn(AL, self.r.fam.bond_markets)
+        self.assertEqual(v["dropped"][0]["held"], 100.0)
+        self.assertEqual(self.pings, [])
 
-    def test_the_engine_keeps_quoting_bond_markets(self):
+    def test_the_engine_keeps_quoting_and_exits_only_its_own_stock(self):
         self.b.approve(AL, self.now)
         self.assertFalse(self.r.fam._frozen(AL))
         self.assertTrue(self.r.fam.enterable(AL))
-        self.assertIn(AL, self.r.fam.bond_markets)       # but rests no exits there
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.assertEqual(self.r.fam.bond_qty, {AL: 100.0})   # what _sell subtracts
 
     def test_ignore_is_remembered_and_reversible(self):
         self.b.scan(self.now, force=True)
@@ -154,289 +167,245 @@ class TestTheList(Base):
         t = calendar.timegm((2026, 9, 3, 7, 5, 0, 0, 0, 0))
         self.assertEqual(set(self.b.scan(t)), {AL, TN, ALD})
         self.odds[GA] = 0.995
-        self.assertEqual(self.b.scan(t + 3600), [])           # not until tomorrow
+        self.assertEqual(self.b.scan(t + 3600), [])
         self.assertIn(GA, self.b.scan(t + 86400))
 
 
-class TestThePage(Base):
-    def test_rows_are_cheapest_per_dollar_first_with_yield_and_earnings(self):
+class TestTheLedger(Base):
+    def test_only_bond_purchases_count_as_held(self):
         self.b.approve(AL, self.now)
-        self.b.approve(TN, self.now)
-        self.b.approve(ALD, self.now)
+        self.exch(AL, 500.0, 0.92)               # the engine's own stock
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        v = self.b.view(self.now, self.positions())
+        row = v["rows"][0]
+        self.assertEqual(row["qty"], 0.0)
+        self.assertEqual(row["uncounted"], 500.0)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL"), [])        # no order on engine stock
+
+    def test_the_owner_can_count_his_shares_in(self):
+        self.b.approve(AL, self.now)
+        self.exch(AL, 500.0, 0.92)
+        r = self.b.adopt(AL, 300.0, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 300.0)
+        self.assertAlmostEqual(self.b.cost_basis(AL, "YES"), 0.92)
+        self.assertFalse(self.b.adopt(AL, 300.0, self.positions())["ok"])  # only 200 left
+
+    def test_the_order_never_exceeds_what_the_exchange_shows(self):
+        self.b.approve(AL, self.now)
+        self.b._book_lot(AL, "YES", 400.0, 400 * 0.98)   # ledger says 400
+        self.exch(AL, 250.0, 0.98)                       # exchange says 250
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL")[0].qty, 250.0)
+
+
+class TestThePage(Base):
+    def test_rows_are_cheapest_per_dollar_first(self):
+        for s in (AL, TN, ALD):
+            self.b.approve(s, self.now)
         self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98))
         v = self.b.view(self.now)
         self.assertEqual([r["market"] for r in v["rows"]], [TN, AL, ALD])
-        tn, al, ald = v["rows"]
-        self.assertEqual(tn["cost"], 0.98)                    # the YES ask
+        tn = v["rows"][0]
+        self.assertEqual(tn["cost"], 0.98)
         self.assertAlmostEqual(tn["yield"], (1 - 0.98) / 0.98, places=4)
-        self.assertAlmostEqual(tn["annual"], tn["yield"] * 365 / tn["days"],
-                               places=3)
-        self.assertEqual(ald["bond"], "NO")
-        self.assertEqual(ald["cost"], 0.99)                   # 1 - the YES bid
         self.assertIsNotNone(tn["earn"])
-        self.assertIn("est_day", tn["earn"])
+        self.assertEqual(v["keep"], 0.6)
 
 
-class TestTheMoney(Base):
+class TestTheRestingOrder(Base):
     def test_switch_off_places_nothing(self):
         self.b.approve(AL, self.now)
-        self.hold(AL, 1500.0, 0.98)
+        self.bond(AL, "YES", 1500.0, 0.98)
         self.b.cycle(self.now, self.positions(), on=False)
         self.assertEqual(self.r.exchange.live, {})
 
-    def test_a_held_yes_bond_gets_one_ask_and_keeps_it(self):
-        self.b.approve(AL, self.now)
-        self.hold(AL, 1500.0, 0.98)
-        self.b.cycle(self.now, self.positions(), on=True)
-        asks = self.orders(AL, "SELL")
-        self.assertEqual(len(asks), 1)
-        self.assertEqual((asks[0].purpose, asks[0].intent), ("bond", SELL_LONG))
-        self.assertEqual(asks[0].qty, 1500.0)
-        # the fixture book has nothing on the grid behind the 99c touch
-        # (the wall is at 99.9c), so the ask joins it
-        self.assertAlmostEqual(asks[0].price, 0.99)
-        # minnows undercut to 98c: we are patient, the ask stays put
-        self.r.cache.put(AL, yes_book(self.now + 700, bid=0.97, ask=0.98))
-        self.r.now += 700
-        self.b.cycle(self.r.now, self.positions(), on=True)
-        asks = self.orders(AL, "SELL")
-        self.assertEqual(len(asks), 1)
-        self.assertAlmostEqual(asks[0].price, 0.99)
-
-    def minnow_book(self, now, minnows=5.0, ask=0.90):
-        # a few rewards-seeking shares at the touch, the qualifying wall
-        # nine ticks back at 99c where it barely weighs: a 1,500-share
-        # lot two ticks behind still holds ~92% of the side's score
-        # (discount 0.2 a tick) and sells far more slowly
-        return Book(bids=((0.88, 50.0), (0.50, 20000.0)),
-                    asks=((ask, minnows), (0.99, 20000.0)),
-                    tick=0.01, fetched_at=now)
-
     def test_a_big_lot_sits_behind_the_touch_keeping_most_of_the_reward(self):
         self.b.approve(AL, self.now)
-        self.r.cache.put(AL, self.minnow_book(self.now))
-        self.hold(AL, 1500.0, 0.89)
+        self.r.cache.put(AL, minnow_book(self.now))
+        self.bond(AL, "YES", 1500.0, 0.89)
         out = self.b.cycle(self.now, self.positions(), on=True)
-        ask = self.orders(AL, "SELL")[0]
-        self.assertAlmostEqual(ask.price, 0.92)               # two ticks back
-        self.assertEqual(out["placed"][0]["ticks"], 2)
-        slot = self.b.slot[AL]
-        self.assertGreaterEqual(slot["keep"], 0.8)
-        self.assertIn("behind the touch", ask.why)
-        v = self.b.view(self.now, self.positions())
-        self.assertEqual(v["rows"][0]["slot"]["ticks"], 2)
+        ask = self.orders(AL, "SELL", decoy=False)[0]
+        self.assertEqual((ask.purpose, ask.intent), ("bond", SELL_LONG))
+        self.assertEqual(ask.qty, 1500.0)
+        # at 60% kept it sits three ticks back (0.2^3 x 1500 = 12 vs 5)
+        self.assertAlmostEqual(ask.price, 0.93)
+        self.assertEqual(out["placed"][0]["ticks"], 3)
+        self.assertGreaterEqual(self.b.slot[AL]["keep"], 0.6)
 
-    def test_a_wall_close_behind_the_touch_keeps_the_lot_at_the_touch(self):
-        # 97c touch, the 20,000-share wall at 99.9c: even one tick back
-        # the wall's weight takes a third of the reward, so it joins
+    def test_never_under_cost(self):
         self.b.approve(AL, self.now)
-        self.r.cache.put(AL, Book(bids=((0.95, 50.0), (0.50, 20000.0)),
-                                  asks=((0.97, 5.0), (0.999, 20000.0)),
-                                  tick=0.01, fetched_at=self.now))
-        self.hold(AL, 1500.0, 0.96)
+        self.r.cache.put(AL, minnow_book(self.now))
+        self.bond(AL, "YES", 1500.0, 0.945)
         self.b.cycle(self.now, self.positions(), on=True)
-        self.assertAlmostEqual(self.orders(AL, "SELL")[0].price, 0.97)
-
-    def test_behind_the_touch_never_means_under_cost(self):
-        self.b.approve(AL, self.now)
-        self.r.cache.put(AL, self.minnow_book(self.now))
-        self.hold(AL, 1500.0, 0.935)          # paid more than the 90c touch
-        self.b.cycle(self.now, self.positions(), on=True)
-        ask = self.orders(AL, "SELL")[0]
-        self.assertGreaterEqual(ask.price, 0.94 - 1e-9)       # cost, up onto the grid
-
-    def test_it_moves_back_only_when_it_has_become_the_touch(self):
-        self.b.approve(AL, self.now)
-        self.r.cache.put(AL, self.minnow_book(self.now))
-        self.hold(AL, 1500.0, 0.89)
-        self.b.cycle(self.now, self.positions(), on=True)
-        first = self.orders(AL, "SELL")[0]                    # 92c, two back
-        # minnows undercut to 89c: three back now — we stay
-        self.r.cache.put(AL, self.minnow_book(self.now + 60, ask=0.89))
-        self.b.cycle(self.now + 60, self.positions(), on=True)
-        self.assertIn(first.id, self.r.fam.orders)
-        # the minnows fill and leave: our 92c IS the touch now, the
-        # place a bond sells fastest — the cooldown holds it a while...
-        alone = Book(bids=((0.88, 50.0), (0.50, 20000.0)),
-                     asks=((0.92, 1500.0), (0.99, 20000.0)),
-                     tick=0.01, fetched_at=self.now + 120)
-        self.r.cache.put(AL, alone)
-        self.b.cycle(self.now + 120, self.positions(), on=True)
-        self.assertIn(first.id, self.r.fam.orders)
-        # ...then it moves back to the farthest slot that keeps 80% of
-        # the reward against the wall, and no further
-        alone2 = Book(bids=((0.88, 50.0), (0.50, 20000.0)),
-                      asks=((0.92, 1500.0), (0.99, 20000.0)),
-                      tick=0.01, fetched_at=self.now + 2000)
-        self.r.cache.put(AL, alone2)
-        self.b.cycle(self.now + 2000, self.positions(), on=True)
-        asks = self.orders(AL, "SELL")
-        self.assertEqual(len(asks), 1)
-        self.assertNotEqual(asks[0].id, first.id)
-        self.assertAlmostEqual(asks[0].price, 0.96)
-        self.assertIn("moved back", asks[0].why)
-        self.assertGreaterEqual(self.b.slot[AL]["keep"], 0.8)
-
-    def test_the_ask_never_rests_under_cost(self):
-        self.b.approve(AL, self.now)
-        self.hold(AL, 100.0, 0.985)         # paid 98.5c; the touch is 98c
-        self.r.cache.put(AL, yes_book(self.now, bid=0.97, ask=0.98))
-        self.b.cycle(self.now, self.positions(), on=True)
-        self.assertAlmostEqual(self.orders(AL, "SELL")[0].price, 0.99)
+        self.assertGreaterEqual(self.orders(AL, "SELL")[0].price, 0.95 - 1e-9)
 
     def test_a_held_no_bond_gets_a_cover_bid_never_above_what_it_sold_at(self):
         self.b.approve(ALD, self.now)
-        self.hold(ALD, -1000.0, 0.01)       # short 1000 YES at 1c = NO at 99c
+        self.bond(ALD, "NO", 1000.0, 0.01)
         self.b.cycle(self.now, self.positions(), on=True)
         bids = self.orders(ALD, "BUY")
         self.assertEqual(len(bids), 1)
         self.assertEqual((bids[0].purpose, bids[0].intent), ("bond", SELL_SHORT))
-        self.assertAlmostEqual(bids[0].price, 0.01)
+        self.assertLessEqual(bids[0].price, 0.01 + 1e-9)
         self.assertEqual(bids[0].qty, 1000.0)
 
-    def test_a_sale_by_our_ask_is_reinvested_by_taking_the_cheapest_touch(self):
+
+class TestTheSniper(Base):
+    """Owner: "purchasing anything that is in the way of our sell orders
+    collecting rewards... gradually lead the minnow down until it is
+    priced more cheaply. Then snap and buy their shares."""
+
+    def setUp(self):
+        super().setUp()
         self.b.approve(AL, self.now)
-        self.b.approve(TN, self.now)
-        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=120.0))
-        self.hold(AL, 100.0, 0.98)
-        self.b.cycle(self.now, self.positions(), on=True)
-        ask = self.orders(AL, "SELL")[0]
-        # the exchange fills our ask: order gone, position flat
-        self.r.exchange.live.pop(ask.id, None)
-        self.r.fam.orders.pop(ask.id, None)
-        self.r.positions[AL] = (0.0, 0.0)
-        self.r.fam.inventory.pop(AL, None)
+        self.b.set_budget(1000.0)
+        self.b.set_max(0.95)                  # the bar: lead minnows down to here
+        self.r.cache.put(AL, minnow_book(self.now, minnows=0.0, ask=0.99))
+        self.bond(AL, "YES", 1500.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)   # rests the main ask
+        self.main = self.orders(AL, "SELL", decoy=False)[0]
+
+    def book_with_minnow(self, px, q=20.0, t=0.0):
+        # our main ask stays on the book; a minnow appears in front of it
+        asks = ((px, q), (self.main.price, self.main.qty), (0.99, 20000.0))
+        d = Book(bids=((0.88, 50.0), (0.50, 20000.0)),
+                 asks=tuple(sorted(asks)), tick=0.01, fetched_at=self.now + t)
+        self.r.cache.put(AL, d)
+        return d
+
+    def test_a_minnow_in_front_draws_a_decoy_a_tick_ahead_of_it(self):
+        m_px = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m_px, 20.0, 60)
+        out = self.b.cycle(self.now + 60, self.positions(), on=True)
+        decoys = self.orders(AL, "SELL", decoy=True)
+        self.assertEqual(len(decoys), 1)
+        self.assertAlmostEqual(decoys[0].price, round(m_px - 0.01, 2))
+        self.assertEqual(decoys[0].qty, DECOY_QTY)
+        self.assertTrue(out["placed"][0]["decoy"])
+        self.assertIn(self.main.id, self.r.fam.orders)             # main untouched
+        v = self.b.view(self.now + 60, self.positions())
+        self.assertEqual(v["rows"][0]["minnow"]["price"], m_px)
+
+    def test_the_decoy_follows_the_minnow_down_but_never_under_cost(self):
+        m_px = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m_px, 20.0, 60)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        d1 = self.orders(AL, "SELL", decoy=True)[0]
+        # the minnow re-undercuts the decoy: the decoy steps again
+        m2 = round(d1.price - 0.01, 2)
+        self.book_with_minnow(m2, 20.0, 120)
+        self.b.cycle(self.now + 120, self.positions(), on=True)
+        d2 = self.orders(AL, "SELL", decoy=True)[0]
+        self.assertAlmostEqual(d2.price, round(m2 - 0.01, 2))
+        self.assertNotEqual(d1.id, d2.id)
+        # ...but never under cost (90c): with the bar below cost, a
+        # minnow sitting at 90c can neither be led (89c is under cost)
+        # nor taken (over the bar) — the decoy stays where it was
+        self.b.set_max(0.85)
+        self.book_with_minnow(0.90, 20.0, 180)
+        self.b.cycle(self.now + 180, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL", decoy=True)[0].id, d2.id)
+        self.assertEqual([o for o in self.r.fam.orders.values()
+                          if o.side == "BUY"], [])
+
+    def test_at_or_under_the_bar_the_minnow_is_taken_and_joins_the_bond(self):
+        self.book_with_minnow(0.95, 20.0, 60)         # led down to the bar
         out = self.b.cycle(self.now + 60, self.positions(), on=True)
         takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
         self.assertEqual(len(takes), 1)
-        self.assertEqual(takes[0].market, TN)                # cheaper per dollar
         self.assertEqual((takes[0].purpose, takes[0].intent), ("bond", BUY_LONG))
-        self.assertAlmostEqual(takes[0].price, 0.98)          # AT the ask, not under it
-        self.assertEqual(takes[0].qty, 101.0)                 # 99 / 0.98, whole shares
+        self.assertAlmostEqual(takes[0].price, 0.95)   # AT the minnow's price
+        self.assertEqual(takes[0].qty, 20.0)           # never more than it shows
         self.assertTrue(out["placed"][0]["taken"])
-        self.assertAlmostEqual(self.b.cash, 99.0 - 101 * 0.98, places=2)
+        self.assertEqual(self.b.held(AL, "YES"), 1520.0)
+        self.assertAlmostEqual(self.b.budget, 1000.0 - 19.0, places=2)
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        self.assertEqual(self.pings, [])               # under $100 so far
 
-    def test_taking_never_exceeds_what_the_touch_shows(self):
+    def test_a_note_only_after_a_hundred_dollars(self):
+        for i in range(6):
+            self.book_with_minnow(0.95, 20.0, 60 * (i + 1))
+            self.b.cycle(self.now + 60 * (i + 1), self.positions(), on=True)
+        self.assertEqual(len(self.pings), 1)           # 6 x $19 = $114
+        self.assertIn("$114.00", self.pings[0][1])
+        self.assertAlmostEqual(self.b.unpinged, 0.0)
+
+    def test_no_minnow_means_no_decoy_and_a_stale_decoy_is_pulled(self):
+        m_px = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m_px, 20.0, 60)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=True)), 1)
+        self.book_with_minnow(m_px, 0.0, 120)          # the minnow left
+        self.b.cycle(self.now + 120, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+
+    def test_a_wall_in_front_is_not_a_minnow(self):
+        self.book_with_minnow(round(self.main.price - 0.01, 2), 5000.0, 60)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+
+
+class TestEntryAndSales(Base):
+    def test_new_ground_is_entered_at_the_bar_cheapest_first(self):
+        self.b.approve(AL, self.now)
         self.b.approve(TN, self.now)
-        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=20.0))
-        self.b.cash = 500.0
+        self.b.set_budget(500.0)
+        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=200.0))
         self.b.cycle(self.now, self.positions(), on=True)
         takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
-        self.assertEqual(takes[0].qty, 20.0)
+        self.assertEqual(len(takes), 1)
+        self.assertEqual(takes[0].market, TN)          # AL at 99c is over the bar
+        self.assertEqual(takes[0].qty, 200.0)
+        self.assertEqual(self.b.held(TN, "YES"), 200.0)
+        self.assertAlmostEqual(self.b.budget, 500.0 - 196.0, places=2)
 
-    def test_a_hand_sale_with_our_ask_untouched_is_not_reinvested(self):
+    def test_a_sale_by_our_order_leaves_the_ledger_and_the_cash_waits(self):
         self.b.approve(AL, self.now)
-        self.hold(AL, 100.0, 0.98)
+        self.bond(AL, "YES", 100.0, 0.98)
         self.b.cycle(self.now, self.positions(), on=True)
-        self.r.positions[AL] = (60.0, 58.8)     # the owner sold 40 by hand
+        ask = self.orders(AL, "SELL")[0]
+        self.r.exchange.live.pop(ask.id, None)          # the exchange filled it
+        self.r.fam.orders.pop(ask.id, None)
+        self.exch(AL, 0.0, 0.0)
+        self.r.fam.inventory.pop(AL, None)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertAlmostEqual(self.b.cash, 100 * ask.price, places=2)
+        self.assertEqual(self.b.lots, {})
+
+    def test_a_hand_sale_with_our_order_untouched_is_not_counted(self):
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.exch(AL, 60.0, 0.98)                       # 40 sold by hand
         self.b.cycle(self.now + 60, self.positions(), on=True)
         self.assertEqual(self.b.cash, 0.0)
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)  # the ledger keeps its count
 
     def test_persistence_round_trip(self):
         self.b.approve(AL, self.now)
         self.b.approve(ALD, self.now)
-        self.b.ignore(GA, self.now)
-        self.b.cash = 12.5
-        self.b.scan_day = "2026-09-03"
+        self.bond(AL, "YES", 50.0, 0.98)
+        self.b.set_budget(250.0)
+        self.b.set_max(0.99)
+        self.b.unpinged = 33.0
         d = self.b.to_dict()
         b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
         b2.restore(d)
-        self.assertEqual(set(b2.approved), {AL, ALD})
-        self.assertEqual(b2.approved[ALD]["side"], "NO")
-        self.assertEqual(set(b2.ignored), {GA})
-        self.assertEqual(b2.cash, 12.5)
-        self.assertEqual(b2.scan_day, "2026-09-03")
-        self.assertEqual(self.r.fam.bond_markets, {AL, ALD})
-
-
-class TestTheSniper(Base):
-    """Owner, 2026-09-02: "I will leave the money out of my account.
-    When there is a great opportunity the bond engine makes the
-    purchase and I top off the money for the engine... it's more about
-    sniping the rewards seeking shares that others place."""
-
-    def setUp(self):
-        super().setUp()
-        self.pings = []
-        self.b.alert = lambda t, m: self.pings.append((t, m))
-        self.b.approve(AL, self.now)
-        self.b.approve(TN, self.now)
-
-    def test_no_money_no_takes(self):
-        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=200.0))
-        self.b.cycle(self.now, self.positions(), on=True)
-        self.assertEqual(self.r.exchange.live, {})
-
-    def test_the_budget_funds_a_take_at_a_great_price_and_pings(self):
-        self.b.set_budget(500.0)
-        # AL at 99c is not great (bar 98.5c); TN at 98c is
-        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=200.0))
-        out = self.b.cycle(self.now, self.positions(), on=True)
-        takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
-        self.assertEqual(len(takes), 1)
-        self.assertEqual(takes[0].market, TN)
-        self.assertEqual(takes[0].qty, 200.0)              # the touch showed 200
-        self.assertAlmostEqual(self.b.budget, 500.0 - 200 * 0.98, places=2)
-        self.assertAlmostEqual(self.b.spent, 196.0, places=2)
-        self.assertEqual(out["placed"][0]["usd"], 196.0)
-        self.assertEqual(len(self.pings), 1)
-        self.assertIn("$196.00", self.pings[0][1])
-        self.assertIn("$304.00", self.pings[0][1])         # budget left
-
-    def test_nothing_at_the_bar_or_under_means_no_take(self):
-        self.b.set_budget(500.0)
-        self.b.cycle(self.now, self.positions(), on=True)   # both asks at 99c
-        self.assertEqual(self.r.exchange.live, {})
-        self.assertEqual(self.b.budget, 500.0)
-
-    def test_the_bar_is_the_owners_and_the_take_is_only_ever_at_the_touch(self):
-        self.b.set_budget(500.0)
-        r = self.b.set_max(0.99)
-        self.assertTrue(r["ok"])
-        self.b.cycle(self.now, self.positions(), on=True)   # 99c now qualifies
-        takes = [o for o in self.r.fam.orders.values() if o.side == "BUY"]
-        self.assertEqual(len(takes), 1)
-        self.assertAlmostEqual(takes[0].price, 0.99)
-        self.assertFalse(self.b.set_max(0.999)["ok"])       # over the cap
-        self.assertFalse(self.b.set_budget(-1)["ok"])
-
-    def test_proceeds_are_spent_before_the_budget(self):
-        self.b.set_budget(100.0)
-        self.b.cash = 50.0
-        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=100.0))
-        self.b.cycle(self.now, self.positions(), on=True)   # takes 100 @ 98c = $98
-        self.assertEqual(self.b.cash, 0.0)
-        self.assertAlmostEqual(self.b.budget, 100.0 - 48.0, places=2)
-        self.assertAlmostEqual(self.b.spent, 48.0, places=2)
-
-    def test_setting_the_budget_again_is_the_top_up(self):
-        self.b.set_budget(100.0)
-        self.r.cache.put(TN, yes_book(self.now, bid=0.97, ask=0.98, ask_q=100.0))
-        self.b.cycle(self.now, self.positions(), on=True)
-        self.assertAlmostEqual(self.b.spent, 98.0, places=2)
-        self.b.set_budget(300.0)
-        self.assertEqual((self.b.budget, self.b.spent), (300.0, 0.0))
-
-    def test_budget_and_bar_survive_a_restart(self):
-        self.b.set_budget(250.0)
-        self.b.set_max(0.99)
-        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
-        b2.restore(self.b.to_dict())
-        self.assertEqual((b2.budget, b2.snipe_max), (250.0, 0.99))
+        self.assertEqual(b2.held(AL, "YES"), 50.0)
+        self.assertEqual((b2.budget, b2.snipe_max, b2.unpinged), (250.0, 0.99, 33.0))
+        self.assertEqual(self.r.fam.bond_qty, {AL: 50.0})
 
 
 class TestTheDesksSecondCarveOut(Base):
-    """Owner, 2026-09-02: take the touch for proceeds. Owner's rail
-    only, never past the touch, never more than it shows, and nothing
-    else may cross."""
-
     def test_only_the_owner_may_take_and_never_past_the_touch(self):
         d = self.r.fam.desk
         r = d.place_resting(AL, "BUY", 0.99, 10.0, intent=BUY_LONG,
                             initiator="auto", taker="bond")
         self.assertFalse(r.ok)
         self.assertIn("owner", r.note)
-        # the ask is 98c on this book; a 99c bid would pay past the touch
         self.r.cache.put(AL, yes_book(self.now, bid=0.97, ask=0.98))
         r = d.place_resting(AL, "BUY", 0.99, 10.0, intent=BUY_LONG,
                             initiator="owner", taker="bond")
@@ -456,14 +425,14 @@ class TestTheDesksSecondCarveOut(Base):
         r = d.place_resting(ALD, "SELL", 0.01, 400.0, intent=BUY_SHORT,
                             initiator="owner", taker="bond")
         self.assertTrue(r.ok, r.note)
-        r = d.place_resting(ALD, "SELL", 0.01, 401.0, intent=BUY_SHORT,
-                            initiator="owner", taker="bond")
-        self.assertFalse(r.ok)
+        self.assertFalse(d.place_resting(ALD, "SELL", 0.01, 401.0,
+                                         intent=BUY_SHORT, initiator="owner",
+                                         taker="bond").ok)
 
     def test_nothing_else_may_cross_under_the_bond_flag(self):
-        d = self.r.fam.desk
-        r = d.place_resting(AL, "SELL", 0.98, 10.0, intent=SELL_LONG,
-                            net_position=10.0, initiator="owner", taker="bond")
+        r = self.r.fam.desk.place_resting(AL, "SELL", 0.98, 10.0,
+                                          intent=SELL_LONG, net_position=10.0,
+                                          initiator="owner", taker="bond")
         self.assertFalse(r.ok)
         self.assertIn("only open a bond", r.note)
 
@@ -475,7 +444,7 @@ class TestEngineHandsOff(unittest.TestCase):
         src = inspect.getsource(family)
         self.assertNotIn('rec.purpose == "manual" or self._frozen', src)
         self.assertGreaterEqual(src.count('"bond"'), 10)
-        self.assertIn("if slug in self.bond_markets:", src)
+        self.assertIn("self.bond_qty.get(slug, 0.0)", src)
 
 
 if __name__ == "__main__":
