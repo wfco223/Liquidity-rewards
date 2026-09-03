@@ -803,8 +803,12 @@ class Bonds:
     def _best_slot(self, slug: str, side: str, book, qty: float,
                    bound: float, start: float | None = None):
         """The farthest slot behind the touch that still keeps
-        KEEP_FRACTION of the best reward on offer, never past `bound`.
-        Returns (price, est_day, ticks_behind, keep) or None."""
+        KEEP_FRACTION of the best reward on offer, never past `bound`,
+        with the whole lot offered there (owner, 2026-09-03: "You don't
+        have to reserve any shares to maturity. If we're below 60% and
+        at the touch you can offer them all so long as it is not below
+        cost"). Returns (price, est_day, ticks_behind, keep, size) or
+        None."""
         from .scoring import estimate_join
         prog = self.fam.terms.get(slug)
         tick = book.tick or 0.01
@@ -860,36 +864,15 @@ class Bonds:
             # — the Tennessee lesson (2026-09-03): an exit resting at
             # the touch AT COST filled in 13 minutes for a gain of $0
             px, est, ticks = scored[-1]
-            return px, est, ticks, 1.0
+            return px, est, ticks, 1.0, qty
         target = KEEP_FRACTION * best - 1e-12
         for px, est, ticks in reversed(scored):
             if est >= target:
-                size = self._min_size(bs, levels, tick, prog, pool, px, qty, target)
-                return px, est, ticks, est / best, size
+                # the whole lot is offered there (owner, 2026-09-03:
+                # "You don't have to reserve any shares to maturity")
+                return px, est, ticks, est / best, qty
         px, est, ticks = scored[0]
         return px, est, ticks, 1.0, qty
-
-    @staticmethod
-    def _min_size(bs: str, levels, tick: float, prog, pool, px: float,
-                  qty: float, target: float) -> float:
-        """The smallest size at `px` that still earns `target` $/day —
-        what is worth offering; the rest of the lot stays for the
-        coupon. Monotone in size, so a binary search."""
-        from .scoring import estimate_join
-
-        def est_of(q: float) -> float:
-            j = estimate_join(bs, levels, tick, float(prog.df), float(prog.target), px, q)
-            return j.share * pool if (j.qualifies and j.in_window) else 0.0
-        lo, hi = 1.0, float(math.floor(qty))
-        if hi < 1.0 or est_of(hi) < target:
-            return hi
-        while hi - lo > 0.5:
-            mid = float(math.floor((lo + hi) / 2))
-            if est_of(mid) >= target:
-                hi = mid
-            else:
-                lo = mid + 1.0
-        return hi if est_of(hi) >= target else float(math.floor(qty))
 
     def _bound(self, slug: str, side: str, tick: float) -> float:
         """The YES price the exit may not cross: the price paid, on the
@@ -958,24 +941,14 @@ class Bonds:
                        or (side == "NO" and slot[0] > cur.price + tick / 2))
             # a step UP only when where it sits no longer keeps the
             # target (owner, 2026-09-03: "shouldn't a contingent of my
-            # orders resting a step back move up since I'm not at 60%"):
-            # the size that keeps it moves to the slot, never past cost;
-            # the rest is kept back. A step back only from the touch.
+            # orders resting a step back move up since I'm not at
+            # 60%"), with the whole lot, never past cost. A step back
+            # only from the touch.
             move = (forward and est_cur < KEEP_FRACTION * best - 1e-12) or (back and at_front)
             new_px = slot[0] if move else cur.price
-            if new_px == cur.price:
-                # not moving: only the size may change, and only when
-                # it is off by a real margin
-                size = self._min_size(bs, self._levels_net(slug, bs, book), tick,
-                                      self.fam.terms.get(slug),
-                                      self.fam._side_pool(slug, self.fam.terms.get(slug)),
-                                      cur.price, max(lot_qty, 1.0),
-                                      KEEP_FRACTION * slot[1] / max(slot[3], 1e-9) - 1e-12) \
-                    if slot[1] > 0 else max(lot_qty, 1.0)
-                if abs(size - cur.qty) < max(1.0, 0.25 * max(lot_qty, 1.0)):
-                    return None
-            else:
-                size = slot[4]
+            size = max(lot_qty, 1.0)               # everything held is offered
+            if new_px == cur.price and abs(size - cur.qty) < max(1.0, 0.1 * size):
+                return None                        # not moving, size close enough
             r = self.fam.desk.reprice(
                 {"id": cur.id, "market": slug, "side": bs,
                  "price": cur.price, "size": cur.qty,
@@ -991,18 +964,16 @@ class Bonds:
                 intent=cur.intent, placed_ts=now, purpose="bond",
                 why=("bond: moved back behind the touch — still earning, "
                      "selling slower" if (moved and back) else
-                     "bond: a contingent moved up to keep 60% of the best "
-                     "reward — the rest is kept back" if moved else
-                     "bond: resized to what earns — the rest is held for "
-                     "the coupon"))
+                     "bond: moved up to keep 60% of the best reward" if moved else
+                     "bond: resized to the whole lot"))
             self.moved_at[slug] = now
             self.slot[slug] = {"px": (r.price or new_px), "ticks": slot[2],
                                "keep": round(slot[3], 3), "est": round(slot[1], 4),
-                               "size": size, "reserve": round(max(lot_qty - size, 0.0), 2)}
+                               "size": size}
             self._log(event=("earn_moved_back" if (moved and back)
                              else "earn_moved_up" if moved else "earn_resized"),
                       market=slug, side=side, price=(r.price or new_px),
-                      qty=size, ticks=slot[2], reserve=round(max(lot_qty - size, 0.0), 2),
+                      qty=size, ticks=slot[2],
                       keep=round(est_cur / best, 3) if best > 0 else None)
             return {"market": slug, "bond": side, "side": bs,
                     "price": (r.price or new_px), "qty": size, "moved": moved}
@@ -1029,10 +1000,9 @@ class Bonds:
         self.moved_at[slug] = now
         self.slot[slug] = {"px": (r.price or want), "ticks": ticks,
                            "keep": round(keep, 3), "est": round(est, 4),
-                           "size": qty, "reserve": round(max(lot_qty - qty, 0.0), 2)}
+                           "size": qty}
         self._log(event="earn_rested", market=slug, side=side,
-                  price=(r.price or want), qty=qty, ticks=ticks,
-                  reserve=round(max(lot_qty - qty, 0.0), 2))
+                  price=(r.price or want), qty=qty, ticks=ticks)
         return {"market": slug, "bond": side, "side": bs,
                 "price": (r.price or want), "qty": qty, "ticks": ticks}
 

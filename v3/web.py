@@ -878,7 +878,6 @@ function bCalc(r){
   h+='<div>'+(o.decoy?'decoy ':'exit ')+o.qty+' @ '+pc(o.price)+(o.ticks?', '+o.ticks+' tick'+(o.ticks>1?'s':'')+' behind':', at the touch')+': '+(o.qualifies?bPct(o.share)+' of the side × '+(pool==null?'?':usd(pool))+' = <b>'+usd(o.est)+'/day</b>':'<span class="warn">earning nothing</span>')+'</div>';
  });
  if(c.touch)h+='<div class="muted">the whole lot at the touch ('+pc(c.touch.price)+') would take '+bPct(c.touch.share)+' = '+usd(c.touch.est)+'/day</div>';
- if(r.slot&&r.slot.reserve>0.5)h+='<div class="muted">'+r.slot.reserve+' shares kept back for the coupon at resolution</div>';
  return h;
 }
 function bSniper(r,b,sw){
