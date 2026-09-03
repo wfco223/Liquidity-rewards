@@ -43,11 +43,17 @@ class FakeClient:
             }
             if body.get("participateDontInitiate") is False:
                 # a taker order fills: the trade record shows it
-                self.trades.append({"id": f"a{oid}", "trade": {
+                q = float(body["quantity"])
+                px = float(body["price"]["value"])
+                self.trades.append({"type": "ACTIVITY_TYPE_TRADE", "trade": {
+                    "id": f"t{oid}",
                     "aggressorExecution": {
-                        "order": {"id": oid, "intent": body["intent"]},
-                        "lastShares": float(body["quantity"]),
-                        "lastPx": float(body["price"]["value"])}}})
+                        "id": f"x{oid}",
+                        "order": {"id": oid, "intent": body["intent"],
+                                  "quantity": q, "cumQuantity": q,
+                                  "avgPx": {"value": f"{px:.4f}"}},
+                        "lastShares": f"{q:.4f}",
+                        "lastPx": {"value": f"{px:.4f}"}}}})
             return {"order": {"id": oid}}
         if "/cancel" in url:
             self.live.pop(url.rstrip("/cancel").rsplit("/", 1)[-1], None)

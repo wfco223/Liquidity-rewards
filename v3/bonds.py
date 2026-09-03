@@ -86,6 +86,7 @@ FILL_WAIT_S = 8.0           # how long a take's fill is awaited in the trade rec
 TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed to show it
 HOLD_ENGINE_S = 600.0       # after clearing our orders out of a take's way, the engine waits this long
 CLEAR_WAIT_S = 5.0          # how long a cleared order gets to leave the open-order list
+RECONFIRM_S = 3600.0        # a booked fill is re-checked against the record this long
 
 
 def side_for(odds: float | None) -> str | None:
@@ -154,6 +155,10 @@ class Bonds:
         # position feed whenever the feed shows less
         self.lot_ts: dict[str, float] = {}     # slug -> last booking time
         self.exch_max: dict[str, float] = {}   # slug -> most the exchange ever showed
+        # every booked fill by order id, so it can be re-checked against
+        # the record for an hour (the 2026-09-03 Hawaii take: five
+        # executions read as one — the ledger said 1, the exchange 5)
+        self.fill_book: dict[str, dict] = {}   # oid -> {slug, side, qty, px, ts}
         self.unpinged: float = 0.0            # bought since the last ping
         self.moved_at: dict[str, float] = {}
         self.slot: dict[str, dict] = {}
@@ -329,6 +334,50 @@ class Bonds:
                        f"${self.budget:,.2f} of the deploy budget left, "
                        f"${self.cash:,.2f} of proceeds waiting")
             self.unpinged = 0.0
+
+    def _reconfirm(self, now: float) -> None:
+        """Fills booked within RECONFIRM_S are read again from the trade
+        record; a lot is corrected to the exchange's running total for
+        that order, up or down, at its average price. The record is the
+        truth; a first read can be early."""
+        due = {oid: f for oid, f in self.fill_book.items()
+               if now - float(f.get("ts") or 0.0) <= RECONFIRM_S}
+        if not due:
+            return
+        try:
+            acts = self.client.recent_trades(limit=200)
+        except Exception:  # noqa: BLE001 — try again next cycle
+            return
+        for oid, f in due.items():
+            got = self._record_of(oid, acts)
+            if got is None:
+                continue
+            shares, avg, _ = got
+            booked = float(f.get("qty") or 0.0)
+            if abs(shares - booked) < 0.005:
+                continue
+            slug, side = f["slug"], f["side"]
+            px = avg or float(f.get("px") or 0.0)
+            cost_per = px if side == "YES" else round(1.0 - px, 4)
+            if shares > booked:
+                extra = round(shares - booked, 4)
+                usd = round(extra * cost_per, 4)
+                self._book_lot(slug, side, extra, usd)
+                self._pay(usd)
+                self._ping_maybe(usd)
+            else:
+                gone = round(booked - shares, 4)
+                cost = self._unbook_lot(slug, side, gone)
+                self.spent = round(max(self.spent - cost, 0.0), 4)
+                if self.budget_mode != "tax":
+                    self.budget = round(self.budget + cost, 4)
+                self._follow_tax()
+            f["qty"] = shares
+            f["px"] = px
+            self._log(event="fill_corrected", market=slug, side=side, order_id=oid,
+                      qty=shares, price=px,
+                      note=f"the record shows {shares:g} filled on this order; "
+                           f"the ledger had {booked:g}")
 
     def _trim_to_exchange(self, positions: dict | None, now: float) -> None:
         """The position feed is the truth for holdings: a lot the feed
@@ -612,6 +661,7 @@ class Bonds:
                               proceeds=round(proceeds, 2),
                               gain=round(proceeds - cost, 2),
                               cash=round(self.cash, 2))
+        self._reconfirm(now)
         self._trim_to_exchange(positions, now)
         if on:
             for slug in sorted(self.approved):
@@ -1018,6 +1068,8 @@ class Bonds:
                 f"way of our resting order")
         usd = round(qty * cost, 4)
         self._book_lot(slug, side, qty, usd, ref=r.order_id)
+        self.fill_book[r.order_id] = {"slug": slug, "side": side, "qty": qty,
+                                      "px": px, "ts": round(now, 1)}
         self._pay(usd)
         self._log(event="snapped", market=slug, side=side, price=px, qty=qty,
                   cost=round(usd, 2), cash=round(self.cash, 2),
@@ -1050,38 +1102,20 @@ class Bonds:
         because the feed lags a placement by a few seconds. An order
         that shows resting instead of filled is cancelled — a take was
         never meant to rest. Nothing is assumed."""
-        seen: set = set()
-        shares = usd = 0.0
-        note = ""
+        shares, avg, note = 0.0, posted_px, ""
         for attempt in range(int(FILL_WAIT_S) + 1):
             if attempt:
                 self._sleep(1.0)
             try:
-                for a in self.client.recent_trades(limit=50):
-                    aid = str(a.get("id") or "")
-                    t = a.get("trade") or {}
-                    for exk in ("passiveExecution", "aggressorExecution"):
-                        ex = t.get(exk) or {}
-                        o = ex.get("order") or {}
-                        if str(o.get("id") or "") != order_id:
-                            continue
-                        key = (aid, exk)
-                        if key in seen:
-                            continue
-                        seen.add(key)
-                        sh = self._px_of(ex.get("lastShares"), ex.get("shares"),
-                                         ex.get("quantity")) or 0.0
-                        px = self._px_of(ex.get("lastPx"), ex.get("lastPrice"),
-                                         ex.get("price"), t.get("lastPx"),
-                                         t.get("price"), o.get("price"))
-                        if px is None:
-                            px = posted_px
-                            note = "price taken from the order (the record gave none)"
-                        if sh > 0:
-                            shares = round(shares + sh, 4)
-                            usd = round(usd + sh * px, 6)
+                got = self._record_of(order_id, self.client.recent_trades(limit=50))
             except Exception as e:  # noqa: BLE001 — the record is the truth; keep asking
                 note = f"trade record: {str(e)[:80]}"
+                continue
+            if got is not None:
+                shares, avg, note = got
+                if not avg:
+                    avg = posted_px
+                    note = note or "price taken from the order (the record gave none)"
             if shares + 1e-9 >= want:
                 break
         if shares + 1e-9 < want:
@@ -1096,8 +1130,43 @@ class Bonds:
                         break
             except Exception as e:  # noqa: BLE001
                 note = f"open orders: {str(e)[:80]}"
-        avg = round(usd / shares, 4) if shares > 0 else posted_px
         return shares, avg, note
+
+    def _record_of(self, order_id: str, activities) -> tuple[float, float, str] | None:
+        """(filled shares, average price, note) for one order from the
+        exchange's activity rows, or None when no row names it. Each row
+        is one execution; the ORDER inside carries the exchange's own
+        running total (cumQuantity) and average price (avgPx) — that is
+        what is read, so five executions never count as one. Rows with
+        no such total fall back to the executions' own share counts,
+        one per execution id."""
+        cum = 0.0
+        avg = None
+        by_exec: dict[str, tuple[float, float | None]] = {}
+        found = False
+        for a in activities or []:
+            t = a.get("trade") or {}
+            for exk in ("passiveExecution", "aggressorExecution"):
+                ex = t.get(exk) or {}
+                o = ex.get("order") or {}
+                if str(o.get("id") or "") != order_id:
+                    continue
+                found = True
+                c = self._px_of(o.get("cumQuantity")) or 0.0
+                if c > cum:
+                    cum = c
+                    avg = self._px_of(o.get("avgPx")) or avg
+                xid = str(ex.get("id") or "") or f"{t.get('id')}/{exk}"
+                by_exec[xid] = (self._px_of(ex.get("lastShares")) or 0.0,
+                                self._px_of(ex.get("lastPx"), o.get("price")))
+        if not found:
+            return None
+        if cum > 0:
+            return round(cum, 4), (round(avg, 4) if avg else 0.0), ""
+        shares = round(sum(q for q, _ in by_exec.values()), 4)
+        usd = sum(q * (px or 0.0) for q, px in by_exec.values())
+        return shares, (round(usd / shares, 4) if shares > 0 and usd > 0 else 0.0), \
+            "no running total in the record; executions summed"
 
     def _clear_way(self, slug: str, far: str, px: float, now: float) -> str | None:
         """Before a take: our own orders on the side it hits, at or
@@ -1378,6 +1447,7 @@ class Bonds:
                 "paid_booked": round(self.paid_booked, 4),
                 "rewards_by_market": self.rewards_by_market,
                 "lot_ts": self.lot_ts, "exch_max": self.exch_max,
+                "fill_book": self.fill_book,
                 "scan_day": self.scan_day,
                 "earn_seen": self._earn_seen, "earn_px": self._earn_px,
                 "exch_seen": getattr(self, "_exch_seen", {}),
@@ -1428,6 +1498,19 @@ class Bonds:
                                   in (d.get("rewards_by_market") or {}).items()}
         self.lot_ts = {str(k): float(v) for k, v in (d.get("lot_ts") or {}).items()}
         self.exch_max = {str(k): float(v) for k, v in (d.get("exch_max") or {}).items()}
+        self.fill_book = {str(k): dict(v) for k, v in (d.get("fill_book") or {}).items()}
+        # a lot booked before fills were kept by order id: seed the book
+        # from the lot itself so the next cycle re-checks it (the Hawaii
+        # lot of 2026-09-03: 1 booked, 5 filled)
+        for slug, lot in self.lots.items():
+            ids = [x for x in lot.get("fills") or [] if x != "adopt"]
+            if len(ids) == 1 and ids[0] not in self.fill_book:
+                q = abs(float(lot.get("qty") or 0.0))
+                side = "YES" if float(lot.get("qty") or 0.0) >= 0 else "NO"
+                per = float(lot.get("cost") or 0.0) / q if q > 0.005 else 0.0
+                px = per if side == "YES" else round(1.0 - per, 4)
+                self.fill_book[ids[0]] = {"slug": slug, "side": side, "qty": q,
+                                          "px": round(px, 4), "ts": round(self._clock(), 1)}
         self.scan_day = str(d.get("scan_day") or "")
         self._earn_seen = {str(k): float(v) for k, v in (d.get("earn_seen") or {}).items()}
         self._earn_px = {str(k): float(v) for k, v in (d.get("earn_px") or {}).items()}
