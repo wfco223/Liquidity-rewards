@@ -1728,3 +1728,45 @@ class TestTheHeadline(Base):
         b3 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
         b3.restore(self.b.to_dict())                                     # current state: kept as is
         self.assertAlmostEqual(b3.money_in, self.b.money_in, places=4)
+
+
+class TestInTheBlack(Base):
+    """Owner, 2026-09-03: "highlight markets on the bond page where the
+    bid price has moved above my average cost so I know when they are
+    in the black.\""""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def test_a_yes_bond_against_the_best_bid_others_have(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.lots[AL]["fees"] = 0.5                       # cost with fees: 98.5c
+        self.r.cache.put(AL, yes_book(self.now, bid=0.98, ask=0.99))
+        m = self.b.view(self.now, self.positions())["rows"][0]["mark"]
+        self.assertEqual((m["bid"], m["cost"], m["black"]), (0.98, 0.985, False))
+        self.r.cache.put(AL, yes_book(self.now, bid=0.99, ask=0.995))
+        m = self.b.view(self.now, self.positions())["rows"][0]["mark"]
+        self.assertTrue(m["black"])
+        self.assertAlmostEqual(m["edge"], 0.005, places=4)
+        # our own bid does not count: nobody can sell to himself
+        self.r.fam.orders["B1"] = FamilyOrder(id="B1", market=AL, side="BUY", price=0.99,
+                                              qty=300.0, intent=BUY_LONG, placed_ts=self.now,
+                                              purpose="bond")
+        self.r.cache.put(AL, Book(bids=((0.99, 300.0), (0.98, 50.0)), asks=((0.995, 10.0),),
+                                  tick=0.01, fetched_at=self.now))
+        m = self.b.view(self.now, self.positions())["rows"][0]["mark"]
+        self.assertEqual((m["bid"], m["black"]), (0.98, False))
+
+    def test_a_no_bond_reads_the_no_bid_off_the_yes_asks(self):
+        self.bond(ALD, "NO", 100.0, 0.05)                   # NO at 95c
+        self.r.cache.put(ALD, no_book(self.now, bid=0.03, ask=0.06))   # NO bid = 94c
+        rows = self.b.view(self.now, self.positions())["rows"]
+        m = [r for r in rows if r["market"] == ALD][0]["mark"]
+        self.assertEqual((m["bid"], m["black"]), (0.94, False))
+        self.r.cache.put(ALD, no_book(self.now, bid=0.03, ask=0.04))   # NO bid = 96c
+        m = [r for r in self.b.view(self.now, self.positions())["rows"] if r["market"] == ALD][0]["mark"]
+        self.assertEqual((m["bid"], m["black"]), (0.96, True))
+        self.assertIsNone([r for r in self.b.view(self.now, self.positions())["rows"] if r["market"] == AL][0]["mark"])
