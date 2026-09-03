@@ -1595,3 +1595,81 @@ class TestFreshBooks(Base):
             bm.BOOK_READS_PER_CYCLE = keep
         v = self.b.view(self.now + 100)
         self.assertFalse(any(r["stale"] for r in v["rows"]))
+
+
+class TestBait(Base):
+    """Owner, 2026-09-03: "let me see both sides of the book and place
+    bait orders on the buy side (only one share) to entice people to
+    move their buy offers some.\""""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+        self.bond(AL, "YES", 100.0, 0.98)                # book 98 / 99: no room for bait
+        self.bond(ALD, "NO", 100.0, 0.05)                # NO at 95c
+
+    def test_the_book_shows_both_sides_in_the_bonds_own_terms(self):
+        self.r.cache.put(ALD, Book(bids=((0.05, 195.0), (0.03, 50.0), (0.02, 2080.0)),
+                                   asks=((0.06, 542.0), (0.09, 1.0)),
+                                   tick=0.01, fetched_at=self.now))
+        self.r.fam.orders["X1"] = FamilyOrder(id="X1", market=ALD, side="BUY", price=0.05,
+                                              qty=195.0, intent=SELL_SHORT, placed_ts=self.now,
+                                              purpose="bond")
+        row = [r for r in self.b.view(self.now, self.positions())["rows"] if r["market"] == ALD][0]
+        bk = row["book"]
+        self.assertEqual(bk["terms"], "NO")
+        self.assertEqual(bk["bids"][0], [0.94, 542.0, 0.0])      # NO bids = YES asks, 100 − 6
+        self.assertEqual(bk["asks"][0], [0.95, 195.0, 195.0])    # our exit, marked ours
+        self.assertEqual(bk["asks"][1][0], 0.97)
+
+    def test_a_bait_rests_one_share_a_tick_inside_their_best(self):
+        self.r.cache.put(ALD, Book(bids=((0.05, 195.0), (0.03, 50.0)),
+                                   asks=((0.08, 542.0), (0.09, 1.0)),
+                                   tick=0.01, fetched_at=self.now))
+        r = self.b.place_bait(ALD, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        o = self.b._bait_orders(ALD)[0]
+        self.assertEqual((o.side, o.price, o.qty), ("SELL", 0.07, 1.0))   # a YES ask at 7c: buying NO at 93c
+        self.assertTrue(self.b.fill_book[o.id]["open"])
+        st = self.b.view(self.now, self.positions())
+        bt = [x for x in st["rows"] if x["market"] == ALD][0]["bait"]
+        self.assertTrue(bt["resting"])
+        self.assertEqual(bt["px"], 0.07)
+        self.assertFalse(self.b.place_bait(ALD, self.now)["ok"])   # one at a time
+        # they follow: others show up at the bait's price — it comes off
+        self.r.cache.put(ALD, Book(bids=((0.05, 195.0), (0.03, 50.0)),
+                                   asks=((0.07, 301.0), (0.08, 241.0)),
+                                   tick=0.01, fetched_at=self.now + 60))
+        self.b.cycle(self.now + 60, self.positions(), on=False)
+        self.assertEqual(self.b._bait_orders(ALD), [])
+        self.assertEqual(self.b.bait[ALD]["followed"], 1)
+        self.assertIn("followed", self.b.bait[ALD]["note"])
+        # the next step, when he taps again
+        r = self.b.place_bait(ALD, self.now + 120, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b._bait_orders(ALD)[0].price, 0.06)
+        self.assertEqual(self.b.bait[ALD]["steps"], 2)
+
+    def test_no_room_and_the_first_price_cap(self):
+        r = self.b.place_bait(AL, self.now, self.positions())      # bid 98 / ask 99: no tick inside
+        self.assertFalse(r["ok"])
+        self.assertIn("no room", r["note"])
+        # a NO bond first bought at 5c: a bait at 4c would pay 96c, more than his 95c
+        self.r.cache.put(ALD, Book(bids=((0.02, 195.0),), asks=((0.05, 542.0),),
+                                   tick=0.01, fetched_at=self.now))
+        r = self.b.place_bait(ALD, self.now, self.positions())
+        self.assertFalse(r["ok"])
+        self.assertIn("first price", r["note"])
+
+    def test_nobody_follows_for_two_hours_and_it_comes_off(self):
+        self.r.cache.put(ALD, Book(bids=((0.05, 195.0),), asks=((0.08, 542.0),),
+                                   tick=0.01, fetched_at=self.now))
+        self.assertTrue(self.b.place_bait(ALD, self.now, self.positions())["ok"])
+        self.b.cycle(self.now + 3600, self.positions(), on=False)
+        self.assertEqual(len(self.b._bait_orders(ALD)), 1)
+        self.b.cycle(self.now + 7300, self.positions(), on=False)
+        self.assertEqual(self.b._bait_orders(ALD), [])
+        self.assertIn("nobody followed", self.b.bait[ALD]["note"])
+        self.assertTrue(self.b.pull_bait(ALD)["ok"] is False)     # nothing left to pull
