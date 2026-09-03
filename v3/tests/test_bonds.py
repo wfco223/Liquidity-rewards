@@ -1683,6 +1683,7 @@ class TestTheHeadline(Base):
         self.b.approve(AL, self.now)
         self.b.set_budget(1000.0)
         self.b._book_lot(AL, "YES", 100.0, 90.0, ref="T1", fee=0.5)      # $90.50 in, fees in
+        self.b._pay(90.5)
         self.b.fill_book["T1"] = {"slug": AL, "side": "YES", "qty": 100.0, "px": 0.90,
                                   "fee": 0.5, "ts": self.now - 10 * 86400}
         e = self.b._earned()
@@ -1694,6 +1695,7 @@ class TestTheHeadline(Base):
         self.b.accrued["2026-09-03"] = 1.81
         self.b.realized = round(40 * (0.95 - 0.905), 4)                  # 1.80
         self.b.sold_usd = 40 * 0.95
+        self.b.cash = 40 * 0.95
         self.b._unbook_lot(AL, "YES", 40.0)
         e = self.b._earned()
         self.assertAlmostEqual(e["invested"], 60 * 0.905, places=2)       # what is still in
@@ -1703,3 +1705,18 @@ class TestTheHeadline(Base):
         self.assertAlmostEqual(e["annual_pct"], 3.61 / 90.5 * 365 / 10, places=3)
         v = self.b.view(self.now)
         self.assertEqual(v["earned"]["invested"], e["invested"])
+        # buying with the $38 of proceeds is not new money: "put in" stays
+        self.b._book_lot(TN, "YES", 40.0, 38.0, ref="T2")
+        self.b._pay(38.0)
+        e = self.b._earned()
+        self.assertAlmostEqual(e["invested"], 60 * 0.905 + 38.0, places=2)
+        self.assertAlmostEqual(e["deployed"], 90.5, places=2)
+        # but buying from the budget is
+        self.b._book_lot(GA, "YES", 10.0, 7.0, ref="T3")
+        self.b._pay(7.0)
+        self.assertAlmostEqual(self.b._earned()["deployed"], 97.5, places=2)
+        # and a lot the engine's stock was counted in at is his money too
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        d = self.b.to_dict(); d.pop("money_in")
+        b2.restore(d)                                                    # older state: seeded
+        self.assertAlmostEqual(b2.money_in, b2._earned()["invested"] + 36.2, places=1)

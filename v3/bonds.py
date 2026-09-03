@@ -150,6 +150,10 @@ class Bonds:
         # order's live $/day times the time since the last cycle.
         self.realized: float = 0.0            # profit on sales by our orders
         self.sold_usd: float = 0.0
+        # outside money ever put into bonds: paid from the budget, or
+        # shares counted in at cost. Proceeds reinvested are not new
+        # money (owner, 2026-09-03), so the return is measured on this.
+        self.money_in: float = 0.0
         self.accrued: dict[str, float] = {}   # day -> usd the bond orders earned
         self.accrued_mkt: dict[str, float] = {}
         self._accrued_at: float = 0.0
@@ -375,6 +379,7 @@ class Bonds:
         from_budget = round(usd - from_cash, 4)
         self.budget = round(max(self.budget - from_budget, 0.0), 4)
         self.spent = round(self.spent + from_budget, 4)
+        self.money_in = round(self.money_in + from_budget, 4)
         return from_budget
 
     def _ping_maybe(self, usd: float) -> None:
@@ -475,6 +480,7 @@ class Bonds:
             refund = round(cost * min(never_seen / removed, 1.0), 4) if removed > 0 else 0.0
             if refund > 0:
                 self.spent = round(max(self.spent - refund, 0.0), 4)
+                self.money_in = round(max(self.money_in - refund, 0.0), 4)
                 if self.budget_mode != "tax":
                     self.budget = round(self.budget + refund, 4)
             self._follow_tax()
@@ -521,8 +527,7 @@ class Bonds:
         total = self.realized + rewards
         invested = sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
                        for l in self.lots.values())
-        sold_cost = max(self.sold_usd - self.realized, 0.0)
-        deployed = invested + sold_cost
+        deployed = self.money_in               # outside money only; proceeds recycled are not new
         first = [float(f.get("ts") or 0.0) for f in self.fill_book.values()
                  if float(f.get("qty") or 0.0) > 0] + list(self.lot_ts.values())
         since = min([t for t in first if t > 0] or [0.0])
@@ -648,6 +653,7 @@ class Bonds:
         yes_px = abs(c / q) if abs(q) > 0.005 and c else 0.0
         per = yes_px if side == "YES" else (1.0 - yes_px if yes_px else 0.0)
         self._book_lot(slug, side, qty, round(qty * per, 4), ref="adopt")
+        self.money_in = round(self.money_in + qty * per, 4)
         self._log(event="adopted", market=slug, side=side, qty=qty,
                   cost=round(qty * per, 2))
         return {"ok": True, "note": f"counting {qty:g} {side} shares as bond "
@@ -1214,6 +1220,7 @@ class Bonds:
         per = per_yes if side == "YES" else round(1.0 - per_yes, 4)
         per = min(max(per, 0.0), 1.0)
         self._book_lot(slug, side, over, round(over * per, 4), ref="adopt")
+        self.money_in = round(self.money_in + over * per, 4)
         self._over_since.pop(slug, None)
         self._log(event="adopted", market=slug, side=side, qty=over,
                   price=round(per, 4),
@@ -2060,6 +2067,7 @@ class Bonds:
                 "budget_mode": self.budget_mode,
                 "unpinged": round(self.unpinged, 4),
                 "realized": round(self.realized, 4), "sold_usd": round(self.sold_usd, 4),
+                "money_in": round(self.money_in, 4),
                 "accrued": self.accrued, "accrued_mkt": self.accrued_mkt,
                 "accrued_at": round(self._accrued_at, 1),
                 "lot_ts": self.lot_ts, "exch_max": self.exch_max,
@@ -2109,6 +2117,14 @@ class Bonds:
         self.unpinged = float(d.get("unpinged") or 0.0)
         self.realized = float(d.get("realized") or 0.0)
         self.sold_usd = float(d.get("sold_usd") or 0.0)
+        if "money_in" in d:
+            self.money_in = float(d.get("money_in") or 0.0)
+        else:
+            # state from before this was kept: what is held plus what the
+            # sold shares had cost — nothing had been reinvested yet
+            self.money_in = round(sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
+                                      for l in self.lots.values())
+                                  + max(self.sold_usd - self.realized, 0.0), 4)
         self.accrued = {str(k): float(v) for k, v in (d.get("accrued") or {}).items()}
         self.accrued_mkt = {str(k): float(v) for k, v in (d.get("accrued_mkt") or {}).items()}
         self._accrued_at = float(d.get("accrued_at") or 0.0)
