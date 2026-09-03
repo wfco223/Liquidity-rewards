@@ -261,8 +261,14 @@ def _iso_to_ts(s: str) -> float:
         return 0.0
 
 
-def parse_activities(rows: list) -> list[dict]:
-    """Activity rows -> OUR executions, one per row.
+def parse_activities(rows: list, known_ids=None) -> list[dict]:
+    """Activity rows -> OUR executions, one per row. `known_ids` are
+    order ids we know to be ours (resting, placed, journaled, bond
+    takes): when a trade names one, THAT execution is ours and the
+    other is the counterparty's — the Tennessee case (2026-09-03): our
+    3c take filled against two strangers whose orders carried real
+    intents too, the passive side was read first, and their orders
+    were journaled as the owner's own hand sales.
 
     The feed returns BOTH sides of every trade: ours and the
     counterparty's. Treating that as a self-cross once dropped 1,623 of
@@ -277,14 +283,23 @@ def parse_activities(rows: list) -> list[dict]:
         if t:
             ours = None
             role = ""
+            known = known_ids or ()
             for key, name in (("passiveExecution", "passive"),
                               ("aggressorExecution", "aggressor")):
                 ex = t.get(key) or {}
                 o = ex.get("order") or {}
-                it = str(o.get("intent") or "")
-                if o.get("id") and it and not it.endswith("UNDEFINED"):
+                if o.get("id") and str(o.get("id")) in known:
                     ours, role = ex, name
                     break
+            if ours is None:
+                for key, name in (("passiveExecution", "passive"),
+                                  ("aggressorExecution", "aggressor")):
+                    ex = t.get(key) or {}
+                    o = ex.get("order") or {}
+                    it = str(o.get("intent") or "")
+                    if o.get("id") and it and not it.endswith("UNDEFINED"):
+                        ours, role = ex, name
+                        break
             if ours is None:
                 continue                      # entirely the other side
             o = ours.get("order") or {}
@@ -2154,6 +2169,23 @@ class Monitor:
             self.freeze_payload()
         return {"ok": True, "fixed": fixed, "voided": voided, "added": added}
 
+    def _known_order_ids(self) -> set:
+        """Every order id we know to be ours: resting, ever placed by
+        the engine, journaled, or a bond take."""
+        ids: set = set()
+        for fam in self.families.values():
+            ids.update(str(k) for k in fam.orders)
+            ids.update(str(k) for k in getattr(fam, "placed_at", {}) or {})
+            for f in getattr(fam, "fills", []) or []:
+                if isinstance(f, dict) and f.get("oid"):
+                    ids.add(str(f["oid"]))
+        bonds = getattr(self, "bonds", None)
+        if bonds is not None:
+            ids.update(str(k) for k in bonds.fill_book)
+            for lot in bonds.lots.values():
+                ids.update(str(x) for x in (lot.get("fills") or []))
+        return ids
+
     def publish_trades(self, now: float, deep: bool = False) -> dict:
         """The definitive transaction record: the exchange's own
         activity history, published to data/trades.csv (owner,
@@ -2166,7 +2198,7 @@ class Monitor:
         except Exception as e:  # noqa: BLE001 — never breaks the loop
             self._note(f"trades history: {e}")
             return {"ok": False, "note": str(e)[:120]}
-        rows = parse_activities(raw)
+        rows = parse_activities(raw, self._known_order_ids())
         self._last_trade_rows = rows      # the hourly reconciliation reads these
         # One-time shape probe: if the exchange's order object already
         # carries a creation time, resting periods come free for
@@ -2230,7 +2262,7 @@ class Monitor:
         ex: dict = defaultdict(lambda: {"shares": 0.0, "ts": 0.0,
                                         "market": "", "side": "", "px": 0.0,
                                         "placed_ts": None})
-        for r in parse_activities(raw):
+        for r in parse_activities(raw, self._known_order_ids()):
             if r["type"] != "ACTIVITY_TYPE_TRADE":
                 continue
             if not (r["market"] and r["side"] and r["price"]
@@ -2711,6 +2743,8 @@ class Monitor:
             return {"ok": False, "note": "no market given"}
         elif op == "bonds_adopt":
             r = self.bonds.adopt(market, value)
+        elif op == "bonds_more_cap":
+            r = self.bonds.set_more_cap(market, value)
         elif op == "bonds_enter":
             # his own purchase: sweep the resting orders out to his price
             r = self.bonds.enter(market, value, now)
@@ -3458,6 +3492,7 @@ class Monitor:
             pass
         try:
             d["bonds"] = self.bonds.view(time.time())
+            d["est_bonds"] = {"dots": list(self.bonds.dots)}
         except Exception as e:  # noqa: BLE001
             d["bonds"] = {"rows": [], "proposed": [], "error": str(e)[:120]}
         return d
