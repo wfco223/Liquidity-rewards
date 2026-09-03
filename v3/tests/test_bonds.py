@@ -79,7 +79,7 @@ class Base(unittest.TestCase):
         """A bond in the ledger AND on the exchange."""
         self.exch(slug, qty if side == "YES" else -qty, yes_px)
         cost = qty * (yes_px if side == "YES" else 1.0 - yes_px)
-        self.b._book_lot(slug, side, qty, cost)
+        self.b._book_lot(slug, side, qty, cost, ref="test")   # backed, as a real fill is
 
     def positions(self):
         return dict(self.r.positions)
@@ -286,6 +286,7 @@ class TestTheSniper(Base):
                  asks=tuple(sorted((p, qq) for p, qq in merged.items() if qq > 0)),
                  tick=0.01, fetched_at=self.now + t)
         self.r.cache.put(AL, d)
+        self.r.exchange.books[AL] = d        # a re-read after a clear sees it too
         return d
 
     def cyc(self, t):
@@ -633,17 +634,18 @@ class TestOurOwnOrdersAreNotForSale(Base):
         self.assertEqual(row["cost"], 0.99)
         self.assertAlmostEqual(float(row["size"]), 300.0)
 
-    def test_a_sweep_skips_a_level_that_is_only_ours(self):
+    def test_a_level_that_is_only_ours_is_cleared_not_bought(self):
+        # our own 20 @ 95c sit in the take's way: they are pulled first
+        # (2026-09-03), the level goes with them, and the sweep buys the
+        # 96s and 97s from others
         sweep = TestTheOwnersEntry.Sweeping(
             [(0.95, 20.0), (0.96, 30.0), (0.97, 40.0), (0.98, 500.0)], self.now)
-        mine = {0.95}
 
         def post(url, body, **k):
-            # a take fills against OTHERS: the first level not ours goes
-            for i, (p, q) in enumerate(sweep.asks):
-                if p not in mine:
-                    sweep.asks.pop(i)
-                    break
+            if "/cancel" in url:
+                sweep.asks = [(p, q) for p, q in sweep.asks if p != 0.95]
+                return {}
+            sweep.asks.pop(0)
             oid = "T%d" % len(sweep.asks)
             sweep.fill(oid, body)
             return {"id": oid}
@@ -655,8 +657,10 @@ class TestOurOwnOrdersAreNotForSale(Base):
         self.ours(0.95, 20.0)
         r = self.b.enter(AL, 0.97, self.now, self.positions())
         self.assertTrue(r["ok"], r["note"])
-        self.assertEqual(self.b.held(AL, "YES"), 70.0)          # 30 + 40, not our 20
-        self.assertEqual(sweep.asks, [(0.95, 20.0), (0.98, 500.0)])
+        self.assertNotIn("E1", self.r.fam.orders)
+        self.assertEqual(self.b.held(AL, "YES"), 70.0)          # 30 + 40, never our 20
+        self.assertEqual(sweep.asks, [(0.98, 500.0)])
+        self.assertEqual(self.r.fam.hold_until[AL], self.now + 600.0)
 
     def test_the_desk_refuses_a_take_of_our_own_level(self):
         self.hawaii()
@@ -981,3 +985,116 @@ class TestTheExchangeIsTheTruth(Base):
         self.b._book_lot(AL, "YES", 10.0, 9.3)
         self.b.cycle(self.now + 600, {}, on=True)
         self.assertEqual(self.b.held(AL, "YES"), 10.0)
+
+
+class TestClearingTheWay(Base):
+    """Owner, 2026-09-03: "I think the order did not go through because
+    I still have resting orders from the engine ... When you clear out,
+    it might make sense to tell the engine to hold off on that market
+    for 10 minutes." The Hawaii case: the engine's 3-share cover bid at
+    7c sat at the touch, so a 7c sell of ours would match our own bid
+    first and the exchange left it unfilled."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(ALD, self.now)                  # a NO bond: takes hit the bids
+        self.b.set_budget(1000.0)
+
+    def our_bid(self, oid, purpose, px=0.01, qty=3.0):
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=ALD, side="BUY", price=px, qty=qty,
+            intent=SELL_SHORT, placed_ts=self.now, purpose=purpose)
+        self.r.exchange.live[oid] = {"id": oid, "market": ALD, "side": "BUY",
+                                     "price": px, "size": qty, "intent": SELL_SHORT}
+
+    def test_the_engines_bid_in_the_way_is_pulled_and_the_engine_held_off(self):
+        self.our_bid("E1", "sell")                     # the engine's cover bid at the touch
+        self.assertTrue(self.r.fam.enterable(ALD))
+        r = self.b.enter(ALD, 0.01, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertNotIn("E1", self.r.fam.orders)
+        self.assertNotIn("E1", self.r.exchange.live)
+        self.assertEqual(self.b.held(ALD, "NO"), 397.0)   # 400 showing less our 3
+        self.assertEqual(self.r.fam.hold_until[ALD], self.now + 600.0)
+        self.assertTrue(self.r.fam._frozen(ALD))
+        self.assertFalse(self.r.fam.enterable(ALD))
+        ev = [e for e in self.b.log if e["event"] == "cleared"][0]
+        self.assertEqual(ev["orders"], ["E1"])
+        row = self.b.view(self.now + 1, self.positions())["rows"][0]
+        self.assertEqual(row["hold_until"], self.now + 600.0)
+        self.r.fam._clock = lambda: self.now + 601.0
+        self.assertFalse(self.r.fam._frozen(ALD))
+
+    def test_a_hand_order_in_the_way_stops_the_take_untouched(self):
+        self.our_bid("H1", "manual")
+        r = self.b.enter(ALD, 0.01, self.now, self.positions())
+        self.assertFalse(r["ok"])
+        self.assertIn("your own order H1", r["note"])
+        self.assertIn("H1", self.r.fam.orders)
+        self.assertIn("H1", self.r.exchange.live)
+        self.assertEqual(self.b.held(ALD, "NO"), 0.0)
+        self.assertNotIn(ALD, self.r.fam.hold_until)
+
+    def test_an_order_behind_the_take_price_is_not_in_the_way(self):
+        self.our_bid("E2", "sell", px=0.001)           # behind the 1c bids: stays
+        r = self.b.enter(ALD, 0.01, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertIn("E2", self.r.fam.orders)
+        self.assertNotIn(ALD, self.r.fam.hold_until)
+
+
+class TestOnlyConfirmedFillsAreHeld(Base):
+    """Owner, 2026-09-03 (screenshot: "Held 3 @ 93c ... resting 3 @ 7c"):
+    the trim had stopped at the exchange's 3-share short, but that short
+    is the engine's own stock, not a bond purchase, and the bond's
+    stale cover bid was still resting against it."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def test_a_lot_nothing_confirmed_backs_is_dropped_on_restore(self):
+        # the Hawaii state as the old code left it: booked, paid, unbacked
+        self.b.lots[ALD] = {"qty": -10.0, "cost": 9.3}
+        self.b._pay(9.3)
+        # and a lot backed by a confirmed fill, which stays
+        self.b._book_lot(AL, "YES", 7.0, 6.9, ref="T7")
+        d = self.b.to_dict()
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(d)
+        self.assertNotIn(ALD, b2.lots)
+        self.assertEqual(b2.held(AL, "YES"), 7.0)
+        self.assertEqual(b2.lots[AL]["fills"], ["T7"])
+        self.assertAlmostEqual(b2.budget, 1000.0, places=2)   # the 9.30 came back
+        self.assertEqual(b2.spent, 0.0)
+        ev = [e for e in b2.log if e["event"] == "unbooked_unconfirmed"]
+        self.assertEqual((ev[0]["market"], ev[0]["qty"]), (ALD, 10.0))
+
+    def test_shares_he_counted_in_are_backed_by_him(self):
+        self.exch(AL, 50.0, 0.98)
+        self.assertTrue(self.b.adopt(AL, 20.0, self.positions())["ok"])
+        self.assertEqual(self.b.lots[AL]["fills"], ["adopt"])
+
+    def test_nothing_held_pulls_the_stale_earn_order(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        ask = self.orders(AL, "SELL")[0]
+        self.b.lots.clear()                              # the lot was trimmed away
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertNotIn(ask.id, self.r.fam.orders)
+        self.assertNotIn(ask.id, self.r.exchange.live)
+        self.assertEqual([e["event"] for e in self.b.log][-1], "earn_pulled")
+        self.assertEqual(self.b.view(self.now + 61, self.positions())["rows"][0]["qty"], 0.0)
+
+    def test_clearing_only_our_own_bond_order_does_not_hold_the_engine(self):
+        self.r.fam.orders["B1"] = FamilyOrder(
+            id="B1", market=ALD, side="BUY", price=0.01, qty=3.0,
+            intent=SELL_SHORT, placed_ts=self.now, purpose="bond")
+        self.r.exchange.live["B1"] = {"id": "B1", "market": ALD, "side": "BUY",
+                                      "price": 0.01, "size": 3.0, "intent": SELL_SHORT}
+        r = self.b.enter(ALD, 0.01, self.now, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertNotIn("B1", self.r.fam.orders)
+        self.assertNotIn(ALD, self.r.fam.hold_until)

@@ -859,16 +859,17 @@ function bCalc(r){
  return h;
 }
 function bSniper(r,b,sw){
+ var hold=(r.hold_until&&r.hold_until>Date.now()/1000)?'<div class="sub">Engine held off here until '+when(r.hold_until)+' (our orders were cleared out of a take\'s way)</div>':'';
  var main=(r.calc&&r.calc.orders||[]).filter(function(o){return !o.decoy;});
- if(!main.length)return '<div class="sub">Sniper: no resting order of ours here'+(sw.on?'':' (bonds switch off)')+'</div>';
- if(!r.front)return '<div class="sub">Sniper: nothing in front of our order</div>';
+ if(!main.length)return hold+'<div class="sub">Sniper: no resting order of ours here'+(sw.on?'':' (bonds switch off)')+'</div>';
+ if(!r.front)return hold+'<div class="sub">Sniper: nothing in front of our order</div>';
  var h='Sniper: '+r.front.qty+' @ '+pc(r.front.price)+' in front';
- if(!r.minnow)return '<div class="sub">'+h+' — too big to lead (over '+(b.minnow_max||25)+')</div>';
+ if(!r.minnow)return hold+'<div class="sub">'+h+' — too big to lead (over '+(b.minnow_max||25)+')</div>';
  if(r.dance){
   var snap=(r.dance.since||0)+(b.dance_wait_s||7200);
   h+=' · decoy joined it at '+pc(r.dance.px)+', move '+r.dance.moves+' of 3 · if it stays put, bought at '+when(snap)+'; at once if it moves a 4th time, reaches the touch, or goes under our cost '+pc(r.cost_px);
  } else h+=(sw.on?' · a decoy joins it next cycle':' · bonds switch off, nothing sent');
- return '<div class="sub">'+h+'</div>';
+ return hold+'<div class="sub">'+h+'</div>';
 }
 function bLadder(r,b){
  var lad=r.ladder||[];if(!lad.length)return '';
@@ -920,7 +921,7 @@ function render(d){
  out+='<div>'+bField('bbud',bKeep('bbud'),'7em')+' <button onclick="bBudget()">Set budget</button>'+(tax?'':' <button onclick="bOp(\'bonds_budget_tax\',\'-\')">Follow taxes owed</button>')+' <button onclick="bOp(\'bonds_scan\',\'-\')">Check Silver now</button></div>';
  out+='<details class="how"><summary>how this works</summary>'
   +'<div>A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO.</div>'
-  +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. Your own orders are never counted.</div>'
+  +'<div>You buy in from the ladder. Enter at a price takes every share OTHERS have resting out to it. Your own orders are never counted; the engine\'s and the bond\'s own orders in the way are pulled first and the engine is held off that market for ten minutes. A hand order in the way stops the take.</div>'
   +'<div>Held bonds get one resting order, as far back as it can sit keeping '+Math.round((b.keep||0.6)*100)+'% of the best reward, never under cost.</div>'
   +'<div>A small order (25 or fewer) in front of it gets a decoy joining it. Sits two hours, moves over three times, reaches the touch or goes under cost: bought, joins the bond.</div>'
   +'<div>Sale proceeds go back into Money. A phone note every $100 bought.</div>'
