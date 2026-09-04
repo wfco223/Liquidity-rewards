@@ -50,7 +50,7 @@ from zoneinfo import ZoneInfo
 from . import risk
 from .books import BookCache
 from .evidence import Evidence, SNATCH_WEIGHT
-from .fillmodel import FillModel
+from .fillmodel import DAY_S, FillModel
 from .intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT, capital_at_risk
 from .orders import OrderDesk, snap_price
 from .scoring import estimate_join
@@ -347,6 +347,11 @@ class FamilyOrder:
     # 8h. est_peak8 is the window's max, refreshed with every read.
     est_hist: list = field(default_factory=list)   # [[bucket_ts, max_est]..]
     est_peak8: float = 0.0
+    # the fill model's evidence (owner, 2026-09-04): where the order sat
+    # at its last look, and when that look was, so its resting time
+    # accrues to the right distance cell and a fill lands in the same one
+    ticks_last: int = 0
+    seen_ts: float = 0.0
 
 
 def resting_ok(now: float, cfg: FamilyConfig) -> bool:
@@ -404,6 +409,11 @@ class Family:
         self.evidence = Evidence(clock=clock)
         self.fillmodel = FillModel()
         self.pending_marks: list[dict] = []   # fills awaiting their 1h grade
+        # what the model EXPECTED, accrued as the orders actually rested
+        # (owner, 2026-09-04): hour bucket -> purpose -> expected fills.
+        # The calibration note grades this against the fills that came,
+        # instead of a snapshot of whatever happens to rest right now.
+        self.exp_fills: dict[str, dict[str, float]] = {}
         self.fills: list[dict] = []           # the purchase journal, one row per fill
         self.proven: set[str] = set()         # graduated markets (main feeds it)
         self.recent_paid: dict[str, tuple] = {}   # mkt -> (avg $/day, paid days), last 7d
@@ -1707,6 +1717,11 @@ class Family:
                                    "px": rec.price, "weight": w,
                                    "adv": adv, "verdict": verdict})
         self.fillmodel.observe_fill_age(rec.market, now - rec.placed_ts)
+        if rec.purpose not in ("sell", "probe", "bond"):
+            # the fill lands in the cell whose resting time it ended
+            self.fillmodel.observe_own_fill(rec.market, rec.side,
+                                            rec.ticks_last,
+                                            now - rec.placed_ts)
         self.pending_marks.append({"market": rec.market, "side": rec.side,
                                    "price": rec.price, "due": now + 3600.0})
         del self.pending_marks[:-60]
@@ -2128,9 +2143,29 @@ class Family:
                                   - rec.qty, 0.0)
                 pf_now = self.fillmodel.p_fill(rec.market, rec.side, ticks_now,
                                                shield=shield_now,
-                                               target=float(prog.target))
+                                               target=float(prog.target),
+                                               age_s=now - rec.placed_ts)
                 rec.live_pf = round(pf_now, 4)   # the expected-risk
                                                  # budget charges by this
+                # the model's evidence and its own report card: the
+                # time this order just rested, at this depth and age.
+                # The first look only stamps it — an order adopted or
+                # restored from before the stamp existed would otherwise
+                # bank its whole life as fill-free. A slow cycle or a
+                # restart still counts (the order rested through it and
+                # its fill, if any, is found at this look), capped at
+                # an hour so a long outage cannot swamp a cell.
+                if rec.seen_ts:
+                    dt_seen = min(now - rec.seen_ts, 3600.0)
+                    if dt_seen > 0.0:
+                        if rec.purpose != "bond":
+                            self.fillmodel.observe_rest(
+                                rec.market, rec.side, ticks_now,
+                                now - rec.placed_ts, dt_seen)
+                        self._accrue_expected(rec.purpose, pf_now, dt_seen,
+                                              now)
+                rec.ticks_last = ticks_now
+                rec.seen_ts = now
                 ign_now = 0.0
                 ind_now = (1.0 if self.fairs is not None
                            and self.fairs(rec.market) is not None
@@ -2915,6 +2950,36 @@ class Family:
         ("wide", "deep"): (10.0, 681.4),
         ("pooled", "pooled"): (16.5, 1062.2),
     }
+
+    def _accrue_expected(self, purpose: str, pf: float, dt_s: float,
+                         now: float) -> None:
+        """Bank the fills the model expected from one order over the
+        dt_s it just rested, in this hour's bucket, by purpose."""
+        if dt_s <= 0 or pf is None or pf <= 0:
+            return
+        h = -math.log(max(1.0 - min(pf, 0.999999), 1e-9))   # fills/day
+        key = str(int(now // 3600) * 3600)
+        cell = self.exp_fills.setdefault(key, {})
+        cell[purpose] = round(cell.get(purpose, 0.0) + h * dt_s / DAY_S, 6)
+        if len(self.exp_fills) > 26:
+            for k in sorted(self.exp_fills, key=int)[:-26]:
+                self.exp_fills.pop(k, None)
+
+    def expected_fills_24h(self, now: float) -> tuple[dict[str, float], float]:
+        """(expected fills by purpose over the last 24h, when that record
+        starts). The start matters right after a boot: the note grades
+        only the hours it actually watched."""
+        out: dict[str, float] = {}
+        since = None
+        floor = int((now - DAY_S) // 3600) * 3600
+        for k, cell in self.exp_fills.items():
+            ts = int(k)
+            if ts < floor:
+                continue
+            since = ts if since is None else min(since, ts)
+            for p, v in cell.items():
+                out[p] = out.get(p, 0.0) + v
+        return out, (float(since) if since is not None else now)
 
     def _fill_speed_verdict(self, side: str, px: float, rested_s: float,
                             book) -> tuple[float, str, float]:
@@ -4350,6 +4415,7 @@ class Family:
             "seen_pids": sorted(self.seen_pids),
             "inv_since": self.inv_since,
             "fillmodel": self.fillmodel.to_dict(),
+            "exp_fills": self.exp_fills,
             "pending_marks": self.pending_marks[-60:],
             # 600 to match the in-memory retention trim: saving
             # only 200 silently discarded most of the journal on
@@ -4406,6 +4472,9 @@ class Family:
         if d.get("fillmodel"):
             self.fillmodel = FillModel.from_dict(d["fillmodel"])
         self.pending_marks = list(d.get("pending_marks") or [])
+        self.exp_fills = {str(k): {p: float(v) for p, v in cell.items()}
+                          for k, cell in (d.get("exp_fills") or {}).items()
+                          if isinstance(cell, dict)}
         self.fills = list(d.get("fills") or [])
         self.dump_today = float(d.get("dump_today") or 0.0)
         self.active_until = float(d.get("active_until") or 0.0)

@@ -2891,6 +2891,55 @@ class Monitor:
             self._note(f"ladders: could not write {path} ({n} markets) "
                        f"— trying again next hour")
 
+    @staticmethod
+    def fill_calibration_line(key: str, fam, now: float) -> str | None:
+        """The fill model's report card, per order type, over the hours
+        it actually watched (owner, 2026-09-04). The old note summed the
+        odds on whatever rested at that moment and counted every fill
+        of the day, bond program included — it read 5x for politics
+        while the engine's own orders were 2.7x under and the owner's
+        deep bids 2x over. Bond fills are directed by the owner and
+        exits are the unwinding working: both shown, neither scored."""
+        exp, since = fam.expected_fills_24h(now)
+        start = max(now - 86400.0, since)
+        hours = max((now - start) / 3600.0, 0.0)
+        got: dict = {}
+        for f in fam.fills:
+            if (f.get("ts") or 0) > start:
+                p = f.get("purpose") or ""
+                got[p] = got.get(p, 0) + 1
+        unscored = ("manual", "hand", "bond", "sell", "probe", "backfill")
+        eng_exp = sum(v for p, v in exp.items() if p not in unscored)
+        eng_got = sum(v for p, v in got.items() if p not in unscored)
+        hand_exp = exp.get("manual", 0.0)
+        hand_got = got.get("manual", 0) + got.get("hand", 0)
+
+        def drift(e: float, a: float) -> str:
+            # six hours of watching before anything may read as drift:
+            # a fresh boot has nothing banked yet
+            return ("  <-- DRIFTING" if hours >= 6.0
+                    and (a > 2 * e + 2 or e > 2 * a + 2) else "")
+        parts = []
+        if eng_exp or eng_got:
+            parts.append(f"engine orders expected {eng_exp:.1f} fills over "
+                         f"the last {hours:.0f}h, got {eng_got}"
+                         f"{drift(eng_exp, eng_got)}")
+        if hand_exp or hand_got:
+            parts.append(f"your hand orders expected {hand_exp:.1f}, got "
+                         f"{hand_got}{drift(hand_exp, hand_got)}")
+        if got.get("bond"):
+            parts.append(f"bond program {got['bond']} (directed by you, "
+                         "not scored)")
+        if got.get("sell"):
+            parts.append(f"exits {got['sell']} (the unwinding working, "
+                         "not scored)")
+        if got.get("backfill"):
+            parts.append(f"{got['backfill']} found only in the record "
+                         "(not scored)")
+        if not parts:
+            return None
+        return f"fill calibration {key}: " + "; ".join(parts)
+
     def publish_files(self, now: float) -> None:
         """Hourly, and only while 1.0 is retired (one writer per file)."""
         if os.environ.get("V1_ENABLED", "0") != "0":
@@ -2980,26 +3029,10 @@ class Monitor:
             # 24h. Drift past ~2x is the tripwire to raise with the
             # owner.
             for key, fam in self.families.items():
-                exp_day = sum(o.live_pf for o in list(fam.orders.values())
-                              if o.live_pf is not None
-                              and o.purpose != "manual")
-                # entries against entries (owner approved 2026-08-26):
-                # the expectation covers entry orders only, so exits
-                # and dumps filling — the unwinding WORKING — must not
-                # read as drift. All day the raw count said 3x while
-                # the honest ratio sat at 1.1-1.7x.
-                actual = sum(1 for f in fam.fills
-                             if (f.get("ts") or 0) > now - 86400
-                             and f.get("purpose") not in
-                             ("sell", "manual", "backfill"))
-                if exp_day or actual:
-                    self._note(
-                        f"fill calibration {key}: model expects "
-                        f"{exp_day:.1f} fills/day resting; actual "
-                        f"entry fills last 24h: {actual}"
-                        + ("  <-- DRIFTING" if exp_day > 0 and
-                           (actual > 2 * exp_day + 2
-                            or exp_day > 2 * actual + 2) else ""))
+                line = self.fill_calibration_line(key, fam, now)
+                if line:
+                    self._note(line)
+                if line or fam.orders:
                     self._note(
                         f"risk {key}: expected ${fam.family_spent():.2f}"
                         f"/{fam.cfg.capital_usd:.0f}  gross "
