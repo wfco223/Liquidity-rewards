@@ -173,8 +173,15 @@ class OrderDesk:
                 far, word = "SELL", "ask"
             elif (side, intent) == ("SELL", BUY_SHORT):
                 far, word = "BUY", "bid"
+            elif (side, intent) == ("SELL", SELL_LONG):
+                # closing: held YES sold into the bids (owner, 2026-09-04:
+                # "sell my mass gov rep shares to the orders resting at
+                # 98 cents") — same rail: the touch not ours, its size
+                far, word = "BUY", "bid"
+            elif (side, intent) == ("BUY", SELL_SHORT):
+                far, word = "SELL", "ask"         # a NO bond closed against the YES asks
             else:
-                return "bond taker orders may only open a bond at the touch"
+                return "bond taker orders may only open or close a bond at the touch"
             # the levels on the far side net of our own orders: the best
             # one that is not entirely ours is the touch we may take
             others = []
