@@ -3388,3 +3388,55 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788527358.3,cfb,aachc-cfb-wins-2026-11-28-nebr-8pt5wins,BUY,0.01,0.22,hand,,19.54,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C2115FSA2DJT
 1788527358.3,cfb,aachc-cfb-wins-2026-11-28-minnst-5pt5wins,SELL,0.2,0.55,hand,,29.58,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C1S1BNSKEDJR
 1788527358.3,cfb,aachc-cfb-wins-2026-11-28-txtech-7pt5wins,SELL,0.01,0.74,hand,,67.25,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C0TDSBN2CDJR
+1788527429.6,politics,ussewc-usse-nm-2026-11-03-dem,BUY,1,0.95,bond,0,0.02,0.9948,92,96,0.45,0.93,0.96,-0.0448,47,bond: took 1 YES at 95c — it was in the way of our resting order,C9N7D2M8EMVR
+1788527549.6,cfb,aachc-cfb-wins-2026-11-28-nd-9pt5wins,SELL,0.03,0.89,sell,0,0,,87,92,0.179,0.89,0.9,0.01,0.97,taker dump — sold into the bid (the carved exception),C9N8C9JG4MW1
+1788527549.6,cfb,aachc-cfb-wins-2026-11-28-fl-5pt5wins,SELL,1,0.75,sell,0,0,,69,77,0.254,0.75,0.77,-0.02,0,taker dump — sold into the bid (the carved exception),C9N8C9JGEMW1
+1788527549.6,cfb,aachc-cfb-wins-2026-11-28-kanst-6pt5wins,SELL,1,0.68,sell,0,0,,74,82,0.408,0.68,0.69,0.1,0,taker dump — sold into the bid (the carved exception),C9N8AV2KTMW0
+1788527549.6,cfb,aachc-cfb-wins-2026-11-28-aubrn-7pt5wins,SELL,1,0.44,sell,0,0,,35,43,0.593,0.44,0.45,-0.04,0,taker dump — sold into the bid (the carved exception),C9N81Y68EMVZ
+1788527549.6,cfb,aachc-cfb-wins-2026-11-28-fl-7pt5wins,SELL,1,0.36,sell,0,0,,26,34,0.648,0.36,0.37,-0.06,0,taker dump — sold into the bid (the carved exception),C9N9KBND4MVG
+1788527609.6,cfb,aachc-cfb-wins-2026-11-28-fl-9pt5wins,BUY,1,0.43,sell,0,0.02,,8,15,0.353,0.32,0.51,0.32,0,buying back the short at or under what it sold for — the bid earns while it wait,C9N8EE56AMVP
+1788527609.6,cfb,aachc-cfb-wins-2026-11-28-minnst-8pt5wins,SELL,0.09,0.32,sell,0,0,,29,35,0.296,0.32,0.33,0,4.91,taker dump — sold into the bid (the carved exception),C9N9ZM7CCMVG
+1788527609.6,cfb,aachc-cfb-wins-2026-11-28-kan-7pt5wins,SELL,1,0.43,sell,0,0,,4,13,0.492,0.43,0.44,-0.35,0,taker dump — sold into the bid (the carved exception),C9N8T6FKMMW1
+1788527609.6,cfb,aachc-cfb-wins-2026-11-28-ohiost-10pt5wins,SELL,0.23,0.51,sell,0,0,,36,48,0.339,0.51,0.52,-0.1,0.77,taker dump — sold into the bid (the carved exception),C9N8ZS0W6MVF
+1788527669.6,cfb,aachc-cfb-wins-2026-11-28-utah-7pt5wins,SELL,0.38,0.77,sell,0,0,,76,81,0.254,0.77,0.78,0.02,1.62,taker dump — sold into the bid (the carved exception),C9N971QPWMVK
+1788527669.6,cfb,aachc-cfb-wins-2026-11-28-wake-4pt5wins,SELL,1,0.94,sell,0,0,,77,85,0.017,0.94,0.95,-0.13,0,taker dump — sold into the bid (the carved exception),C9N9JJZT4MW1
+1788527669.6,cfb,aachc-cfb-wins-ou-2026-11-28-tcu,SELL,0.07,0.38,sell,0,0,,34,40,0.186,0.38,0.39,-0.01,0.93,taker dump — sold into the bid (the carved exception),C9N9B3F4AMVF
+1788527729.6,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,17,0.96,bond,0,0.01,0.9965,96,98,0.795,0.93,0.96,0.0365,66,bond: sold 17 YES into the bids at 96c by you,C9N9JK91GMW1
+1788527729.6,cfb,aachc-cfb-wins-2026-11-28-oregst-4pt5wins,SELL,1,0.48,sell,0,0,,45,50,0.326,0.48,0.49,-0.01,0,taker dump — sold into the bid (the carved exception),C9N9PW9QYMVP
+1788527729.6,cfb,aachc-cfb-wins-2026-11-28-wisc-7pt5wins,SELL,0.03,0.29,sell,0,0,,27,32,0.585,0.29,0.3,0.01,1.97,taker dump — sold into the bid (the carved exception),C9NAESS7WMVY
+1788527729.6,cfb,aachc-cfb-wins-ou-2026-11-28-arz,SELL,0.44,0.71,sell,0,0,,53,63,0.308,0.71,0.72,-0.13,0,taker dump — sold into the bid (the carved exception),C9N983KTYMVZ
+1788527750.3,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,0.25,0.93,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9N983MZGMVZ
+1788527789.6,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,6,0.93,bond,0,0.02,0.9965,96,98,0.825,0.93,0.95,-0.0665,72,bond more: buying up to $77.89 more; never dearer than his first price — 76% of ,C9N983MZGMVZ
+1788527789.6,politics,ussewc-usse-ky-2026-11-03-dem,BUY,28,0.03,bond,0,0.01,0.00265,5,7,0.883,0.02,0.07,0.0273,28,bond: sold 28 NO into the bids at 97c by you,C9NAQK69GMVG
+1788527849.6,politics,ussewc-usse-ky-2026-11-03-dem,BUY,0.97,0.03,bond,0.0297,0.02,0.00265,5,7,0.893,0.02,0.07,0.0273,29.97,bond: sold 0.97 NO into the bids at 97c by you,C9NAV67HTMVY
+1788527924.5,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,7,0.06,bond,0,0.02,0.009675,2,8,0.229,0.05,0.07,-0.0503,-7,bond: took 7 NO at 6c — it was in the way of our resting order,C9NA5YCBCMVZ
+1788528027.6,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,0.01,0.97,backfill,,0.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9N773YXPMVG
+1788528044.5,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,2,0.97,manual,0.1064,0.19,0.9999,93,96,0.656,0.95,0.97,0.0299,57,the owner's own order — the engine leaves it alone,C9N773YXPMVG
+1788528584.6,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,25,0.9,bond,0,0.01,0.990325,87,90,0.832,0.86,0.9,-0.0903,230,bond: took 25 YES at 90c — it was in the way of our resting order,C9NFT98JTMVR
+1788528644.6,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,11,0.94,bond,0,0.01,0.9965,95,97,0.847,0.93,0.94,-0.0565,83,bond: took 11 YES at 94c — it was in the way of our resting order,C9NFRV9R6MVZ
+1788528704.7,politics,usgubewc-usgub-mn-2026-11-03-rep,SELL,29,0.07,bond,0,0,0.0051,6,9,0.725,0.07,0.08,-0.0649,-74,bond: took 29 NO at 7c — it was in the way of our resting order,C9NH1W5PAMVR
+1788528764.9,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,30,0.03,bond,0,0.01,0.009,2,4,0.654,0.02,0.48,0.021,0,bond: sold 30 NO into the bids at 97c by you,C9NHYTM0JMVV
+1788528764.9,politics,ussewc-usse-sd-2026-11-03-rep,BUY,12,0.93,bond,0,0.01,0.992375,88,93,0.597,0.92,0.93,-0.0624,39,bond: took 12 YES at 93c — it was in the way of our resting order,C9NHT6RWPMVP
+1788528824.9,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,2,0.06,bond,0,0,0.009675,3,8,0.529,0.05,0.06,-0.0503,-9,bond: took 2 NO at 6c — it was in the way of our resting order,C9NHF0Y3RMVF
+1788528926.8,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,1.88,0.05,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9NJATQ0EMVY
+1788529065.0,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,1,0.94,bond,0,0.02,0.9965,95,97,0.864,0.93,0.95,-0.0565,84,bond: took 1 YES at 94c — it was in the way of our resting order,C9NKA6VSPMW1
+1788529125.0,cfb,aachc-cfb-wins-2026-11-28-okst-8pt5wins,SELL,0.01,0.34,earn,0,0.35,,17,21,0.685,0.33,0.4,-0.15,-1.01,6 ticks in front of the touch — we would hold 1% of the ask side,C9NAK9NFGMVF
+1788530497.7,cfb,aachc-cfb-wins-2026-11-28-ga-9pt5wins,SELL,0.32,0.55,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9NYGDMHRMW0
+1788530694.3,cfb,aachc-cfb-wins-2026-11-28-aubrn-5pt5wins,SELL,1,0.54,sell,0,0.08,,69,93,0.029,0.53,0.54,0.27,0,selling filled stock — it earns while it waits,C9NYJWASPMVP
+1788530694.3,cfb,aachc-cfb-wins-2026-11-28-tenn-9pt5wins,BUY,1,0.3,sell,0,0.67,,24,31,0.334,0.31,0.34,0.02,0,an exit — its fill reduces the position it sits on,C9NDM6J0RMVK
+1788530754.3,cfb,aachc-cfb-wins-2026-11-28-tenn-9pt5wins,SELL,0.99,0.3,sell,0,0,,23,30,0.572,0.3,0.32,-0.03,0.01,taker dump — sold into the bid (the carved exception),C9P1890BGMVP
+1788530995.3,politics,ewc-usgub-az-2026-11-03-dem,BUY,-1,0.87,fix,,24.3,,,,,,,,,size trimmed by 1 to the exchange's count (order C8EJCJ070MVF),C8EJCJ070MVF
+1788530995.3,politics,ewc-usgub-az-2026-11-03-dem,BUY,-2,0.87,fix,,24.3,,,,,,,,,size trimmed by 2 to the exchange's count (order C8EJCJ070MVF),C8EJCJ070MVF
+1788530995.3,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,-2.4,0.04,fix,,17.59,,,,,,,,,size trimmed by 2.4 to the exchange's count (order C8SY2CNF4MVR),C8SY2CNF4MVR
+1788530995.3,politics,ussewc-usse-ky-2026-11-03-rep,SELL,-0.1,0.95,fix,0.0833,6.94,0.99665,91,93,0.908,0.93,0.94,0.0467,36.95,size trimmed by 0.1 to the exchange's count (order C8SYMEY7GMVG),C8SYMEY7GMVG
+1788530995.3,politics,ussewc-usse-ky-2026-11-03-rep,SELL,-0.85,0.95,fix,,6.92,,,,,,,,,size trimmed by 0.85 to the exchange's count (order C8SYMEY7GMVG),C8SYMEY7GMVG
+1788530995.3,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,-8,0.81,fix,6.2497,4.64,0.933775,,,0.758,,,-0.1238,27,size trimmed by 8 to the exchange's count (order C8VMNJDEYMVV),C8VMNJDEYMVV
+1788530995.3,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,-4,0.81,fix,6.2499,0.47,0.933775,81,85,0.719,0.81,0.84,-0.1238,19,size trimmed by 4 to the exchange's count (order C8VMNJDEYMVV),C8VMNJDEYMVV
+1788530995.3,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,-6.31,0.93,fix,0.491,12.43,0.991,93,95,0.7,0.93,0.94,-0.061,150.31,size trimmed by 6.31 to the exchange's count (order C9AN8K9GJMVF),C9AN8K9GJMVF
+1788530995.3,politics,scc-senate-gop-2026-11-03-55,BUY,-1,0.09,fix,2.6583,1.92,0.015275,1,5,0.443,0.09,0.1,0.0747,0,size trimmed by 1 to the exchange's count (order C9KKCNSBRMVV),C9KKCNSBRMVV
+1788530995.3,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,0.25,0.93,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9N983MZGMVZ
+1788530995.3,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,0.01,0.97,backfill,,0.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9N773YXPMVG
+1788530995.3,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,1.88,0.05,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9NJATQ0EMVY
+1788530995.3,cfb,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,BUY,-0.36,0.23,fix,0.0044,12.28,,27,31,0.357,0.29,0.3,-0.06,0.98,size trimmed by 0.36 to the exchange's count (order C8S6YVBREMW0),C8S6YVBREMW0
+1788530995.3,cfb,aachc-cfb-wins-ou-2026-11-28-arz,SELL,-0.56,0.71,fix,0,0,,53,63,0.308,0.71,0.72,-0.13,0,size trimmed by 0.56 to the exchange's count (order C9N983KTYMVZ),C9N983KTYMVZ
+1788530995.3,cfb,aachc-cfb-wins-2026-11-28-ga-9pt5wins,SELL,0.32,0.55,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9NYGDMHRMW0
