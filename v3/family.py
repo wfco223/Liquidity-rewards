@@ -672,8 +672,16 @@ class Family:
         highest budget utilisation on record. The owner spotted the
         contradiction before I did.
 
-        Owner, 2026-08-24, on excluding all of them: "That's good." """
-        return o.purpose == "manual"
+        Owner, 2026-08-24, on excluding all of them: "That's good."
+
+        The bond program's orders are his money too (2026-09-04): he
+        approves each market and sets each cap, and the program keeps
+        its own ledger. On 2026-09-04 a $300 Illinois bond bid in a
+        market not yet graduated landed $114 of expected risk on the
+        engine's $250 search ceiling; the trimmer cut the engine's own
+        politics book from 50 orders to 11 in an evening. Owner: "Yes
+        to #1" — bond orders charge no engine ceiling."""
+        return o.purpose in ("manual", "bond")
 
     def holdings_value(self) -> float:
         """What the stock would fetch if liquidated NOW: longs at the
