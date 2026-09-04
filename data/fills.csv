@@ -3440,3 +3440,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788530995.3,cfb,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,BUY,-0.36,0.23,fix,0.0044,12.28,,27,31,0.357,0.29,0.3,-0.06,0.98,size trimmed by 0.36 to the exchange's count (order C8S6YVBREMW0),C8S6YVBREMW0
 1788530995.3,cfb,aachc-cfb-wins-ou-2026-11-28-arz,SELL,-0.56,0.71,fix,0,0,,53,63,0.308,0.71,0.72,-0.13,0,size trimmed by 0.56 to the exchange's count (order C9N983KTYMVZ),C9N983KTYMVZ
 1788530995.3,cfb,aachc-cfb-wins-2026-11-28-ga-9pt5wins,SELL,0.32,0.55,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9NYGDMHRMW0
+1788531235.3,cfb,aachc-cfb-wins-2026-11-28-duke-3pt5wins,SELL,1,0.97,sell,0,0,,78,85,0.436,0.97,0.98,-0.15,0,taker dump — sold into the bid (the carved exception),C9P57MDVWMVK
+1788531595.5,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,41,0.94,bond,0,0.01,0.9965,95,97,0.875,0.93,0.97,-0.0565,125,bond: took 41 YES at 94c — it was in the way of our resting order,C9P8HM9Y6MVF
+1788531595.5,cfb,aachc-cfb-wins-ou-2026-11-28-arz,SELL,0.35,0.68,sell,0,0,,53,63,0.304,0.68,0.7,-0.11,0.65,taker dump — sold into the bid (the carved exception),C9P9DRMH6MVG
+1788531685.9,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,0.01,0.84,hand,,0.35,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C9NYBWG7PMVK
+1788531777.9,politics,ussewc-usse-sd-2026-11-03-rep,BUY,12,0.93,bond,0,0.01,0.992375,88,92,0.695,0.92,0.93,-0.0624,51,bond: took 12 YES at 93c — it was in the way of our resting order,C9PAHJ37MMVG
+1788531878.3,politics,ussewc-usse-ky-2026-11-03-dem,SELL,33,0.04,bond,0,0.02,0.00265,4,6,0.9,0.04,0.07,-0.0374,-4,bond: took 33 NO at 4c — it was in the way of our resting order,C9PAVDZ12MVG
+1788532178.3,politics,enwc-ussep-de-2026-09-15-rep-johshu,SELL,102,0.09,sell,0,0,,12,18,0.303,0.09,0.1,0.06,0,taker dump — sold into the bid (the carved exception),C9PDQ50ARMVY
+1788532298.3,politics,enwc-ussep-de-2026-09-15-rep-johshu,BUY,100,0.09,earn,0.0757,1.24,,12,18,0.302,0.09,0.1,-0.06,200,at the touch — a fill here is 2 ticks inside value (evidence band only; confiden,C9NAVESWEMVV
+1788532478.8,cfb,aachc-cfb-wins-2026-11-28-okst-8pt5wins,SELL,0.01,0.34,earn,0.1294,0.28,,18,22,0.747,0.33,0.34,-0.14,-1.01,6 ticks in front of the touch — we would hold 1% of the ask side,C9P7YS29RMW0
+1788532778.9,politics,usgubewc-usgub-wy-2026-11-03-dem,SELL,20,0.02,earn,6.2495,6.17,0.00015,1,4,0.092,0.01,0.02,-0.0198,-20,at the touch — a fill here is 2 ticks inside value (Silver + evidence),C9H94871AMVY
+1788532778.9,cfb,aachc-cfb-wins-2026-11-28-flst-4pt5wins,BUY,0.01,0.87,earn,0.0555,0.53,,76,90,0,0.72,0.88,0.03,0.01,joins the touch — the book has been quiet,C9P2CTTN2MVY
+1788533871.7,cfb,aachc-cfb-wins-2026-11-28-rutger-4pt5wins,BUY,1,0.62,sell,0.0209,1.72,,61,67,0.503,0.66,0.67,-0.02,2,buying back the short at or under what it sold for — the bid earns while it wait,C9N9B3EGAMVF
+1788534111.8,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,14,0.22,manual,2.551,2.64,0.1705,17,21,0.694,0.21,0.22,-0.0495,-34,the owner's own order — the engine leaves it alone,C9MHWS6JGMVK
+1788534532.5,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,5,0.09,sell,6.2499,4.61,0.0018,5,8,0.651,0.01,0.09,0.0882,5,buying back the short at or under what it sold for — the bid earns while it wait,C9K0BM732MVV
+1788534652.5,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,0.01,0.84,hand,,0.35,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C9NYBWG7PMVK
+1788534652.5,cfb,aachc-cfb-wins-2026-11-28-utah-7pt5wins,SELL,0.5,0.76,void,0,0,,77,81,0.251,0.76,0.78,0.03,0.5,voided: the exchange has no trade for order C9P6ZPSB2MVV — the row of 09-04 14:1,C9P6ZPSB2MVV
