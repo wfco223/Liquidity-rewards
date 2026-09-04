@@ -3951,3 +3951,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788552750.6,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,13,0.93,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9THGSTZMMVP
 1788552750.6,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,21,0.06,backfill,,1.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9SQGAS0MMVP
 1788552750.6,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,10.72,0.18,backfill,,3.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9RFB16CYMVZ
+1788552930.6,cfb,aachc-cfb-wins-2026-11-28-ucf-7pt5wins,SELL,1,0.25,sell,0,0,,33,41,0.013,0.25,0.26,0.11,0,taker dump — sold into the bid (the carved exception),C9VDC3V1WMVP
+1788553590.7,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,69,0.07,bond,0,0,0.009675,6,10,0.714,0.06,0.07,-0.0603,-127,bond: took 69 NO at 7c — it was in the way of our resting order,C9VJTGH5WMVY
+1788553778.3,politics,ussewc-usse-ky-2026-11-03-rep,BUY,5.86,0.92,backfill,,39.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8SWNEY68MW1
+1788553830.7,politics,ussewc-usse-la-2026-11-03-rep,SELL,6,0.89,sell,6.25,2.51,0.963075,89,94,0.521,0.88,0.89,0.0731,0,selling filled stock — it earns while it waits,C9SC9H9NWMVY
+1788553830.7,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,26.77,0.93,bond,5.6061,0.92,0.990325,90,94,0.614,0.91,0.93,0.0603,200.23,bond: moved back behind the touch — still earning; selling slower,C9TW5XBR8MVV
+1788553830.7,politics,ussewc-usse-ky-2026-11-03-rep,SELL,6,0.95,bond,3.5374,0.02,0.99735,91,94,0.88,0.92,0.96,0.0474,80,bond: sold 6 YES into the bids at 95c by you,C9VMF6FC0MW1
+1788554070.7,cfb,aachc-cfb-wins-2026-11-28-utah-7pt5wins,SELL,0.01,0.78,sell,0,0,,77,82,0.228,0.78,0.79,0.02,0.99,taker dump — sold into the bid (the carved exception),C9VPSDBSGMVF
+1788554430.7,politics,ussewc-usse-wy-2026-11-03-dem,SELL,41,0.02,sell,5.3732,10.19,2.5e-05,1,5,0.34,0.01,0.02,-0.02,0,selling filled stock — it earns while it waits,C9JYD9JYPMVZ
+1788554430.7,cfb,aachc-cfb-wins-2026-11-28-flst-4pt5wins,SELL,0.01,0.87,sell,0,0,,76,87,0.426,0.87,0.88,-0.05,0,taker dump — sold into the bid (the carved exception),C9VS7FQBYMVP
+1788554551.1,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,26,0.93,bond,6.222,0.02,0.990325,92,95,0.707,0.91,0.92,-0.0603,226,bond: took 26 YES at 93c — it was in the way of our resting order,C9VSCN3B4MVV
+1788554911.1,politics,ussewc-usse-ky-2026-11-03-rep,BUY,1,0.93,bond,0,0.02,0.99735,92,94,0.89,0.92,0.94,-0.0673,87,bond: took 1 YES at 93c — it was in the way of our resting order,C9VW7T3WYMW1
+1788554984.9,politics,enwc-uspres-nom-dem-2028-petbut,BUY,0.01,0.05,backfill,,54.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8CN6J718MW1
+1788554986.9,politics,enwc-uspres-nom-dem-2028-jonste,BUY,0.01,0.02,backfill,,33.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZDH8HA6MW0
+1788555571.1,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,1,0.91,bond,0,0,0.990325,94,98,0.767,0.9,0.96,0.0803,225,bond: sold 1 YES into the bids at 91c by you,C9W0HTBARMVP
+1788556231.2,politics,usgubewc-usgub-ct-2026-11-03-rep,SELL,21,0.03,bond,4.728,1.03,0.00235,1,3,0.544,0.02,0.03,-0.0277,-42,bond more: buying up to $20.58 more; never dearer than his first price — 45% of ,C9V9SJH0WMVK
+1788556351.2,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,-26.77,0.93,fix,0,0.03,0.990325,91,94,0.764,0.91,0.92,0.0603,199.23,size trimmed by 26.77 to the exchange's count (order C9TW5XBR8MVV),C9TW5XBR8MVV
+1788556351.2,politics,ussewc-usse-ky-2026-11-03-rep,BUY,5.86,0.92,backfill,,39.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8SWNEY68MW1
+1788556351.2,politics,enwc-uspres-nom-dem-2028-petbut,BUY,0.01,0.05,backfill,,54.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8CN6J718MW1
+1788556351.2,politics,enwc-uspres-nom-dem-2028-jonste,BUY,0.01,0.02,backfill,,33.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZDH8HA6MW0
+1788556351.2,cfb,aachc-cfb-wins-2026-11-28-txtech-7pt5wins,BUY,-0.31,0.93,fix,0.2876,35.18,,77,93,0.011,0.96,0.97,0.08,1,size trimmed by 0.31 to the exchange's count (order C8A0BYR6YMW1),C8A0BYR6YMW1
