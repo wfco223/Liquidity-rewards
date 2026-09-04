@@ -465,6 +465,10 @@ class Family:
         # make sense to tell the engine to hold off on that market for
         # 10 minutes") — set by the bonds module before a take
         self.hold_until: dict[str, float] = {}
+        # the owner's say over the game window (2026-09-04: "Cfb can go
+        # active until 5:00 pm eastern today"): until this time the
+        # family rests as in resting hours, whatever the window says
+        self.active_until: float = 0.0
         # the owner's bond shares per market, signed YES (owner,
         # 2026-09-02: "the engine does not need to ignore these
         # markets, only the orders I place"; "I only want to know for a
@@ -1934,7 +1938,10 @@ class Family:
         summary = {"mode": "on" if switch_on else "observing",
                    "markets": len(self.universe),
                    "active": len(self.active_markets()),
-                   "resting_ok": resting_ok(now, self.cfg),
+                   "resting_ok": bool(resting_ok(now, self.cfg)
+                                      or (self.active_until and now < self.active_until)),
+                   "active_until": (self.active_until
+                                    if self.active_until and now < self.active_until else 0.0),
                    "refreshed": refreshed,
                    "would_adopt": len(pending)}
         if not switch_on:
@@ -1958,7 +1965,8 @@ class Family:
         # hand orders included (owner, 2026-09-02, shown the Week-1 pull
         # took 28 of them: "that's a good idea to pull hand orders during
         # game windows"). The one place the hands-off rule yields.
-        if not resting_ok(now, self.cfg):
+        if not (resting_ok(now, self.cfg)
+                or (self.active_until and now < self.active_until)):
             summary["mode"] = "game window"
             for rec in list(self.orders.values()):
                 if actions <= 0:
@@ -4330,6 +4338,7 @@ class Family:
             "positions_seen": self.positions_seen,
             "silent_cancels": self.silent_cancels,
             "placed_at": self.placed_at,
+            "active_until": self.active_until,
             "pos_moves": self.pos_moves[-500:],
             "pending_pages": self.pending_pages,
             "gone_pending": {oid: {"rec": asdict(g["rec"]),
@@ -4399,6 +4408,7 @@ class Family:
         self.pending_marks = list(d.get("pending_marks") or [])
         self.fills = list(d.get("fills") or [])
         self.dump_today = float(d.get("dump_today") or 0.0)
+        self.active_until = float(d.get("active_until") or 0.0)
         if d.get("cfg_sig") == self._cfg_sig():
             self.scoreboard = dict(d.get("scoreboard") or {})
         else:
