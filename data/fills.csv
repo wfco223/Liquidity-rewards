@@ -3971,3 +3971,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788556351.2,politics,enwc-uspres-nom-dem-2028-petbut,BUY,0.01,0.05,backfill,,54.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8CN6J718MW1
 1788556351.2,politics,enwc-uspres-nom-dem-2028-jonste,BUY,0.01,0.02,backfill,,33.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZDH8HA6MW0
 1788556351.2,cfb,aachc-cfb-wins-2026-11-28-txtech-7pt5wins,BUY,-0.31,0.93,fix,0.2876,35.18,,77,93,0.011,0.96,0.97,0.08,1,size trimmed by 0.31 to the exchange's count (order C8A0BYR6YMW1),C8A0BYR6YMW1
+1788557573.3,cfb,aachc-cfb-wins-2026-11-28-uk-6pt5wins,BUY,0.66,0.5,backfill,,1.45,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9V8F4RJTMVR
+1788557671.2,cfb,aachc-cfb-wins-2026-11-28-uk-6pt5wins,BUY,0.34,0.5,sell,7.5,1.48,,21,46,0.003,0.34,0.51,0.16,1.34,buying back the short at or under what it sold for — the bid earns while it wait,C9V8F4RJTMVR
+1788558211.2,politics,ussewc-usse-or-2026-11-03-rep,SELL,25,0.05,bond,3.3916,9.83,0.001375,3,6,0.528,0.04,0.05,-0.0486,-50,bond more: buying up to $23.75 more; never dearer than his first price — 59% of ,C9M55T96JMW0
+1788558451.2,cfb,aachc-cfb-wins-2026-11-28-kan-7pt5wins,BUY,1,0.43,sell,2.4351,2.62,,4,13,0.451,0.43,0.44,0.35,0,buying back the short at or under what it sold for — the bid earns while it wait,C9TH49HX8MVR
+1788559051.3,politics,ewc-usse-tx-2026-11-03-dem,SELL,17,0.48,sell,0.4533,11.42,0.616475,46,51,0.393,0.47,0.48,0.1365,22,selling filled stock — it earns while it waits,C9K08TG5WMVY
+1788559171.3,politics,ewc-usse-tx-2026-11-03-dem,SELL,1,0.48,sell,0.0842,11.46,0.616475,47,51,0.597,0.47,0.48,0.1365,21,selling filled stock — it earns while it waits,C9K08TG5WMVY
+1788559291.3,politics,ewc-usse-tx-2026-11-03-dem,SELL,2,0.48,sell,0.0488,11.49,0.616475,48,52,0.698,0.47,0.48,0.1365,19,selling filled stock — it earns while it waits,C9K08TG5WMVY
+1788559951.3,politics,scc-senate-gop-2026-11-03-52,SELL,-5.45,0.11,fix,2.4305,8.25,0.095975,7,12,0.167,0.09,0.11,-0.014,-6,size trimmed by 5.45 to the exchange's count (order C920RC5K8MVR),C920RC5K8MVR
+1788559951.3,cfb,aachc-cfb-wins-2026-11-28-uk-6pt5wins,BUY,0.66,0.5,backfill,,1.45,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9V8F4RJTMVR
