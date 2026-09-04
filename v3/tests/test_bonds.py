@@ -2276,3 +2276,154 @@ class TestBuyingMoreWithTheMoneyThere(Base):
         self.r.cache.put(AL, yes_book(self.now + 1900))         # a fresh book, later
         self.b.cycle(self.now + 1900, self.positions(), on=True)
         self.assertEqual(len(self.calls), 2)
+
+
+class TestExitAtHisPrice(Base):
+    """Owner, 2026-09-04: "Give me the option to exit a position at a
+    given price if it is higher than my cost"."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def sells(self):
+        return self.orders(AL, "SELL")
+
+    def test_the_whole_lot_rests_at_his_price_and_stays(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.r.cache.put(AL, yes_book(self.now, bid=0.91, ask=0.99))
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertNotEqual(self.sells()[0].price, 0.97)          # the slot logic put it elsewhere
+        r = self.b.set_exit(AL, 97, self.now)                     # cents
+        self.assertTrue(r["ok"], r["note"])
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        asks = self.sells()
+        self.assertEqual(len(asks), 1)
+        self.assertEqual((asks[0].price, asks[0].qty), (0.97, 100.0))
+        self.assertIn("pinned by you", asks[0].why)
+        self.r.cache.put(AL, yes_book(self.now + 1000, bid=0.91, ask=0.99))
+        self.b.cycle(self.now + 1000, self.positions(), on=True)   # the slot logic stays out
+        self.assertEqual(self.sells()[0].price, 0.97)
+        row = self.b.view(self.now + 1001, self.positions())["rows"][0]
+        self.assertEqual(row["pin"]["bond_px"], 0.97)
+        self.assertTrue(row["slot"]["pinned"])
+
+    def test_at_or_under_cost_is_refused(self):
+        self.bond(AL, "YES", 100.0, 0.95)
+        self.b.lots[AL]["fees"] = 1.0                                 # 96c a share with fees
+        r = self.b.set_exit(AL, 96, self.now)
+        self.assertFalse(r["ok"])
+        self.assertIn("not above your cost", r["note"])
+        self.assertTrue(self.b.set_exit(AL, 0.97, self.now)["ok"])   # a fraction works too
+        self.assertEqual(self.b.exit_px[AL]["px"], 0.97)
+
+    def test_a_price_under_the_bid_rests_a_tick_over_it(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.r.cache.put(AL, yes_book(self.now, bid=0.97, ask=0.99))
+        self.assertTrue(self.b.set_exit(AL, 95, self.now)["ok"])
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.sells()[0].price, 0.98)                 # better than his 95c, never crossing
+
+    def test_a_no_bond_is_priced_in_its_own_terms(self):
+        self.bond(ALD, "NO", 50.0, 0.02)                              # cost 98c NO
+        self.assertFalse(self.b.set_exit(ALD, 98, self.now)["ok"])
+        self.assertTrue(self.b.set_exit(ALD, 99, self.now)["ok"])     # sell NO at 99c = buy YES at 1c
+        self.b.cycle(self.now, self.positions(), on=True)
+        bids = self.orders(ALD, "BUY")
+        self.assertEqual(len(bids), 1)
+        self.assertAlmostEqual(bids[0].price, 0.01, places=4)
+        self.assertEqual(bids[0].qty, 50.0)
+
+    def test_clearing_hands_the_exit_back_to_the_slot_logic(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.r.cache.put(AL, yes_book(self.now, bid=0.91, ask=0.99))
+        self.b.set_exit(AL, 96, self.now)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.sells()[0].price, 0.96)
+        self.assertTrue(self.b.clear_exit(AL)["ok"])
+        self.assertFalse(self.b.clear_exit(AL)["ok"])
+        row = self.b.view(self.now + 1, self.positions())["rows"][0]
+        self.assertIsNone(row["pin"])
+        self.assertNotIn("exit_px", {k for k in self.b.to_dict()["exit_px"]})
+
+    def test_the_pin_survives_a_restore_and_dies_with_the_position(self):
+        self.bond(AL, "YES", 100.0, 0.95)
+        self.b.set_exit(AL, 99, self.now)
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
+                   clock=lambda: self.r.now, sleep=lambda s: None)
+        b2.restore(self.b.to_dict())
+        self.assertEqual(b2.exit_px[AL]["px"], 0.99)
+        self.b.lots.clear()
+        self.exch(AL, 0.0, 0.0)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertNotIn(AL, self.b.exit_px)
+
+
+class TestHisOwnBuy(Base):
+    """Owner, 2026-09-04: "let me buy a portion of the shares at a given
+    price point"."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def buys(self, slug=AL, side="BUY"):
+        return [o for o in self.orders(slug, side) if str(o.why).startswith("bond buy")]
+
+    def test_it_rests_at_his_price_for_his_size_and_the_record_books_the_fill(self):
+        self.bond(AL, "YES", 100.0, 0.95)
+        r = self.b.place_buy(AL, 96, 25, self.now)
+        self.assertTrue(r["ok"], r["note"])
+        o = self.buys()[0]
+        self.assertEqual((o.price, o.qty), (0.96, 25.0))
+        row = self.b.view(self.now, self.positions())["rows"][0]
+        self.assertEqual((row["buys"][0]["qty"], row["buys"][0]["price"]), (25.0, 0.96))
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertIn(o.id, self.r.fam.orders)                      # the buy-more logic leaves it alone
+        # it fills: the record books it, and the ledger pays for it
+        del self.r.exchange.live[o.id]
+        self.r.exchange.trades.append(self.trade_row(o.id, BUY_LONG, 0.96, 25.0, self.now + 90))
+        self.exch(AL, 125.0, 0.952)
+        self.b.cycle(self.now + 120, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 125.0)
+        self.assertAlmostEqual(self.b.budget, 1000.0 - 24.0, places=2)
+
+    def test_a_price_that_reaches_the_offers_is_refused(self):
+        self.bond(AL, "YES", 100.0, 0.95)
+        r = self.b.place_buy(AL, 99, 10, self.now)
+        self.assertFalse(r["ok"])
+        self.assertIn("Enter", r["note"])
+        self.assertEqual(self.buys(), [])
+
+    def test_sized_to_the_buying_power_and_pulled_on_a_tap(self):
+        self.bond(AL, "YES", 100.0, 0.95)
+        self.r.exchange.buying_power = lambda: 10.0
+        r = self.b.place_buy(AL, 96, 50, self.now)
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.buys()[0].qty, 10.0)                  # floor(10 / 0.96)
+        self.assertIn("sized to the buying power", r["note"])
+        self.assertTrue(self.b.pull_buy(AL)["ok"])
+        self.assertEqual(self.buys(), [])
+        self.assertFalse(self.b.pull_buy(AL)["ok"])
+
+    def test_a_no_bond_buy_is_an_ask_in_yes_terms(self):
+        self.bond(ALD, "NO", 50.0, 0.02)
+        r = self.b.place_buy(ALD, 97, 20, self.now)                  # buy NO at 97c = sell YES at 3c
+        self.assertTrue(r["ok"], r["note"])
+        o = self.buys(ALD, "SELL")[0]
+        self.assertAlmostEqual(o.price, 0.03, places=4)
+        self.assertEqual(o.qty, 20.0)
+        row = [x for x in self.b.view(self.now, self.positions())["rows"] if x["market"] == ALD][0]
+        self.assertAlmostEqual(row["buys"][0]["price"], 0.97, places=4)
+
+    def test_no_new_buying_where_the_odds_left_the_band(self):
+        self.bond(AL, "YES", 100.0, 0.95)
+        self.odds[AL] = 0.984
+        self.b.scan(self.now + 1, force=True)
+        r = self.b.place_buy(AL, 96, 10, self.now + 2)
+        self.assertFalse(r["ok"])
+        self.assertIn("left the band", r["note"])
