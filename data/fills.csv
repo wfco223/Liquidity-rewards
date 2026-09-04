@@ -5342,3 +5342,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788518038.0,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,17.98,0.86,earn,6.1654,0.23,0.990325,89,92,0.817,0.86,0.9,-0.1303,97.98,1 tick behind the touch — we would hold 66% of the bid side,C9JTE199GMW1
 1788518098.0,politics,enwc-uspres-nom-dem-2028-wesmoo,SELL,128,0.04,sell,0.3047,0.1,,1,4,0.564,0.03,0.06,-0.01,0,selling filled stock — it earns while it waits,C9JYFQ3VTMVV
 1788518338.0,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,8,0.8,backfill,,1.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9H70JFE0MVV
+1788518979.4,politics,scc-senate-gop-2026-11-03-55,SELL,0.09,0.03,backfill,,40.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8GMQJXTEMVG
+1788518998.0,politics,scc-senate-gop-2026-11-03-55,SELL,1,0.03,earn,0.886,40.38,0.015275,1,4,0,0.01,0.03,-0.0147,-1,1 tick in front of the touch — we would hold 93% of the ask side,C8GMQJXTEMVG
+1788521151.4,politics,enwc-uspres-nom-rep-2028-dontrujr,SELL,0.31,0.08,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9KQ6D01JMVZ
+1788521158.1,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,2,0.07,earn,0.1472,0.62,0.012825,6,10,0.52,0.05,0.11,-0.0572,-19,4 ticks in front of the touch — we would hold 100% of the ask side,C9K7K7ZWTMVG
+1788521158.1,politics,enwc-uspres-nom-rep-2028-dontrujr,SELL,6,0.08,sell,0.1247,0.05,,5,10,0.288,0.04,0.08,0,34,selling filled stock — it earns while it waits,C9KQ6D01JMVZ
+1788521938.1,politics,scc-senate-gop-2026-11-03-55,SELL,0.09,0.03,backfill,,40.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8GMQJXTEMVG
+1788521938.1,politics,enwc-uspres-nom-rep-2028-dontrujr,SELL,0.31,0.08,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9KQ6D01JMVZ
