@@ -3913,3 +3913,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788545481.3,politics,ussewc-usse-la-2026-11-03-rep,BUY,0.38,0.93,backfill,,0.66,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9RWD34PWMVP
 1788545481.3,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,2.4,0.04,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9SCK4X74MVV
 1788545481.3,cfb,aachc-cfb-wins-2026-11-28-utah-7pt5wins,BUY,0.38,0.77,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9S0V0J6CMW1
+1788545612.9,cfb,aachc-cfb-wins-2026-11-28-fl-5pt5wins,BUY,0.39,0.69,backfill,,5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9N9M2QMPMVY
+1788545814.5,politics,ussewc-usse-sd-2026-11-03-rep,SELL,0.25,0.93,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9S554FE8MVP
+1788545857.3,politics,ewc-usgub-ks-2026-11-03-dem,BUY,20,0.37,earn,5.1016,2.13,0.394025,37,41,0,0.36,0.37,-0.024,20,at the touch — a fill here is 2 ticks inside value (Silver + evidence),C9QTKBX3AMVK
+1788545857.3,politics,ussewc-usse-sd-2026-11-03-rep,SELL,19,0.93,bond,4.8913,0.65,0.992375,88,92,0.754,0.92,0.93,0.0624,44,bond: moved up to keep 60% of the best reward,C9S554FE8MVP
+1788545919.6,politics,ewc-usgub-ks-2026-11-03-dem,BUY,19,0.35,earn,0.271,0.02,0.394025,36,40,0.455,0.35,0.36,-0.044,39,1 tick behind the touch — we would hold 4% of the bid side,C9SPDF5Y6MVV
+1788546192.2,politics,ewc-usgub-ks-2026-11-03-dem,BUY,1,0.35,earn,0.1908,0.09,0.394025,35,38,0.625,0.33,0.35,-0.044,40,1 tick behind the touch — we would hold 4% of the bid side,C9SPDF5Y6MVV
+1788546736.4,cfb,aachc-cfb-wins-2026-11-28-utah-7pt5wins,SELL,0.03,0.77,sell,0,0,,77,81,0.235,0.77,0.79,0.02,0.97,taker dump — sold into the bid (the carved exception),C9SW2CQVMMVG
+1788547592.2,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,0.05,0.95,backfill,,2.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9R2Q62Z8MVK
+1788547598.6,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,1,0.95,bond,1.0309,2.34,0.9965,94,96,0.878,0.94,0.95,0.0465,124,bond: moved up to keep 60% of the best reward,C9R2Q62Z8MVK
+1788548855.4,politics,ussewc-usse-co-2026-11-03-rep,SELL,2,0.06,bond,0,0.04,0.004725,2,5,0.53,0.05,0.07,-0.0553,-22,bond: took 2 NO at 6c — it was in the way of our resting order,C9TEPX4MEMVR
+1788548855.4,cfb,aachc-cfb-wins-2026-11-28-ark-1pt5wins,SELL,0.01,0.98,sell,0,0,,91,97,0.619,0.98,0.99,-0.04,0.99,taker dump — sold into the bid (the carved exception),C9TG14N52MVP
+1788549036.4,politics,ussewc-usse-sd-2026-11-03-rep,BUY,12,0.93,bond,0,0.01,0.992375,90,93,0.793,0.92,0.93,-0.0624,56,bond: took 12 YES at 93c — it was in the way of our resting order,C9TGMEAZEMW1
+1788549042.5,politics,ussewc-usse-co-2026-11-03-rep,BUY,2.58,0.05,backfill,,7.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9M4YYEGMMVR
+1788549096.4,politics,ewc-usgub-ca-2026-11-03-stehil,BUY,-29.55,0.06,fix,0.2457,8.71,0.000725,5,8,0.584,0.06,0.07,0.0593,34.55,size trimmed by 29.55 to the exchange's count (order C8ZG7EZ3MMVG),C8ZG7EZ3MMVG
+1788549096.4,politics,ewc-usgub-ca-2026-11-03-stehil,BUY,-7.9,0.06,fix,,6.32,,,,,,,,,size trimmed by 7.9 to the exchange's count (order C8ZG7EZ3MMVG),C8ZG7EZ3MMVG
+1788549096.4,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,-0.01,0.07,fix,,15.92,,,,,,,,,size trimmed by 0.01 to the exchange's count (order C8SXK0772MVY),C8SXK0772MVY
+1788549096.4,politics,ussewc-usse-sd-2026-11-03-rep,SELL,0.25,0.93,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9S554FE8MVP
+1788549096.4,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,0.05,0.95,backfill,,2.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9R2Q62Z8MVK
+1788549096.4,politics,ussewc-usse-co-2026-11-03-rep,BUY,2.58,0.05,backfill,,7.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9M4YYEGMMVR
+1788549096.4,cfb,aachc-cfb-wins-2026-11-28-fl-5pt5wins,BUY,0.39,0.69,backfill,,5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9N9M2QMPMVY
