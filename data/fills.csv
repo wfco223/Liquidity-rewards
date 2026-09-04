@@ -5319,3 +5319,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788503892.9,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,8,0.8,backfill,,6.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C99QJEDWRMVR
 1788503892.9,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,20,0.88,backfill,,0.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9FE0EJKCMVR
 1788503894.4,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,20,0.88,backfill,,0.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9FE0EJKCMVR
+1788504132.9,cfb,aachc-cfb-wins-2026-11-28-ncst-7pt5wins,SELL,1.99,0.29,sell,0.2499,11.84,,27,31,0.568,0.03,0.3,0,0.01,selling filled stock — it earns while it waits,C95HHPZAPMVY
+1788507372.9,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,sell,0,0,0.989475,95,99,0.348,0.96,0.97,0.0295,0,taker dump — sold into the bid (the carved exception),C9GET7SSYMVV
+1788507492.9,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,-8,0.8,fix,4.5455,6.97,0.821425,80,83,0.775,0.79,0.8,-0.0214,16,size trimmed by 8 to the exchange's count (order C99QJEDWRMVR),C99QJEDWRMVR
+1788507492.9,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,-20,0.88,fix,6.2498,0.2,0.990325,90,93,0.799,0.85,0.9,-0.1103,80,size trimmed by 20 to the exchange's count (order C9FE0EJKCMVR),C9FE0EJKCMVR
+1788507492.9,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,void,0,0,0.989475,96,99,0.352,0.96,0.97,0.0295,0,voided: the exchange has no trade for order C9FJ3MCA0MVF — the row of 09-04 06:3,C9FJ3MCA0MVF
