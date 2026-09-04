@@ -65,6 +65,28 @@ SCORING_FRAC_SEED = 0.8
 SCORING_FRAC_ALPHA = 0.1
 MAX_OBS_GAP_S = 300.0            # don't accrue exposure across dead spells
 
+# Our own fills are the ground truth (owner, 2026-09-04: "fit the touch
+# hazard from our own fills per hour rested"). The crossing proxy counts
+# a level being CLEARED — the opposite touch reaching it in a 20-second
+# sample — which never sees the taker who eats part of the touch,
+# including us, first in the queue, nor anything between samples. The
+# 2026-09-04 audit: engine orders at the touch filled 2.7x what the
+# proxy said; the owner's deep bids filled half of it. So the proxy is
+# now only the PRIOR: each (family, side, distance) cell also accrues
+# the seconds our own orders actually rested there and the fills they
+# took, and once that exposure passes OWN_PRIOR_S the own-fill rate
+# carries the estimate. A week of order-time: with 500 orders resting
+# politics banks that in twenty minutes, a family with five orders in
+# a day and a half — the proxy holds exactly as long as the family's
+# own evidence is thin.
+OWN_PRIOR_S = 7 * DAY_S
+# Fresh orders fill fastest (same audit: a governor order fills 1.33/day
+# in its first hour, 0.16/day after a day — the model averaged the two).
+# The age factor rescales the hazard by the family's own fill rate at
+# that age relative to its all-ages rate, shrunk toward 1 with this
+# many pseudo-fills so a handful of events cannot swing it.
+AGE_PRIOR_FILLS = 5.0
+
 
 def family_of(slug: str) -> str:
     """Learning pool. One market rarely yields enough touch events, so
@@ -161,6 +183,10 @@ class FillModel:
         # (family, side, distance bucket). COLLECT ONLY for now.
         self.approach_obs: dict[str, list[float]] = {}  # fam|side|b -> [sec, $sec/day]
         self.tod_obs: dict[str, list[float]] = {}   # fam|side|band -> [sec, crossings]
+        # our own orders' resting time and fills, by distance and by
+        # age (owner, 2026-09-04) — what the hazard is fit from now
+        self.own_obs: dict[str, list[float]] = {}   # fam|side|b -> [sec, fills]
+        self.age_fit: dict[str, list[float]] = {}   # fam|agebucket -> [sec, fills]
 
     @staticmethod
     def _key(family: str, side: str, bucket: int) -> str:
@@ -224,6 +250,29 @@ class FillModel:
         cell[0] += dt_s
         cell[1] += (est_day or 0.0) * dt_s
 
+    def observe_rest(self, slug: str, side: str, ticks_back: int,
+                     age_s: float, dt_s: float) -> None:
+        """Seconds one of our own orders just spent resting, at this
+        distance behind its touch and at this age. Together with
+        observe_own_fill this is the hazard's evidence."""
+        if dt_s <= 0:
+            return
+        fam = family_of(slug)
+        cell = self.own_obs.setdefault(self._key(fam, side, _bucket(ticks_back)),
+                                       [0.0, 0.0])
+        cell[0] += dt_s
+        acell = self.age_fit.setdefault(f"{fam}|{age_bucket(age_s)}", [0.0, 0.0])
+        acell[0] += dt_s
+
+    def observe_own_fill(self, slug: str, side: str, ticks_back: int,
+                         age_s: float) -> None:
+        fam = family_of(slug)
+        cell = self.own_obs.setdefault(self._key(fam, side, _bucket(ticks_back)),
+                                       [0.0, 0.0])
+        cell[1] += 1.0
+        acell = self.age_fit.setdefault(f"{fam}|{age_bucket(age_s)}", [0.0, 0.0])
+        acell[1] += 1.0
+
     def observe_offload(self, slug: str, days: float) -> None:
         fam = family_of(slug)
         cur = self.offload_days.get(fam, OFFLOAD_SEED_DAYS)
@@ -257,25 +306,77 @@ class FillModel:
 
     # -- predictions ------------------------------------------------------------
 
-    def hazard_per_day(self, family: str, side: str, ticks_back: int,
-                       bait: float = 0.0) -> float:
+    def crossing_hazard_per_day(self, family: str, side: str, ticks_back: int,
+                                bait: float = 0.0) -> float:
+        """The book-feed proxy: how often the opposite touch reached this
+        depth. The prior for the own-fill estimate below."""
         b = _bucket(ticks_back)
         cell = self.obs.get(self._key(family, side, b), [0.0, 0.0])
         prior = (PRIOR_HAZARD_PER_DAY[b] * (1.0 + BAIT_PER_TICK * bait)
                  * PRIOR_EXPOSURE_S / DAY_S)
         return ((cell[1] + prior) / (cell[0] + PRIOR_EXPOSURE_S)) * DAY_S
 
+    def hazard_per_day(self, family: str, side: str, ticks_back: int,
+                       bait: float = 0.0) -> float:
+        """Fills per day for one of our orders at this depth: our own
+        fills over our own resting time in the cell, with the crossing
+        proxy standing in for OWN_PRIOR_S of exposure until the cell has
+        lived that long itself."""
+        b = _bucket(ticks_back)
+        cross = self.crossing_hazard_per_day(family, side, b, bait=bait)
+        cell = self.own_obs.get(self._key(family, side, b), [0.0, 0.0])
+        return ((cell[1] + cross * OWN_PRIOR_S / DAY_S)
+                / (cell[0] + OWN_PRIOR_S)) * DAY_S
+
+    def age_multiplier(self, family: str, age_s: float) -> float:
+        """How much faster (or slower) this family's orders fill at this
+        age than at any age. 1.0 until the family has fills."""
+        cells = [(k, v) for k, v in self.age_fit.items()
+                 if k.startswith(family + "|")]
+        sec = sum(v[0] for _k, v in cells)
+        fills = sum(v[1] for _k, v in cells)
+        if sec <= 0 or fills <= 0:
+            return 1.0
+        rate = fills / sec
+        s, n = self.age_fit.get(f"{family}|{age_bucket(age_s)}", [0.0, 0.0])
+        return (n + AGE_PRIOR_FILLS) / (rate * s + AGE_PRIOR_FILLS)
+
+    def age_factor(self, family: str, age_s: float,
+                   horizon_s: float = DAY_S) -> float:
+        """The age multiplier averaged over the order's NEXT horizon_s
+        of life: a fresh order spends its first hour at the fresh rate,
+        then ages through the slower buckets."""
+        if horizon_s <= 0:
+            return self.age_multiplier(family, age_s)
+        acc = 0.0
+        t = max(age_s, 0.0)
+        end = t + horizon_s
+        for _idx, _label, hi in AGE_BUCKETS:
+            if t >= end:
+                break
+            if t >= hi:
+                continue
+            seg_end = min(hi, end)
+            acc += self.age_multiplier(family, t) * (seg_end - t)
+            t = seg_end
+        return acc / horizon_s
+
     def p_fill(self, slug: str, side: str, ticks_back: int,
                horizon_s: float = DAY_S, shield: float = 0.0,
-               target: float = 0.0, bait: float = 0.0) -> float:
+               target: float = 0.0, bait: float = 0.0,
+               age_s: float = 0.0) -> float:
         """Chance of a fill over the horizon. `shield` is the contracts a
         taker must consume before reaching us — direct evidence against a
         fill that the distance-only hazard cannot see (owner, 2026-08-19:
         "the size of the walls is also evidence that an order won't get
         filled"). `bait` is ticks resting past fair value — a mispriced
-        order is assumed to fill fast until data proves otherwise."""
-        h = self.hazard_per_day(family_of(slug), side, ticks_back, bait=bait)
+        order is assumed to fill fast until data proves otherwise.
+        `age_s` is how long the order has already rested: fresh orders
+        fill fastest (owner, 2026-09-04)."""
+        fam = family_of(slug)
+        h = self.hazard_per_day(fam, side, ticks_back, bait=bait)
         h *= shield_discount(shield, target)
+        h *= self.age_factor(fam, age_s, horizon_s)
         return 1.0 - math.exp(-h * horizon_s / DAY_S)
 
     def fill_cost(self, slug: str, side: str, price: float,
@@ -317,16 +418,34 @@ class FillModel:
         out: dict = {"hazards": {}, "markdown": self.markdown,
                      "marks_n": self.marks_n, "scoring_frac": self.scoring_frac,
                      "prior_per_day": dict(PRIOR_HAZARD_PER_DAY)}
-        fams = {k.split("|")[0] for k in self.obs} | {"senate-seats", "house-seats"}
+        fams = ({k.split("|")[0] for k in self.obs}
+                | {k.split("|")[0] for k in self.own_obs}
+                | {"senate-seats", "house-seats"})
         for fam in sorted(fams):
             for side in ("BUY", "SELL"):
                 row = {}
                 for b in DIST_BUCKETS:
                     cell = self.obs.get(self._key(fam, side, b))
+                    own = self.own_obs.get(self._key(fam, side, b))
                     row[b] = {"per_day": round(self.hazard_per_day(fam, side, b), 4),
+                              "crossing_per_day": round(
+                                  self.crossing_hazard_per_day(fam, side, b), 4),
                               "hours_observed": round((cell or [0.0])[0] / 3600, 1),
-                              "crossings": int((cell or [0.0, 0.0])[1])}
+                              "crossings": int((cell or [0.0, 0.0])[1]),
+                              "hours_rested": round((own or [0.0])[0] / 3600, 1),
+                              "own_fills": int((own or [0.0, 0.0])[1])}
                 out["hazards"][f"{fam} {side}"] = row
+        out["age"] = {}
+        for fam in sorted(fams):
+            row = {}
+            for idx, label, _hi in AGE_BUCKETS:
+                s, n = self.age_fit.get(f"{fam}|{idx}", [0.0, 0.0])
+                row[label] = {"mult": round(self.age_multiplier(
+                                  fam, 0.0 if idx == 0 else
+                                  AGE_BUCKETS[idx - 1][2]), 3),
+                              "hours_rested": round(s / 3600, 1),
+                              "fills": int(n)}
+            out["age"][fam] = row
         return out
 
     def to_dict(self) -> dict:
@@ -340,11 +459,19 @@ class FillModel:
                 "age_obs": {k: [round(v[0], 1), v[1]]
                             for k, v in self.age_obs.items()},
                 "tod_obs": {k: [round(v[0], 1), v[1]]
-                            for k, v in self.tod_obs.items()}}
+                            for k, v in self.tod_obs.items()},
+                "own_obs": {k: [round(v[0], 1), v[1]]
+                            for k, v in self.own_obs.items()},
+                "age_fit": {k: [round(v[0], 1), v[1]]
+                            for k, v in self.age_fit.items()}}
 
     @classmethod
     def from_dict(cls, d: dict) -> "FillModel":
         m = cls()
+        m.own_obs = {k: [float(v[0]), float(v[1])]
+                     for k, v in (d.get("own_obs") or {}).items()}
+        m.age_fit = {k: [float(v[0]), float(v[1])]
+                     for k, v in (d.get("age_fit") or {}).items()}
         m.obs = {k: [float(v[0]), float(v[1])] for k, v in (d.get("obs") or {}).items()}
         m.markdown = dict(d.get("markdown") or {})
         m.marks_n = dict(d.get("marks_n") or {})
