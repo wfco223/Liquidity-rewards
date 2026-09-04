@@ -5334,3 +5334,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788511093.0,politics,ussewc-usse-ok-2026-11-03-rep,BUY,-2.4,0.95,fix,0,0.01,0.999625,97,99,0.059,0.95,0.97,-0.0496,19,size trimmed by 2.4 to the exchange's count (order C8TC7NY8PMVF),C8TC7NY8PMVF
 1788511093.0,politics,usgubewc-usgub-hi-2026-11-03-rep,BUY,14,0.03,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9H915WRTMVP
 1788511093.0,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,1,0.8,backfill,,40.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8DCB2024MW0
+1788512113.0,cfb,aachc-cfb-wins-2026-11-28-vtech-7pt5wins,BUY,1,0.5,sell,0,21.55,,47,57,0,0.5,0.74,-0.02,0,an exit — its fill reduces the position it sits on,C8Z2CYDF2MW1
+1788514693.1,politics,ussewc-usse-ok-2026-11-03-rep,BUY,-12,0.95,fix,0,0.01,0.999625,97,99,0.059,0.95,0.97,-0.0496,19,size trimmed by 12 to the exchange's count (order C8TC7NY8PMVF),C8TC7NY8PMVF
