@@ -850,9 +850,11 @@ function bTog(el,m){window._bOpen[m]=!!el.open;}
 function bExit(r){return (r.calc&&r.calc.orders||[]).filter(function(o){return !o.decoy;});}
 function bTop(r,L,held){
  var mk=r.mark;var black=!!(mk&&mk.black);
- var h='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+(black?' <span class="pill on">in the black</span>':'')+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
+ var h='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+(black?' <span class="pill on">in the black</span>':'')+(r.odds_changed?' <span class="pill" style="border-color:#c9a227;color:#e8c547">odds changed · Silver '+bOdds(r)+'</span>':'')+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
  if(held){
-  if(mk)h+='<div class="sub">bid <b class="'+(black?'ok':'warn')+'">'+pc(mk.bid)+'</b> vs your cost '+pc(mk.cost)+' ('+(mk.edge>=0?'+':'−')+(Math.abs(mk.edge)*100).toFixed(1)+'¢ a share)</div>';
+  if(r.odds_changed)h+='<div class="sub warn">No longer in the 99% band: the exit keeps working, nothing new is bought here. It leaves the page once you are out, and comes back if the odds return.</div>';
+  if(r.unconfirmed)h+='<div class="sub warn">The exchange shows '+r.unconfirmed.exch+' of '+r.unconfirmed.ledger+' here but the transaction record shows no sale (it puts you at '+r.unconfirmed.record+'). Kept until the record explains it.</div>';
+  if(mk)h+='<div class="sub">bid <b class="'+(black?'ok':'warn')+'">'+pc(mk.bid)+'</b> vs your cost '+pc(mk.cost)+' ('+(mk.edge>=0?'+':'−')+(Math.abs(mk.edge)*100).toFixed(1)+'¢ a share)'+(r.cost_src&&r.cost_src!=='record'?' <span class="muted">· cost from the '+(r.cost_src==='exchange'?'exchange’s own figure':r.cost_src==='record+exchange'?'record and the exchange’s figure':'ledger')+'</span>':'')+'</div>';
   var ex=bExit(r);
   var e=ex.length?('exit '+ex[0].qty+' @ '+pc(ex[0].price)+' → <b>'+usd(ex[0].est)+'/day</b>'):'<span class="warn">no exit resting</span>';
   var mo=(r.more&&r.more.order)?(' · buying more '+r.more.order.qty+' @ '+pc(r.more.order.price)):'';
@@ -900,9 +902,11 @@ function bMore(r,b,sw){
  var mo=r.more;if(!mo)return '';
  var m=esc(r.market);var pct=Math.round((b.more_share||0.3)*100);
  var h='Buy more: up to $'+bField('bmore-'+m,bKeep('bmore-'+m)||(mo.cap_usd||0).toFixed(2),'6em')+' '+bBtn('Set','bMoreSet(\''+m+'\')')+(mo.cap_px!=null?'<br>at '+pc(mo.cap_px)+' or better (your first price here)':'');
- if(mo.order)h+='<br>resting '+mo.order.qty+' @ '+pc(mo.order.price)+': '+bPct(mo.order.share)+' of its side = <b>'+usd(mo.order.est)+'/day</b>';
+ if(mo.paused)h+='<br><span class="warn">'+esc(mo.paused)+'</span>';
+ else if(mo.order)h+='<br>resting '+mo.order.qty+' @ '+pc(mo.order.price)+': '+bPct(mo.order.share)+' of its side = <b>'+usd(mo.order.est)+'/day</b>';
+ else if(mo.retry_at)h+='<br><span class="muted">'+(mo.note?esc(mo.note)+' · ':'')+'tries again '+when(mo.retry_at)+'</span>';
  else if(mo.slot)h+='<br>would rest '+mo.slot.qty+' @ '+pc(mo.slot.price)+' ('+bPct(mo.slot.share)+')'+(sw.on?'':' — bonds switch off');
- else h+='<br><span class="muted">not resting: no price at or under your first price captures '+pct+'% of its side</span>';
+ else h+='<br><span class="muted">not resting: '+(mo.note?esc(mo.note):'no price at or under your first price captures '+pct+'% of its side')+'</span>';
  return '<div class="sub">'+h+'</div>';
 }
 function bBait(r){

@@ -66,6 +66,11 @@ class FakeClient:
     def recent_trades(self, limit=25):
         return list(self.trades)[-limit:]
 
+    def activities(self, types=None, pages=10, page_size=100):
+        """The transaction record: every trade, newest first like the
+        exchange's."""
+        return list(reversed(self.trades))
+
     # -- read side ----------------------------------------------------------
     def book(self, slug, fetched_at=None):
         b = self.books[slug]

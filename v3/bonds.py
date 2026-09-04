@@ -45,6 +45,21 @@ And the corrections, same day, in order:
   nothing is bought anywhere a bond order of ours is not resting: no
   automatic entry into new ground, no price bar. A bond starts with
   the owner buying by hand and counting the shares in from the page.
+- 2026-09-04, after one short position read wrote off 32 markets:
+  "The bonds list should be written from my positions from the api.
+  The transactions give the cost basis and the profit or loss and if
+  the positions disappear, you can verify their disposition using the
+  transaction lists." From his first purchase in a market the feed
+  writes the holding (more on the exchange than in the ledger is
+  counted in at the transaction record's cost); LESS is believed only
+  after it has held over several reads and minutes AND the record
+  agrees — a sale or a settlement. Unexplained, it is kept and flagged.
+- Same day: "if a market is removed from the bond program because the
+  silver bulletin no longer shows it as > 99%. Leave the position on
+  in the bond page, just make it clear that the odds have changed and
+  don't show it again once I have exited that market fully until the
+  odds are back in range." The exit keeps working there; nothing new
+  is bought.
 
 Bond-LIKE across many such markets; on any one the price is the
 market's own odds that the lot goes to zero, and the page says so.
@@ -98,6 +113,21 @@ CLEAR_WAIT_S = 5.0          # how long a cleared order gets to leave the open-or
 RECONFIRM_S = 3600.0        # a booked fill is re-checked against the record this long
 MORE_SHARE = 0.30           # the buy-more order rests only where it captures this much of its side
 DOTS_KEEP = 2880            # bond earning-rate samples kept for the graph
+# the holdings come from the exchange's position feed and their cost
+# from its transaction record (owner, 2026-09-04: "The bonds list
+# should be written from my positions from the api. The transactions
+# give the cost basis and the profit or loss and if the positions
+# disappear, you can verify their disposition using the transaction
+# lists"). A holding the feed shows SMALLER must stay smaller over
+# several reads and the record must agree before the ledger lets go.
+RECORD_PAGES_BOOT = 12      # the record read deep once: ~1,200 activities, a few days
+RECORD_PAGES = 3            # then a few pages every RECORD_EVERY_S
+RECORD_EVERY_S = 300.0
+RECORD_KEEP = 8000
+LESS_CONFIRM_S = 300.0      # a smaller reading must hold this long...
+LESS_CONFIRM_READS = 3      # ...over this many reads
+MORE_RETRY_S = 1800.0       # a refused buy-more waits this long to try again
+BP_EVERY_S = 60.0           # buying power read at most this often
 
 
 def side_for(odds: float | None) -> str | None:
@@ -122,9 +152,10 @@ def scan_due(now: float, last_day: str, hour: int = SCAN_HOUR_UTC) -> str | None
 
 class Bonds:
     def __init__(self, fam, client, fair, clock=None, alert=None, tax_owed=None,
-                 sleep=None):
+                 sleep=None, parse=None):
         self.fam = fam                  # the politics family
         self.client = client
+        self.parse = parse              # activity rows -> our executions (main's parser)
         self.fair = fair                # slug -> Silver's YES odds, or None
         self._clock = clock or time.time
         self._sleep = sleep or time.sleep
@@ -201,6 +232,19 @@ class Bonds:
         self.log: list[dict] = []
         self._earn_seen: dict[str, float] = {}
         self._earn_px: dict[str, float] = {}
+        # the transaction record (owner, 2026-09-04): every execution of
+        # ours the exchange lists, by execution; it prices what the feed
+        # shows and confirms where a holding went when the feed shows less
+        self._rec: dict[str, dict] = {}
+        self._rec_at: float = 0.0
+        self._rec_deep: bool = False
+        self._less: dict[str, dict] = {}       # slug -> {exch, since, reads}
+        self.unconfirmed: dict[str, dict] = {}  # slug -> smaller on the feed, no sale on record
+        self.cost_src: dict[str, str] = {}     # slug -> where the cost basis came from
+        self._more_retry: dict[str, float] = {}
+        self._bp: tuple | None = None          # (buying power, read at)
+        self._rebuilding: bool = False
+        self._exch_seen: dict[str, float] = {}   # slug -> what the feed last showed
 
     # ------------------------------------------------------------ helpers
 
@@ -455,43 +499,282 @@ class Bonds:
                       note=f"the record shows {shares:g} filled on this order; "
                            f"the ledger had {booked:g}")
 
-    def _trim_to_exchange(self, positions: dict | None, now: float) -> None:
-        """The position feed is the truth for holdings: a lot the feed
-        shows less of is cut to what it shows. Shares the exchange NEVER
-        showed were never bought, so their cost goes back to the money;
-        shares it once showed and now does not were sold by hand, and
-        that money is his, not the bond ledger's. A fresh lot gets
-        TRIM_GRACE_S for the feed to catch up, and an empty feed (no
-        positions at all while the engine holds stock) is not believed."""
+    # -- the holdings, from the exchange ----------------------------------
+
+    def _working(self) -> list[str]:
+        """Every market the bond side has business in: the list, a
+        market that left the band while he still holds it (owner,
+        2026-09-04: "Leave the position on in the bond page, just make
+        it clear that the odds have changed"), and anything the ledger
+        still carries."""
+        out = set(self.approved)
+        for s, m in self.dropped.items():
+            if self.held(s, m.get("side") or "YES") > 0.005:
+                out.add(s)
+        out.update(s for s, l in self.lots.items()
+                   if abs(float(l.get("qty") or 0.0)) > 0.005)
+        return sorted(out)
+
+    def _side_of(self, slug: str) -> str:
+        m = self.approved.get(slug) or self.dropped.get(slug) or {}
+        if m.get("side"):
+            return str(m["side"])
+        return "YES" if float((self.lots.get(slug) or {}).get("qty") or 0.0) >= 0 else "NO"
+
+    def _refresh_record(self, now: float, force: bool = False) -> None:
+        """The exchange's transaction record, read deep once and a few
+        pages every RECORD_EVERY_S after (or now, when a holding needs
+        confirming). Kept by execution, so overlap costs nothing."""
+        if self.parse is None:
+            return
+        deep = not self._rec_deep
+        if not (force or deep or now - self._rec_at >= RECORD_EVERY_S):
+            return
+        if force and now - self._rec_at < 30.0:
+            return
+        self._rec_at = now
+        try:
+            raw = self.client.activities(pages=RECORD_PAGES_BOOT if deep else RECORD_PAGES)
+        except Exception as e:  # noqa: BLE001 — next cycle
+            self._log(event="record_failed", note=str(e)[:100])
+            return
+        known = set(self.fill_book) | set(self.fam.orders) \
+            | set(getattr(self.fam, "placed_at", {}) or {})
+        for r in self.parse(raw, known) or []:
+            if not r.get("market"):
+                continue
+            key = (f"{r.get('order_id')}|{r.get('ts')}|{r.get('shares')}|"
+                   f"{r.get('price')}|{r.get('type')}")
+            self._rec[key] = r
+        if len(self._rec) > RECORD_KEEP:
+            for k in sorted(self._rec, key=lambda k: float(self._rec[k].get("ts") or 0.0))[
+                    :len(self._rec) - RECORD_KEEP]:
+                del self._rec[k]
+        if deep:
+            self._rec_deep = True
+            self._log(event="record_read", n=len(self._rec),
+                      note="the transaction record, read deep")
+
+    def _record_position(self, slug: str, side: str) -> dict:
+        """What the transaction record says the bond side holds here: an
+        average-cost walk of every execution of ours in the market —
+        entries add shares at their price with the commission in, exits
+        take them out at the running average and realize the profit or
+        loss. Prices in the bond's own terms. A settlement empties it."""
+        rows = sorted((r for r in self._rec.values() if r.get("market") == slug),
+                      key=lambda r: float(r.get("ts") or 0.0))
+        qty = cost = fees = realized = sold = 0.0
+        last_exit = 0.0
+        resolved = False
+        n = 0
+        for r in rows:
+            t = str(r.get("type") or "")
+            if "RESOLUTION" in t:
+                resolved = True
+                qty = cost = fees = 0.0
+                continue
+            if "TRADE" not in t:
+                continue
+            sh = float(r.get("shares") or 0.0)
+            px = float(r.get("price") or 0.0)
+            if sh <= 0 or px <= 0:
+                continue
+            it = str(r.get("intent") or "")
+            bs = str(r.get("side") or "")
+            if side == "YES":
+                entry = it == BUY_LONG or (not it and bs == "BUY")
+                exit_ = it == SELL_LONG or (not it and bs == "SELL")
+            else:
+                entry = it == BUY_SHORT or (not it and bs == "SELL")
+                exit_ = it == SELL_SHORT or (not it and bs == "BUY")
+            per = px if side == "YES" else round(1.0 - px, 4)
+            fee = float(r.get("commission") or 0.0)
+            n += 1
+            if entry:
+                qty += sh
+                cost += sh * per
+                fees += fee
+            elif exit_:
+                take = min(sh, qty)
+                if take <= 0:
+                    continue
+                avg = cost / qty
+                f_part = fees * take / qty
+                cost -= avg * take
+                fees -= f_part
+                qty -= take
+                realized += take * per - fee - avg * take - f_part
+                sold += take * per
+                last_exit = float(r.get("ts") or 0.0)
+        return {"qty": round(qty, 4), "cost": round(cost, 4), "fees": round(fees, 4),
+                "realized": round(realized, 4), "sold_usd": round(sold, 4),
+                "last_exit": last_exit, "resolved": resolved, "n": n}
+
+    @staticmethod
+    def _feed_cost(slug: str, positions: dict | None) -> float | None:
+        """The exchange's own cost figure for the position, per share in
+        the bond's terms (a short's cost is its NO-side cost, signed)."""
+        v = (positions or {}).get(slug)
+        if not v or len(v) < 2:
+            return None
+        try:
+            net, cost = float(v[0]), float(v[1])
+        except (TypeError, ValueError):
+            return None
+        if abs(net) < 0.005 or not cost:
+            return None
+        per = abs(cost) / abs(net)
+        return per if 0.0 < per <= 1.0 else None
+
+    def _claim_cost(self, slug: str, side: str, positions: dict | None):
+        """(cost per share, fee per share, source) for shares the
+        exchange shows on the bond side: the record when it covers the
+        position, else the exchange's own cost figure, else what the
+        ledger already paid here."""
+        rec = self._record_position(slug, side)
+        exch = self.exchange_held(slug, side, positions)
+        if rec["qty"] > 0.5 and rec["qty"] + 0.5 >= exch:
+            return rec["cost"] / rec["qty"], rec["fees"] / rec["qty"], "record"
+        per = self._feed_cost(slug, positions)
+        if per is not None:
+            return per, 0.0, ("record+exchange" if rec["qty"] > 0.5 else "exchange")
+        pb = self.price_basis(slug, side)
+        if pb > 0:
+            return pb, 0.0, "ledger"
+        return None, 0.0, "none"
+
+    def _claim(self, slug: str, side: str, qty: float, positions: dict | None,
+               now: float, why: str) -> bool:
+        per, fee_per, src = self._claim_cost(slug, side, positions)
+        if per is None or per <= 0:
+            if self._more_note.get(slug + "|claim") != src:
+                self._more_note[slug + "|claim"] = src
+                self._log(event="claim_unpriced", market=slug, side=side, qty=qty,
+                          note="the exchange shows bond stock the ledger lacks, "
+                               "but neither the record nor the feed prices it")
+            return False
+        self._book_lot(slug, side, qty, round(qty * per, 4), ref="adopt",
+                       fee=round(qty * fee_per, 4))
+        self.cost_src[slug] = src
+        if not self._rebuilding:
+            self.money_in = round(self.money_in + qty * per, 4)
+        self._log(event="adopted", market=slug, side=side, qty=round(qty, 2),
+                  price=round(per, 4), source=src, note=why)
+        return True
+
+    def _sync_holdings(self, positions: dict | None, now: float) -> None:
+        """The exchange writes the holdings. More on the feed than in the
+        ledger is counted in at the record's cost (a bond order's own
+        fills book from the record first, so an in-flight fill gets
+        TRIM_GRACE_S to settle). LESS on the feed is believed only once
+        it has held for LESS_CONFIRM_S over LESS_CONFIRM_READS reads
+        AND the record agrees the shares are gone — a sale, or a
+        settlement. A smaller reading the record cannot explain is
+        kept, flagged on the page, and never written off (2026-09-04:
+        one short read wrote off 32 markets)."""
         if not positions:
             return
-        for slug in list(self.lots):
-            lot = self.lots.get(slug) or {}
-            q = float(lot.get("qty") or 0.0)
-            side = "YES" if q >= 0 else "NO"
-            ledger = abs(q)
+        claimed = 0
+        usd = 0.0
+        for slug in self._working():
+            side = self._side_of(slug)
+            ledger = self.held(slug, side)
             exch = self.exchange_held(slug, side, positions)
-            before = self.exch_max.get(slug, 0.0)
-            self.exch_max[slug] = max(before, exch)
-            if ledger <= 0.005 or exch + 0.005 >= ledger:
+            self.exch_max[slug] = max(self.exch_max.get(slug, 0.0), exch)
+            if exch > ledger + 0.5:
+                # counted in only where the bond side is already in:
+                # from his first purchase until he holds nothing there
+                # (owner, 2026-09-03), or on the rebuild of a wiped
+                # ledger. Before that the engine's stock is shown as
+                # uncounted, and he can count it in from the page.
+                if not (ledger > 0.005 or slug in self.engine_out
+                        or (self._rebuilding
+                            and self._exch_seen.get(slug, 0.0) > 0.5)):
+                    self._over_since.pop(slug, None)
+                    self._less.pop(slug, None)
+                    continue
+                over = round(exch - ledger, 4)
+                pending = (not self._rebuilding and
+                           any(f.get("open") and f.get("slug") == slug
+                               for f in self.fill_book.values()))
+                if pending:
+                    prev = self._over_since.get(slug)
+                    if prev is None or abs(prev[0] - over) >= 1.0:
+                        self._over_since[slug] = (over, now)
+                        continue
+                    if now - prev[1] < TRIM_GRACE_S:
+                        continue
+                self._over_since.pop(slug, None)
+                self._less.pop(slug, None)
+                if self._claim(slug, side, over, positions, now,
+                               "the exchange shows more on the bond side than the "
+                               "ledger: counted in"):
+                    claimed += 1
+                    usd += over * (self.cost_basis(slug, side) or 0.0)
                 continue
-            if now - self.lot_ts.get(slug, 0.0) < TRIM_GRACE_S:
-                continue
-            removed = round(ledger - exch, 4)
-            never_seen = round(max(ledger - max(before, exch), 0.0), 4)
-            cost = self._unbook_lot(slug, side, removed)
-            refund = round(cost * min(never_seen / removed, 1.0), 4) if removed > 0 else 0.0
-            if refund > 0:
-                self.spent = round(max(self.spent - refund, 0.0), 4)
-                self.money_in = round(max(self.money_in - refund, 0.0), 4)
-                if self.budget_mode != "tax":
-                    self.budget = round(self.budget + refund, 4)
-            self._follow_tax()
-            self._log(event="trimmed_to_exchange", market=slug, side=side,
-                      qty=removed, cost=round(cost, 2), refund=round(refund, 2),
-                      note=f"the exchange shows {exch:g}, the ledger had "
-                           f"{ledger:g}; {never_seen:g} of those it never "
-                           f"showed at all")
+            self._over_since.pop(slug, None)
+            if ledger > 0.005 and exch + 0.005 < ledger:
+                self._confirm_less(slug, side, ledger, exch, now)
+            else:
+                self._less.pop(slug, None)
+                self.unconfirmed.pop(slug, None)
+        if self._rebuilding:
+            self._rebuilding = False
+            invested = sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
+                           for l in self.lots.values())
+            self.money_in = round(invested + self.cash - self.realized, 4)
+            self._log(event="ledger_rebuilt", n=claimed, usd=round(usd, 2),
+                      note="the ledger was empty while the exchange held bond "
+                           "stock: every position claimed back from the feed "
+                           "at the record's cost")
+        self._mark_engine()
+
+    def _confirm_less(self, slug: str, side: str, ledger: float, exch: float,
+                      now: float) -> None:
+        st = self._less.get(slug)
+        if st is None or abs(float(st["exch"]) - exch) > 0.5:
+            self._less[slug] = {"exch": exch, "since": now, "reads": 1}
+            return
+        st["reads"] = int(st.get("reads") or 0) + 1
+        if st["reads"] < LESS_CONFIRM_READS or now - float(st["since"]) < LESS_CONFIRM_S:
+            return
+        self._refresh_record(now, force=True)
+        rec = self._record_position(slug, side)
+        before = self.exch_max.get(slug, 0.0)
+        never_seen = round(max(ledger - max(before, exch), 0.0), 4)
+        if not (rec["resolved"] or rec["qty"] <= exch + 0.5 or never_seen > 0.005):
+            if slug not in self.unconfirmed:
+                self._log(event="holding_unconfirmed", market=slug, side=side,
+                          exch=exch, ledger=ledger, record=rec["qty"],
+                          note=f"the exchange shows {exch:g} of {ledger:g} for "
+                               f"{LESS_CONFIRM_S / 60:.0f} min but the record shows "
+                               f"no sale (it puts the bond side at {rec['qty']:g}); "
+                               f"kept until the record explains it")
+            self.unconfirmed[slug] = {"exch": exch, "ledger": ledger,
+                                      "since": st["since"], "record": rec["qty"]}
+            return
+        removed = round(ledger - exch, 4)
+        cost = self._unbook_lot(slug, side, removed)
+        # shares the exchange NEVER showed were never bought: their cost
+        # goes back to the money. Shares it once showed and now does not
+        # were sold by hand; that money is his, not the ledger's.
+        refund = round(cost * min(never_seen / removed, 1.0), 4) if removed > 0 else 0.0
+        if refund > 0:
+            self.spent = round(max(self.spent - refund, 0.0), 4)
+            self.money_in = round(max(self.money_in - refund, 0.0), 4)
+            if self.budget_mode != "tax":
+                self.budget = round(self.budget + refund, 4)
+        self._follow_tax()
+        self._less.pop(slug, None)
+        self.unconfirmed.pop(slug, None)
+        why = ("settled" if rec["resolved"] else
+               f"never on the exchange" if never_seen >= removed - 0.005 else
+               f"the record puts the bond side at {rec['qty']:g}")
+        self._log(event="trimmed_to_exchange", market=slug, side=side,
+                  qty=removed, cost=round(cost, 2), refund=round(refund, 2),
+                  note=f"the exchange shows {exch:g} for {LESS_CONFIRM_S / 60:.0f} min "
+                       f"and the record agrees ({why}); the ledger had {ledger:g}; "
+                       f"{never_seen:g} of those it never showed at all")
         self._mark_engine()
 
     # ------------------------------------------------------------ earnings
@@ -581,6 +864,17 @@ class Bonds:
                 continue
             if p is None or slug in self.ignored:
                 continue
+            dm = self.dropped.get(slug)
+            if dm is not None and s is not None and s == dm.get("side") \
+                    and self.held(slug, s) > 0.005:
+                # it left the band while he held it and is back: it is
+                # a bond again without a tap (owner, 2026-09-04: "don't
+                # show it again ... until the odds are back in range")
+                self.approved[slug] = {"added": round(now, 1), "odds": round(p, 4),
+                                       "side": s}
+                self.dropped.pop(slug, None)
+                self._log(event="back_in_band", market=slug, odds=round(p, 4))
+                continue
             if s is None:
                 self.proposed.pop(slug, None)
                 continue
@@ -637,10 +931,9 @@ class Bonds:
     def adopt(self, slug: str, qty, positions: dict | None = None) -> dict:
         """Count shares the owner already holds here as bond shares, at
         the family's cost basis for them — his call, from the page."""
-        meta = self.approved.get(slug)
-        if meta is None:
+        if slug not in self._working():
             return {"ok": False, "note": "not on the bond list"}
-        side = meta["side"]
+        side = self._side_of(slug)
         try:
             qty = float(qty)
         except (TypeError, ValueError):
@@ -712,10 +1005,8 @@ class Bonds:
         self._mark_engine()
         placed: list[dict] = []
         # sales: our earning order gave up shares and the ledger shrinks
-        for slug in sorted(set(self.approved) | set(self.lots)):
-            side = (self.approved.get(slug) or {}).get("side") or (
-                "YES" if float((self.lots.get(slug) or {}).get("qty") or 0) >= 0
-                else "NO")
+        for slug in self._working():
+            side = self._side_of(slug)
             bs, _ = self.earn(side)
             seen = self._earn_seen.get(slug, 0.0)
             now_q = sum(o.qty for o in self._orders(slug, bs))
@@ -739,14 +1030,15 @@ class Bonds:
                               gain=round(proceeds - cost, 2),
                               cash=round(self.cash, 2))
         self._reconfirm(now)
-        self._trim_to_exchange(positions, now)
+        self._refresh_record(now)
+        self._sync_holdings(positions, now)
         self._engine_out(positions, now)
         for s in list(self.more_cap):
             if abs(float((self.lots.get(s) or {}).get("qty") or 0.0)) < 0.005:
                 self.more_cap.pop(s, None)       # no longer held: the default resets
         if on:
-            for slug in sorted(self.approved):
-                side = self.approved[slug]["side"]
+            for slug in self._working():
+                side = self._side_of(slug)
                 r = self._keep_earning(slug, side, positions, now)
                 if r:
                     placed.append(r)
@@ -756,8 +1048,8 @@ class Bonds:
                 r = self._keep_buying(slug, side, positions, now)
                 if r:
                     placed.append(r)
-        for slug in sorted(self.approved):
-            self._watch_bait(slug, self.approved[slug]["side"], now)
+        for slug in self._working():
+            self._watch_bait(slug, self._side_of(slug), now)
         rate = sum(o.live_est or 0.0 for o in list(self.fam.orders.values())
                    if o.purpose == "bond")
         self.dots.append([round(now, 1), round(rate, 2)])
@@ -1021,6 +1313,9 @@ class Bonds:
         than his first price here."""
         meta = self.approved.get(slug)
         if meta is None:
+            if slug in self._working():
+                return {"ok": False, "note": "the odds left the band — no new "
+                                             "buying here, bait included"}
             return {"ok": False, "note": "not on the bond list"}
         side = meta["side"]
         if self._bait_orders(slug):
@@ -1156,9 +1451,8 @@ class Bonds:
         everything on the bond side there counts as bond — the engine's
         own stock at what it cost, and any later excess the record does
         not explain after a grace."""
-        for slug in sorted(set(self.approved) | set(self.lots)):
-            side = (self.approved.get(slug) or {}).get("side") or (
-                "YES" if float((self.lots.get(slug) or {}).get("qty") or 0) >= 0 else "NO")
+        for slug in self._working():
+            side = self._side_of(slug)
             held = self.held(slug, side)
             if held > 0.005 and slug not in self.engine_out:
                 gone = []
@@ -1209,26 +1503,11 @@ class Bonds:
                 return
             if now - prev[1] < TRIM_GRACE_S:
                 return
-        inv = self.fam.inventory.get(slug) or {}
-        iq = float(inv.get("qty") or 0.0)
-        ic = float(inv.get("cost") or 0.0)
-        if abs(iq) > 0.005 and ic != 0.0:
-            per_yes = ic / iq
-        else:
-            pb = self.price_basis(slug, side)
-            per_yes = (pb if side == "YES" else 1.0 - pb) if pb > 0 else None
-        if per_yes is None:
-            return
-        per = per_yes if side == "YES" else round(1.0 - per_yes, 4)
-        per = min(max(per, 0.0), 1.0)
-        self._book_lot(slug, side, over, round(over * per, 4), ref="adopt")
-        self.money_in = round(self.money_in + over * per, 4)
         self._over_since.pop(slug, None)
-        self._log(event="adopted", market=slug, side=side, qty=over,
-                  price=round(per, 4),
-                  note=("the engine's stock here counts as bond now" if force
-                        else "held beyond the ledger for five minutes with no "
-                             "bond fill pending: counted as bond"))
+        self._claim(slug, side, over, positions, now,
+                    "the engine's stock here counts as bond now" if force
+                    else "held beyond the ledger for five minutes with no "
+                         "bond fill pending: counted as bond")
 
     # -- buying more ---------------------------------------------------------
 
@@ -1307,6 +1586,23 @@ class Bonds:
                 return px, qty, share, est
         return None
 
+    def _buying_power(self, now: float) -> float | None:
+        """The account's free buying power, read at most every
+        BP_EVERY_S; None when the exchange gives none."""
+        fn = getattr(self.client, "buying_power", None)
+        if fn is None:
+            return None
+        if self._bp is not None and now - self._bp[1] < BP_EVERY_S:
+            return self._bp[0]
+        try:
+            bp = fn()
+        except Exception:  # noqa: BLE001 — unknown, not zero
+            return self._bp[0] if self._bp is not None else None
+        if bp is None:
+            return None
+        self._bp = (float(bp), now)
+        return float(bp)
+
     def _pull_more(self, slug: str, why: str) -> None:
         for o in self._more_orders(slug):
             r = self.fam.desk.cancel(o.id, slug, initiator="owner")
@@ -1328,6 +1624,12 @@ class Bonds:
         cap = self.more_cap.get(slug) or {}
         cap_usd = float(cap.get("usd") or 0.0)
         cur = self._more_orders(slug)
+        if slug not in self.approved:
+            # the odds left the band: the exit keeps working, nothing
+            # new is bought here (owner, 2026-09-04)
+            if cur:
+                self._pull_more(slug, "the odds left the band: no new buying here")
+            return None
         if self.held(slug, side) < 1.0 or cap_usd < 1.0:
             if cur:
                 self._pull_more(slug, "nothing held here" if cap_usd >= 1.0
@@ -1373,11 +1675,41 @@ class Bonds:
                 self._log(event="more_none", market=slug, note=note)
             return None
         px, qty, share, est = slot
+        if now < self._more_retry.get(slug, 0.0):
+            return None                        # refused lately: it waits
+        # sized to the money in the account (2026-09-04: an order the
+        # account could not fund was sent every minute, the exchange
+        # trimmed or killed it, and the trimmed remainders sat as
+        # strays nothing tracked)
+        bp = self._buying_power(now)
+        if bp is not None:
+            cost = px if side == "YES" else round(1.0 - px, 4)
+            afford = float(math.floor(bp / cost)) if cost > 0 else 0.0
+            if afford < 1.0:
+                note = f"no buying power for more (${bp:,.2f} free)"
+                if self._more_note.get(slug) != note:
+                    self._more_note[slug] = note
+                    self._log(event="more_none", market=slug, note=note)
+                self._more_retry[slug] = now + MORE_RETRY_S
+                return None
+            if afford < qty:
+                qty = afford
+                share, est = self._share_at(slug, far, book, px, qty)
         r = self.fam.desk.place_resting(slug, far, px, qty, net_position=pos,
                                         initiator="owner", intent=intent)
+        trimmed = ""
         if not (r.ok and r.order_id):
-            self._log(event="more_refused", market=slug, note=r.note[:120])
-            return None
+            if r.order_id and float(getattr(r, "resting_qty", 0.0) or 0.0) >= 1.0:
+                # the exchange kept part of it: that part is ours and
+                # counts, never a stray for the next pass to stack on
+                trimmed = (f"the exchange kept {r.resting_qty:g} of {qty:g} "
+                           f"(the money there)")
+                qty = float(r.resting_qty)
+                share, est = self._share_at(slug, far, book, r.price or px, qty)
+            else:
+                self._log(event="more_refused", market=slug, note=r.note[:120])
+                self._more_retry[slug] = now + MORE_RETRY_S
+                return None
         px = r.price or px
         self.fam.orders[r.order_id] = FamilyOrder(
             id=r.order_id, market=slug, side=far, price=px, qty=qty,
@@ -1389,9 +1721,11 @@ class Bonds:
                                       "px": px, "ts": round(now, 1), "open": True}
         self.moved_more_at[slug] = now
         self._more_note.pop(slug, None)
-        self._log(event=("more_moved" if cur else "more_rested"), market=slug,
+        self._more_retry.pop(slug, None)
+        self._log(event=("more_trimmed" if trimmed else
+                         "more_moved" if cur else "more_rested"), market=slug,
                   side=side, price=px, qty=qty, share=round(share, 3),
-                  est=round(est, 4))
+                  est=round(est, 4), note=trimmed)
         return {"market": slug, "bond": side, "side": far, "price": px,
                 "qty": qty, "more": True}
 
@@ -1900,6 +2234,9 @@ class Bonds:
         money runs out. Every lot joins the ledger."""
         meta = self.approved.get(slug)
         if meta is None:
+            if slug in self._working():
+                return {"ok": False, "note": "the odds left the band — no new "
+                                             "buying here; the exit keeps working"}
             return {"ok": False, "note": "not on the bond list"}
         side = meta["side"]
         try:
@@ -1999,6 +2336,10 @@ class Bonds:
         return {
             "ladder": ladder,
             "market": slug, "bond": side, "odds": meta.get("odds"),
+            # the odds left the band while he holds it (owner, 2026-09-04)
+            "odds_changed": bool(meta.get("changed")),
+            "cost_src": self.cost_src.get(slug),
+            "unconfirmed": self.unconfirmed.get(slug),
             "bid": bid, "ask": ask,
             "cost": (round(cost, 4) if cost else None),
             "size": round(size, 1),
@@ -2099,7 +2440,12 @@ class Bonds:
         px0 = self._first_px(slug)
         out = {"cap_usd": round(float(cap.get("usd") or 0.0), 2),
                "by": cap.get("by", "default"), "order": None, "slot": None,
-               "cap_px": (round(px0 if side == "YES" else 1.0 - px0, 4) if px0 > 0 else None)}
+               "cap_px": (round(px0 if side == "YES" else 1.0 - px0, 4) if px0 > 0 else None),
+               "paused": ("the odds left the band: no new buying here"
+                          if slug not in self.approved else None),
+               "retry_at": (self._more_retry.get(slug)
+                            if self._more_retry.get(slug, 0.0) > self._clock() else None),
+               "note": self._more_note.get(slug)}
         cur = self._more_orders(slug)
         if cur:
             o = cur[0]
@@ -2119,14 +2465,29 @@ class Bonds:
         (bond shares held, or a bond order resting), keyed by market.
         Books come from the cache the exchange's stream feeds."""
         out = {}
-        for slug, meta in list(self.approved.items()):
+        for slug, meta in self._metas():
             if self.held(slug, meta["side"]) > 0.005 or self._orders(slug):
                 out[slug] = self._row(slug, meta, now, positions)
         return out
 
+    def _metas(self) -> list[tuple[str, dict]]:
+        """(slug, meta) for every market on the page: the list, plus a
+        market that left the band while he holds it, flagged."""
+        out = []
+        slugs = list(self.approved) + [s for s in self._working()
+                                       if s not in self.approved]
+        for slug in slugs:
+            meta = self.approved.get(slug)
+            if meta is None:
+                d = self.dropped.get(slug) or {}
+                meta = {"side": self._side_of(slug), "odds": d.get("odds"),
+                        "changed": True, "since": d.get("ts")}
+            out.append((slug, meta))
+        return out
+
     def view(self, now: float, positions: dict | None = None) -> dict:
         rows = [self._row(slug, meta, now, positions)
-                for slug, meta in list(self.approved.items())]
+                for slug, meta in self._metas()]
         # the markets he is in first, largest at cost first; then the
         # rest cheapest per dollar (owner, 2026-09-03: "take the markets
         # I'm actually in and put them at the top")
@@ -2163,6 +2524,38 @@ class Bonds:
 
     # ------------------------------------------------------------ persistence
 
+    SEED_FILE = "bonds_seed.json"
+
+    def _seed_caps(self) -> None:
+        """Buy-more amounts the owner set by hand, kept beside the code
+        so a wiped ledger does not lose them (2026-09-04): applied only
+        where no cap is on file, then the file is inert."""
+        import json
+        import os
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.SEED_FILE)
+        try:
+            with open(path, encoding="utf-8") as f:
+                seed = json.load(f)
+        except (OSError, ValueError):
+            return
+        n = 0
+        for slug, cap in (seed.get("more_cap") or {}).items():
+            if slug in self.more_cap or not isinstance(cap, dict):
+                continue
+            try:
+                usd = float(cap.get("usd") or 0.0)
+                px = float(cap.get("px") or 0.0)
+            except (TypeError, ValueError):
+                continue
+            if usd <= 0 or not (0.0 < px < 1.0):
+                continue
+            self.more_cap[str(slug)] = {"usd": round(usd, 2), "by": "owner",
+                                        "first": "seed", "px": round(px, 4)}
+            n += 1
+        if n:
+            self._log(event="caps_seeded", n=n,
+                      note="buy-more amounts you set, restored from the seed file")
+
     def to_dict(self) -> dict:
         return {"approved": self.approved, "proposed": self.proposed,
                 "ignored": self.ignored, "dropped": self.dropped,
@@ -2186,6 +2579,8 @@ class Bonds:
                 "exch_seen": getattr(self, "_exch_seen", {}),
                 "slot": self.slot, "moved_at": self.moved_at,
                 "dance": self.dance,
+                "cost_src": self.cost_src, "unconfirmed": self.unconfirmed,
+                "more_retry": self._more_retry,
                 "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -2281,7 +2676,26 @@ class Bonds:
         self.slot = {str(k): dict(v) for k, v in (d.get("slot") or {}).items()}
         self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
         self.dance = {str(k): dict(v) for k, v in (d.get("dance") or {}).items()}
+        self.cost_src = {str(k): str(v) for k, v in (d.get("cost_src") or {}).items()}
+        self.unconfirmed = {str(k): dict(v) for k, v
+                            in (d.get("unconfirmed") or {}).items()}
+        self._more_retry = {str(k): float(v) for k, v
+                            in (d.get("more_retry") or {}).items()}
+        # an empty ledger while the exchange last showed bond stock is
+        # the 2026-09-04 wipe: the first sync claims everything back at
+        # the record's cost, and the outside-money figure is re-seeded
+        # from what holds rather than counted a second time
+        self._rebuilding = (not self.lots and any(
+            float(v) > 0.5 for v in self._exch_seen.values()))
+        if self._rebuilding:
+            # fills of the orders in flight before the wipe are in the
+            # record the claim prices from; re-checking them would book
+            # them a second time. They stay as known order ids.
+            for f in self.fill_book.values():
+                f["open"] = False
+                f["ts"] = 0.0
         self.log = list(d.get("log") or [])
         self.log.extend(unbooked)
         del self.log[:-LOG_KEEP]
+        self._seed_caps()
         self._mark_engine()

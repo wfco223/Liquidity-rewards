@@ -84,6 +84,23 @@ class Base(unittest.TestCase):
     def positions(self):
         return dict(self.r.positions)
 
+    @staticmethod
+    def trade_row(oid, intent, px, shares, ts, market=AL, commission=0.0):
+        """One execution of ours in the exchange's activity shape."""
+        import time as _t
+        iso = _t.strftime("%Y-%m-%dT%H:%M:%SZ", _t.gmtime(ts))
+        return {"type": "ACTIVITY_TYPE_TRADE", "trade": {
+            "id": f"t{oid}", "marketSlug": market, "updateTime": iso,
+            "aggressorExecution": {
+                "id": f"x{oid}", "transactTime": iso,
+                "order": {"id": oid, "intent": intent, "quantity": shares,
+                          "cumQuantity": shares, "createTime": iso,
+                          "avgPx": {"value": f"{px:.4f}"},
+                          "price": {"value": f"{px:.4f}"}},
+                "lastShares": f"{shares:.4f}",
+                "lastPx": {"value": f"{px:.4f}"},
+                "commissionNotionalCollected": {"value": f"{commission:.4f}"}}}}
+
     def orders(self, slug, side=None, decoy=None):
         out = []
         for o in self.r.fam.orders.values():
@@ -1062,24 +1079,72 @@ class TestTheExchangeIsTheTruth(Base):
         self.assertAlmostEqual(self.b.budget, 1000 - 7 * 0.985, places=2)
 
     def test_the_ledger_is_trimmed_to_the_position_feed(self):
+        # a smaller reading must hold over several reads and minutes
+        # (2026-09-04: one short read wrote off 32 markets), and the
+        # record must agree — here it shows no purchase, so it does
         self.bond(AL, "YES", 100.0, 0.98)
         self.b.cycle(self.now, self.positions(), on=True)     # the exchange showed 100
         self.exch(AL, 60.0, 0.98)                              # 40 sold by hand
         self.b.cycle(self.now + 60, self.positions(), on=True)
-        self.assertEqual(self.b.held(AL, "YES"), 100.0)        # the feed gets a grace
-        self.b.cycle(self.now + 600, self.positions(), on=True)
-        self.assertEqual(self.b.held(AL, "YES"), 60.0)         # then it is the truth
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)        # one read is not believed
+        self.b.cycle(self.now + 200, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)        # nor two
+        self.b.cycle(self.now + 400, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 60.0)         # three reads over 5 min: the truth
         self.assertEqual(self.b.cash, 0.0)                     # a hand sale: not reinvested
         self.assertEqual(self.b.budget, 1000.0)                # and nothing refunded
         ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"]
         self.assertEqual((ev[0]["qty"], ev[0]["refund"]), (40.0, 0.0))
+
+    def test_one_short_read_writes_nothing_off(self):
+        # the 2026-09-04 wipe: the feed showed every holding as zero on
+        # one read, then showed them again. Nothing moves.
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.r.fam._frozen(AL))
+        good = self.positions()
+        self.b.cycle(self.now + 60, {}, on=True)                    # an empty read
+        self.b.cycle(self.now + 120, {GA: (5.0, 3.0)}, on=True)     # a short read
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)
+        self.assertTrue(self.r.fam._frozen(AL))                     # the engine stays out
+        self.assertTrue(self.orders(AL, "SELL"))                    # the exit stays
+        self.b.cycle(self.now + 180, good, on=True)                 # the feed is back
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)
+        self.assertNotIn(AL, self.b.unconfirmed)
+        self.assertEqual([e for e in self.b.log if e["event"] == "trimmed_to_exchange"], [])
+
+    def test_a_smaller_reading_the_record_cannot_explain_is_kept(self):
+        # the record shows the purchase and no sale: the feed's smaller
+        # figure is flagged, not believed (owner, 2026-09-04: "if the
+        # positions disappear, you can verify their disposition using
+        # the transaction lists")
+        from v3.main import parse_activities
+        self.b.parse = parse_activities
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.98, 100.0, self.now - 100))
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.exch(AL, 0.0, 0.0)
+        for dt in (60, 200, 400, 800):
+            self.b.cycle(self.now + dt, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)
+        self.assertIn(AL, self.b.unconfirmed)
+        self.assertEqual(self.b.unconfirmed[AL]["record"], 100.0)
+        row = self.b.view(self.now + 801, self.positions())["rows"][0]
+        self.assertEqual(row["unconfirmed"]["exch"], 0.0)
+        self.assertIn("holding_unconfirmed", [e["event"] for e in self.b.log])
+        # the record then shows the sale: now it is gone
+        self.r.exchange.trades.append(self.trade_row("B2", SELL_LONG, 0.99, 100.0, self.now + 500))
+        self.b.cycle(self.now + 1200, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertNotIn(AL, self.b.unconfirmed)
 
     def test_shares_the_exchange_never_showed_go_back_to_the_money(self):
         # the Hawaii state: a lot booked, paid for, never on the exchange
         self.b._book_lot(AL, "YES", 10.0, 9.3)
         self.b._pay(9.3)
         self.assertEqual(self.b.budget, 1000 - 9.3)
-        self.b.cycle(self.now + 600, {GA: (5.0, 3.0)}, on=True)   # a live feed, AL absent
+        for dt in (600, 700, 1000):
+            self.b.cycle(self.now + dt, {GA: (5.0, 3.0)}, on=True)   # a live feed, AL absent
         self.assertEqual(self.b.lots, {})
         self.assertAlmostEqual(self.b.budget, 1000.0, places=2)
         self.assertEqual(self.b.spent, 0.0)
@@ -1999,3 +2064,215 @@ class TestADecoyNeverRestsUnderCost(Base):
         self.b.cycle(self.now + 60, self.positions(), on=True)
         self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
         self.assertIn("snapped", [e["event"] for e in self.b.log])
+
+
+class TestLeavingTheBand(Base):
+    """Owner, 2026-09-04: "if a market is removed from the bond program
+    because the silver bulletin no longer shows it as > 99%. Leave the
+    position on in the bond page, just make it clear that the odds have
+    changed and don't show it again once I have exited that market
+    fully until the odds are back in range"."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.set_more_cap(AL, 50.0)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.orders(AL, "SELL"))
+        self.assertTrue(self.orders(AL, "BUY"))              # the buy-more rests
+        self.odds[AL] = 0.984
+        self.b.scan(self.now + 1, force=True)
+        self.assertNotIn(AL, self.b.approved)
+
+    def test_the_held_position_stays_on_the_page_flagged(self):
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        rows = self.b.view(self.now + 61, self.positions())["rows"]
+        self.assertEqual(rows[0]["market"], AL)
+        self.assertTrue(rows[0]["odds_changed"])
+        self.assertEqual(rows[0]["qty"], 100.0)
+        self.assertAlmostEqual(rows[0]["odds"], 0.984)
+        self.assertIn(AL, self.b.live_rows(self.now + 61, self.positions()))
+        self.assertTrue(self.r.fam._frozen(AL))               # the engine stays out
+
+    def test_the_exit_keeps_working_and_nothing_new_is_bought(self):
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertTrue(self.orders(AL, "SELL"))
+        self.assertEqual(self.orders(AL, "BUY"), [])          # the buy-more came off
+        ev = [e for e in self.b.log if e["event"] == "more_pulled"]
+        self.assertIn("left the band", ev[-1]["note"])
+        self.assertIn("no new buying", self.b.enter(AL, 0.98, self.now + 60)["note"])
+        self.assertIn("no new buying", self.b.place_bait(AL, self.now + 60,
+                                                         self.positions())["note"])
+        more = self.b.view(self.now + 61, self.positions())["rows"][0]["more"]
+        self.assertIn("left the band", more["paused"])
+
+    def test_it_leaves_the_page_once_he_is_out(self):
+        self.b.lots.clear()
+        self.exch(AL, 0.0, 0.0)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        v = self.b.view(self.now + 61, self.positions())
+        self.assertEqual([r["market"] for r in v["rows"]], [])
+        self.assertEqual(v["dropped"][0]["market"], AL)
+        # back in range: proposed again, for him to add
+        self.odds[AL] = 0.995
+        self.assertIn(AL, self.b.scan(self.now + 120, force=True))
+
+    def test_back_in_range_while_held_it_is_a_bond_again(self):
+        self.odds[AL] = 0.995
+        self.b.scan(self.now + 120, force=True)
+        self.assertIn(AL, self.b.approved)
+        self.assertNotIn(AL, self.b.dropped)
+        self.assertIn("back_in_band", [e["event"] for e in self.b.log])
+        self.b.cycle(self.now + 180, self.positions(), on=True)
+        self.assertTrue(self.orders(AL, "BUY"))              # buying more again
+
+
+class TestTheLedgerIsRebuiltFromTheExchange(Base):
+    """2026-09-04: one short position read wrote off 32 markets. The
+    holdings come from the feed and their cost from the transaction
+    record (owner: "The bonds list should be written from my positions
+    from the api. The transactions give the cost basis")."""
+
+    def setUp(self):
+        super().setUp()
+        from v3.main import parse_activities
+        self.b.parse = parse_activities
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def test_an_empty_ledger_claims_what_the_exchange_holds_at_the_records_cost(self):
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.97, 100.0,
+                                                     self.now - 200, commission=0.5))
+        self.r.exchange.trades.append(self.trade_row("B2", BUY_SHORT, 0.02, 50.0,
+                                                     self.now - 150, market=ALD))
+        self.bond(AL, "YES", 100.0, 0.97)
+        self.bond(ALD, "NO", 50.0, 0.02)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.orders(AL, "SELL") and self.orders(ALD, "BUY"))
+        d = self.b.to_dict()
+        d["lots"], d["engine_out"], d["more_cap"] = {}, [], {}   # the wipe
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
+                   clock=lambda: self.r.now, sleep=lambda s: None,
+                   parse=self.b.parse)
+        self.r.fam.freeze_dyn.clear()
+        b2.restore(d)
+        self.assertEqual(b2.lots, {})
+        b2.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(b2.held(AL, "YES"), 100.0)
+        self.assertEqual(b2.held(ALD, "NO"), 50.0)
+        self.assertEqual(b2.cost_src[AL], "record")
+        self.assertAlmostEqual(b2.price_basis(AL, "YES"), 0.97, places=4)
+        self.assertAlmostEqual(b2.lots[AL]["fees"], 0.5, places=4)     # the commission, from the record
+        self.assertAlmostEqual(b2.cost_basis(ALD, "NO"), 0.98, places=4)
+        self.assertTrue(self.r.fam._frozen(AL) and self.r.fam._frozen(ALD))
+        inv = b2._earned()["invested"]
+        self.assertAlmostEqual(b2.money_in, inv + b2.cash - b2.realized, places=2)
+        ev = {e["event"] for e in b2.log}
+        self.assertIn("ledger_rebuilt", ev)
+        self.assertIn("adopted", ev)
+        self.assertTrue(self.orders(AL, "SELL") and self.orders(ALD, "BUY"))  # the exits
+        # the buy-more default is the claimed lot (fees aside); nothing counted twice
+        self.assertAlmostEqual(b2.more_cap[AL]["usd"], 97.0, places=2)
+
+    def test_engine_stock_before_his_first_purchase_is_still_uncounted(self):
+        self.exch(AL, 500.0, 0.92)                # the engine's own stock, no bond lot
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertFalse(self.r.fam._frozen(AL))
+        row = self.b.view(self.now, self.positions())["rows"][0]
+        self.assertEqual(row["uncounted"], 500.0)
+
+    def test_the_record_walk_prices_a_no_bond_in_its_own_terms(self):
+        # bought NO twice (sold YES at 3c and 2c), covered some at 1c
+        for row in (self.trade_row("S1", BUY_SHORT, 0.03, 100.0, self.now - 300, market=ALD),
+                    self.trade_row("S2", BUY_SHORT, 0.02, 100.0, self.now - 200, market=ALD),
+                    self.trade_row("C1", SELL_SHORT, 0.01, 50.0, self.now - 100, market=ALD)):
+            self.r.exchange.trades.append(row)
+        self.b._refresh_record(self.now, force=True)
+        rec = self.b._record_position(ALD, "NO")
+        self.assertEqual(rec["qty"], 150.0)
+        self.assertAlmostEqual(rec["cost"] / rec["qty"], 0.975, places=4)   # the average NO cost
+        self.assertAlmostEqual(rec["realized"], 50 * (0.99 - 0.975), places=4)
+        self.assertAlmostEqual(rec["sold_usd"], 50 * 0.99, places=4)
+        self.assertEqual(self.b._record_position(ALD, "YES")["qty"], 0.0)
+
+
+class TestBuyingMoreWithTheMoneyThere(Base):
+    """2026-09-04: an order the account could not fund was sent every
+    minute; the exchange trimmed it to the money there or killed it,
+    and the trimmed remainders sat untracked as strays."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.set_more_cap(AL, 98.0)
+        self.calls = []
+        self._orig = self.r.desk.place_resting
+
+    def buys(self):
+        return [o for o in self.orders(AL, "BUY")]
+
+    def test_the_order_is_sized_to_the_buying_power(self):
+        self.r.exchange.buying_power = lambda: 20.0
+        self.b.cycle(self.now, self.positions(), on=True)
+        o = self.buys()[0]
+        self.assertEqual(o.qty, float(int(20.0 / o.price)))
+
+    def test_no_buying_power_means_no_order_and_a_wait(self):
+        self.r.exchange.buying_power = lambda: 0.4
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.buys(), [])
+        self.assertIn("no buying power", self.b._more_note[AL])
+        more = self.b.view(self.now + 1, self.positions())["rows"][0]["more"]
+        self.assertIsNotNone(more["retry_at"])
+        self.r.exchange.buying_power = lambda: 500.0
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.buys(), [])                       # still waiting
+        self.r.cache.put(AL, yes_book(self.now + 1900))         # a fresh book, later
+        self.b.cycle(self.now + 1900, self.positions(), on=True)
+        self.assertTrue(self.buys())                            # the wait is over
+
+    def test_a_trimmed_order_is_kept_as_ours(self):
+        from v3.orders import OrderResult
+
+        def trimmed(slug, side, price, qty, **kw):
+            r = self._orig(slug, side, price, qty, **kw)
+            if side == "BUY" and r.ok:
+                self.r.exchange.live[r.order_id]["size"] = 40.0
+                return OrderResult(ok=False, note="placed but not resting: resting only 40 of "
+                                   f"{qty:g}", order_id=r.order_id, intent=r.intent,
+                                   price=r.price, resting_qty=40.0)
+            return r
+        self.r.desk.place_resting = trimmed
+        self.b.cycle(self.now, self.positions(), on=True)
+        o = self.buys()[0]
+        self.assertEqual(o.qty, 40.0)
+        self.assertEqual(o.purpose, "bond")
+        ev = [e for e in self.b.log if e["event"] == "more_trimmed"]
+        self.assertIn("kept 40", ev[0]["note"])
+        # the next pass does not stack another on top
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(len(self.buys()), 1)
+
+    def test_a_refused_order_waits_before_trying_again(self):
+        from v3.orders import OrderResult
+
+        def refused(slug, side, price, qty, **kw):
+            if side == "BUY":
+                self.calls.append(qty)
+                return OrderResult(ok=False, note="placed but not resting: order not seen "
+                                   "in the open list", order_id="dead1", price=price)
+            return self._orig(slug, side, price, qty, **kw)
+        self.r.desk.place_resting = refused
+        for dt in (0, 60, 120, 180):
+            self.b.cycle(self.now + dt, self.positions(), on=True)
+        self.assertEqual(len(self.calls), 1)                    # once, then the wait
+        self.assertEqual(self.buys(), [])
+        self.r.cache.put(AL, yes_book(self.now + 1900))         # a fresh book, later
+        self.b.cycle(self.now + 1900, self.positions(), on=True)
+        self.assertEqual(len(self.calls), 2)
