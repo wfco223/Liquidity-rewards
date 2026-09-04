@@ -2771,6 +2771,10 @@ class Monitor:
                                      getattr(self, "_bond_positions", None))
         elif op == "bonds_pull_buy":
             r = self.bonds.pull_buy(market, str(value or "") or None)
+        elif op == "bonds_sell_into":
+            v = value if isinstance(value, dict) else {}
+            r = self.bonds.sell_into(market, v.get("px"), v.get("qty"), now,
+                                     getattr(self, "_bond_positions", None))
         elif op == "bonds_bait":
             r = self.bonds.place_bait(market, now, getattr(self, "_bond_positions", None))
         elif op == "bonds_pull_bait":

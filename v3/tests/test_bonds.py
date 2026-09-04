@@ -687,11 +687,13 @@ class TestTheDesksSecondCarveOut(Base):
                                          taker="bond").ok)
 
     def test_nothing_else_may_cross_under_the_bond_flag(self):
-        r = self.r.fam.desk.place_resting(AL, "SELL", 0.98, 10.0,
-                                          intent=SELL_LONG, net_position=10.0,
+        # opening and closing a bond at the touch are the whole carve-out;
+        # an intent on the wrong side of the book is refused outright
+        r = self.r.fam.desk.place_resting(AL, "BUY", 0.98, 10.0,
+                                          intent=BUY_SHORT, net_position=10.0,
                                           initiator="owner", taker="bond")
         self.assertFalse(r.ok)
-        self.assertIn("only open a bond", r.note)
+        self.assertIn("only open or close a bond", r.note)
 
 
 class TestEngineHandsOff(unittest.TestCase):
@@ -2427,3 +2429,95 @@ class TestHisOwnBuy(Base):
         r = self.b.place_buy(AL, 96, 10, self.now + 2)
         self.assertFalse(r["ok"])
         self.assertIn("left the band", r["note"])
+
+
+class TestSellingIntoTheBids(Base):
+    """Owner, 2026-09-04: "I want the ability to sell my mass gov rep
+    shares to the orders resting at 98 cents"."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.approve(ALD, self.now)
+        self.b.set_budget(1000.0)
+
+    def book(self, slug, bids, asks):
+        bk = Book(bids=bids, asks=asks, tick=0.01, fetched_at=self.now)
+        self.r.exchange.books[slug] = bk
+        self.r.cache.put(slug, bk)
+
+    def test_the_bids_are_taken_best_first_never_more_than_they_show(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.book(AL, ((0.98, 60.0), (0.97, 30.0), (0.50, 20000.0)),
+                  ((0.99, 300.0), (0.999, 20000.0)))
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.orders(AL, "SELL"))                    # an exit rests
+        r = self.b.sell_into(AL, 97, 80, self.now)
+        self.assertTrue(r["ok"], r["note"])
+        # 60 at 98c: the level and not more (the fake book does not move)
+        self.assertEqual(self.b.held(AL, "YES"), 40.0)
+        self.assertAlmostEqual(self.b.cash, 60 * 0.98, places=2)
+        self.assertAlmostEqual(self.b.realized, 60 * (0.98 - 0.90), places=2)
+        resting = [o for o in self.orders(AL, "SELL") if not o.why.startswith("bond: sold")]
+        self.assertEqual(resting, [])                               # the exit came off first
+        self.assertEqual(self.b._orders(AL, "SELL"), [])            # and the filled take is not an exit
+        ev = [e for e in self.b.log if e["event"] == "sold_into"]
+        self.assertEqual((ev[0]["qty"], ev[0]["price"]), (60.0, 0.98))
+        self.assertIn("sold 60", r["note"])
+        # the next pass rests a right-sized exit and books no phantom sale
+        self.exch(AL, 40.0, 0.90)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.b._orders(AL, "SELL", decoy=False)[0].qty, 40.0)
+        self.assertEqual([e for e in self.b.log if e["event"] == "sold"], [])
+        self.assertEqual(self.b.held(AL, "YES"), 40.0)
+
+    def test_a_lagging_feed_does_not_hand_the_sold_shares_back(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.book(AL, ((0.98, 60.0), (0.50, 20000.0)), ((0.99, 300.0), (0.999, 20000.0)))
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.b.sell_into(AL, 98, 60, self.now)["ok"])
+        self.b.cycle(self.now + 30, self.positions(), on=True)      # the feed still says 100
+        self.assertEqual(self.b.held(AL, "YES"), 40.0)
+        self.assertEqual([e for e in self.b.log if e["event"] == "adopted"], [])
+        self.exch(AL, 40.0, 0.90)
+        self.b.cycle(self.now + 90, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 40.0)
+        self.assertNotIn(AL, self.b._await_drop)
+
+    def test_under_cost_and_off_the_bids_are_refused(self):
+        self.bond(AL, "YES", 100.0, 0.95)
+        self.book(AL, ((0.94, 60.0), (0.50, 20000.0)), ((0.99, 300.0), (0.999, 20000.0)))
+        r = self.b.sell_into(AL, 94, 10, self.now)
+        self.assertFalse(r["ok"])
+        self.assertIn("not above your cost", r["note"])
+        r = self.b.sell_into(AL, 99, 10, self.now)                   # nobody bids that high
+        self.assertFalse(r["ok"])
+        self.assertIn("nothing sold", r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)
+
+    def test_a_no_bond_sells_into_the_yes_asks(self):
+        self.bond(ALD, "NO", 50.0, 0.02)                              # cost 98c NO
+        self.book(ALD, ((0.005, 400.0), (0.001, 20000.0)),
+                  ((0.01, 60.0), (0.60, 20000.0)))                    # a NO bid at 99c is a YES ask at 1c
+        r = self.b.sell_into(ALD, 99, 20, self.now)
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(ALD, "NO"), 30.0)
+        self.assertAlmostEqual(self.b.cash, 20 * 0.99, places=2)
+        o = [o for o in self.r.fam.orders.values()
+             if o.market == ALD and "sold" in str(o.why)][0]
+        self.assertEqual((o.side, o.intent), ("BUY", SELL_SHORT))
+        self.assertAlmostEqual(o.price, 0.01, places=4)
+
+    def test_the_desk_rail_closes_only_at_the_touch_and_its_size(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.book(AL, ((0.98, 60.0), (0.97, 30.0), (0.50, 20000.0)),
+                  ((0.99, 300.0), (0.999, 20000.0)))
+        d = self.r.desk
+        self.assertFalse(d.place_resting(AL, "SELL", 0.97, 10.0, intent=SELL_LONG,
+                                         initiator="owner", taker="bond", verify=False).ok)   # past the touch
+        self.assertFalse(d.place_resting(AL, "SELL", 0.98, 61.0, intent=SELL_LONG,
+                                         initiator="owner", taker="bond", verify=False).ok)   # more than it shows
+        self.assertFalse(d.place_resting(AL, "SELL", 0.98, 10.0, intent=SELL_LONG,
+                                         initiator="auto", taker="bond", verify=False).ok)    # the owner's rail only
+        self.assertTrue(d.place_resting(AL, "SELL", 0.98, 60.0, intent=SELL_LONG,
+                                        initiator="owner", taker="bond", verify=False).ok)
