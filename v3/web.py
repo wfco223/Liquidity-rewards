@@ -799,6 +799,12 @@ function render(d){
    +'<button class="off" onclick="tap(\\'off\\',\\''+k+'\\')">Never mind</button></div>';}
   else{out+='<div><button onclick="tap(\\'arm\\',\\''+k+'\\')">Arm&hellip;</button></div>'
    +'<div class="hint">Turning on takes two taps (arm, then confirm). Turning off takes one. Every flip is logged and pushed to the phone.</div>';}
+  if(s.has_window){
+   var au=s.active_until||0;var live=au>Date.now()/1000;
+   out+='<div class="sub">Game window: '+(s.resting_now?'resting hours now':(live?'<b>kept active until '+when(au)+' by you</b>':'<span class="warn">orders pulled now \\u2014 game window</span>'))+(live?' <button class="off" onclick="auClear(\\''+k+'\\')">Clear</button>':'')+'</div>';
+   out+='<div>Stay active until <input id="au-'+k+'" type="time" style="font-size:16px;padding:6px"> ET today <button onclick="auSet(\\''+k+'\\')">Set</button></div>';
+   out+='<div class="hint">Until that time the family rests its orders as in resting hours, whatever the window says. It clears itself when the time passes.</div>';
+  }
   var lg=(s.log||[]);
   if(lg.length){out+='<details class="how"><summary>last flips</summary>';
    lg.slice(-6).reverse().forEach(function(r){out+='<div class="muted">'+when(r.ts)+' \\u2014 '+esc(r.action)+'</div>';});
@@ -808,6 +814,8 @@ function render(d){
  return out;
 }
 function tap(op,which){post({op:'switch_'+op,which:which});}
+function auSet(k){var e=document.getElementById('au-'+k);var v=e?e.value:'';if(!v){alert('pick a time first');return;}post({op:'family_active_until',which:k,value:v});}
+function auClear(k){post({op:'family_active_until',which:k,value:''});}
 """
 
 BONDS_JS = r"""
@@ -1832,6 +1840,9 @@ class WebServer:
             return {"ok": True,
                     "state": self.monitor.switch_tap(op[len("switch_"):],
                                                      str(body.get("which") or "master"))}
+        if op == "family_active_until":
+            return self.monitor.set_active_until(str(body.get("which") or ""),
+                                                 body.get("value"))
         if op == "refresh_rewards":
             return self.monitor.refresh_rewards()
         if op == "schedule_cancel":
