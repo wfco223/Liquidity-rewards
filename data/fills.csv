@@ -3933,3 +3933,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788549096.4,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,0.05,0.95,backfill,,2.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9R2Q62Z8MVK
 1788549096.4,politics,ussewc-usse-co-2026-11-03-rep,BUY,2.58,0.05,backfill,,7.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9M4YYEGMMVR
 1788549096.4,cfb,aachc-cfb-wins-2026-11-28-fl-5pt5wins,BUY,0.39,0.69,backfill,,5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9N9M2QMPMVY
+1788549096.4,cfb,aachc-cfb-wins-2026-11-28-missr-4pt5wins,SELL,1,0.69,sell,0,0,,78,84,0.504,0.69,0.7,0.12,0,taker dump — sold into the bid (the carved exception),C9THYQS3AMVP
+1788549290.8,politics,enwc-uspres-nom-dem-2028-jonste,BUY,4,0.02,backfill,,31.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZDH8HA6MW0
+1788549305.1,cfb,aachc-cfb-wins-ou-2026-11-28-okst,BUY,0.2,0.3,earn,0.4699,0.09,,15,48,0,0.14,0.31,-0.02,0.2,joins the touch — the book has been quiet,C9TGCX9G0MVZ
+1788549344.9,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,13,0.93,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9THGSTZMMVP
+1788549485.1,cfb,aachc-cfb-wins-2026-11-28-tx-10pt5wins,SELL,0.3,0.41,sell,0,0,,34,42,0.082,0.41,0.42,-0.03,2.7,taker dump — sold into the bid (the carved exception),C9TMVZRDAMVY
+1788550409.6,cfb,aachc-cfb-wins-2026-11-28-utah-7pt5wins,SELL,0.01,0.78,sell,0,0,,77,82,0.232,0.78,0.79,0.01,0.99,taker dump — sold into the bid (the carved exception),C9TV527R6MVZ
+1788551324.9,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,21,0.06,backfill,,1.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9SQGAS0MMVP
+1788551490.5,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,8.35,0.2,manual,0.7852,2.89,0.1705,19,22,0.782,0.19,0.2,0.0295,-16.65,the owner's own order — the engine leaves it alone,C9RF0PDWPMW0
+1788552150.5,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,12,0.96,bond,0,0.02,0.99545,93,97,0,0.95,0.99,-0.0355,48,bond: took 12 YES at 96c — it was in the way of our resting order,C9V6TNVECMVV
+1788552283.1,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,10.72,0.18,backfill,,3.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9RFB16CYMVZ
+1788552390.5,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,0.12,0.19,sell,0.1135,0.27,0.1705,19,22,0.815,0.19,0.22,0.0195,-18.88,buying back the short at or under what it sold for — the bid earns while it wait,C9V22T4BJMW0
+1788552570.5,cfb,aachc-cfb-wins-2026-11-28-ark-1pt5wins,SELL,0.01,0.98,sell,0,0,,91,97,0.614,0.98,0.99,-0.04,0.99,taker dump — sold into the bid (the carved exception),C9VA8K57RMVG
+1788552750.6,politics,scc-hrep-rep-2026-11-03-gte185,SELL,2,0.89,void,0,0,0.913175,87,93,0.01,0.89,0.9,0.0232,0,voided: the exchange has no trade for order C9TJV657WMVG — the row of 09-04 19:1,C9TJV657WMVG
+1788552750.6,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,13,0.93,void,4.0987,0.18,0.990325,87,91,0.606,0.92,0.93,0.0603,227,voided: the exchange has no trade for order C9TENWJK4MW1 — the row of 09-04 19:1,C9TENWJK4MW1
+1788552750.6,politics,enwc-uspres-nom-dem-2028-jonste,BUY,4,0.02,backfill,,31.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8ZDH8HA6MW0
+1788552750.6,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,13,0.93,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9THGSTZMMVP
+1788552750.6,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,21,0.06,backfill,,1.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9SQGAS0MMVP
+1788552750.6,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,10.72,0.18,backfill,,3.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9RFB16CYMVZ
