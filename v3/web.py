@@ -825,6 +825,8 @@ function bField(id,val,w){return '<input id="'+id+'" type="number" inputmode="de
 function bSay(h){window._bNote=h;var el=document.getElementById('bmsg');if(el)el.innerHTML=h;}
 function bBudget(){var x=parseFloat(bKeep('bbud'));if(!(x>=0)){bSay('<div class="bad">type the budget in dollars first</div>');return;}var f=document.getElementById('bbud');if(f)f.value='';bOp('bonds_budget','-',x);}
 function bMoreSet(m){var x=parseFloat(bKeep('bmore-'+m));if(!(x>=0)){bSay('<div class="bad">dollars, please</div>');return;}bOp('bonds_more_cap',m,x);}
+function bExitSet(m){var x=parseFloat(bKeep('bexit-'+m));if(!(x>0)){bSay('<div class="bad">type the exit price in cents first</div>');return;}bOp('bonds_exit_at',m,x);}
+function bBuy(m){var q=parseFloat(bKeep('bbq-'+m));var p=parseFloat(bKeep('bbp-'+m));if(!(q>=1)||!(p>0)){bSay('<div class="bad">how many shares, and the price in cents?</div>');return;}if(confirm('Rest a buy for '+q+' shares at '+p+'¢?'))bOp('bonds_buy',m,{qty:q,px:p});}
 function bEnter(m,px,qty,cost,money){if(confirm('Buy '+qty+' shares out to '+pc(px)+' for about '+usd(cost)+'? Money: '+usd(money)+'.'))bOp('bonds_enter',m,px);}
 // the live line (owner, 2026-09-03): one stream carries the held
 // markets' rows as their books move; the page redraws only while you
@@ -856,7 +858,7 @@ function bTop(r,L,held){
   if(r.unconfirmed)h+='<div class="sub warn">The exchange shows '+r.unconfirmed.exch+' of '+r.unconfirmed.ledger+' here but the transaction record shows no sale (it puts you at '+r.unconfirmed.record+'). Kept until the record explains it.</div>';
   if(mk)h+='<div class="sub">bid <b class="'+(black?'ok':'warn')+'">'+pc(mk.bid)+'</b> vs your cost '+pc(mk.cost)+' ('+(mk.edge>=0?'+':'−')+(Math.abs(mk.edge)*100).toFixed(1)+'¢ a share)'+(r.cost_src&&r.cost_src!=='record'?' <span class="muted">· cost from the '+(r.cost_src==='exchange'?'exchange’s own figure':r.cost_src==='record+exchange'?'record and the exchange’s figure':'ledger')+'</span>':'')+'</div>';
   var ex=bExit(r);
-  var e=ex.length?('exit '+ex[0].qty+' @ '+pc(ex[0].price)+' → <b>'+usd(ex[0].est)+'/day</b>'):'<span class="warn">no exit resting</span>';
+  var e=ex.length?('exit '+ex[0].qty+' @ '+pc(ex[0].price)+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex[0].est)+'/day</b>'):'<span class="warn">no exit resting</span>';
   var mo=(r.more&&r.more.order)?(' · buying more '+r.more.order.qty+' @ '+pc(r.more.order.price)):'';
   h+='<div class="sub"><b>'+r.qty+' held @ '+pc(r.cost_px)+'</b> · '+e+mo+(r.rewards?' · earned '+usd(r.rewards):'')+'</div>';
  } else {
@@ -909,6 +911,20 @@ function bMore(r,b,sw){
  else h+='<br><span class="muted">not resting: '+(mo.note?esc(mo.note):'no price at or under your first price captures '+pct+'% of its side')+'</span>';
  return '<div class="sub">'+h+'</div>';
 }
+function bExitAt(r){
+ var m=esc(r.market);var pin=r.pin;
+ var h='<b>Exit at</b> — rest the whole lot at a price of your own, above your cost ('+pc(r.cost_px)+' with fees):<br>';
+ if(pin)h+='pinned at '+pc(pin.bond_px)+' since '+when(pin.since)+' · it only moves if the other side comes up to meet it '+bBtn('Clear','bOp(\'bonds_exit_clear\',\''+m+'\')','off');
+ else h+=bField('bexit-'+m,bKeep('bexit-'+m),'5em')+'¢ '+bBtn('Set exit','bExitSet(\''+m+'\')');
+ return '<div class="sub">'+h+'</div>';
+}
+function bBuyAt(r){
+ var m=esc(r.market);
+ var h='<b>Buy</b> — rest an order of your own for some shares at your price (it fills when someone sells to it):<br>';
+ (r.buys||[]).forEach(function(o){h+='resting '+o.qty+' @ '+pc(o.price)+' '+bBtn('Pull','bOp(\'bonds_pull_buy\',\''+m+'\',\''+esc(o.id)+'\')','off')+'<br>';});
+ h+=bField('bbq-'+m,bKeep('bbq-'+m),'5em')+' shares at '+bField('bbp-'+m,bKeep('bbp-'+m),'5em')+'¢ '+bBtn('Buy','bBuy(\''+m+'\')');
+ return '<div class="sub">'+h+'</div>';
+}
 function bBait(r){
  var bt=r.bait||{};var m=esc(r.market);
  var h='<b>Bait</b> — one share a tick inside their best on the buy side, to pull their offers up:<br>';
@@ -929,8 +945,9 @@ function bRow(r,d,b,sw,held){
  var h='<div style="margin:8px 0;border-top:1px solid #2c3527;padding:6px 0 0 8px;border-left:4px solid '+(held?(black?'#7fd77f':'#2c3527'):'transparent')+'">'+bTop(r,L,held);
  h+='<details'+open+' ontoggle="bTog(this,\''+m+'\')"><summary style="font-size:16px;padding:8px 0;cursor:pointer">Details</summary>';
  h+=bBook(r);
- if(held)h+=bCalc(r)+bSniper(r,b,sw)+bMore(r,b,sw)+bBait(r);
+ if(held)h+=bCalc(r)+bSniper(r,b,sw)+bExitAt(r)+bMore(r,b,sw)+bBait(r);
  h+=bLadder(r,b);
+ if(!r.odds_changed)h+=bBuyAt(r);
  h+='<div>'+bBtn('Remove from list','if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')','off')+'</div>';
  return h+'</details></div>';
 }

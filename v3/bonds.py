@@ -245,6 +245,10 @@ class Bonds:
         self._bp: tuple | None = None          # (buying power, read at)
         self._rebuilding: bool = False
         self._exch_seen: dict[str, float] = {}   # slug -> what the feed last showed
+        # his own exit price (owner, 2026-09-04: "Give me the option to
+        # exit a position at a given price if it is higher than my
+        # cost"): the whole lot rests there, pinned, until he clears it
+        self.exit_px: dict[str, dict] = {}     # slug -> {px (YES terms), bond_px, since, by}
 
     # ------------------------------------------------------------ helpers
 
@@ -955,6 +959,155 @@ class Bonds:
         return {"ok": True, "note": f"counting {qty:g} {side} shares as bond "
                                     f"at {per * 100:.1f}c"}
 
+    def set_exit(self, slug: str, price, now: float) -> dict:
+        """His exit price (owner, 2026-09-04: "Give me the option to
+        exit a position at a given price if it is higher than my
+        cost"): the whole lot rests at it — or a tick inside the other
+        side when that is better for him — and stays pinned there until
+        he clears it. Refused at or under cost, fees in. Typed in the
+        bond's own terms, cents or a fraction."""
+        if slug not in self._working():
+            return {"ok": False, "note": "not on the bond list"}
+        side = self._side_of(slug)
+        if self.held(slug, side) < 1.0:
+            return {"ok": False, "note": "nothing held here"}
+        try:
+            bp = float(price)
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "which price?"}
+        if bp > 1.0:
+            bp = bp / 100.0                          # typed in cents
+        if not (0.001 <= bp <= 0.999):
+            return {"ok": False, "note": "price must be 0.1c to 99.9c"}
+        cb = self.cost_basis(slug, side)
+        if cb > 0 and bp <= cb + 1e-9:
+            return {"ok": False, "note": f"{bp * 100:.1f}c is not above your cost "
+                                         f"({cb * 100:.1f}c a share with fees)"}
+        book = self.fam.cache.any_age(slug)
+        tick = (book.tick if book is not None else None) or 0.01
+        yes_px = bp if side == "YES" else round(1.0 - bp, 4)
+        yes_px = self._snap_up(yes_px, tick) if side == "YES" else self._snap_down(yes_px, tick)
+        if not (0.001 <= yes_px <= 0.999):
+            return {"ok": False, "note": f"{bp * 100:g}c is off this market's price grid"}
+        self.exit_px[slug] = {"px": yes_px, "bond_px": round(bp, 4),
+                              "since": round(now, 1), "by": "owner", "applied": False}
+        self._log(event="exit_pinned", market=slug, side=side, price=yes_px,
+                  bond_px=round(bp, 4))
+        return {"ok": True, "note": f"the exit rests at {bp * 100:g}c (or a tick inside "
+                                    f"the other side when that is better) until you clear it"}
+
+    def clear_exit(self, slug: str) -> dict:
+        if self.exit_px.pop(slug, None) is None:
+            return {"ok": False, "note": "no exit price set here"}
+        self._log(event="exit_unpinned", market=slug)
+        return {"ok": True, "note": "cleared — the exit goes back to its own slot"}
+
+    def _pin_price(self, side: str, book, yes_px: float) -> float:
+        """Where a pinned exit rests: his price, or a tick inside the
+        other side when that is better for him — post-only never
+        crosses."""
+        tick = book.tick or 0.01
+        if side == "YES":
+            floor = (book.bids[0][0] + tick) if book.bids else yes_px
+            return min(self._snap_up(max(yes_px, floor), tick), 0.999)
+        cap = (book.asks[0][0] - tick) if book.asks else yes_px
+        return max(self._snap_down(min(yes_px, cap), tick), 0.001)
+
+    def _buy_orders(self, slug: str) -> list[FamilyOrder]:
+        return [o for o in list(self.fam.orders.values())
+                if o.purpose == "bond" and o.market == slug
+                and str(o.why or "").startswith("bond buy")]
+
+    def place_buy(self, slug: str, price, qty, now: float,
+                  positions: dict | None = None) -> dict:
+        """His own resting buy (owner, 2026-09-04: "let me buy a portion
+        of the shares at a given price point"): so many shares of the
+        bond at his price, post-only on the entry side, sized to the
+        buying power there. It rests until it fills or he pulls it; the
+        buy-more logic leaves it alone, and the record books the fill."""
+        if slug not in self.approved:
+            if slug in self._working():
+                return {"ok": False, "note": "the odds left the band — no new buying here"}
+            return {"ok": False, "note": "not on the bond list"}
+        side = self.approved[slug]["side"]
+        try:
+            bp = float(price)
+            q = float(qty)
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "the price and how many shares?"}
+        if bp > 1.0:
+            bp = bp / 100.0                          # typed in cents
+        if not (0.001 <= bp <= 0.999):
+            return {"ok": False, "note": "price must be 0.1c to 99.9c"}
+        q = float(math.floor(q))
+        if q < 1.0:
+            return {"ok": False, "note": "at least one share"}
+        book = self.fam.cache.fresh(slug, 120.0, now)
+        if book is None:
+            return {"ok": False, "note": "no fresh book — try again in a moment"}
+        tick = book.tick or 0.01
+        far, intent = self.entry(side)
+        yes_px = bp if side == "YES" else round(1.0 - bp, 4)
+        yes_px = self._snap_down(yes_px, tick) if far == "BUY" else self._snap_up(yes_px, tick)
+        if not (0.001 <= yes_px <= 0.999):
+            return {"ok": False, "note": f"{bp * 100:g}c is off this market's price grid"}
+        # a resting order never crosses; the take (Enter) is for that
+        if far == "BUY" and book.asks and yes_px >= book.asks[0][0] - 1e-9:
+            return {"ok": False, "note": f"{bp * 100:g}c reaches the offers "
+                                         f"({book.asks[0][0] * 100:g}c) — use Enter to take them"}
+        if far == "SELL" and book.bids and yes_px <= book.bids[0][0] + 1e-9:
+            return {"ok": False, "note": f"{bp * 100:g}c reaches the offers "
+                                         f"({(1.0 - book.bids[0][0]) * 100:g}c NO) — use Enter "
+                                         f"to take them"}
+        free = self._buying_power(now)
+        trimmed = ""
+        if free is not None:
+            afford = float(math.floor(free / bp)) if bp > 0 else 0.0
+            if afford < 1.0:
+                return {"ok": False, "note": f"no buying power for it (${free:,.2f} free)"}
+            if afford < q:
+                trimmed = f"sized to the buying power: {afford:g} of {q:g}"
+                q = afford
+        pos = float(((positions or {}).get(slug) or (0.0, 0.0))[0]) if positions else float(
+            (self.fam.inventory.get(slug) or {}).get("qty") or 0.0)
+        r = self.fam.desk.place_resting(slug, far, yes_px, q, net_position=pos,
+                                        initiator="owner", intent=intent)
+        if not (r.ok and r.order_id):
+            if r.order_id and float(getattr(r, "resting_qty", 0.0) or 0.0) >= 1.0:
+                trimmed = f"the exchange kept {r.resting_qty:g} of {q:g} (the money there)"
+                q = float(r.resting_qty)
+            else:
+                return {"ok": False, "note": f"the exchange refused: {r.note[:100]}"}
+        px = r.price or yes_px
+        self.fam.orders[r.order_id] = FamilyOrder(
+            id=r.order_id, market=slug, side=far, price=px, qty=q,
+            intent=(r.intent or intent), placed_ts=now, purpose="bond",
+            why=f"bond buy: {q:g} at {bp * 100:g}c by you")
+        self.fill_book[r.order_id] = {"slug": slug, "side": side, "qty": 0.0,
+                                      "px": px, "ts": round(now, 1), "open": True}
+        self._log(event="buy_rested", market=slug, side=side, price=px, qty=q,
+                  bond_px=round(bp, 4), note=trimmed)
+        return {"ok": True, "note": f"resting: {q:g} {side} at {bp * 100:g}c"
+                                    f"{' — ' + trimmed if trimmed else ''} — it fills when "
+                                    f"someone sells to it; the record books the fill"}
+
+    def pull_buy(self, slug: str, order_id: str | None = None) -> dict:
+        got = 0
+        for o in self._buy_orders(slug):
+            if order_id and o.id != order_id:
+                continue
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if r.ok:
+                self.fam.orders.pop(o.id, None)
+                f = self.fill_book.get(o.id)
+                if f is not None:
+                    f["open"] = False
+                    f["ts"] = round(self._clock(), 1)
+                got += 1
+                self._log(event="buy_pulled", market=slug, price=o.price, qty=o.qty)
+        return {"ok": got > 0, "note": (f"pulled {got} order{'s' if got != 1 else ''}"
+                                        if got else "no buy of yours resting here")}
+
     def set_budget(self, amount) -> dict:
         try:
             amount = float(amount)
@@ -1036,6 +1189,9 @@ class Bonds:
         for s in list(self.more_cap):
             if abs(float((self.lots.get(s) or {}).get("qty") or 0.0)) < 0.005:
                 self.more_cap.pop(s, None)       # no longer held: the default resets
+        for s in list(self.exit_px):
+            if self.held(s, self._side_of(s)) < 0.005:
+                self.exit_px.pop(s, None)        # out of the position: the pin is spent
         if on:
             for slug in self._working():
                 side = self._side_of(slug)
@@ -1210,6 +1366,50 @@ class Bonds:
         resting = sum(o.qty for o in main) + sum(o.qty for o in decoys)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
         lot_qty = float(math.floor(held - sum(o.qty for o in decoys)))
+        pin = self.exit_px.get(slug)
+        if pin:
+            # his price (owner, 2026-09-04): the whole lot rests there,
+            # or a tick inside the other side when that is better; the
+            # slot logic stays out of it until he clears the pin
+            want = self._pin_price(side, book, float(pin["px"]))
+            size = max(lot_qty, 1.0)
+            if main:
+                cur = main[0]
+                if abs(cur.price - want) < 1e-9 and abs(size - cur.qty) < max(1.0, 0.1 * size):
+                    pin["applied"] = True
+                    return None
+                if pin.get("applied") and now - self.moved_at.get(slug, 0.0) < MOVE_COOLDOWN_S:
+                    return None
+                r = self.fam.desk.reprice(
+                    {"id": cur.id, "market": slug, "side": bs,
+                     "price": cur.price, "size": cur.qty,
+                     "intent": cur.intent}, want, size, initiator="owner")
+                if not (r.ok and r.order_id):
+                    return None
+                if not r.two_orders:
+                    self.fam.orders.pop(cur.id, None)
+                use_intent = cur.intent
+            else:
+                r = self.fam.desk.place_resting(slug, bs, want, size, net_position=pos,
+                                                initiator="owner", intent=intent)
+                if not (r.ok and r.order_id):
+                    self._log(event="earn_refused", market=slug, note=r.note[:120])
+                    return None
+                use_intent = r.intent or intent
+            px = r.price or want
+            self.fam.orders[r.order_id] = FamilyOrder(
+                id=r.order_id, market=slug, side=bs, price=px, qty=size,
+                intent=use_intent, placed_ts=now, purpose="bond",
+                why=f"bond: exit pinned by you at {float(pin['bond_px']) * 100:g}c")
+            self.moved_at[slug] = now
+            pin["applied"] = True
+            self.slot[slug] = {"px": px, "ticks": 0, "keep": 1.0,
+                               "est": round(self._est_at(slug, bs, book, px, size), 4),
+                               "size": size, "pinned": True}
+            self._log(event="exit_pinned_rested", market=slug, side=side,
+                      price=px, qty=size)
+            return {"market": slug, "bond": side, "side": bs, "price": px,
+                    "qty": size, "pinned": True}
         if main:
             # one exit order: it moves back on the cooldown when it has
             # become the touch, and is resized to what earns when the
@@ -2340,6 +2540,11 @@ class Bonds:
             "odds_changed": bool(meta.get("changed")),
             "cost_src": self.cost_src.get(slug),
             "unconfirmed": self.unconfirmed.get(slug),
+            "pin": self.exit_px.get(slug),
+            # his own resting buys, in the bond's terms (owner, 2026-09-04)
+            "buys": [{"id": o.id, "qty": o.qty,
+                      "price": (o.price if side == "YES" else round(1.0 - o.price, 4))}
+                     for o in self._buy_orders(slug)],
             "bid": bid, "ask": ask,
             "cost": (round(cost, 4) if cost else None),
             "size": round(size, 1),
@@ -2581,6 +2786,7 @@ class Bonds:
                 "dance": self.dance,
                 "cost_src": self.cost_src, "unconfirmed": self.unconfirmed,
                 "more_retry": self._more_retry,
+                "exit_px": self.exit_px,
                 "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -2681,6 +2887,7 @@ class Bonds:
                             in (d.get("unconfirmed") or {}).items()}
         self._more_retry = {str(k): float(v) for k, v
                             in (d.get("more_retry") or {}).items()}
+        self.exit_px = {str(k): dict(v) for k, v in (d.get("exit_px") or {}).items()}
         # an empty ledger while the exchange last showed bond stock is
         # the 2026-09-04 wipe: the first sync claims everything back at
         # the record's cost, and the outside-money figure is re-seeded
