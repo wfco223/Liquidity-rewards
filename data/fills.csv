@@ -3980,3 +3980,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788559291.3,politics,ewc-usse-tx-2026-11-03-dem,SELL,2,0.48,sell,0.0488,11.49,0.616475,48,52,0.698,0.47,0.48,0.1365,19,selling filled stock — it earns while it waits,C9K08TG5WMVY
 1788559951.3,politics,scc-senate-gop-2026-11-03-52,SELL,-5.45,0.11,fix,2.4305,8.25,0.095975,7,12,0.167,0.09,0.11,-0.014,-6,size trimmed by 5.45 to the exchange's count (order C920RC5K8MVR),C920RC5K8MVR
 1788559951.3,cfb,aachc-cfb-wins-2026-11-28-uk-6pt5wins,BUY,0.66,0.5,backfill,,1.45,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9V8F4RJTMVR
+1788559966.4,politics,ussewc-usse-ky-2026-11-03-dem,SELL,33,0.05,backfill,,7.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9PD8EEF4MVP
+1788560011.3,politics,ussewc-usse-ky-2026-11-03-dem,SELL,8,0.05,bond,0,0.02,0.00265,4,7,0.895,0.06,0.08,-0.0474,-12,bond: took 8 NO at 5c — it was in the way of our resting order,C9X1JCEM4MW1
+1788560071.3,politics,ussewc-usse-ky-2026-11-03-dem,SELL,12,0.06,bond,0,0.02,0.00265,5,7,0.903,0.06,0.08,-0.0573,-57,bond: took 12 NO at 6c — it was in the way of our resting order,C9X2BJHXCMVP
+1788560851.3,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,0.4,0.97,manual,0.0006,40.05,0.9982,95,97,0.557,0.95,0.99,0.0282,17.6,the owner's own order — the engine leaves it alone,C8TSK1NQTMVK
+1788560851.3,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,18,0.96,bond,0.2898,10.57,0.9982,95,97,0.557,0.95,0.99,0.0382,-0.4,bond: resting at the touch — it earns while it waits,C9M4EMCZWMVV
+1788563123.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,40,0.465,sell,0,0,0.5,47,50,0.539,0.465,0.466,0.035,0,closed out by the owner from the live card — sold into the bid,C9XVXE2HYMVV
+1788563133.0,politics,ewc-usgub-oh-2026-11-03-rep,SELL,40,0.41,sell,0,0,0.593925,42,45,0.624,0.41,0.42,0.1839,0,closed out by the owner from the live card — sold into the bid,C9XVXE8JTMVV
+1788563371.4,cfb,aachc-cfb-wins-2026-11-28-mst-4pt5wins,BUY,1,0.63,sell,0.3069,3.22,,59,66,0.424,0.44,0.54,0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,C9V4HND2PMVK
+1788563546.8,politics,ewc-usgub-oh-2026-11-03-rep,SELL,40,0.59,manual,0,0.12,0.5044,42,45,0.624,0.41,0.42,-0.0856,0,the owner's own order — the engine leaves it alone,C9XS9W8EWMVP
+1788563606.8,politics,ussewc-usse-sc-2026-11-03-dem,SELL,-2,0.17,fix,0.0371,3.78,0.07615,12,16,0.673,0.16,0.17,-0.0939,-4,size trimmed by 2 to the exchange's count (order C98M9Y32AMVR),C98M9Y32AMVR
+1788563606.8,politics,ussewc-usse-sc-2026-11-03-dem,SELL,-1,0.17,fix,5.2083,0.56,0.07615,7,12,0.331,0.15,0.17,-0.0939,-3,size trimmed by 1 to the exchange's count (order C98M9Y32AMVR),C98M9Y32AMVR
+1788563606.8,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,-12,0.97,fix,,0,,,,,,,,,size trimmed by 12 to the exchange's count (order C99MPTJJTMW0),C99MPTJJTMW0
+1788563606.8,politics,ussewc-usse-ky-2026-11-03-dem,SELL,33,0.05,backfill,,7.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9PD8EEF4MVP
