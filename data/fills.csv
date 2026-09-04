@@ -5242,3 +5242,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788482005.3,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,10,0.95,void,0,0.12,0.9999,93,96,0.789,0.7,0.86,0.0499,45,voided: the exchange has no trade for order C99NHKT1YMVF — the row of 09-03 23:4,C99NHKT1YMVF
 1788482005.3,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,9.99,0.86,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C99QA1FP0MVV
 1788482005.3,politics,ussewc-usse-nm-2026-11-03-rep,BUY,1.5,0.02,backfill,,0.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9A2T10PGMW0
+1788482124.6,politics,paccc-usse-midterms-2026-11-03-dem,BUY,20,0.465,earn,0.3872,4.13,0.5,47,51,0.493,0.465,0.466,-0.035,40,at the touch — a fill here is 27 ticks inside value (Silver + evidence),C96YP69V8MVR
+1788482236.5,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,12,0.05,manual,0.2048,2.12,0.0004,3,6,0.789,0.03,0.05,-0.0496,-331,the owner's own order — the engine leaves it alone,C98NFMGGJMW0
+1788482236.5,politics,scc-senate-gop-2026-11-03-51,SELL,10,0.14,earn,0.2057,1.32,0.124525,9,14,0.02,0.13,0.14,-0.0155,-18,at the touch — a fill here is 2 ticks inside value (Silver + evidence),C99D4KD0JMVZ
+1788482445.3,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,20,0.87,earn,1.2425,0.09,0.990325,92,95,0.783,0.83,0.89,-0.1203,60,1 tick behind the touch — we would hold 97% of the bid side,C9AHPC80RMW1
+1788483433.9,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,12,0.97,bond,0.6109,0.27,0.9965,94,97,0.763,0.95,0.97,0.0265,176,bond: resting 1 tick behind the touch; keeping 100% of the best reward,C9AN1SFW2MVF
+1788483676.6,politics,ewc-usse-mi-2026-11-03-rep,SELL,10,0.37,earn,0.0801,3.25,0.3146,31,37,0.234,0.37,0.38,-0.0554,-18,at the touch — a fill here is 4 ticks inside value (Silver + evidence),C981GCN80MVF
+1788483924.7,politics,scc-senate-gop-2026-11-03-52,BUY,6,0.13,sell,2.0544,2.12,0.095975,8,13,0.498,0.1,0.14,0.034,6,buying back the short at or under what it sold for — the bid earns while it wait,C994CQAXMMVK
+1788484200.3,politics,ussewc-usse-sc-2026-11-03-dem,BUY,3,0.16,sell,1.5736,2.2,0.07615,12,16,0.56,0.16,0.17,0.0839,0,buying back the short at or under what it sold for — the bid earns while it wait,C994JV0R4MVR
+1788484290.7,politics,enwc-uspres-nom-rep-2028-marrub,BUY,0.03,0.23,backfill,,0.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9ANB05H6MVK
+1788484298.4,politics,enwc-uspres-nom-rep-2028-marrub,BUY,1,0.23,earn,0,0.46,0.35,23,27,0.579,0.23,0.24,-0.12,96,1 tick in front of the touch — we would hold 57% of the bid side,C9ANB05H6MVK
+1788484828.2,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,sell,0,0,0.989475,95,99,0.376,0.96,0.97,0.0295,0,taker dump — sold into the bid (the carved exception),C9B63FEMAMVF
+1788484828.2,cfb,aachc-cfb-wins-ou-2026-11-28-ncar,BUY,1,0.78,sell,0,6.44,,77,86,0.535,0.97,0.98,-0.04,1,buying back the short at or under what it sold for — the bid earns while it wait,C95K729GYMW0
+1788485672.5,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,-12,0.05,fix,0.1889,2.18,0.0004,4,6,0.82,0.03,0.05,-0.0496,-343,size trimmed by 12 to the exchange's count (order C98NFMGGJMW0),C98NFMGGJMW0
+1788485672.5,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,void,0,0,0.989475,95,99,0.381,0.96,0.97,0.0295,0,voided: the exchange has no trade for order C9A8DHWCCMVK — the row of 09-04 00:1,C9A8DHWCCMVK
+1788485672.5,politics,enwc-uspres-nom-rep-2028-marrub,BUY,0.03,0.23,backfill,,0.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9ANB05H6MVK
