@@ -1379,6 +1379,56 @@ class Monitor:
         self.store.save_remote(st)
         return s
 
+    @staticmethod
+    def _et_today(hhmm: str, now: float) -> float | None:
+        """An ET clock time today ("17:00") as an epoch, or None."""
+        import datetime as _dt
+        from .family import ET
+        try:
+            h, m = str(hhmm).strip().split(":")[:2]
+            h, m = int(h), int(m)
+        except (TypeError, ValueError):
+            return None
+        if not (0 <= h < 24 and 0 <= m < 60):
+            return None
+        day = _dt.datetime.fromtimestamp(now, ET).date()
+        return _dt.datetime(day.year, day.month, day.day, h, m, tzinfo=ET).timestamp()
+
+    def set_active_until(self, which: str, value) -> dict:
+        """The owner's say over a family's game window (2026-09-04:
+        "Cfb can go active until 5:00 pm eastern today"): until the ET
+        time given, today, the family rests as in resting hours. An
+        empty value clears it. Persisted at once, like a switch flip."""
+        fam = self.families.get(which)
+        if fam is None:
+            return {"ok": False, "note": f"no family called {which}"}
+        now = time.time()
+        if value in (None, "", "-", "clear"):
+            fam.active_until = 0.0
+            note = f"{fam.cfg.name}: back to its own game window"
+        else:
+            ts = self._et_today(str(value), now)
+            if ts is None:
+                return {"ok": False, "note": "pick a time like 17:00"}
+            if ts <= now:
+                return {"ok": False, "note": "that time has passed today"}
+            fam.active_until = float(ts)
+            import datetime as _dt
+            from .family import ET
+            shown = _dt.datetime.fromtimestamp(ts, ET).strftime("%I:%M %p").lstrip("0")
+            note = f"{fam.cfg.name} stays active until {shown} ET today"
+        self._audit({"op": "active_until", "family": which,
+                     "until": fam.active_until, "initiator": "owner", "ts": now})
+        self._note(note)
+        st = dict(self.last_state) if self.last_state else {}
+        st[f"fam_{which}"] = fam.to_dict()
+        st["saved_at"] = now
+        self.last_state = st
+        self.freeze_payload()
+        self.store.save_local(st)
+        self.store.save_remote(st)
+        return {"ok": True, "note": note, "active_until": fam.active_until}
+
     def _fair_for(self, slug: str) -> float | None:
         """One fair per market: the OWNER'S number when he has set one,
         else the model's. Every consumer of fair — the past-fair caps,
@@ -3477,9 +3527,22 @@ class Monitor:
             "master": self.master.state(),
             **({"bonds": self.switches["bonds"].state()}
                if "bonds" in self.switches else {}),
-            **{k: self.switches[k].state() for k in self.families}}
+            **{k: self._family_switch_state(k) for k in self.families}}
         st["floor"] = self.floor.status()
         return st
+
+    def _family_switch_state(self, key: str) -> dict:
+        """The switch page's card for a family: the switch, plus where
+        its game window stands and any 'active until' the owner set."""
+        from .family import resting_ok
+        s = dict(self.switches[key].state())
+        fam = self.families[key]
+        now = time.time()
+        au = float(getattr(fam, "active_until", 0.0) or 0.0)
+        s["has_window"] = bool(fam.cfg.rest_from is not None and fam.cfg.rest_until is not None)
+        s["resting_now"] = bool(resting_ok(now, fam.cfg))
+        s["active_until"] = au if au > now else 0.0
+        return s
 
     # what the phone pages actually read. The old payload shipped the
     # whole state minus fam_* — 1.85 MB a refresh — and worse, the web

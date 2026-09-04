@@ -392,6 +392,36 @@ class TestWindow(unittest.TestCase):
         self.assertTrue(resting_ok(0.0, FamilyConfig(rest_from=None)))
         self.assertTrue(resting_ok(1e9, politics.config()))
 
+    def test_the_owner_can_keep_a_family_active_past_its_window(self):
+        # owner, 2026-09-04: "Cfb can go active until 5:00 pm eastern
+        # today" — a resting window of one hour on Monday mornings, so
+        # the rig's clock (a Monday, 08:46 ET) sits in the game window
+        cfg = FamilyConfig(name="Politics", tag="POL", known_ground=True,
+                           rest_style="join_quiet", revive=True,
+                           capital_usd=100.0, per_market_usd=2.0, revive_max_usd=5.0,
+                           min_days_out=3, rest_from=(0, 0), rest_until=(0, 1))
+        r = Rig(cfg=cfg)
+        r.add_market(A)
+        self.assertFalse(resting_ok(r.now, cfg))
+        s = r.cycle()
+        self.assertEqual(s["mode"], "game window")
+        self.assertEqual(r.exchange.live, {})
+        r.fam.active_until = r.now + 3600.0          # the owner's say
+        s = r.cycle()
+        self.assertEqual(s["mode"], "on")
+        self.assertTrue(s["resting_ok"])
+        self.assertEqual(s["active_until"], r.fam.active_until)
+        self.assertTrue(r.exchange.live)             # it quotes as in resting hours
+        d = r.fam.to_dict()
+        self.assertEqual(d["active_until"], r.fam.active_until)
+        r2 = Rig(cfg=cfg)
+        r2.fam.restore(d)
+        self.assertEqual(r2.fam.active_until, r.fam.active_until)   # survives a restart
+        s = r.cycle(advance=3601.0)                  # the time passes: the window rules again
+        self.assertEqual(s["mode"], "game window")
+        self.assertEqual(s["active_until"], 0.0)
+        self.assertEqual(r.exchange.live, {})
+
 
 if __name__ == "__main__":
     unittest.main()
