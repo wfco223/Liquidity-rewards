@@ -187,15 +187,22 @@ class Client:
         both confirmed by 1.0's working reader."""
         out: dict[str, dict] = {}
         cursor = None
+        pages = 0
+        eof = False
         for _ in range(max_pages):
             params: dict = {"limit": 100}
             if cursor:
                 params["cursor"] = cursor
             j = self.get(TRADE_API + "/v1/portfolio/positions", signed=True, params=params)
+            pages += 1
             out.update(j.get("positions") or {})
             cursor = j.get("nextCursor")
             if j.get("eof") or not cursor:
+                eof = bool(j.get("eof"))
                 break
+        # the shape of the last read, for the log: on 2026-09-04 a read
+        # came back missing 114 of 171 positions and nothing said so
+        self.positions_read = {"pages": pages, "n": len(out), "eof": eof}
         return out
 
     def positions_net(self) -> dict[str, tuple[float, float]]:

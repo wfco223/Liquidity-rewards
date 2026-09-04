@@ -1033,7 +1033,7 @@ class Monitor:
                                               scope="Bonds")
         self.bonds = Bonds(self.families["politics"], self.client,
                            self.silver.model_fair, alert=self.alerts.notify,
-                           tax_owed=self._tax_owed)
+                           tax_owed=self._tax_owed, parse=parse_activities)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
@@ -1193,6 +1193,12 @@ class Monitor:
         self.ladder_day = str(saved.get("ladder_day") or "")
         if saved.get("bonds"):
             self.bonds.restore(saved["bonds"])
+        pl = saved.get("pos_last") or {}
+        if pl.get("pos") and time.time() - float(pl.get("at") or 0.0) < 3600.0:
+            # the last accepted position read survives a restart, so a
+            # short read right after boot is caught like any other
+            self._pos_last = {str(k): tuple(v) for k, v in pl["pos"].items()}
+            self._pos_last_at = float(pl.get("at") or 0.0)
         if saved.get("sw_bonds"):
             self.switches["bonds"].restore(saved["sw_bonds"])
         self.ladder_seen = {str(k): str(v) for k, v in
@@ -1291,6 +1297,9 @@ class Monitor:
             "cancel_jobs": list(getattr(self, "cancel_jobs", [])),
             "rss_mb": round(rss_mb(), 1),
             "bonds": self.bonds.to_dict(),
+            "pos_last": {"at": round(getattr(self, "_pos_last_at", 0.0), 1),
+                         "pos": {k: list(v) for k, v in
+                                 (getattr(self, "_pos_last", None) or {}).items()}},
             "sw_bonds": self.switches["bonds"].to_dict(),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
@@ -1931,6 +1940,11 @@ class Monitor:
             headers={"Authorization": f"Bearer {tok}",
                      "Accept": "application/vnd.github+json"},
             json=body, timeout=30)
+        if r.status_code >= 300:
+            # a refused publish was silent (2026-09-04: nothing reached
+            # the front page for eight hours and no line said why)
+            self._note(f"publish {path}: HTTP {r.status_code} "
+                       f"{(r.text or '')[:100]}")
         return r.status_code < 300
 
     def compose_rewards_csv(self, rows: list[dict], existing: str | None) -> str:
@@ -3641,6 +3655,62 @@ class Monitor:
                 fam.cfg.books_per_cycle = books
                 fam.cfg.scan_reserve = scan
 
+    # A position READ is not the position feed. On 2026-09-04 04:20 ET a
+    # read came back missing 114 of 171 held positions, showed them
+    # again a minute later, and kept doing it for hours; in between the
+    # bond ledger wrote every holding off, pulled every exit and let
+    # the engine back in. A read that names fewer markets than the last
+    # accepted one is read again; markets still missing keep their
+    # last value until they have been missing on POS_GONE_READS reads
+    # spanning POS_GONE_S — and even then the transaction record, not
+    # the read, is what says where a position went.
+    POS_GONE_READS = 3
+    POS_GONE_S = 300.0
+
+    def _guard_positions(self, fresh: dict, now: float) -> dict:
+        last = getattr(self, "_pos_last", None) or {}
+        fresh = dict(fresh or {})
+        missing = {m for m, v in last.items()
+                   if m not in fresh and abs(float(v[0])) > 0.005}
+        if missing:
+            try:
+                again = dict(self.client.positions_net() or {})
+            except ApiError as e:
+                self._note(f"positions re-read failed: {e}")
+                again = None
+            if again is not None:
+                still = {m for m in missing if m not in again}
+                if len(still) < len(missing):
+                    fresh, missing = again, still
+        pend = getattr(self, "_pos_missing", None) or {}
+        for m in list(pend):
+            if m not in missing:
+                pend.pop(m, None)
+        merged = dict(fresh)
+        gone = []
+        for m in sorted(missing):
+            cnt, since = pend.get(m, (0, now))
+            cnt += 1
+            pend[m] = (cnt, since)
+            if cnt >= self.POS_GONE_READS and now - since >= self.POS_GONE_S:
+                gone.append(m)
+                pend.pop(m, None)
+            else:
+                merged[m] = last[m]
+        self._pos_missing = pend
+        if missing:
+            rd = getattr(self.client, "positions_read", None)
+            kept = len(missing) - len(gone)
+            self._note(f"positions feed short: {len(missing)} of {len(last)} held "
+                       f"markets missing (read: {rd}); "
+                       + (f"{kept} kept at their last value" if kept else "")
+                       + (f"; {len(gone)} missing {self.POS_GONE_READS} reads over "
+                          f"{self.POS_GONE_S / 60:.0f} min, now taken as gone: "
+                          f"{', '.join(gone[:4])}" if gone else ""))
+        self._pos_last = merged
+        self._pos_last_at = now
+        return merged
+
     def _cycle_body(self, now: float) -> dict:
         self._stage("checking the floor and switches", 5)
         self.flatten = flatten_active()
@@ -3649,7 +3719,7 @@ class Monitor:
         self._stage("fetching the account's resting orders", 10)
         orders = self.client.open_orders()
         self._stage("fetching positions", 18)
-        positions = self.client.positions_net()
+        positions = self._guard_positions(self.client.positions_net(), now)
         self.last_flat = None
         if self.flatten and self._floor_ok:
             self.last_flat = self._flatten_pass(orders, positions)

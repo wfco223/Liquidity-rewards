@@ -1,0 +1,17 @@
+{
+  "_note": "Buy-more amounts the owner set by hand on the bonds page before the 2026-09-04 ledger wipe (from the 03:13Z state save). Applied once, only where no cap is on file. px is the price cap in YES terms: his first purchase price.",
+  "more_cap": {
+    "usgubewc-usgub-md-2026-11-03-rep": {"usd": 200.0, "px": 0.05},
+    "usgubewc-usgub-ma-2026-11-03-rep": {"usd": 300.0, "px": 0.04},
+    "usgubewc-usgub-il-2026-11-03-dem": {"usd": 300.0, "px": 0.95},
+    "usgubewc-usgub-id-2026-11-03-rep": {"usd": 200.0, "px": 0.94},
+    "usgubewc-usgub-tn-2026-11-03-rep": {"usd": 200.0, "px": 0.93},
+    "usgubewc-usgub-sd-2026-11-03-rep": {"usd": 200.0, "px": 0.95},
+    "usgubewc-usgub-md-2026-11-03-dem": {"usd": 150.0, "px": 0.96},
+    "usgubewc-usgub-co-2026-11-03-rep": {"usd": 80.0, "px": 0.08},
+    "usgubewc-usgub-pa-2026-11-03-rep": {"usd": 75.0, "px": 0.05},
+    "usgubewc-usgub-ar-2026-11-03-dem": {"usd": 50.0, "px": 0.05},
+    "usgubewc-usgub-tn-2026-11-03-dem": {"usd": 50.0, "px": 0.03},
+    "usgubewc-usgub-mn-2026-11-03-rep": {"usd": 20.0, "px": 0.08}
+  }
+}

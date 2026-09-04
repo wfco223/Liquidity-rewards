@@ -88,6 +88,9 @@ class OrderResult:
     price: float = 0.0            # the price actually sent (snapped to the
                                   # book's grid) — callers record THIS, so
                                   # our books show orders where they rest
+    resting_qty: float = 0.0      # what the open list showed resting when the
+                                  # verify fell short (the exchange trims an
+                                  # order to the money there, 2026-09-04)
 
 
 class OrderDesk:
@@ -279,24 +282,30 @@ class OrderDesk:
         if not verify:
             return OrderResult(ok=True, note="placed (unverified)",
                                order_id=order_id, intent=intent, price=price)
-        ok, note = self.verify_resting(slug, side, price, want_id=order_id, min_qty=qty)
+        ok, note, seen = self.verify_resting(slug, side, price, want_id=order_id,
+                                             min_qty=qty)
         if not ok:
             # 2xx that never rests happens (and post-only rejections land
             # here too). Report it; the order id, if any, lets the caller
             # clean up. Never re-post: the first may still land late.
             return OrderResult(ok=False, note=f"placed but not resting: {note}",
-                               order_id=order_id, intent=intent, price=price)
+                               order_id=order_id, intent=intent, price=price,
+                               resting_qty=seen)
         return OrderResult(ok=True, note=note, order_id=order_id, intent=intent,
                            price=price)
 
     def verify_resting(self, slug: str, side: str, price: float, *,
-                       want_id: str, min_qty: float) -> tuple[bool, str]:
+                       want_id: str, min_qty: float) -> tuple[bool, str, float]:
         """Poll the open-order list until the order is genuinely resting:
         matched by ID (a dead record at the right price must not pass),
-        with at least min_qty remaining (the exchange silently trims)."""
+        with at least min_qty remaining (the exchange silently trims).
+        Returns (ok, note, the size seen resting) — a trimmed order is
+        still a real order of ours, and the caller decides what to do
+        with it."""
         deadline = self._clock() + VERIFY_MAX_WAIT
         wait = 1.0
         last = "order not seen in the open list"
+        seen = 0.0
         while True:
             try:
                 for o in self.client.open_orders():
@@ -307,12 +316,13 @@ class OrderDesk:
                         continue
                     if o["size"] >= min_qty - 1e-9:
                         return True, (f"resting: {o['size']:g} @ "
-                                      f"{o['price'] * 100:g}c (id {o['id']})")
+                                      f"{o['price'] * 100:g}c (id {o['id']})"), o["size"]
                     last = f"resting only {o['size']:g} of {min_qty:g}"
+                    seen = float(o["size"] or 0.0)
             except ApiError as e:
                 last = f"open-orders read failed: {e}"
             if self._clock() >= deadline:
-                return False, last
+                return False, last, seen
             self._sleep(wait)
             wait = min(wait * 2, 4.0)
 
