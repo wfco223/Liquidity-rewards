@@ -814,6 +814,8 @@ BONDS_JS = r"""
 function bPct(x){return x==null?'—':(x*100).toFixed(x>=0.1?0:1)+'%';}
 function bOdds(r){return r.bond==='NO'?'NO '+bPct(1-(r.odds||0)):'YES '+bPct(r.odds);}
 function bPill(s){return '<span class="pill">'+s+' bond</span>';}
+// an order's YES price in the bond's own terms (a NO bond's exit is a YES bid: 100 − it)
+function bTerms(r,px){return r.bond==='NO'?Math.round((1-px)*10000)/10000:px;}
 function bBtn(label,onclick,cls){return '<button class="'+(cls||'')+'" style="padding:10px 16px;font-size:16px;margin:4px 8px 4px 0" onclick="'+onclick+'">'+label+'</button>';}
 function bOp(op,m,v){var body={op:op,market:m};if(v!=null)body.value=v;window._bNote='';post(body,function(j){
  bSay('<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>');});}
@@ -827,6 +829,7 @@ function bBudget(){var x=parseFloat(bKeep('bbud'));if(!(x>=0)){bSay('<div class=
 function bMoreSet(m){var x=parseFloat(bKeep('bmore-'+m));if(!(x>=0)){bSay('<div class="bad">dollars, please</div>');return;}bOp('bonds_more_cap',m,x);}
 function bExitSet(m){var x=parseFloat(bKeep('bexit-'+m));if(!(x>0)){bSay('<div class="bad">type the exit price in cents first</div>');return;}bOp('bonds_exit_at',m,x);}
 function bBuy(m){var q=parseFloat(bKeep('bbq-'+m));var p=parseFloat(bKeep('bbp-'+m));if(!(q>=1)||!(p>0)){bSay('<div class="bad">how many shares, and the price in cents?</div>');return;}if(confirm('Rest a buy for '+q+' shares at '+p+'¢?'))bOp('bonds_buy',m,{qty:q,px:p});}
+function bSellInto(m,px,qty,pr){if(confirm('Sell '+qty+' shares into the bids out to '+pc(px)+' for about '+usd(pr)+'? The commission comes off the proceeds. Our own exit comes off first.'))bOp('bonds_sell_into',m,{px:px,qty:qty});}
 function bEnter(m,px,qty,cost,money){if(confirm('Buy '+qty+' shares out to '+pc(px)+' for about '+usd(cost)+'? Money: '+usd(money)+'.'))bOp('bonds_enter',m,px);}
 // the live line (owner, 2026-09-03): one stream carries the held
 // markets' rows as their books move; the page redraws only while you
@@ -858,7 +861,7 @@ function bTop(r,L,held){
   if(r.unconfirmed)h+='<div class="sub warn">The exchange shows '+r.unconfirmed.exch+' of '+r.unconfirmed.ledger+' here but the transaction record shows no sale (it puts you at '+r.unconfirmed.record+'). Kept until the record explains it.</div>';
   if(mk)h+='<div class="sub">bid <b class="'+(black?'ok':'warn')+'">'+pc(mk.bid)+'</b> vs your cost '+pc(mk.cost)+' ('+(mk.edge>=0?'+':'−')+(Math.abs(mk.edge)*100).toFixed(1)+'¢ a share)'+(r.cost_src&&r.cost_src!=='record'?' <span class="muted">· cost from the '+(r.cost_src==='exchange'?'exchange’s own figure':r.cost_src==='record+exchange'?'record and the exchange’s figure':'ledger')+'</span>':'')+'</div>';
   var ex=bExit(r);
-  var e=ex.length?('exit '+ex[0].qty+' @ '+pc(ex[0].price)+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex[0].est)+'/day</b>'):'<span class="warn">no exit resting</span>';
+  var e=ex.length?('exit '+ex[0].qty+' @ '+pc(bTerms(r,ex[0].price))+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex[0].est)+'/day</b>'):'<span class="warn">no exit resting</span>';
   var mo=(r.more&&r.more.order)?(' · buying more '+r.more.order.qty+' @ '+pc(r.more.order.price)):'';
   h+='<div class="sub"><b>'+r.qty+' held @ '+pc(r.cost_px)+'</b> · '+e+mo+(r.rewards?' · earned '+usd(r.rewards):'')+'</div>';
  } else {
@@ -879,9 +882,9 @@ function bCalc(r){
  var sideWord=(c.side==='SELL'?'ask':'bid');var pool=c.side_pool;var h='';
  h+='<div class="muted">'+sideWord+' side: '+c.side_size+' shares, Target Size '+c.target+' · side pool '+(pool==null?'unconfirmed':usd(pool)+'/day = '+usd(c.pool_day)+' ÷ '+(c.event_n||'?')+' ÷ 2')+'</div>';
  (c.orders||[]).forEach(function(o){
-  h+='<div>'+(o.decoy?'decoy ':'exit ')+o.qty+' @ '+pc(o.price)+(o.ticks?', '+o.ticks+' tick'+(o.ticks>1?'s':'')+' behind':', at the touch')+': '+(o.qualifies?bPct(o.share)+' of the side × '+(pool==null?'?':usd(pool))+' = <b>'+usd(o.est)+'/day</b>':'<span class="warn">earning nothing</span>')+'</div>';
+  h+='<div>'+(o.decoy?'decoy ':'exit ')+o.qty+' @ '+pc(bTerms(r,o.price))+(o.ticks?', '+o.ticks+' tick'+(o.ticks>1?'s':'')+' behind':', at the touch')+': '+(o.qualifies?bPct(o.share)+' of the side × '+(pool==null?'?':usd(pool))+' = <b>'+usd(o.est)+'/day</b>':'<span class="warn">earning nothing</span>')+'</div>';
  });
- if(c.touch)h+='<div class="muted">the whole lot at the touch ('+pc(c.touch.price)+') would take '+bPct(c.touch.share)+' = '+usd(c.touch.est)+'/day</div>';
+ if(c.touch)h+='<div class="muted">the whole lot at the touch ('+pc(bTerms(r,c.touch.price))+') would take '+bPct(c.touch.share)+' = '+usd(c.touch.est)+'/day</div>';
  return h;
 }
 function bSniper(r,b,sw){
@@ -925,6 +928,15 @@ function bBuyAt(r){
  h+=bField('bbq-'+m,bKeep('bbq-'+m),'5em')+' shares at '+bField('bbp-'+m,bKeep('bbp-'+m),'5em')+'¢ '+bBtn('Buy','bBuy(\''+m+'\')');
  return '<div class="sub">'+h+'</div>';
 }
+function bSellLadder(r){
+ var bk=r.book;if(!bk||!(r.qty>0.005))return '';
+ var bids=bk.bids||[];if(!bids.length)return '';
+ var m=esc(r.market);var cost=r.cost_px||0;var cum=0;var rows=0;
+ var h='<div class="sub"><b>Sell into the bids</b> — take the buyers resting there, best first, out to a price (our exit comes off first):</div><table><tr><th class="r">bid</th><th class="r">avail</th><th class="r">you sell</th><th class="r">proceeds</th><th class="r">vs cost</th><th></th></tr>';
+ bids.forEach(function(b){var px=b[0],q=b[1]-(b[2]||0);if(q<=0)return;cum+=q;var sell=Math.min(Math.floor(cum),Math.floor(r.qty));if(sell<1)return;var pr=sell*px;var pnl=(px-cost)*sell;var ok=px>cost+1e-9;rows++;
+  h+='<tr><td class="r">'+pc(px)+'</td><td class="r">'+q.toFixed(1)+'</td><td class="r">'+sell+'</td><td class="r">'+usd(pr)+'</td><td class="r '+(pnl>=0?'ok':'warn')+'">'+(pnl>=0?'+':'−')+usd(Math.abs(pnl))+'</td><td>'+(ok?bBtn('Sell','bSellInto(\''+m+'\','+px+','+sell+','+pr.toFixed(2)+')'):'<span class="muted">under cost</span>')+'</td></tr>';});
+ return rows?h+'</table>':'';
+}
 function bBait(r){
  var bt=r.bait||{};var m=esc(r.market);
  var h='<b>Bait</b> — one share a tick inside their best on the buy side, to pull their offers up:<br>';
@@ -945,7 +957,7 @@ function bRow(r,d,b,sw,held){
  var h='<div style="margin:8px 0;border-top:1px solid #2c3527;padding:6px 0 0 8px;border-left:4px solid '+(held?(black?'#7fd77f':'#2c3527'):'transparent')+'">'+bTop(r,L,held);
  h+='<details'+open+' ontoggle="bTog(this,\''+m+'\')"><summary style="font-size:16px;padding:8px 0;cursor:pointer">Details</summary>';
  h+=bBook(r);
- if(held)h+=bCalc(r)+bSniper(r,b,sw)+bExitAt(r)+bMore(r,b,sw)+bBait(r);
+ if(held)h+=bCalc(r)+bSniper(r,b,sw)+bExitAt(r)+bSellLadder(r)+bMore(r,b,sw)+bBait(r);
  h+=bLadder(r,b);
  if(!r.odds_changed)h+=bBuyAt(r);
  h+='<div>'+bBtn('Remove from list','if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')','off')+'</div>';

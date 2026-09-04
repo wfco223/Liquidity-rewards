@@ -61,7 +61,12 @@ long and accreted, so search it rather than reading it through.
   a limit SELL of held stock priced AT the current bid (never worse),
   only when the spread is ≤2 ticks, only up to the bid's displayed size,
   never below model fair − 3 ticks, exits cancelled first, capped per
-  family per day (politics $50, cfb $10). Nothing else may cross.
+  family per day (politics $50, cfb $10). The bond rail (owner's tap
+  only) is the other: it opens a bond at the touch not ours (Enter,
+  2026-09-02) and closes one into it (2026-09-04, "sell my mass gov rep
+  shares to the orders resting at 98 cents"), each level at its own
+  price, never more than it shows, never under cost with fees, our own
+  exits pulled first. Nothing else may cross.
 - NO SCHEDULED GitHub Actions (owner, 2026-08-24: "remove the GitHub
   automation. It keeps running and I keep getting emails"). Every cron
   workflow is deleted; the monitor writes rewards.csv, fills.csv,

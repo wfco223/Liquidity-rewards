@@ -249,6 +249,9 @@ class Bonds:
         # exit a position at a given price if it is higher than my
         # cost"): the whole lot rests there, pinned, until he clears it
         self.exit_px: dict[str, dict] = {}     # slug -> {px (YES terms), bond_px, since, by}
+        # a sale by his hand the position feed has not shown yet: the
+        # sync must not hand the sold shares back meanwhile
+        self._await_drop: dict[str, tuple] = {}   # slug -> (qty sold, since)
 
     # ------------------------------------------------------------ helpers
 
@@ -276,7 +279,10 @@ class Bonds:
                 continue
             if book_side is not None and o.side != book_side:
                 continue
-            is_decoy = str(o.why or "").startswith("bond decoy")
+            why = str(o.why or "")
+            if why.startswith(("bond: sold", "bond: took")):
+                continue          # a filled take, kept for the journal — not resting
+            is_decoy = why.startswith("bond decoy")
             if decoy is not None and is_decoy != decoy:
                 continue
             out.append(o)
@@ -685,6 +691,16 @@ class Bonds:
             ledger = self.held(slug, side)
             exch = self.exchange_held(slug, side, positions)
             self.exch_max[slug] = max(self.exch_max.get(slug, 0.0), exch)
+            drop = self._await_drop.get(slug)
+            if drop:
+                # he sold by hand and the record booked it; until the
+                # feed shows the smaller position (or the grace runs
+                # out) the sold shares are not "more on the exchange"
+                dq, since = float(drop[0]), float(drop[1])
+                if exch <= ledger + 0.5 or now - since > TRIM_GRACE_S:
+                    self._await_drop.pop(slug, None)
+                else:
+                    exch = max(exch - dq, 0.0)
             if exch > ledger + 0.5:
                 # counted in only where the bond side is already in:
                 # from his first purchase until he holds nothing there
@@ -1107,6 +1123,150 @@ class Bonds:
                 self._log(event="buy_pulled", market=slug, price=o.price, qty=o.qty)
         return {"ok": got > 0, "note": (f"pulled {got} order{'s' if got != 1 else ''}"
                                         if got else "no buy of yours resting here")}
+
+    def _pull_exits(self, slug: str, side: str) -> int:
+        """Our exit, decoy and pinned orders on the earn side come off
+        before a sale by his hand: what he sells must not be offered
+        twice. The next pass rests a right-sized exit."""
+        bs, _ = self.earn(side)
+        n = 0
+        for o in self._orders(slug, bs):
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if r.ok:
+                self.fam.orders.pop(o.id, None)
+                n += 1
+        if n:
+            self._log(event="exits_pulled", market=slug, n=n,
+                      note="pulled ahead of a sale by hand; a right-sized exit "
+                           "rests on the next pass")
+        return n
+
+    def sell_into(self, slug: str, price, qty, now: float,
+                  positions: dict | None = None) -> dict:
+        """His sale into the bids (owner, 2026-09-04: "I want the ability
+        to sell my mass gov rep shares to the orders resting at 98
+        cents"): the buyers resting on the exit side are taken from the
+        best price out to his, each level at its own price and never
+        more than it shows, never under his cost with fees, never more
+        than he holds. Our own exits come off first; the record books
+        each sale; the proceeds join the cash."""
+        if slug not in self._working():
+            return {"ok": False, "note": "not on the bond list"}
+        side = self._side_of(slug)
+        held0 = self.held(slug, side)
+        if held0 < 1.0:
+            return {"ok": False, "note": "nothing held here"}
+        try:
+            bp = float(price)
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "out to which price?"}
+        if bp > 1.0:
+            bp = bp / 100.0                          # typed in cents
+        if not (0.001 <= bp <= 0.999):
+            return {"ok": False, "note": "price must be 0.1c to 99.9c"}
+        try:
+            want = (float(math.floor(float(qty))) if qty not in (None, "")
+                    else float(math.floor(held0)))
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "how many shares?"}
+        want = min(want, float(math.floor(held0)))
+        if want < 1.0:
+            return {"ok": False, "note": "at least one share"}
+        cb = self.cost_basis(slug, side)
+        if cb > 0 and bp <= cb + 1e-9:
+            return {"ok": False, "note": f"{bp * 100:.1f}c is not above your cost "
+                                         f"({cb * 100:.1f}c a share with fees)"}
+        self._pull_exits(slug, side)
+        bs, intent = self.earn(side)
+        far = "BUY" if side == "YES" else "SELL"      # the side we hit: their bids for the bond
+        sold = usd = fees = 0.0
+        lots = 0
+        last = None
+        stop = ""
+        for _ in range(ENTER_MAX_LEVELS):
+            if want - sold < 1.0:
+                break
+            try:
+                book = self.client.book(slug, fetched_at=now)
+            except Exception as e:  # noqa: BLE001
+                stop = f"could not read the book: {str(e)[:80]}"
+                break
+            self.fam.cache.put(slug, book)
+            lv = self._others(slug, far, book)
+            if not lv:
+                stop = "nobody is bidding"
+                break
+            p, q = lv[0]
+            bond_p = p if side == "YES" else round(1.0 - p, 4)
+            if bond_p < bp - 1e-9:
+                stop = f"the best bid left is {bond_p * 100:g}c, under your {bp * 100:g}c"
+                break
+            if bond_p <= cb + 1e-9:
+                stop = f"the best bid left, {bond_p * 100:g}c, is not above your cost"
+                break
+            if last is not None and abs(p - last[0]) < 1e-9 and q >= last[1] - 1e-9:
+                stop = "the book did not move"
+                break
+            last = (p, q)
+            take = float(min(math.floor(q), want - sold))
+            if take < 1.0:
+                break
+            blocked, cleared = self._clear_way(slug, far, p, now)
+            if blocked:
+                stop = blocked
+                break
+            if cleared:
+                last = None                          # the book changed under us: price it again
+                continue
+            pos = float(((positions or {}).get(slug) or (0.0, 0.0))[0]) if positions else float(
+                (self.fam.inventory.get(slug) or {}).get("qty") or 0.0)
+            r = self.fam.desk.place_resting(slug, bs, p, take, net_position=pos,
+                                            initiator="owner", intent=intent,
+                                            taker="bond", verify=False)
+            if not (r.ok and r.order_id):
+                stop = f"the exchange refused: {r.note[:100]}"
+                break
+            filled, fill_px, fee, note = self._filled(r.order_id, take, (r.price or p), slug)
+            if filled < 0.01:
+                stop = "the exchange shows no fill" + (f"; {note}" if note else "")
+                self._log(event="sale_unfilled", market=slug, side=side, price=p,
+                          qty=take, order_id=r.order_id, note=stop)
+                break
+            per = fill_px if side == "YES" else round(1.0 - fill_px, 4)
+            proceeds = round(filled * per, 4)
+            cost = self._unbook_lot(slug, side, filled)
+            self.cash = round(self.cash + proceeds - fee, 4)
+            self.realized = round(self.realized + proceeds - fee - cost, 4)
+            self.sold_usd = round(self.sold_usd + proceeds, 4)
+            self.fam.orders[r.order_id] = FamilyOrder(
+                id=r.order_id, market=slug, side=bs, price=fill_px, qty=filled,
+                intent=(r.intent or intent), placed_ts=now, purpose="bond",
+                why=f"bond: sold {filled:g} {side} into the bids at {per * 100:g}c by you")
+            self._log(event="sold_into", market=slug, side=side, price=per, qty=filled,
+                      proceeds=round(proceeds, 2), fee=round(fee, 4),
+                      gain=round(proceeds - fee - cost, 2), order_id=r.order_id,
+                      **({"note": note} if note else {}))
+            sold += filled
+            usd += proceeds
+            fees += fee
+            lots += 1
+        # the exit came off by our hand and the position fell by his
+        # sale: the next pass must not read that as the exit filling,
+        # nor hand the sold shares back while the feed catches up
+        self._earn_seen[slug] = sum(o.qty for o in self._orders(slug, bs, decoy=False))
+        self._exch_seen[slug] = max(self._exch_seen.get(slug, 0.0) - sold, 0.0)
+        if sold > 0.005:
+            prev = self._await_drop.get(slug)
+            self._await_drop[slug] = (round(sold + (float(prev[0]) if prev else 0.0), 4),
+                                      round(now, 1))
+        if sold < 0.5:
+            return {"ok": False, "note": f"nothing sold — {stop or 'no bids at or above that price'}"}
+        left = self.held(slug, side)
+        return {"ok": True,
+                "note": f"sold {sold:g} {side} in {lots} lot{'s' if lots != 1 else ''} for "
+                        f"${usd:,.2f} ({usd / sold * 100:.1f}c a share, ${fees:,.2f} "
+                        f"commission); {left:g} left, ${self.cash:,.2f} of proceeds waiting"
+                        + (f" — stopped: {stop}" if (stop and left >= 1.0 and sold < want) else "")}
 
     def set_budget(self, amount) -> dict:
         try:
@@ -2787,6 +2947,7 @@ class Bonds:
                 "cost_src": self.cost_src, "unconfirmed": self.unconfirmed,
                 "more_retry": self._more_retry,
                 "exit_px": self.exit_px,
+                "await_drop": {k: list(v) for k, v in self._await_drop.items()},
                 "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -2888,6 +3049,9 @@ class Bonds:
         self._more_retry = {str(k): float(v) for k, v
                             in (d.get("more_retry") or {}).items()}
         self.exit_px = {str(k): dict(v) for k, v in (d.get("exit_px") or {}).items()}
+        self._await_drop = {str(k): (float(v[0]), float(v[1])) for k, v
+                            in (d.get("await_drop") or {}).items()
+                            if isinstance(v, (list, tuple)) and len(v) == 2}
         # an empty ledger while the exchange last showed bond stock is
         # the 2026-09-04 wipe: the first sync claims everything back at
         # the record's cost, and the outside-money figure is re-seeded
