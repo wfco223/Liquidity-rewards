@@ -5310,3 +5310,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788500292.8,politics,ussewc-usse-ky-2026-11-03-rep,SELL,-0.95,0.95,fix,0.0833,6.94,0.99665,91,93,0.908,0.93,0.94,0.0467,36.95,size trimmed by 0.95 to the exchange's count (order C8SYMEY7GMVG),C8SYMEY7GMVG
 1788500292.8,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,void,0,0,0.989475,96,99,0.362,0.96,0.97,0.0295,0,voided: the exchange has no trade for order C9DT66KB6MW1 — the row of 09-04 04:2,C9DT66KB6MW1
 1788500292.8,politics,usgubewc-usgub-wy-2026-11-03-rep,SELL,1,0.98,void,0,0,0.99985,98,99,0.34,0.98,0.99,0.0199,0,voided: the exchange has no trade for order C9E20MBXJMVZ — the row of 09-04 04:4,C9E20MBXJMVZ
+1788501132.8,politics,ewc-usp-2028-11-07-tuccar,SELL,39,0.02,sell,0,0,,2,6,0.005,0.02,0.03,0.02,48,taker dump — sold into the bid (the carved exception),C9EZ7XF1YMVG
+1788503712.9,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,sell,0,0,0.989475,96,99,0.352,0.96,0.97,0.0295,0,taker dump — sold into the bid (the carved exception),C9FJ3MCA0MVF
+1788503797.5,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,8,0.8,backfill,,6.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C99QJEDWRMVR
+1788503892.9,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,-1.6,0.04,fix,0.0298,17.6,0.0018,5,9,0.632,0.03,0.09,0.0382,-3.4,size trimmed by 1.6 to the exchange's count (order C8SY2CNF4MVR),C8SY2CNF4MVR
+1788503892.9,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,-0.8,0.04,fix,,0.3,,,,,,,,,size trimmed by 0.8 to the exchange's count (order C8SY2CNF4MVR),C8SY2CNF4MVR
+1788503892.9,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,1,0.96,void,0,0,0.989475,96,99,0.357,0.96,0.97,0.0295,0,voided: the exchange has no trade for order C9EQZVQATMVP — the row of 09-04 05:3,C9EQZVQATMVP
+1788503892.9,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,8,0.8,backfill,,6.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C99QJEDWRMVR
+1788503892.9,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,20,0.88,backfill,,0.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9FE0EJKCMVR
+1788503894.4,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,20,0.88,backfill,,0.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9FE0EJKCMVR
