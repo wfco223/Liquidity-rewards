@@ -807,6 +807,12 @@ function render(d){
    out+='<div>Stay active until <input id="au-'+k+'" type="time" style="font-size:16px;padding:6px"> ET <select id="aud-'+k+'" style="font-size:16px;padding:6px"><option value="">today</option><option value="tomorrow">tomorrow</option></select> <button onclick="auSet(\\''+k+'\\')">Set</button></div>';
    out+='<div class="hint">Until that time the family rests its orders as in resting hours, whatever the window says. It clears itself when the time passes.</div>';
   }
+  if(s.graduation){var g=s.graduation;
+   out+='<div class="sub"><b>Graduation</b> \\u2014 a market that paid at least '+usd(g.bar_usd||0)+'/day on '+(g.days||0)+' of the last 7 days can leave this ceiling for the proven pool ('+usd(g.spent||0)+' of '+usd(g.pool_usd||0)+' in use'+(g.per_market_usd?', up to '+usd(g.per_market_usd)+' a market':'')+') \\u2014 only when you approve it.</div>';
+   if((g.graduated||[]).length){out+='<div class="sub">Graduated by you:</div>';g.graduated.forEach(function(m){out+='<div class="muted">'+esc(m.name||m.market)+' \\u2014 paid '+usd(m.avg||0)+'/day on '+(m.days||0)+' of 7 <button class="small off" onclick="gradOp(\\''+k+'\\',\\''+esc(m.market)+'\\',false)">Remove</button></div>';});}
+   if((g.candidates||[]).length){out+='<div class="sub">Met the bar, waiting for your approval:</div>';g.candidates.forEach(function(m){out+='<div class="muted">'+esc(m.name||m.market)+' \\u2014 paid '+usd(m.avg||0)+'/day on '+(m.days||0)+' of 7, since '+when(m.since)+' <button class="small" onclick="gradOp(\\''+k+'\\',\\''+esc(m.market)+'\\',true)">Approve</button></div>';});}
+   else if(!(g.graduated||[]).length){out+='<div class="muted">No market has met the bar yet.</div>';}
+  }
   var lg=(s.log||[]);
   if(lg.length){out+='<details class="how"><summary>last flips</summary>';
    lg.slice(-6).reverse().forEach(function(r){out+='<div class="muted">'+when(r.ts)+' \\u2014 '+esc(r.action)+'</div>';});
@@ -818,6 +824,7 @@ function render(d){
 function tap(op,which){post({op:'switch_'+op,which:which});}
 function auSet(k){var e=document.getElementById('au-'+k);var v=e?e.value:'';if(!v){alert('pick a time first');return;}var d=document.getElementById('aud-'+k);if(d&&d.value)v+=' '+d.value;post({op:'family_active_until',which:k,value:v});}
 function auClear(k){post({op:'family_active_until',which:k,value:''});}
+function gradOp(k,m,ok){if(ok&&!confirm('Graduate '+m+'? Its orders leave the '+k+' ceiling for the proven pool, up to the pool\\'s own cap.'))return;post({op:ok?'family_graduate':'family_ungraduate',which:k,market:m});}
 """
 
 BONDS_JS = r"""
@@ -1855,6 +1862,10 @@ class WebServer:
         if op == "family_active_until":
             return self.monitor.set_active_until(str(body.get("which") or ""),
                                                  body.get("value"))
+        if op in ("family_graduate", "family_ungraduate"):
+            return self.monitor.graduate(str(body.get("which") or ""),
+                                         str(body.get("market") or ""),
+                                         op == "family_graduate")
         if op == "refresh_rewards":
             return self.monitor.refresh_rewards()
         if op == "schedule_cancel":
