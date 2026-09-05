@@ -533,6 +533,12 @@ class Family:
         # market what the bond purchases are"): the engine quotes those
         # markets as normal and exits only the stock that is NOT bond
         self.bond_qty: dict[str, float] = {}
+        # the bond side's markets — its list and anything he holds a bond
+        # in (main sets it each cycle). Owner, 2026-09-05: "Bond markets
+        # cannot be graduated markets and do not count towards the
+        # politics budget" — orders there answer to the bond budget, not
+        # this family's ceiling, and never graduate
+        self.bond_markets: set[str] = set()
         self.priority: set = set()   # markets to re-check first
         self.pending_pages: list = []   # open fills awaiting a mark
         self.log: list[dict] = []
@@ -684,6 +690,7 @@ class Family:
         spent = sum(self._charge(o)
                     for o in list(self.orders.values())
                     if o.market not in self.proven
+                    and o.market not in self.bond_markets
                     and not self._owner_exit(o))
         if self.cfg.holdings_in_ceiling:
             spent += self.holdings_value()
@@ -695,7 +702,7 @@ class Family:
         the fill model believes."""
         g = risk.book_risk(risk.order_legs(
             o for o in list(self.orders.values())
-            if not self._owner_exit(o)))
+            if not self._owner_exit(o) and o.market not in self.bond_markets))
         if self.cfg.holdings_in_ceiling:
             g += self.holdings_value()
         return g
@@ -2796,6 +2803,7 @@ class Family:
                     # comparison have to be the same book.
                     search_orders = [o for o in list(self.orders.values())
                                      if o.market not in self.proven
+                                     and o.market not in self.bond_markets
                                      and o.purpose not in ("manual", "bond")]
                     if (self.family_spent() + plan_charge
                             > self.cfg.capital_usd + 1e-9):
@@ -2851,6 +2859,7 @@ class Family:
             cands = [o for o in list(self.orders.values())
                      if o.purpose not in ("sell", "manual", "bond")
                      and not o.pinned
+                     and o.market not in self.bond_markets   # not this ceiling's
                      and not self._frozen(o.market)]
             if not cands:
                 break
