@@ -3262,6 +3262,40 @@ class Monitor:
         except Exception as e:  # noqa: BLE001
             self._note(f"STATUS.md publish: {e}")
 
+    def _posting_progress(self, agg: dict, now: float) -> list[dict]:
+        """How much of what we estimated has the exchange posted yet
+        (owner, 2026-09-05: "a progress bar filling up as the percentage
+        of markets I estimated to be paid appear as pending rows").
+        Today and yesterday, ET: the markets whose orders ACCRUED an
+        estimate that day, against the market-days the exchange lists
+        for it in any status. A row is an appearance whether it reads
+        pending, paid or skipped — the bar measures the posting, the
+        grades page measures the money."""
+        from .estimator import et_day
+        out = []
+        for back in (0, 1):
+            day = et_day(now - back * 86400.0)
+            expected = {k.split("|", 1)[1] for k, v in self.mkt_claim_day.items()
+                        if k.startswith(day + "|") and (v or 0.0) > 0.005}
+            rows = {a["market"]: a for a in agg.values()
+                    if a.get("date") == day}
+            if not expected and not rows:
+                continue
+            hit = expected & set(rows)
+
+            def has(m: str, word: str) -> bool:
+                return any(word in str(s) for s in rows[m].get("status") or ())
+            out.append({
+                "day": day, "expected": len(expected), "appeared": len(hit),
+                "pct": (round(100.0 * len(hit) / len(expected))
+                        if expected else None),
+                "pending": sum(1 for m in hit if has(m, "PENDING")),
+                "paid": sum(1 for m in hit
+                            if has(m, "PAID") and not has(m, "PENDING")),
+                "extra": len(set(rows) - expected),
+            })
+        return out
+
     def refresh_rewards(self) -> dict:
         """Owner's button: pull the exchange's posted payouts now, show
         what is new since the last look, and fold the day totals into the
@@ -3288,6 +3322,11 @@ class Monitor:
             a["status"].add(r["status"])
             if r["status"] != "SKIPPED":
                 a["paid"] += r["reward_usd"]
+        try:
+            progress = self._posting_progress(agg, time.time())
+        except Exception as e:  # noqa: BLE001 — a bar never breaks the check
+            self._note(f"posting progress: {e}")
+            progress = []
         seen = self.rewards_seen
         fresh = []
         totals: dict[str, float] = {}
@@ -3364,6 +3403,7 @@ class Monitor:
             latest = max(totals) if totals else "?"
             self._note(f"rewards baseline: {len(rows)} rows through {latest}")
             return {"ok": True, "new_rows": [], "new_count": 0, "days": days,
+                    "progress": progress,
                     "note": (f"First check: I recorded a baseline of "
                              f"{len(rows):,} rows through {latest}. From "
                              f"now on this button shows only what is new.")}
@@ -3374,6 +3414,7 @@ class Monitor:
             latest = max(totals) if totals else "?"
             self._note(f"rewards baseline re-recorded ({len(fresh)} rows)")
             return {"ok": True, "new_rows": [], "new_count": 0, "days": days,
+                    "progress": progress,
                     "note": (f"The baseline was lost in a restart, so I "
                              f"re-recorded it ({len(rows):,} rows through "
                              f"{latest}). Press again later — only true "
@@ -3384,6 +3425,7 @@ class Monitor:
             latest = max(totals) if totals else "?"
             self._note(f"rewards baseline re-recorded ({len(fresh)} rows)")
             return {"ok": True, "new_rows": [], "new_count": 0, "days": days,
+                    "progress": progress,
                     "note": (f"I re-recorded the baseline "
                              f"({len(agg):,} market-days through {latest}). "
                              f"From here only true news shows.")}
@@ -3399,7 +3441,7 @@ class Monitor:
         self._note(f"rewards check: {len(shown)} new market-days shown, "
                    f"{len(fresh) - len(shown)} old strays absorbed")
         return {"ok": True, "new_rows": out_rows, "new_count": len(shown),
-                "days": days}
+                "days": days, "progress": progress}
 
     def _lite_study(self) -> dict:
         """Declared-anchor scoring study (owner, 2026-08-21): what each
