@@ -1134,3 +1134,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788612914.0,politics,ussewc-usse-or-2026-11-03-rep,BUY,10,0.04,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CA9GFCEQYMVR
 1788612914.0,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,9,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CA9GTGED6MW1
 1788612914.0,cfb,aachc-cfb-wins-2026-11-28-fl-5pt5wins,SELL,-0.02,0.75,fix,0,0,,69,77,0.254,0.75,0.77,-0.02,0,size trimmed by 0.02 to the exchange's count (order C9N8C9JGEMW1),C9N8C9JGEMW1
+1788613086.7,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,3,0.95,bond,2.0077,0.27,0.999575,,,0.402,,,-0.0496,12,bond more: split — 3 at 95c carry the share; never dearer than his first price,CA9DR4JG8MVY
+1788613086.7,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,6,0.87,bond,0,0.27,0.999575,,,0.402,,,-0.1296,18,bond more: split — the rest; 6 at 87c; cheaper,CA9BSS3JWMVG
+1788613086.7,politics,ussewc-usse-or-2026-11-03-rep,BUY,10,0.04,bond,0,0.09,0.0016,,,0.815,,,0.0384,-116,bond: sold 10 NO into the bids at 96c by you,CA9GFCEQYMVR
+1788613086.7,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,9,0.96,bond,0,0.1,0.999575,,,0.402,,,-0.0396,27,bond: took 9 YES at 96c — it was in the way of our resting order,CA9GTGED6MW1
+1788613232.6,politics,usgubewc-usgub-nm-2026-11-03-dem,BUY,-1,0.97,fix,1.2202,10,0.98535,93,97,0.461,0.96,0.97,-0.0153,16,size trimmed by 1 to the exchange's count (order CA11TJAFCMVG),CA11TJAFCMVG
+1788613232.6,politics,ussewc-usse-ky-2026-11-03-dem,SELL,0.68,0.06,backfill,,11.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9ZBC0CMTMVV
+1788613232.6,politics,ussewc-usse-or-2026-11-03-rep,SELL,0.48,0.05,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA8QBEGMTMVY
+1788613232.6,politics,usgubewc-usgub-nm-2026-11-03-dem,BUY,0.61,0.96,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA9G3PF56MVY
+1788613232.6,cfb,aachc-cfb-wins-2026-11-28-syra-4pt5wins,SELL,0.5,0.46,hand,,1.3,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C50YZYTQCKDM
