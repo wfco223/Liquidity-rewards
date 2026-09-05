@@ -1216,3 +1216,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788626849.6,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,2,0.04,manual,2.0066,0.3,0.0004,4,8,0.447,0.03,0.06,-0.0396,-381,the owner's own order — the engine leaves it alone,CACPKYP80MVF
 1788627761.3,politics,ewc-usgub-mi-2026-11-03-rep,SELL,10,0.1,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CACM1CRJ0MVK
 1788627780.0,politics,ewc-usgub-mi-2026-11-03-rep,SELL,10,0.1,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CACM1CRJ0MVK
+1788628539.1,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,20,0.07,bond,1.9184,1.17,0.009875,6,9,0.689,0.09,0.1,-0.0601,-147,bond more: split — 20 at 7c carry the share; never dearer than his first price,CACBXXC5PMVG
+1788628680.5,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,3,0.09,bond,0,0.04,0.009875,7,9,0.753,0.09,0.1,-0.0801,-150,bond: took 3 NO at 9c — it was in the way of our resting order,CADDTQN7AMVZ
+1788629654.1,politics,ewc-usgub-mi-2026-11-03-rep,SELL,-10,0.1,fix,1.5201,0.71,0.059775,5,10,0.165,0.11,0.12,-0.0402,-10,size trimmed by 10 to the exchange's count (order CACM1CRJ0MVK),CACM1CRJ0MVK
