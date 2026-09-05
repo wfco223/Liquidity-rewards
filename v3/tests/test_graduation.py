@@ -64,6 +64,23 @@ class TestGraduation(unittest.TestCase):
         self.assertTrue(self.mon.graduate("politics", C, True)["ok"])   # his call, bar or not
         self.assertIn(C, self.fam.proven)
 
+    def test_a_bond_market_never_graduates(self):
+        # owner, 2026-09-05: "Bond markets cannot be graduated markets"
+        self.fam.bond_markets = {A}
+        self.mon._refresh_graduation(self.fam, 1000.0)
+        self.assertEqual(set(self.fam.grad_candidates), {B})     # A met the bar but is a bond market
+        r = self.mon.graduate("politics", A, True)
+        self.assertFalse(r["ok"])
+        self.assertIn("bond market", r["note"])
+        self.assertTrue(self.mon.graduate("politics", B, True)["ok"])
+        self.assertEqual(self.fam.proven, {B})
+        # B becomes a bond market: it leaves the approved set by itself
+        self.fam.bond_markets = {A, B}
+        self.mon._refresh_graduation(self.fam, 2000.0)
+        self.assertEqual(self.fam.proven, set())
+        self.assertEqual(self.fam.grad_candidates, {})
+        self.assertIn("ungraduated", [e["event"] for e in self.fam.log])
+
     def test_the_switch_card_shows_both_lists(self):
         self.mon._refresh_graduation(self.fam, 1000.0)
         self.mon.graduate("politics", B, True)

@@ -1158,3 +1158,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788616964.7,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,0.33,0.8,backfill,,70.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8DCB2024MW0
 1788618832.4,politics,enwc-uspres-nom-dem-2028-andbes,SELL,0.96,0.06,backfill,,11.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA19F632JMVF
 1788618844.5,politics,enwc-uspres-nom-dem-2028-andbes,SELL,0.96,0.06,backfill,,11.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA19F632JMVF
+1788618965.3,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,0.9,0.66,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CAB1WGMP4MVY
+1788618965.3,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,0.1,0.66,hand,,10.87,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CA1RF7TMMMVV
+1788618992.5,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,1,0.67,sell,0.0061,10.67,,,,0.404,,,,0,selling filled stock — it earns while it waits,CA1YWJ1ZAMVZ
+1788619134.3,politics,enwc-uspres-nom-dem-2028-andbes,SELL,-0.96,0.06,fix,0.6447,11.41,0.09,6,9,0.863,0.03,0.06,0.03,113.04,size trimmed by 0.96 to the exchange's count (order CA19F632JMVF),CA19F632JMVF
+1788619134.3,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,0.9,0.66,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CAB1WGMP4MVY
+1788619134.3,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,0.1,0.66,hand,,10.87,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CA1RF7TMMMVV
+1788620157.8,politics,ussewc-usse-ma-2026-11-03-rep,SELL,10,0.03,manual,0.2815,0.41,0.000225,1,3,0.063,0.02,0.03,-0.0298,-10,the owner's own order — the engine leaves it alone,CAAYTY6JEMVZ
+1788621050.0,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,1,0.67,void,0.0061,10.67,,,,0.404,,,,0,voided: the exchange has no trade for order CA1YWJ1ZAMVZ — the row of 09-05 14:3,CA1YWJ1ZAMVZ
