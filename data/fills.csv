@@ -1166,3 +1166,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788619134.3,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,0.1,0.66,hand,,10.87,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CA1RF7TMMMVV
 1788620157.8,politics,ussewc-usse-ma-2026-11-03-rep,SELL,10,0.03,manual,0.2815,0.41,0.000225,1,3,0.063,0.02,0.03,-0.0298,-10,the owner's own order — the engine leaves it alone,CAAYTY6JEMVZ
 1788621050.0,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,1,0.67,void,0.0061,10.67,,,,0.404,,,,0,voided: the exchange has no trade for order CA1YWJ1ZAMVZ — the row of 09-05 14:3,CA1YWJ1ZAMVZ
+1788621422.7,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,20,0.25,earn,0.129,1,0.21875,21,26,0.505,0.25,0.27,-0.0312,-22,1 tick behind the touch — we would hold 4% of the ask side,CAAP3QK3JMVK
+1788621486.4,politics,ussewc-usse-or-2026-11-03-rep,BUY,17,0.0411,bond,0,0.01,0.0016,4,6,0.826,0.02,0.04,0.0384,-99,bond: sold 17 NO into the bids at 96c by you · price corrected to 4.11c from the,CABQ54QA4MVY
+1788621486.4,politics,ussewc-usse-ky-2026-11-03-dem,BUY,6,0.05,bond,0,0.01,0.00285,5,7,0.843,0.04,0.07,0.0472,-87,bond: sold 6 NO into the bids at 95c by you,CABQ54Y5CMVY
+1788621486.4,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,24,0.05,bond,0,0,0.0004,2,6,0,0.04,0.06,-0.0496,-379,bond: took 24 NO at 5c — it was in the way of our resting order,CABQCHSZEMVZ
+1788621555.4,politics,usgubewc-usgub-ma-2026-11-03-dem,SELL,0.02,0.96,hand,,0.22,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CABH6D9DAMVZ
+1788621671.6,politics,ussewc-usse-or-2026-11-03-rep,BUY,99,0.0395,bond,0,0.02,0.0016,4,6,0.848,0.01,0.04,0.0384,0,bond: sold 99 NO into the bids at 96c by you · price corrected to 3.95c from the,CABQ91830MVK
+1788621815.3,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,2,0.9,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CABQWJ3M6MW0
+1788621819.7,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,2.14,0.91,backfill,,2.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA9FCXZNEMW1
+1788621869.1,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,6,0.9,bond,0,0.02,0.990125,91,95,0.56,0.89,0.91,-0.0901,216,bond: took 8 YES at 90c — it was in the way of our resting order,CABQWJ3M6MW0
+1788621869.1,politics,ussewc-usse-ky-2026-11-03-rep,BUY,1,0.94,bond,0,0.02,0.99715,92,95,0.641,0.93,0.95,-0.0572,143,bond: took 1 YES at 94c — it was in the way of our resting order,CABRWMVT0MVR
+1788622094.8,politics,ussewc-usse-ky-2026-11-03-rep,BUY,0.01,0.93,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CABRWMWA6MVR
+1788622133.6,politics,ussewc-usse-or-2026-11-03-rep,BUY,17,0.0411,fix,0,0.01,0.0016,4,6,0.826,0.02,0.04,0.0384,-99,price corrected 4c -> 4.11c per the exchange record (order CABQ54QA4MVY),CABQ54QA4MVY
+1788622133.6,politics,ussewc-usse-or-2026-11-03-rep,BUY,99,0.0395,fix,0,0.02,0.0016,4,6,0.848,0.01,0.04,0.0384,0,price corrected 4c -> 3.95c per the exchange record (order CABQ91830MVK),CABQ91830MVK
+1788622133.6,politics,ussewc-usse-va-2026-11-03-rep,SELL,0.1,0.25,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C89M25AFMMVZ
+1788622133.6,politics,usgubewc-usgub-ma-2026-11-03-dem,SELL,0.02,0.96,hand,,0.22,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CABH6D9DAMVZ
+1788622133.6,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,2,0.9,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CABQWJ3M6MW0
+1788622133.6,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,2.14,0.91,backfill,,2.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA9FCXZNEMW1
+1788622133.6,politics,ussewc-usse-ky-2026-11-03-rep,BUY,0.01,0.93,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CABRWMWA6MVR
