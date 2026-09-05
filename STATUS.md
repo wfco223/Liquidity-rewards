@@ -1,8 +1,8 @@
 # Liquidity rewards — 3.0
 
-✅ Updated Sep 05, 06:33 PM ET — the app writes this file every hour.
+✅ Updated Sep 05, 07:43 PM ET — the app writes this file every hour.
 
-Memory: 426 MB in use. The six-hour fetches are the peaks; discovery and the survey refetch now run three hours apart.
+Memory: 475 MB in use. The six-hour fetches are the peaks; discovery and the survey refetch now run three hours apart.
 
 - **Politics**: about $0.00/day resting ($54.38 accrued today), 0 orders, $0.00 of $250 at risk.
 - **College football**: about $0.00/day resting ($7.27 accrued today), 0 orders, $11.50 of $100 at risk — includes holdings worth $11.50 at liquidation.
