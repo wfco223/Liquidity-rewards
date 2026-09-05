@@ -783,6 +783,8 @@ function render(d){
 SWITCH_JS = """
 function render(d){
  var sv=(d.switch_view||{});var out='';
+ var ph=d.place_health||{};
+ if(ph.blocked){var t=new Date((ph.since||0)*1000);out+='<div class="card"><div class="warn"><b>The exchange is refusing this server\\'s orders</b> \\u2014 "your connection looks like a VPN", since '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+', '+(ph.refused||0)+' refused.</div><div class="muted">Nothing is cancelled that could not come back: moves, step-ups and re-prices are paused; one placement a minute probes for recovery. Cancels that only reduce risk still run. The fix is a new outbound address: tap Deploy on DigitalOcean.</div></div>';}
  var order=['master'];for(var k in sv){if(k!=='master')order.push(k);}
  order.forEach(function(k){
   var s=sv[k]||{};var label=(k==='master'?'Master switch \\u2014 all of 3.0':k+' switch');

@@ -1963,6 +1963,13 @@ class Bonds:
         self._bp = (float(bp), now)
         return float(bp)
 
+    def _placing_blocked(self) -> bool:
+        """The exchange is refusing placements (2026-09-05, the VPN flag):
+        a bid pulled to be moved would not come back, so the rail holds
+        its orders where they are until a placement lands."""
+        h = getattr(self.fam.desk, "health", None)
+        return bool(h is not None and h.blocked())
+
     def _pull_more(self, slug: str, why: str) -> None:
         for o in self._more_orders(slug):
             r = self.fam.desk.cancel(o.id, slug, initiator="owner")
@@ -2019,6 +2026,8 @@ class Bonds:
             if (share + 1e-9 >= MORE_SHARE and abs(o.qty - want_qty) < 1.0
                     and not cheaper):
                 return None
+            if self._placing_blocked():
+                return None         # a move today is a pull with no put-back
             if slot is None:
                 self._pull_more(slug, f"no price inside the cap captures "
                                       f"{MORE_SHARE:.0%} of the side now")
