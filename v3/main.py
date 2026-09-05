@@ -1491,6 +1491,63 @@ class Monitor:
         self.store.save_remote(st)
         return {"ok": True, "note": note, "active_until": fam.active_until}
 
+    @staticmethod
+    def _refresh_graduation(fam, now: float) -> None:
+        """The rule names the candidates — paid at least graduate_paid_usd
+        a day on graduate_days of the last 7 — and they wait for the
+        owner's tap; the proven pool is exactly what he approved."""
+        cands: dict = {}
+        for mkt, (avg, nd) in getattr(fam, "recent_paid", {}).items():
+            if (avg >= fam.cfg.graduate_paid_usd and nd >= fam.cfg.graduate_days
+                    and mkt not in fam.graduated):
+                old = fam.grad_candidates.get(mkt) or {}
+                cands[mkt] = {"avg": round(float(avg), 2), "days": int(nd),
+                              "since": old.get("since") or round(now, 1)}
+        fam.grad_candidates = cands
+        fam.proven = set(fam.graduated)
+
+    def graduate(self, which: str, slug: str, approve: bool) -> dict:
+        """The owner's tap (2026-09-05: "they can accumulate and only
+        graduate on my approval"): a market joins the proven pool — its
+        orders leave the family's expected-risk ceiling for the pool's
+        own cap — or an approved one leaves it. Audited and persisted
+        like a switch flip."""
+        fam = self.families.get(which)
+        if fam is None:
+            return {"ok": False, "note": f"no family called {which}"}
+        slug = str(slug or "").strip()
+        if not slug:
+            return {"ok": False, "note": "which market?"}
+        now = time.time()
+        if approve:
+            if slug in fam.graduated:
+                return {"ok": True, "note": f"{fam._label(slug)} is already graduated"}
+            if slug not in fam.grad_candidates and not fam.knows(slug):
+                return {"ok": False, "note": f"{slug} is not one of {fam.cfg.name}'s markets"}
+            fam.graduated.add(slug)
+            fam.grad_candidates.pop(slug, None)
+            note = (f"{fam.cfg.name}: {fam._label(slug)} graduated — its orders "
+                    f"now draw on the proven pool")
+        else:
+            if slug not in fam.graduated:
+                return {"ok": False, "note": f"{fam._label(slug)} is not graduated"}
+            fam.graduated.discard(slug)
+            note = f"{fam.cfg.name}: {fam._label(slug)} back under the family ceiling"
+        fam.proven = set(fam.graduated)
+        fam._log(event="graduated" if approve else "ungraduated", market=slug,
+                 note="by the owner, from the switch page")
+        self._audit({"op": "graduate" if approve else "ungraduate", "family": which,
+                     "market": slug, "initiator": "owner", "ts": now})
+        self._note(note)
+        st = dict(self.last_state) if self.last_state else {}
+        st[f"fam_{which}"] = fam.to_dict()
+        st["saved_at"] = now
+        self.last_state = st
+        self.freeze_payload()
+        self.store.save_local(st)
+        self.store.save_remote(st)
+        return {"ok": True, "note": note, "graduated": sorted(fam.graduated)}
+
     def _fair_for(self, slug: str) -> float | None:
         """One fair per market: the OWNER'S number when he has set one,
         else the model's. Every consumer of fair — the past-fair caps,
@@ -3704,6 +3761,22 @@ class Monitor:
         s["has_window"] = bool(fam.cfg.rest_from is not None and fam.cfg.rest_until is not None)
         s["resting_now"] = bool(resting_ok(now, fam.cfg))
         s["active_until"] = au if au > now else 0.0
+        if fam.cfg.proven_usd > 0:
+            paid = getattr(fam, "recent_paid", {}) or {}
+
+            def stats(m: str) -> dict:
+                avg, nd = paid.get(m, (0.0, 0))
+                return {"avg": round(float(avg), 2), "days": int(nd)}
+            s["graduation"] = {
+                "graduated": [{"market": m, "name": fam._label(m), **stats(m)}
+                              for m in sorted(fam.graduated)],
+                "candidates": [{"market": m, "name": fam._label(m), **v}
+                               for m, v in sorted(fam.grad_candidates.items(),
+                                                  key=lambda kv: -float(kv[1].get("avg") or 0.0))],
+                "bar_usd": fam.cfg.graduate_paid_usd, "days": fam.cfg.graduate_days,
+                "pool_usd": fam.cfg.proven_usd,
+                "per_market_usd": fam.cfg.proven_per_market_usd,
+                "spent": round(fam.proven_spent(), 2)}
         return s
 
     # what the phone pages actually read. The old payload shipped the
@@ -4041,12 +4114,12 @@ class Monitor:
             if fam.cfg.proven_usd > 0:
                 # graduation takes STABILITY and HIGH EARNINGS (owner,
                 # 2026-08-22): paid on 3+ of the last 7 days, averaging
-                # at least the bar — no reaching back to the old era
-                fam.proven = {
-                    mkt for mkt, (avg, nd)
-                    in getattr(fam, "recent_paid", {}).items()
-                    if avg >= fam.cfg.graduate_paid_usd
-                    and nd >= fam.cfg.graduate_days}
+                # at least the bar — and, since 2026-09-05, HIS APPROVAL
+                # ("they can accumulate and only graduate on my
+                # approval"): the rule names candidates, a tap on the
+                # switch page graduates one, the proven pool is the
+                # approved set
+                self._refresh_graduation(fam, now)
             on = self.master.on and self.switches[key].on and self._floor_ok
             foreign = {oid for k2, f2 in self.families.items() if k2 != key
                        for oid in f2.orders}
@@ -4056,7 +4129,9 @@ class Monitor:
                                            self.client, on,
                                            foreign_ids=foreign,
                                            exits_only=exits_only,
-                                           trades=trades_by_oid)
+                                           trades=trades_by_oid,
+                                           money_out=(getattr(self.bonds, "money_out", None)
+                                                      is not None))
                 summaries[key]["name"] = fam.cfg.name
                 est = self.samplers[key]
                 summaries[key]["earned_today"] = round(est.earned, 2)
