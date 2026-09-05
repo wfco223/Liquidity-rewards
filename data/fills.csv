@@ -5417,3 +5417,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788584610.4,cfb,aachc-cfb-wins-2026-11-28-utah-10pt5wins,BUY,1,0.41,hand,,0.22,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C5GFNV428KDM
 1788584610.4,cfb,aachc-cfb-wins-2026-11-28-tenn-8pt5wins,BUY,0.19,0.45,hand,,7.89,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C5AKF7Q2AKDK
 1788584610.4,cfb,aachc-cfb-wins-2026-11-28-stan-3pt5wins,BUY,0.13,0.58,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA25TVBGCMVF
+1788584739.2,politics,ussewc-usse-or-2026-11-03-rep,SELL,3.68,0.07,bond,3.125,0.62,0.0016,4,6,0.768,0.03,0.07,-0.0684,-101.68,bond more: buying up to $23.75 more; never dearer than his first price — 45% of ,CA2B7AE3WMVR
+1788587182.3,politics,enwc-uspres-nom-dem-2028-andbes,SELL,2,0.06,sell,0.983,2.61,0.09,5,8,0.793,0.03,0.06,0.03,195,hand-set from the live card — the engine holds off,CA19F632JMVF
+1788587923.9,cfb,aachc-cfb-wins-2026-11-28-washst-4pt5wins,BUY,0.5,0.79,earn,4.4987,1.56,,72,80,0,0.8,0.81,0.02,0.5,1 tick behind the touch — we would hold 1% of the bid side,CA2A4H01GMVK
+1788588309.3,politics,usgubewc-usgub-id-2026-11-03-rep,BUY,-0.01,0.85,fix,0,0.02,0.9992,91,95,0.628,0.6,0.85,-0.1492,48,size trimmed by 0.01 to the exchange's count (order C9M6Z5BM6MVP),C9M6Z5BM6MVP
