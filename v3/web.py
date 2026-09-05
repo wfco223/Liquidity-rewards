@@ -804,7 +804,7 @@ function render(d){
   if(s.has_window){
    var au=s.active_until||0;var live=au>Date.now()/1000;
    out+='<div class="sub">Game window: '+(s.resting_now?'resting hours now':(live?'<b>kept active until '+when(au)+' by you</b>':'<span class="warn">orders pulled now \\u2014 game window</span>'))+(live?' <button class="off" onclick="auClear(\\''+k+'\\')">Clear</button>':'')+'</div>';
-   out+='<div>Stay active until <input id="au-'+k+'" type="time" style="font-size:16px;padding:6px"> ET today <button onclick="auSet(\\''+k+'\\')">Set</button></div>';
+   out+='<div>Stay active until <input id="au-'+k+'" type="time" style="font-size:16px;padding:6px"> ET <select id="aud-'+k+'" style="font-size:16px;padding:6px"><option value="">today</option><option value="tomorrow">tomorrow</option></select> <button onclick="auSet(\\''+k+'\\')">Set</button></div>';
    out+='<div class="hint">Until that time the family rests its orders as in resting hours, whatever the window says. It clears itself when the time passes.</div>';
   }
   var lg=(s.log||[]);
@@ -816,7 +816,7 @@ function render(d){
  return out;
 }
 function tap(op,which){post({op:'switch_'+op,which:which});}
-function auSet(k){var e=document.getElementById('au-'+k);var v=e?e.value:'';if(!v){alert('pick a time first');return;}post({op:'family_active_until',which:k,value:v});}
+function auSet(k){var e=document.getElementById('au-'+k);var v=e?e.value:'';if(!v){alert('pick a time first');return;}var d=document.getElementById('aud-'+k);if(d&&d.value)v+=' '+d.value;post({op:'family_active_until',which:k,value:v});}
 function auClear(k){post({op:'family_active_until',which:k,value:''});}
 """
 

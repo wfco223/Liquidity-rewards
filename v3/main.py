@@ -1404,16 +1404,47 @@ class Monitor:
     @staticmethod
     def _et_today(hhmm: str, now: float) -> float | None:
         """An ET clock time today ("17:00") as an epoch, or None."""
+        return Monitor._et_at(hhmm, now)
+
+    @staticmethod
+    def _et_at(value, now: float) -> float | None:
+        """An ET clock time as an epoch: "17:00" is today, "17:00 tomorrow"
+        (or "tomorrow 17:00") is tomorrow, "2026-09-06 17:00" is that day
+        (owner, 2026-09-05: "set the college football to be active until a
+        time tomorrow. It looks like I can only have it active today").
+        None when it cannot be read."""
         import datetime as _dt
+        import re as _re
         from .family import ET
+        days = 0
+        date = None
+        clock = []
+        for p in str(value or "").strip().lower().split():
+            if p == "tomorrow":
+                days = 1
+            elif p == "today":
+                days = 0
+            elif _re.fullmatch(r"\d{4}-\d{2}-\d{2}", p):
+                date = p
+            else:
+                clock.append(p)
+        if len(clock) != 1:
+            return None
         try:
-            h, m = str(hhmm).strip().split(":")[:2]
+            h, m = clock[0].split(":")[:2]
             h, m = int(h), int(m)
         except (TypeError, ValueError):
             return None
         if not (0 <= h < 24 and 0 <= m < 60):
             return None
-        day = _dt.datetime.fromtimestamp(now, ET).date()
+        if date is not None:
+            try:
+                day = _dt.date.fromisoformat(date)
+            except ValueError:
+                return None
+        else:
+            day = (_dt.datetime.fromtimestamp(now, ET).date()
+                   + _dt.timedelta(days=days))
         return _dt.datetime(day.year, day.month, day.day, h, m, tzinfo=ET).timestamp()
 
     def set_active_until(self, which: str, value) -> dict:
@@ -1429,16 +1460,25 @@ class Monitor:
             fam.active_until = 0.0
             note = f"{fam.cfg.name}: back to its own game window"
         else:
-            ts = self._et_today(str(value), now)
+            ts = self._et_at(str(value), now)
             if ts is None:
-                return {"ok": False, "note": "pick a time like 17:00"}
+                return {"ok": False, "note": "pick a time like 17:00, or "
+                                             "17:00 tomorrow"}
             if ts <= now:
-                return {"ok": False, "note": "that time has passed today"}
+                return {"ok": False, "note": "that time has passed"}
+            if ts > now + 8 * 86400.0:
+                return {"ok": False, "note": "that is more than a week out — "
+                                             "the window re-decides week to week"}
             fam.active_until = float(ts)
             import datetime as _dt
             from .family import ET
-            shown = _dt.datetime.fromtimestamp(ts, ET).strftime("%I:%M %p").lstrip("0")
-            note = f"{fam.cfg.name} stays active until {shown} ET today"
+            at = _dt.datetime.fromtimestamp(ts, ET)
+            today = _dt.datetime.fromtimestamp(now, ET).date()
+            shown = at.strftime("%I:%M %p").lstrip("0")
+            delta = (at.date() - today).days
+            when = ("today" if delta == 0 else "tomorrow" if delta == 1
+                    else at.strftime("%a %b %d").replace(" 0", " "))
+            note = f"{fam.cfg.name} stays active until {shown} ET {when}"
         self._audit({"op": "active_until", "family": which,
                      "until": fam.active_until, "initiator": "owner", "ts": now})
         self._note(note)

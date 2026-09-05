@@ -2239,6 +2239,46 @@ class TestBuyingMoreWithTheMoneyThere(Base):
         self.b.cycle(self.now + 1900, self.positions(), on=True)
         self.assertTrue(self.buys())                            # the wait is over
 
+    def _refusing(self, note):
+        from v3.orders import OrderResult
+        self.r.desk.place_resting = lambda *a, **k: OrderResult(ok=False, note=note)
+
+    def test_a_refused_placement_tries_again_in_two_minutes(self):
+        # owner, 2026-09-05: "The replacements need to happen faster, it
+        # waits too long to place a bid" — half an hour was the old wait
+        from v3.bonds import MORE_RETRY_S
+        self._refusing("placement failed: HTTP 400: something about the price")
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.buys(), [])
+        more = self.b.view(self.now + 1, self.positions())["rows"][0]["more"]
+        self.assertAlmostEqual(more["retry_at"], self.now + MORE_RETRY_S, places=3)
+        self.assertLessEqual(MORE_RETRY_S, 180.0)
+        self.r.desk.place_resting = self._orig
+        self.r.cache.put(AL, yes_book(self.now + MORE_RETRY_S + 5))
+        self.b.cycle(self.now + MORE_RETRY_S + 5, self.positions(), on=True)
+        self.assertTrue(self.buys())
+
+    def test_the_breaker_s_refusal_tries_again_in_a_minute(self):
+        from v3.bonds import MORE_RETRY_BLOCKED_S
+        self._refusing("refused: placements blocked — the exchange refused the "
+                       "last one as a VPN (3 since 01:29Z); probing once a minute")
+        self.b.cycle(self.now, self.positions(), on=True)
+        more = self.b.view(self.now + 1, self.positions())["rows"][0]["more"]
+        self.assertAlmostEqual(more["retry_at"], self.now + MORE_RETRY_BLOCKED_S, places=3)
+
+    def test_a_fresh_refusal_keeps_the_resting_bid(self):
+        # the bid used to be pulled for a move and then sit out the whole
+        # retry window with nothing resting
+        self.b.cycle(self.now, self.positions(), on=True)
+        o = self.buys()[0]
+        self.b._more_retry[AL] = self.now + 100.0
+        self.b.moved_more_at[AL] = 0.0
+        # a book where the bid should step back: the touch has thickened
+        self.r.cache.put(AL, yes_book(self.now + 10, bid=0.97, bid_q=5000.0))
+        self.b.cycle(self.now + 10, self.positions(), on=True)
+        self.assertIn(o.id, self.r.fam.orders)
+        self.assertFalse(any(e.get("event") == "more_pulled" for e in self.b.log))
+
     def test_a_trimmed_order_is_kept_as_ours(self):
         from v3.orders import OrderResult
 
@@ -2271,12 +2311,14 @@ class TestBuyingMoreWithTheMoneyThere(Base):
                                    "in the open list", order_id="dead1", price=price)
             return self._orig(slug, side, price, qty, **kw)
         self.r.desk.place_resting = refused
-        for dt in (0, 60, 120, 180):
+        from v3.bonds import MORE_RETRY_S
+        for dt in (0, 30, 60, 90):
             self.b.cycle(self.now + dt, self.positions(), on=True)
         self.assertEqual(len(self.calls), 1)                    # once, then the wait
         self.assertEqual(self.buys(), [])
-        self.r.cache.put(AL, yes_book(self.now + 1900))         # a fresh book, later
-        self.b.cycle(self.now + 1900, self.positions(), on=True)
+        later = self.now + MORE_RETRY_S + 5                     # two minutes, not thirty
+        self.r.cache.put(AL, yes_book(later))                   # a fresh book, later
+        self.b.cycle(later, self.positions(), on=True)
         self.assertEqual(len(self.calls), 2)
 
 
