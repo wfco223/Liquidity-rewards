@@ -1496,10 +1496,16 @@ class Monitor:
         """The rule names the candidates — paid at least graduate_paid_usd
         a day on graduate_days of the last 7 — and they wait for the
         owner's tap; the proven pool is exactly what he approved."""
+        # a bond market never graduates (owner, 2026-09-05): not a
+        # candidate, and out of the approved set the moment it becomes one
+        for mkt in sorted(fam.graduated & fam.bond_markets):
+            fam.graduated.discard(mkt)
+            fam._log(event="ungraduated", market=mkt,
+                     note="a bond market now — bond markets do not graduate")
         cands: dict = {}
         for mkt, (avg, nd) in getattr(fam, "recent_paid", {}).items():
             if (avg >= fam.cfg.graduate_paid_usd and nd >= fam.cfg.graduate_days
-                    and mkt not in fam.graduated):
+                    and mkt not in fam.graduated and mkt not in fam.bond_markets):
                 old = fam.grad_candidates.get(mkt) or {}
                 cands[mkt] = {"avg": round(float(avg), 2), "days": int(nd),
                               "since": old.get("since") or round(now, 1)}
@@ -1522,6 +1528,9 @@ class Monitor:
         if approve:
             if slug in fam.graduated:
                 return {"ok": True, "note": f"{fam._label(slug)} is already graduated"}
+            if slug in fam.bond_markets:
+                return {"ok": False, "note": f"{fam._label(slug)} is a bond market — "
+                                             f"bond markets do not graduate"}
             if slug not in fam.grad_candidates and not fam.knows(slug):
                 return {"ok": False, "note": f"{slug} is not one of {fam.cfg.name}'s markets"}
             fam.graduated.add(slug)
@@ -4113,6 +4122,10 @@ class Monitor:
         for key, fam in self.families.items():
             self._stage(f"{fam.cfg.name}: discovering, reading terms, "
                         f"scoring books", fam_pct.get(key, 94))
+            # the bond side's markets (owner, 2026-09-05): outside this
+            # family's ceiling, never graduated
+            bonds = getattr(self, "bonds", None)
+            fam.bond_markets = set(bonds._working()) if bonds is not None else set()
             if fam.cfg.proven_usd > 0:
                 # graduation takes STABILITY and HIGH EARNINGS (owner,
                 # 2026-08-22): paid on 3+ of the last 7 days, averaging
