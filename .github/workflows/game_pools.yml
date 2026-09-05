@@ -10,9 +10,15 @@ name: Game pools
 # program, groups them by PROGRAM (a pool belongs to a program period and
 # is shared by every market on it), and reads each book's touch.
 #
-# Manual dispatch only — never on a schedule (owner, 2026-08-24).
+# Runs once when this file lands on main (the repo's probe pattern), and
+# on manual dispatch from the Actions tab — never on a schedule (owner,
+# 2026-08-24).
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/game_pools.yml
   workflow_dispatch:
     inputs:
       seed:
