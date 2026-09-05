@@ -2642,7 +2642,8 @@ class TestNeverOfferedTwice(Base):
         self.b.cycle(t, self.positions(), on=True)
         self.assertEqual(len(self.live_asks(AL)), 2)               # the exchange has both
         self.assertEqual(len(self.orders(AL, "SELL")), 2)          # and we know it
-        self.assertTrue(any("two exits" in title.lower() for title, _ in self.pings))
+        self.assertTrue(any(e.get("event") == "two_exits" for e in self.b.log))
+        self.assertFalse(any("exit" in title.lower() for title, _ in self.pings))  # logged, not pinged
         # while the cancel keeps failing nothing new is placed
         self.r.cache.put(AL, minnow_book(t + 60, minnows=30.0))
         self.b.cycle(t + 60, self.positions(), on=True)
@@ -2656,3 +2657,54 @@ class TestNeverOfferedTwice(Base):
         self.assertNotEqual(ours[0].id, first.id)
         self.assertEqual(ours[0].qty, 2000.0)
         self.assertEqual(len(self.live_asks(AL)), 1)
+
+    def split_by_hand(self, slug, first, keep_qty, second_qty, second_px):
+        """The owner's split: the bond's exit trimmed to `keep_qty` and a
+        second level of his own at `second_px`, both recorded as the
+        orders page records a move (purpose kept)."""
+        first.qty = keep_qty
+        self.r.exchange.live[first.id]["size"] = keep_qty
+        oid = "split2"
+        self.r.exchange.live[oid] = {"id": oid, "market": slug, "side": "SELL",
+                                     "price": second_px, "size": second_qty,
+                                     "intent": SELL_LONG}
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=slug, side="SELL", price=second_px, qty=second_qty,
+            intent=SELL_LONG, placed_ts=first.placed_ts + 1.0, purpose="bond",
+            why="moved by the owner")
+
+    def test_a_deliberate_split_across_two_levels_stays(self):
+        # owner, 2026-09-05: keep "splitting orders between two price
+        # levels when appropriate to meet the rewards percentage share
+        # thresholds" — two exits that together offer the lot are not an
+        # over-offer, and the engine leaves the split alone
+        self.b.approve(AL, self.now)
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.cycle(self.now, self.positions(), on=True)
+        first = self.orders(AL, "SELL")[0]
+        self.split_by_hand(AL, first, 1000.0, 500.0, first.price + 0.01)
+        for dt in (60.0, MOVE_COOLDOWN_S + 1, MOVE_COOLDOWN_S + 61):
+            self.r.cache.put(AL, minnow_book(self.now + dt, minnows=30.0))
+            self.b.cycle(self.now + dt, self.positions(), on=True)
+            ours = self.orders(AL, "SELL")
+            self.assertEqual(len(ours), 2)
+            self.assertEqual(sum(o.qty for o in ours), 1500.0)
+            self.assertEqual(len({round(o.price, 4) for o in ours}), 2)
+            self.assertEqual(len(self.live_asks(AL)), 2)
+        self.assertIn("split2", self.r.fam.orders)                  # his level untouched
+
+    def test_a_split_that_offers_more_than_held_is_trimmed_to_the_lot(self):
+        self.b.approve(AL, self.now)
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.cycle(self.now, self.positions(), on=True)
+        first = self.orders(AL, "SELL")[0]
+        self.split_by_hand(AL, first, 1500.0, 500.0, first.price + 0.01)   # 2000 offered, 1500 held
+        self.r.cache.put(AL, minnow_book(self.now + 60, minnows=30.0))
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        ours = self.orders(AL, "SELL")
+        self.assertLessEqual(sum(o.qty for o in ours), 1500.0)
+        self.assertLessEqual(sum(o["size"] for o in self.live_asks(AL)), 1500.0)
