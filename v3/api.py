@@ -99,6 +99,16 @@ class Client:
         self.timeout = timeout
         self._sleep = sleep if sleep is not None else time.sleep
 
+    def fresh_connection(self) -> None:
+        """Drop the pooled connection and open a new one (2026-09-05: the
+        exchange refused a placement as 'a VPN'; a new connection may
+        leave the host on a different outbound address)."""
+        try:
+            self.session.close()
+        except Exception:  # noqa: BLE001
+            pass
+        self.session = requests.Session()
+
     # -- plumbing ----------------------------------------------------------
 
     def _headers(self, method: str, path: str) -> dict:

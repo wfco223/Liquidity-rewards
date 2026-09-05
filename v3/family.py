@@ -2934,6 +2934,8 @@ class Family:
         book."""
         if len(mine) != 1:
             return
+        if not self._can_replace():
+            return              # cancel-then-re-place cannot re-place today
         rec = mine[0]
         qty = inv.get("qty") or 0.0
         if not self._cooldown_ok(slug, side, now):
@@ -3821,7 +3823,7 @@ class Family:
                 # never over-offers)
                 low_stray = [o for o in mine if o.price < lo - 1e-9
                              and o.id in self.orders]
-                if low_stray and rest >= 0.01:    # as before: judged when
+                if low_stray and rest >= 0.01 and self._can_replace():    # as before: judged when
                                                    # cover is being added
                     worst = min(low_stray, key=lambda o: o.price)
                     rr = self.desk.cancel(worst.id, worst.market)
@@ -3837,7 +3839,7 @@ class Family:
                 bound = max(ask_touch, floor_px) + 2 * book.tick
                 stray = [o for o in mine if o.price > bound + 1e-9
                          and o.id in self.orders]
-                if stray:
+                if stray and self._can_replace():
                     worst = max(stray, key=lambda o: o.price)
                     rr = self.desk.cancel(worst.id, worst.market)
                     if rr.ok:
@@ -3970,7 +3972,8 @@ class Family:
                     step_pred = snap_price(step_pred, book.tick, "BUY")
                 if (dead_s and rest < 0.01 and actions > 0
                         and step_pred is not None
-                        and step_pred > worst.price + book.tick / 2):
+                        and step_pred > worst.price + book.tick / 2
+                        and self._can_replace()):
                     rr = self.desk.cancel(worst.id, worst.market)
                     if rr.ok:
                         self.orders.pop(worst.id, None)
@@ -4036,7 +4039,7 @@ class Family:
                 # basis ghosts) retreats the same way
                 high_stray = [o for o in mine if o.price > hi + 1e-9
                               and o.id in self.orders]
-                if high_stray and rest >= 0.01:   # as before: judged when
+                if high_stray and rest >= 0.01 and self._can_replace():   # as before: judged when
                                                    # cover is being added
                                                    # (the gate's blessing
                                                    # is sized to `rest`)
@@ -4054,7 +4057,7 @@ class Family:
                 bound = min(bid_touch, cap_px) - 2 * book.tick
                 stray = [o for o in mine if o.price < bound - 1e-9
                          and o.id in self.orders]
-                if stray:
+                if stray and self._can_replace():
                     worst = min(stray, key=lambda o: o.price)
                     rr = self.desk.cancel(worst.id, worst.market)
                     if rr.ok:
@@ -4139,6 +4142,14 @@ class Family:
         return actions
 
     # --------------------------------------------------------------- books
+
+    def _can_replace(self) -> bool:
+        """False while the exchange refuses placements (2026-09-05, the
+        VPN flag): an order cancelled to be re-placed would just vanish,
+        so nothing is cancelled for a replacement until a placement lands.
+        Pulls that only reduce risk are not gated here."""
+        h = getattr(self.desk, "health", None)
+        return not (h is not None and h.blocked())
 
     def kicked_off(self, slug: str, now: float) -> bool:
         """Has this market's game started? False when no kickoff is known."""

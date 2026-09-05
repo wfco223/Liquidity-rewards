@@ -35,7 +35,7 @@ from .books import BookCache
 from .family import Family
 from .floor import Floor
 from .names import Names
-from .orders import OrderDesk
+from .orders import OrderDesk, PlaceHealth
 from .estimator import Estimator
 from .silver import SilverFairs
 from .state import StateStore
@@ -928,6 +928,8 @@ class Monitor:
         self.audit: list[dict] = []
         self.last_state: dict = {}
         self.boots: list[float] = []
+        # one answer for every desk: is the exchange taking our orders?
+        self.place_health = PlaceHealth(on_change=self._place_health_changed)
         self.master = MasterSwitch(alert=self.alerts.notify,
                                    name="3.0 master switch", scope="all of 3.0")
         # The floor handshake (v3/floor.py): master ON asks 1.0 and 2.0 to
@@ -999,6 +1001,7 @@ class Monitor:
                          alert=self.alerts.notify, names=self.names)
             desk = OrderDesk(
                 client=self.client,
+                health=self.place_health,
                 whitelist=fam.knows,
                 switch_on=lambda s=sw: (self.master.on and s.on
                                         and self._floor_ok),
@@ -1149,6 +1152,22 @@ class Monitor:
     def _audit(self, row: dict) -> None:
         self.audit.append(row)
         del self.audit[:-200]
+
+    def _place_health_changed(self, blocked: bool, note: str) -> None:
+        """The placement breaker tripped or cleared (owner, 2026-09-05):
+        say so once each way, on the phone and in the notes."""
+        if blocked:
+            self._note(f"exchange refuses placements from this server: {note}"
+                       " — moves and re-prices paused; probing once a minute")
+            self.alerts.notify(
+                "3.0: exchange refuses this server's orders",
+                "\"Your connection looks like a VPN.\" Nothing is cancelled "
+                "that could not come back; one placement a minute probes. "
+                "Fix: tap Deploy for a new outbound address.",
+                priority="high")
+        else:
+            self._note(f"exchange accepts placements again: {note}")
+            self.alerts.notify("3.0: placements accepted again", note)
 
     def _note(self, msg: str) -> None:
         self.errors.append(f"{time.strftime('%m-%d %H:%M:%S')} {msg}")
@@ -3565,6 +3584,7 @@ class Monitor:
                if "bonds" in self.switches else {}),
             **{k: self._family_switch_state(k) for k in self.families}}
         st["floor"] = self.floor.status()
+        st["place_health"] = self.place_health.view()
         return st
 
     def _family_switch_state(self, key: str) -> dict:
@@ -3591,7 +3611,7 @@ class Monitor:
                   "saved_at", "build", "boot_ts", "errors", "audit",
                   "master_switch", "flatten", "flat_stats", "summaries",
                   "silver", "silver_log", "grades", "paid_total", "ws",
-                  "alerts_log", "rewards_last", "floor")
+                  "alerts_log", "rewards_last", "floor", "place_health")
 
     def build_phone_payload(self) -> dict:
         st = self.public_state()
