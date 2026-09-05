@@ -1981,10 +1981,32 @@ class Family:
                 rec.purpose = "sell"
                 rec.why = "an exit — its fill reduces the position it sits on"
 
+    def _kill_zombies(self) -> set[str]:
+        """Orders whose cancel failed during a move (the engine's or the
+        owner's from the orders page): the cancel is retried every
+        cycle, switch on or off — reducing exposure is never gated
+        (owner, 2026-09-05: a leftover like this had the bond offering
+        its lot twice). Returns the ids just cancelled: this cycle's
+        open-order list was read before the cancel and still names
+        them, and they must not be adopted back as hand orders."""
+        killed: set[str] = set()
+        for rec in list(self.orders.values()):
+            if rec.why == "cancel failed during a move — retrying":
+                r = self.desk.cancel(rec.id, rec.market)
+                if r.ok:
+                    self._log(event="zombie_cancelled", market=rec.market,
+                              id=rec.id)
+                    del self.orders[rec.id]
+                    killed.add(rec.id)
+        return killed
+
     def cycle(self, now: float, open_orders: list[dict], positions: dict,
               client, switch_on: bool, foreign_ids=(),
               exits_only: bool = False, trades=None) -> dict:
         self.reconcile(open_orders, positions, now, trades=trades)
+        killed = self._kill_zombies()
+        if killed:
+            foreign_ids = set(foreign_ids) | killed
         self._flush_fill_evidence(now)
         self._page_opens_due(now)
         self._reclassify_exits(positions)
@@ -2083,15 +2105,6 @@ class Family:
                           why=f"cost {adverse * 100:.1f}c/share vs the "
                               f"mid an hour on")
             self.pending_marks.remove(mk)
-
-        # 0) zombies from a failed cancel: retry until they die
-        for rec in list(self.orders.values()):
-            if rec.why == "cancel failed during a move — retrying":
-                r = self.desk.cancel(rec.id, rec.market)
-                if r.ok:
-                    self._log(event="zombie_cancelled", market=rec.market,
-                              id=rec.id)
-                    del self.orders[rec.id]
 
         # 1) leave dead or near-resolution markets ENTIRELY (exits included)
         for rec in list(self.orders.values()):

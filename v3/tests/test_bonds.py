@@ -14,9 +14,10 @@ import calendar
 import copy
 import unittest
 
+from v3.api import ApiError
 from v3.bonds import (DANCE_MAX_MOVES, DANCE_WAIT_S, DECOY_QTY, HIGH_ODDS,
-                      KEEP_FRACTION, LOW_ODDS, MINNOW_MAX, PING_EVERY_USD,
-                      Bonds, scan_due, side_for)
+                      KEEP_FRACTION, LOW_ODDS, MINNOW_MAX, MOVE_COOLDOWN_S,
+                      PING_EVERY_USD, Bonds, scan_due, side_for)
 from v3.family import FamilyConfig, FamilyOrder
 from v3.intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 from v3.scoring import Book
@@ -2563,3 +2564,147 @@ class TestSellingIntoTheBids(Base):
                                          initiator="auto", taker="bond", verify=False).ok)    # the owner's rail only
         self.assertTrue(d.place_resting(AL, "SELL", 0.98, 60.0, intent=SELL_LONG,
                                         initiator="owner", taker="bond", verify=False).ok)
+
+
+class TestNeverOfferedTwice(Base):
+    """Owner, 2026-09-05: "I'm currently resting more sell orders than I
+    have shares to sell in at least one bond market. Make sure this
+    isn't happening." The bond sizes its exit around every other order
+    of ours on the same side, and a move whose cancel failed leaves
+    one exit, not two."""
+
+    def refuse_cancels(self, on: bool):
+        exch = self.r.exchange
+        if on and not hasattr(exch, "_post0"):
+            exch._post0 = exch.post
+
+            def post(url, body, path=None, **kw):
+                if "/cancel" in url:
+                    raise ApiError("HTTP 500: cancel refused", status=500)
+                return exch._post0(url, body, path=path, **kw)
+            exch.post = post
+        elif not on and hasattr(exch, "_post0"):
+            exch.post = exch._post0
+            del exch._post0
+
+    def hand_sell(self, slug, qty, px, oid="hand1"):
+        """An ask of the owner's own in the market: on the exchange and
+        recorded as manual, as adoption records it."""
+        self.r.exchange.live[oid] = {"id": oid, "market": slug, "side": "SELL",
+                                     "price": px, "size": qty, "intent": SELL_LONG}
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=slug, side="SELL", price=px, qty=qty, intent=SELL_LONG,
+            placed_ts=self.now, purpose="manual", why="placed by the owner")
+
+    def live_asks(self, slug):
+        return [o for o in self.r.exchange.live.values()
+                if o["market"] == slug and o["side"] == "SELL"]
+
+    def test_his_own_ask_shrinks_the_bond_exit(self):
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.hand_sell(AL, 500.0, 0.97)
+        self.b.cycle(self.now, self.positions(), on=True)
+        ours = self.orders(AL, "SELL")
+        self.assertEqual(sum(o.qty for o in ours), 1500.0)       # the lot, once
+        bond = [o for o in ours if o.purpose == "bond"]
+        self.assertEqual(len(bond), 1)
+        self.assertEqual(bond[0].qty, 1000.0)
+
+    def test_his_ask_for_the_whole_lot_pulls_the_bond_exit(self):
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(len(self.orders(AL, "SELL")), 1)         # the bond's exit
+        self.hand_sell(AL, 1500.0, 0.97)                            # he offers the lot himself
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        ours = self.orders(AL, "SELL")
+        self.assertEqual([o.purpose for o in ours], ["manual"])     # the bond's came off
+        self.assertEqual(sum(o.qty for o in ours), 1500.0)
+        self.assertEqual(len(self.live_asks(AL)), 1)
+
+    def test_a_move_whose_cancel_failed_leaves_one_exit_not_two(self):
+        self.b.approve(AL, self.now)
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.cycle(self.now, self.positions(), on=True)
+        first = self.orders(AL, "SELL")[0]
+        # the lot grows (ledger and exchange); after the cooldown the exit
+        # is resized by a move whose cancel fails
+        self.refuse_cancels(True)
+        self.b._book_lot(AL, "YES", 500.0, 500.0 * 0.89, ref="test")
+        self.exch(AL, 2000.0, 0.89)
+        t = self.now + MOVE_COOLDOWN_S + 1
+        self.r.cache.put(AL, minnow_book(t, minnows=30.0))          # a fresh read
+        self.b.cycle(t, self.positions(), on=True)
+        self.assertEqual(len(self.live_asks(AL)), 2)               # the exchange has both
+        self.assertEqual(len(self.orders(AL, "SELL")), 2)          # and we know it
+        self.assertTrue(any(e.get("event") == "two_exits" for e in self.b.log))
+        self.assertFalse(any("exit" in title.lower() for title, _ in self.pings))  # logged, not pinged
+        # while the cancel keeps failing nothing new is placed
+        self.r.cache.put(AL, minnow_book(t + 60, minnows=30.0))
+        self.b.cycle(t + 60, self.positions(), on=True)
+        self.assertEqual(len(self.live_asks(AL)), 2)
+        # the exchange takes cancels again: the extra comes off, the newest stays
+        self.refuse_cancels(False)
+        self.r.cache.put(AL, minnow_book(t + 120, minnows=30.0))
+        self.b.cycle(t + 120, self.positions(), on=True)
+        ours = self.orders(AL, "SELL")
+        self.assertEqual(len(ours), 1)
+        self.assertNotEqual(ours[0].id, first.id)
+        self.assertEqual(ours[0].qty, 2000.0)
+        self.assertEqual(len(self.live_asks(AL)), 1)
+
+    def split_by_hand(self, slug, first, keep_qty, second_qty, second_px):
+        """The owner's split: the bond's exit trimmed to `keep_qty` and a
+        second level of his own at `second_px`, both recorded as the
+        orders page records a move (purpose kept)."""
+        first.qty = keep_qty
+        self.r.exchange.live[first.id]["size"] = keep_qty
+        oid = "split2"
+        self.r.exchange.live[oid] = {"id": oid, "market": slug, "side": "SELL",
+                                     "price": second_px, "size": second_qty,
+                                     "intent": SELL_LONG}
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=slug, side="SELL", price=second_px, qty=second_qty,
+            intent=SELL_LONG, placed_ts=first.placed_ts + 1.0, purpose="bond",
+            why="moved by the owner")
+
+    def test_a_deliberate_split_across_two_levels_stays(self):
+        # owner, 2026-09-05: keep "splitting orders between two price
+        # levels when appropriate to meet the rewards percentage share
+        # thresholds" — two exits that together offer the lot are not an
+        # over-offer, and the engine leaves the split alone
+        self.b.approve(AL, self.now)
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.cycle(self.now, self.positions(), on=True)
+        first = self.orders(AL, "SELL")[0]
+        self.split_by_hand(AL, first, 1000.0, 500.0, first.price + 0.01)
+        for dt in (60.0, MOVE_COOLDOWN_S + 1, MOVE_COOLDOWN_S + 61):
+            self.r.cache.put(AL, minnow_book(self.now + dt, minnows=30.0))
+            self.b.cycle(self.now + dt, self.positions(), on=True)
+            ours = self.orders(AL, "SELL")
+            self.assertEqual(len(ours), 2)
+            self.assertEqual(sum(o.qty for o in ours), 1500.0)
+            self.assertEqual(len({round(o.price, 4) for o in ours}), 2)
+            self.assertEqual(len(self.live_asks(AL)), 2)
+        self.assertIn("split2", self.r.fam.orders)                  # his level untouched
+
+    def test_a_split_that_offers_more_than_held_is_trimmed_to_the_lot(self):
+        self.b.approve(AL, self.now)
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.cycle(self.now, self.positions(), on=True)
+        first = self.orders(AL, "SELL")[0]
+        self.split_by_hand(AL, first, 1500.0, 500.0, first.price + 0.01)   # 2000 offered, 1500 held
+        self.r.cache.put(AL, minnow_book(self.now + 60, minnows=30.0))
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        ours = self.orders(AL, "SELL")
+        self.assertLessEqual(sum(o.qty for o in ours), 1500.0)
+        self.assertLessEqual(sum(o["size"] for o in self.live_asks(AL)), 1500.0)
