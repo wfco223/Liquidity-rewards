@@ -452,6 +452,14 @@ class Family:
         self._replace_at: dict[str, tuple[float, float, float]] = {}
         self.fills: list[dict] = []           # the purchase journal, one row per fill
         self.proven: set[str] = set()         # graduated markets (main feeds it)
+        # graduation on the owner's approval (2026-09-05: "they can
+        # accumulate and only graduate on my approval"): the rule names
+        # candidates, his tap moves one to `graduated`, and `proven` is
+        # that approved set
+        self.graduated: set[str] = set()
+        self.grad_candidates: dict[str, dict] = {}
+        self._money_out = False               # this cycle: no money to deploy — exits only
+        self._money_out_last = False
         self.recent_paid: dict[str, tuple] = {}   # mkt -> (avg $/day, paid days), last 7d
         self.inv_since: dict[str, float] = {}  # market -> first-fill ts
         self._exit_rate_ps = 0.0               # $/share/day our exits earn
@@ -2007,7 +2015,8 @@ class Family:
 
     def cycle(self, now: float, open_orders: list[dict], positions: dict,
               client, switch_on: bool, foreign_ids=(),
-              exits_only: bool = False, trades=None) -> dict:
+              exits_only: bool = False, trades=None,
+              money_out: bool = False) -> dict:
         self.reconcile(open_orders, positions, now, trades=trades)
         killed = self._kill_zombies()
         if killed:
@@ -2092,6 +2101,19 @@ class Family:
                     del self.orders[rec.id]
                     actions -= 1
 
+        # no money to deploy (owner, 2026-09-05, the bonds' rule for the
+        # families too): nothing new that buys — no entries, probes,
+        # growth, scouts or reprices. The resting orders keep earning on
+        # collateral already committed, exits keep working, pulls run.
+        self._money_out = bool(money_out)
+        if self._money_out != self._money_out_last:
+            self._log(event="money_out" if self._money_out else "money_back",
+                      note=("no money to deploy — exits only, nothing new that buys"
+                            if self._money_out else "money is back — buying resumes"))
+            self._money_out_last = self._money_out
+        if self._money_out:
+            summary["mode"] = "no money — exits only"
+
         # grade fills that have had their hour: the adverse move a fill
         # actually cost is the calibration everything else leans on
         for mk in list(self.pending_marks):
@@ -2161,6 +2183,9 @@ class Family:
         # 4) the seller next — getting the owner OUT always outranks new
         # risk (starving it behind entries left shorts uncovered, 23:53Z)
         actions = self._sell(now, actions)
+
+        if self._money_out:
+            return self._finish(summary, now)   # nothing new that buys
 
         if self.cfg.scout_all:
             # the game-day experiment: a share a side at the touch on
@@ -2643,6 +2668,7 @@ class Family:
                     self._mark(rec.market, rec.side, now)
                     actions -= 1
             elif (best is not None
+                    and not self._money_out        # a move needs collateral for a moment
                     and (gain >= self.cfg.reprice_gain_day
                          or shrink_needed)
                     and (abs(best["px"] - rec.price) > 1e-9
@@ -4542,6 +4568,7 @@ class Family:
             summary["proven_spent"] = round(self.proven_spent(), 2)
             summary["proven_usd"] = self.cfg.proven_usd
             summary["proven_n"] = len(self.proven)
+            summary["grad_candidates_n"] = len(self.grad_candidates)
         summary["holdings_usd"] = round(self.holdings_value(), 2)
         summary["holdings_counted"] = bool(self.cfg.holdings_in_ceiling)
         summary["capital_usd"] = self.cfg.capital_usd
@@ -4715,6 +4742,8 @@ class Family:
             "placed_at": self.placed_at,
             "active_until": self.active_until,
             "event_start": self.event_start,
+            "graduated": sorted(self.graduated),
+            "grad_candidates": self.grad_candidates,
             "pos_moves": self.pos_moves[-500:],
             "pending_pages": self.pending_pages,
             "gone_pending": {oid: {"rec": asdict(g["rec"]),
@@ -4791,6 +4820,10 @@ class Family:
         self.active_until = float(d.get("active_until") or 0.0)
         self.event_start = {str(k): float(v) for k, v in
                             (d.get("event_start") or {}).items()}
+        self.graduated = {str(s) for s in (d.get("graduated") or [])}
+        self.grad_candidates = {str(k): dict(v) for k, v in
+                                (d.get("grad_candidates") or {}).items()}
+        self.proven = set(self.graduated)
         if d.get("cfg_sig") == self._cfg_sig():
             self.scoreboard = dict(d.get("scoreboard") or {})
         else:

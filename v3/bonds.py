@@ -1383,8 +1383,10 @@ class Bonds:
         for s in list(self.exit_px):
             if self.held(s, self._side_of(s)) < 0.005:
                 self.exit_px.pop(s, None)        # out of the position: the pin is spent
+        # the money gate is judged switch on or off (the families read it
+        # too); its pulls happen only with the switch on
+        selling_only = self._money_gate(self._buying_power(now), now, act=on)
         if on:
-            selling_only = self._money_gate(self._buying_power(now), now)
             for slug in self._working():
                 side = self._side_of(slug)
                 r = self._keep_earning(slug, side, positions, now)
@@ -2393,7 +2395,7 @@ class Bonds:
         h = getattr(self.fam.desk, "health", None)
         return bool(h is not None and h.blocked())
 
-    def _money_gate(self, bp: float | None, now: float) -> bool:
+    def _money_gate(self, bp: float | None, now: float, act: bool = True) -> bool:
         """Owner, 2026-09-05: "When there is no money to deploy, all the
         bond functions except for selling shares to generate proceeds
         (never below cost) is the only thing that should be going on. No
@@ -2401,38 +2403,58 @@ class Bonds:
         the buy-more bids, decoys and bait come off and nothing is
         bought, taken or baited; the exits keep working. Buying resumes
         once MONEY_BACK_USD is free beyond what pulling our own bids
-        freed. True while the bonds only sell."""
+        freed. The state is judged whether or not the bonds switch is on
+        (the families read it too); `act` says whether to pull. True
+        while the bonds only sell."""
         if bp is None:
-            return bool(self.money_out)          # unknown: the mode stands as it is
-        if self.money_out:
+            out = bool(self.money_out)           # unknown: the mode stands as it is
+        elif self.money_out:
             need = MONEY_BACK_USD + float(self.money_out.get("freed") or 0.0)
             if bp >= need:
                 self._log(event="money_back", bp=round(bp, 2),
                           note=f"${bp:,.2f} free: buying and the sniper resume")
                 self.money_out = None
                 return False
-            return True
-        if bp >= NO_MONEY_USD:
+            out = True
+        elif bp < NO_MONEY_USD:
+            self.money_out = {"since": round(now, 1), "bp": round(bp, 2),
+                              "freed": 0.0, "pulled": 0}
+            self._log(event="money_out", bp=round(bp, 2),
+                      note="no money to deploy: exits only — no buying, no sniping, "
+                           "no bait")
+            out = True
+        else:
             return False
+        if out and act:
+            self._pull_buying()
+        return out
+
+    def _pull_buying(self) -> None:
+        """While the money is out: every order of the bond's that buys
+        comes off — buy-more bids, decoys, bait — and what they held is
+        counted, so their own collateral coming back is not mistaken
+        for new money."""
+        assert self.money_out is not None
+        why = "no money to deploy: the bonds only sell until there is"
         freed = 0.0
         pulled = 0
-        why = "no money to deploy: the bonds only sell until there is"
         for slug in self._working():
             side = self._side_of(slug)
-            more = self._more_orders(slug)
-            freed += sum(o.qty * (o.price if side == "YES" else round(1.0 - o.price, 4))
-                         for o in more)
-            self._pull_more(slug, why)
-            pulled += len(more) - len(self._more_orders(slug))
+            before = {o.id: o for o in self._more_orders(slug)}
+            if before:
+                self._pull_more(slug, why)
+                gone = [o for oid, o in before.items() if oid not in self.fam.orders]
+                freed += sum(o.qty * (o.price if side == "YES" else round(1.0 - o.price, 4))
+                             for o in gone)
+                pulled += len(gone)
             self._pull_decoys(slug, side)
             if self._bait_orders(slug):
                 self.pull_bait(slug, why=why)
-        self.money_out = {"since": round(now, 1), "bp": round(bp, 2),
-                          "freed": round(freed, 2), "pulled": pulled}
-        self._log(event="money_out", bp=round(bp, 2), freed=round(freed, 2),
-                  pulled=pulled, note="no money to deploy: exits only — no buying, "
-                                      "no sniping, no bait")
-        return True
+        if pulled:
+            self.money_out["freed"] = round(float(self.money_out.get("freed") or 0.0) + freed, 2)
+            self.money_out["pulled"] = int(self.money_out.get("pulled") or 0) + pulled
+            self._log(event="money_pull", freed=round(freed, 2), pulled=pulled,
+                      note="buy-more bids off while the money is out")
 
     def _pull_more(self, slug: str, why: str) -> None:
         for o in self._more_orders(slug):
