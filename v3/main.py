@@ -2255,16 +2255,28 @@ class Monitor:
                     continue
                 keep.append(row)
             fam.fills[:] = keep
-            # 3. executions the journal lacks
+            # 3. executions the journal lacks — and would KEEP. The journal
+            # holds a week of rows (plus a held market's), bounded at
+            # FILLS_KEEP; an older execution added here fell off at the
+            # next fill and was added again the hour after, forever
+            # (2026-09-05: the same 400 old trades re-added every hour,
+            # 800 archive rows a time, from the moment the bound filled)
+            from .family import FILLS_KEEP, FILLS_KEEP_S
             journaled: dict = defaultdict(float)
             for row in fam.fills:
                 if row.get("oid"):
                     journaled[row["oid"]] += float(row.get("qty") or 0.0)
             mine = {r.get("market") for r in fam.fills}
+            week_ago = now - FILLS_KEEP_S
+            oldest_kept = (min(float(r.get("ts") or 0.0) for r in fam.fills)
+                           if len(fam.fills) >= FILLS_KEEP - 10 else 0.0)
             for oid, g in sorted(ex.items(), key=lambda kv: kv[1]["ts"]):
                 m = g["market"]
                 if not (m in mine or fam.knows(m)):
                     continue
+                held_here = abs((fam.inventory.get(m) or {}).get("qty", 0.0)) > 0.005
+                if (g["ts"] < week_ago and not held_here) or g["ts"] < oldest_kept:
+                    continue          # the journal would not keep it
                 short = g["shares"] - journaled.get(oid, 0.0)
                 if short <= 0.005:
                     continue

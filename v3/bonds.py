@@ -120,6 +120,14 @@ HOLD_ENGINE_S = 600.0       # after clearing our orders out of a take's way, the
 CLEAR_WAIT_S = 5.0          # how long a cleared order gets to leave the open-order list
 RECONFIRM_S = 3600.0        # a booked fill is re-checked against the record this long
 MORE_SHARE = 0.30           # the buy-more order rests only where it captures this much of its side
+# Owner, 2026-09-05: "When there is no money to deploy, all the bond
+# functions except for selling shares to generate proceeds (never below
+# cost) is the only thing that should be going on. No more buying or
+# sniping." Under NO_MONEY_USD of free buying power the bonds only sell;
+# buying resumes with MONEY_BACK_USD free beyond what pulling our own
+# bids freed — proceeds or a deposit, not our own collateral coming back.
+NO_MONEY_USD = 10.0
+MONEY_BACK_USD = 50.0
 DOTS_KEEP = 2880            # bond earning-rate samples kept for the graph
 # the holdings come from the exchange's position feed and their cost
 # from its transaction record (owner, 2026-09-04: "The bonds list
@@ -144,6 +152,12 @@ MORE_RETRY_S = 120.0
 MORE_RETRY_BLOCKED_S = 60.0
 MORE_RETRY_BP_S = 600.0
 BP_EVERY_S = 60.0           # buying power read at most this often
+# The bond acts on a book this fresh — inside the desk's own 120s window
+# by a margin, because a cycle's earlier calls take time and a book judged
+# fresh at the top of the pass was refused as stale at placement (2026-09-05:
+# a buy-more pulled for a move, then "no book fresher than 120s" — gone
+# until the retry).
+BOOK_ACT_S = 90.0
 
 
 def side_for(odds: float | None) -> str | None:
@@ -265,6 +279,7 @@ class Bonds:
         # exit a position at a given price if it is higher than my
         # cost"): the whole lot rests there, pinned, until he clears it
         self.exit_px: dict[str, dict] = {}     # slug -> {px (YES terms), bond_px, since, by}
+        self.money_out: dict | None = None     # {since, bp, freed, pulled} while the bonds only sell
         # a sale by his hand the position feed has not shown yet: the
         # sync must not hand the sold shares back meanwhile
         self._await_drop: dict[str, tuple] = {}   # slug -> (qty sold, since)
@@ -1074,7 +1089,7 @@ class Bonds:
         q = float(math.floor(q))
         if q < 1.0:
             return {"ok": False, "note": "at least one share"}
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return {"ok": False, "note": "no fresh book — try again in a moment"}
         tick = book.tick or 0.01
@@ -1369,11 +1384,14 @@ class Bonds:
             if self.held(s, self._side_of(s)) < 0.005:
                 self.exit_px.pop(s, None)        # out of the position: the pin is spent
         if on:
+            selling_only = self._money_gate(self._buying_power(now), now)
             for slug in self._working():
                 side = self._side_of(slug)
                 r = self._keep_earning(slug, side, positions, now)
                 if r:
                     placed.append(r)
+                if selling_only:
+                    continue            # no buying, no sniping (owner, 2026-09-05)
                 r = self._work_minnows(slug, side, positions, now)
                 if r:
                     placed.append(r)
@@ -1844,7 +1862,7 @@ class Bonds:
                    self.exchange_held(slug, side, positions))
         if held < 1.0:
             return None
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return None
         tick = book.tick or 0.01
@@ -2005,9 +2023,12 @@ class Bonds:
                                              "buying here, bait included"}
             return {"ok": False, "note": "not on the bond list"}
         side = meta["side"]
+        if self.money_out:
+            return {"ok": False, "note": "no money to deploy — the bonds only sell "
+                                         "until there is; bait is a buy"}
         if self._bait_orders(slug):
             return {"ok": False, "note": "a bait already rests here — pull it first"}
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return {"ok": False, "note": "no fresh book — try again in a moment"}
         far, intent = self.entry(side)
@@ -2372,6 +2393,47 @@ class Bonds:
         h = getattr(self.fam.desk, "health", None)
         return bool(h is not None and h.blocked())
 
+    def _money_gate(self, bp: float | None, now: float) -> bool:
+        """Owner, 2026-09-05: "When there is no money to deploy, all the
+        bond functions except for selling shares to generate proceeds
+        (never below cost) is the only thing that should be going on. No
+        more buying or sniping." Under NO_MONEY_USD of free buying power
+        the buy-more bids, decoys and bait come off and nothing is
+        bought, taken or baited; the exits keep working. Buying resumes
+        once MONEY_BACK_USD is free beyond what pulling our own bids
+        freed. True while the bonds only sell."""
+        if bp is None:
+            return bool(self.money_out)          # unknown: the mode stands as it is
+        if self.money_out:
+            need = MONEY_BACK_USD + float(self.money_out.get("freed") or 0.0)
+            if bp >= need:
+                self._log(event="money_back", bp=round(bp, 2),
+                          note=f"${bp:,.2f} free: buying and the sniper resume")
+                self.money_out = None
+                return False
+            return True
+        if bp >= NO_MONEY_USD:
+            return False
+        freed = 0.0
+        pulled = 0
+        why = "no money to deploy: the bonds only sell until there is"
+        for slug in self._working():
+            side = self._side_of(slug)
+            more = self._more_orders(slug)
+            freed += sum(o.qty * (o.price if side == "YES" else round(1.0 - o.price, 4))
+                         for o in more)
+            self._pull_more(slug, why)
+            pulled += len(more) - len(self._more_orders(slug))
+            self._pull_decoys(slug, side)
+            if self._bait_orders(slug):
+                self.pull_bait(slug, why=why)
+        self.money_out = {"since": round(now, 1), "bp": round(bp, 2),
+                          "freed": round(freed, 2), "pulled": pulled}
+        self._log(event="money_out", bp=round(bp, 2), freed=round(freed, 2),
+                  pulled=pulled, note="no money to deploy: exits only — no buying, "
+                                      "no sniping, no bait")
+        return True
+
     def _pull_more(self, slug: str, why: str) -> None:
         for o in self._more_orders(slug):
             r = self.fam.desk.cancel(o.id, slug, initiator="owner")
@@ -2407,7 +2469,7 @@ class Bonds:
                 self._pull_more(slug, "nothing held here" if cap_usd >= 1.0
                                 else "buy-more amount is zero")
             return None
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return None
         far, intent = self.entry(side)
@@ -2634,7 +2696,7 @@ class Bonds:
         its price. When the minnow moves more than DANCE_MAX_MOVES
         times, reaches the far touch, or crosses under our cost, it is
         taken at once. No minnow in front: no decoy, no dance."""
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return None
         bs, intent = self.earn(side)
@@ -3269,7 +3331,9 @@ class Bonds:
                "by": cap.get("by", "default"), "order": None, "slot": None,
                "cap_px": (round(px0 if side == "YES" else 1.0 - px0, 4) if px0 > 0 else None),
                "paused": ("the odds left the band: no new buying here"
-                          if slug not in self.approved else None),
+                          if slug not in self.approved else
+                          "no money to deploy: nothing new is bought until there is"
+                          if self.money_out else None),
                "retry_at": (self._more_retry.get(slug)
                             if self._more_retry.get(slug, 0.0) > self._clock() else None),
                "note": self._more_note.get(slug)}
@@ -3344,6 +3408,8 @@ class Bonds:
                 "budget": round(self._budget_now(), 2), "spent": round(self.spent, 2),
                 "budget_mode": self.budget_mode, "tax": self.tax_owed() or None,
                 "money": round(self._money(), 2),
+                "money_out": self.money_out,
+                "no_money_usd": NO_MONEY_USD, "money_back_usd": MONEY_BACK_USD,
                 "earned": self._earned(),
                 "unpinged": round(self.unpinged, 2),
                 "held_cost": held_cost,
@@ -3415,6 +3481,7 @@ class Bonds:
                 "cost_src": self.cost_src, "unconfirmed": self.unconfirmed,
                 "more_retry": self._more_retry,
                 "exit_px": self.exit_px,
+                "money_out": self.money_out,
                 "await_drop": {k: list(v) for k, v in self._await_drop.items()},
                 "log": self.log[-LOG_KEEP:]}
 
@@ -3517,6 +3584,7 @@ class Bonds:
         self._more_retry = {str(k): float(v) for k, v
                             in (d.get("more_retry") or {}).items()}
         self.exit_px = {str(k): dict(v) for k, v in (d.get("exit_px") or {}).items()}
+        self.money_out = dict(d["money_out"]) if d.get("money_out") else None
         self._await_drop = {str(k): (float(v[0]), float(v[1])) for k, v
                             in (d.get("await_drop") or {}).items()
                             if isinstance(v, (list, tuple)) and len(v) == 2}
