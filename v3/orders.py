@@ -78,6 +78,76 @@ def snap_price(price: float, tick: float, side: str) -> float:
     return round(snapped, 3)
 
 
+# The placement breaker (owner, 2026-09-05, "Yes"). At the 01:29Z restart
+# the exchange began refusing every placement from the server's address
+# — HTTP 403 {"code":7,"message":"Your connection looks like a VPN"} —
+# while cancels still went through. Everything that cancels an order to
+# re-place it then cancels fine and cannot re-place: 44 exit re-rests
+# failed in 18 minutes and the bond rail pulled bids it could not put
+# back. So: the desk remembers the refusal; while it stands, the engine
+# cancels nothing it means to replace, one placement a minute probes
+# for recovery, and the owner is told once when it starts and once when
+# it clears. A refused placement is retried on a fresh connection in
+# case the host's shared outbound pool rotates.
+PLACE_PROBE_S = 60.0
+PLACE_RETRY_N = 2
+PLACE_RETRY_S = 3.0
+
+
+def is_vpn_refusal(err) -> bool:
+    s = str(err)
+    return (getattr(err, "status", None) == 403
+            and ("looks like a VPN" in s or '"code":7' in s.replace(" ", "")))
+
+
+class PlaceHealth:
+    """Is the exchange accepting our placements? Shared by every desk in
+    the process — the address is the same for all of them."""
+
+    def __init__(self, clock=None, on_change=None):
+        self._clock = clock if clock is not None else time.time
+        self.on_change = on_change          # callable(blocked: bool, note)
+        self.blocked_since: float | None = None
+        self.last_refused: float = 0.0
+        self.refused_n: int = 0
+        self.ok_at: float = 0.0
+        self.note: str = ""
+
+    def blocked(self) -> bool:
+        return self.blocked_since is not None
+
+    def probe_due(self, now: float | None = None) -> bool:
+        now = self._clock() if now is None else now
+        return self.blocked() and now - self.last_refused >= PLACE_PROBE_S
+
+    def refused(self, note: str, now: float | None = None) -> None:
+        now = self._clock() if now is None else now
+        first = self.blocked_since is None
+        if first:
+            self.blocked_since = now
+        self.last_refused = now
+        self.refused_n += 1
+        self.note = note[:160]
+        if first and self.on_change is not None:
+            self.on_change(True, self.note)
+
+    def accepted(self, now: float | None = None) -> None:
+        now = self._clock() if now is None else now
+        self.ok_at = now
+        if self.blocked_since is not None:
+            since, n = self.blocked_since, self.refused_n
+            self.blocked_since = None
+            self.refused_n = 0
+            if self.on_change is not None:
+                self.on_change(False, f"accepted again after {n} refusals "
+                                      f"over {(now - since) / 60:.0f} min")
+
+    def view(self) -> dict:
+        return {"blocked": self.blocked(), "since": self.blocked_since or 0.0,
+                "last_refused": self.last_refused, "refused": self.refused_n,
+                "ok_at": self.ok_at, "note": self.note}
+
+
 @dataclass(frozen=True)
 class OrderResult:
     ok: bool
@@ -111,7 +181,7 @@ class OrderDesk:
 
     def __init__(self, client: Client, whitelist, switch_on, fresh_book, log,
                  sleep=None, clock=None, closing_only=None, tick_for=None,
-                 own_at=None):
+                 own_at=None, health=None):
         self.client = client
         # own_at(slug, book_side, price) -> shares of OURS resting at that
         # level. We cannot buy our own orders (owner, 2026-09-02): a take
@@ -135,6 +205,9 @@ class OrderDesk:
         # the unwind list. Only SELL_LONG (sell held stock) and SELL_SHORT
         # (buy back a short) pass here; opening anything stays refused.
         self.closing_only = set(closing_only or ())
+        # the placement breaker, shared across desks when the monitor
+        # hands one in (one address, one answer)
+        self.health = health if health is not None else PlaceHealth(clock=self._clock)
 
     # -- rails ---------------------------------------------------------------
 
@@ -263,6 +336,17 @@ class OrderDesk:
         if REST_SIDE[intent] != side:
             return self._refuse("place", slug,
                                 f"intent {intent} rests on {REST_SIDE[intent]}, not {side}")
+        # the breaker: while the exchange refuses our placements, one
+        # attempt a minute probes for recovery and the rest are refused
+        # here without a call. The owner's own tap always tries.
+        now0 = self._clock()
+        if (self.health.blocked() and initiator != "owner"
+                and not self.health.probe_due(now0)):
+            since = time.strftime("%H:%M", time.gmtime(self.health.blocked_since or now0))
+            return self._refuse("place", slug,
+                                f"placements blocked — the exchange refused the "
+                                f"last one as a VPN ({self.health.refused_n} since "
+                                f"{since}Z); probing once a minute")
         body = {
             "marketSlug": slug,
             "intent": intent,
@@ -275,12 +359,30 @@ class OrderDesk:
             # at the bid — see CLAUDE.md
             "participateDontInitiate": not taker,
         }
-        try:
-            resp = self.client.post(TRADE_API + "/v1/orders", body, path="/v1/orders")
-        except ApiError as e:
-            self.log({"op": "place", "market": slug, "error": str(e), "ts": self._clock()})
-            return OrderResult(ok=False, note=f"placement failed: {e}",
+        resp = None
+        err: ApiError | None = None
+        for attempt in range(PLACE_RETRY_N + 1):
+            try:
+                resp = self.client.post(TRADE_API + "/v1/orders", body, path="/v1/orders")
+                break
+            except ApiError as e:
+                err = e
+                if not is_vpn_refusal(e):
+                    break           # a real answer about THIS order: no retry
+                # a definite refusal, not a timeout — re-sending cannot
+                # double the order. Try again on a fresh connection in
+                # case the host's shared outbound pool rotates.
+                self.health.refused(str(e), self._clock())
+                if attempt < PLACE_RETRY_N:
+                    fresh = getattr(self.client, "fresh_connection", None)
+                    if fresh is not None:
+                        fresh()
+                    self._sleep(PLACE_RETRY_S)
+        if resp is None:
+            self.log({"op": "place", "market": slug, "error": str(err), "ts": self._clock()})
+            return OrderResult(ok=False, note=f"placement failed: {err}",
                                price=price)
+        self.health.accepted(self._clock())
         order_id = str((resp.get("order") or {}).get("id") or resp.get("id")
                        or resp.get("orderId") or "")
         self.log({"op": "place", "market": slug, "side": side, "price": price,
