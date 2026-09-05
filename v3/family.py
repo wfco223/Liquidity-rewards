@@ -59,6 +59,24 @@ from .terms import TermsStore
 ET = ZoneInfo("America/New_York")
 
 BOOK_MAX_AGE = 120.0
+# An exit slot "pays" when the model scores it at least this much a
+# day. Exits must earn while they wait (owner, 2026-09-04: 33 of 53
+# politics exits sat where nothing pays — buy-backs 14 ticks under the
+# bid on a 92c sale, left there by a restart): among a buy-back's
+# candidate slots, one that pays beats one that does not, always at or
+# better than break-even. Under a cent a day is the same as nothing.
+# Stock sells keep joining the ask touch (2026-08-22) — behind it pays
+# less by construction, and an empty ask side anchors high (2026-08-27).
+EXIT_PAYS_MIN_USD = 0.01
+# A cancel-then-re-rest hands the re-rest the price it predicted, so
+# the pair lands where the mover or the step-up said it would. Two
+# loops on 2026-09-04 came from the pair disagreeing: a buy-back
+# re-placed at 42c every minute for three hours (the step-up compared
+# against its target, the re-rest priced by the slot optimizer on a
+# book still showing the cancelled order), and lone-ask sells
+# re-placed hourly at the same price (an off-grid anchor, 58.39c,
+# read as a move from 59c). Owner: fix both.
+REPLACE_PLAN_TTL_S = 300.0
 PAGE_LOSS_USD = 1.0    # only losses bigger than this reach the phone
 PAGE_SETTLE_S = 20.0   # let the book settle before marking an open
 GONE_GRACE_S = 300.0
@@ -414,6 +432,9 @@ class Family:
         # The calibration note grades this against the fills that came,
         # instead of a snapshot of whatever happens to rest right now.
         self.exp_fills: dict[str, dict[str, float]] = {}
+        # slug|side -> (price, ts, qty): the price a cancel-then-re-rest
+        # promised for that size, consumed by the re-rest in the same pass
+        self._replace_at: dict[str, tuple[float, float, float]] = {}
         self.fills: list[dict] = []           # the purchase journal, one row per fill
         self.proven: set[str] = set()         # graduated markets (main feeds it)
         self.recent_paid: dict[str, tuple] = {}   # mkt -> (avg $/day, paid days), last 7d
@@ -2874,8 +2895,8 @@ class Family:
             return
         if side == "SELL":
             break_even = min(max(inv.get("cost", 0.0) / qty, 0.001), 0.989)
-            floor_px, _sb = self._exit_floor(slug, "SELL", break_even,
-                                             book.tick, book=book, qty=qty)
+            floor_px, sb = self._exit_floor(slug, "SELL", break_even,
+                                            book.tick, book=book, qty=qty)
             lo = max(floor_px,
                      (book.bids[0][0] + book.tick) if book.bids else 0.002)
             # 2026-08-22: the target IS the front of the profitable
@@ -2888,17 +2909,32 @@ class Family:
             hi = max(min(jp, 0.999), lo)
         else:
             received = min(max(-inv.get("cost", 0.0) / -qty, 0.002), 0.999)
-            cap_px, _sb = self._exit_floor(slug, "BUY", received, book.tick,
-                                           book=book, qty=-qty)
+            cap_px, sb = self._exit_floor(slug, "BUY", received, book.tick,
+                                          book=book, qty=-qty)
             hi = min(cap_px,
                      (book.asks[0][0] - book.tick) if book.asks
                      else cap_px)
             # empty bid side: the mirror of _ask_anchor — a buy-back
             # with no competition bids LOW, not at the expensive end
             lo = min((book.bids[0][0] if book.bids else 0.011), hi)
-        best = (hi if side == "SELL"
-                else self._best_exit_px(slug, side, book, lo, hi, rec.qty))
-        if best is None or abs(best - rec.price) < book.tick / 2:
+        gone = (rec.price, rec.qty)      # the order leaves the book if it moves
+        if side == "SELL":
+            # stock sells join the ask touch (owner, 2026-08-22: "sell
+            # more aggressively"; the MN example — never undercut it,
+            # never park behind it). Behind the touch pays less than the
+            # touch by construction, so there is no better-paying slot
+            # to look for; an empty ask side anchors high by the
+            # 2026-08-27 rule.
+            best = hi
+        else:
+            best = self._best_exit_px(slug, side, book, lo, hi, rec.qty,
+                                      basis=sb, exclude=gone)
+        if best is None:
+            return
+        # on the grid the placer uses: an off-grid anchor (fair + 15
+        # ticks = 58.39c) against a resting 59c is not a move
+        best = snap_price(best, book.tick, side)
+        if abs(best - rec.price) < book.tick / 2:
             return
         # the placer has the LAST word on price (owner, 2026-08-30:
         # exits were cancelled and re-placed at the same price every
@@ -2906,18 +2942,21 @@ class Family:
         # independently — the exit gate pinned the replacement right
         # back where it was). Consult the same gate the placer will;
         # if the final price would not move, the order does not move.
+        # And the re-rest is HANDED this price (2026-09-04), so the
+        # pair cannot disagree on a book still showing the old order.
         basis_g = (break_even if side == "SELL" else received)
         gate_g = self._exit_gate(slug, side, basis_g, rec.qty, book, now)
-        predicted = gate_g if gate_g is not None else best
+        predicted = snap_price(gate_g if gate_g is not None else best,
+                               book.tick, side)
         if abs(predicted - rec.price) < book.tick / 2:
             return
         prog, _w = self._prog_row(slug)
         side_pool = self._side_pool(slug, prog) if prog is not None else None
         if prog is None or side_pool is None:
             return
-        levels = [(p, q) for p, q in book.side(side) if q > 1e-9]
+        levels = self._levels_less(book.side(side), gone)
         j = estimate_join(side, levels, book.tick, float(prog.df),
-                          float(prog.target), best, rec.qty)
+                          float(prog.target), predicted, rec.qty)
         best_est = (j.share * side_pool
                     if j.qualifies and j.in_window else 0.0)
         cur_est = rec.live_est or 0.0
@@ -2929,6 +2968,7 @@ class Family:
         if r.ok:
             self.orders.pop(rec.id, None)
             self.evidence.order_gone(rec.market, rec.id)
+            self._replace_at[f"{slug}|{side}"] = (predicted, now, rec.qty)
             # the gain is already in hand: best_est is what the model
             # scores the new slot at, cur_est what it was earning. The
             # Sold tab reports the sum of these instead of one line per
@@ -3398,22 +3438,48 @@ class Family:
             freed = (1.0 - px) * qty
         return est + pf * (profit + freed * r_eff * d_off)
 
-    def _best_exit_px(self, slug: str, side: str, book, lo: float,
-                      hi: float, qty: float,
-                      basis: float | None = None) -> float:
-        """The exit slot with the best $/day VALUE: resting earnings
-        plus the expected gain of actually exiting (profit + freed
-        money redeployed). With slack in the ceiling this reduces to
-        the best-earning slot; with the ceiling binding it concedes
-        toward faster exits (owner, 2026-08-21: opportunity cost)."""
+    @staticmethod
+    def _levels_less(levels, exclude: tuple | None) -> list:
+        """The book's side without one of our own orders in it — the
+        order about to be moved is not competition for its own
+        replacement, and a cancelled one still shows in the cached
+        book for a while."""
+        out = []
+        for p, q in levels:
+            if exclude is not None and abs(p - exclude[0]) < 1e-9:
+                q = q - exclude[1]
+            if q > 1e-9:
+                out.append((p, q))
+        return out
+
+    def _slot_est(self, slug: str, side: str, book, px: float, qty: float,
+                  exclude: tuple | None = None) -> float | None:
+        """$/day the model scores an exit of qty at px. None when the
+        market cannot be scored (no program row, no pool divisor)."""
+        prog, _w = self._prog_row(slug)
+        if prog is None:
+            return None
+        side_pool = self._side_pool(slug, prog)
+        if side_pool is None:
+            return None
+        levels = self._levels_less(book.side(side), exclude)
+        j = estimate_join(side, levels, book.tick, float(prog.df),
+                          float(prog.target), px, qty)
+        return j.share * side_pool if j.qualifies and j.in_window else 0.0
+
+    def _exit_slots(self, slug: str, side: str, book, lo: float,
+                    hi: float, qty: float, basis: float | None,
+                    exclude: tuple | None) -> list[tuple]:
+        """(price, est $/day, score) for each candidate exit slot in
+        [lo, hi]. Empty when the market cannot be scored."""
         lo, hi = round(lo, 3), round(hi, 3)
         if hi < lo:
-            return hi
+            return []
         prog, _w = self._prog_row(slug)
-        side_pool = self._side_pool(slug, prog) if prog is not None else None
         if prog is None:
-            return hi if side == "SELL" else lo
-        levels = [(p, q) for p, q in book.side(side) if q > 1e-9]
+            return []
+        side_pool = self._side_pool(slug, prog)
+        levels = self._levels_less(book.side(side), exclude)
         touch = levels[0][0] if levels else (hi if side == "SELL" else lo)
         r_eff = self._exit_opportunity_rate()
         d_off = self.fillmodel.expected_offload_days(slug)
@@ -3423,7 +3489,7 @@ class Family:
         cands = [round(lo + i * book.tick, 3) for i in range(0, n, step)]
         if cands[-1] != hi:
             cands.append(hi)
-        best_px, best_key = None, None
+        rows = []
         for px in cands:
             j = estimate_join(side, levels, book.tick, float(prog.df),
                               float(prog.target), px, qty)
@@ -3437,11 +3503,53 @@ class Family:
                                        target=float(prog.target))
             score = self._exit_score(est, pf, qty, px, base, side,
                                      r_eff, d_off)
+            rows.append((px, est, score))
+        return rows
+
+    @staticmethod
+    def _top_slot(rows: list[tuple], side: str) -> float | None:
+        best_px, best_key = None, None
+        for px, _est, score in rows:
             near = -px if side == "SELL" else px
             key = (round(score, 4), near)
             if best_key is None or key > best_key:
                 best_px, best_key = px, key
-        return best_px if best_px is not None else (hi if side == "SELL" else lo)
+        return best_px
+
+    def _paying_exit_px(self, slug: str, side: str, book, lo: float,
+                        hi: float, qty: float,
+                        basis: float | None = None,
+                        exclude: tuple | None = None) -> float | None:
+        """The best-scoring slot in [lo, hi] that PAYS, or None when
+        none does (owner, 2026-09-04: exits must earn while they wait)."""
+        rows = [r for r in self._exit_slots(slug, side, book, lo, hi, qty,
+                                            basis, exclude)
+                if r[1] >= EXIT_PAYS_MIN_USD]
+        return self._top_slot(rows, side)
+
+    def _best_exit_px(self, slug: str, side: str, book, lo: float,
+                      hi: float, qty: float,
+                      basis: float | None = None,
+                      exclude: tuple | None = None) -> float:
+        """The exit slot with the best $/day VALUE: resting earnings
+        plus the expected gain of actually exiting (profit + freed
+        money redeployed). With slack in the ceiling this reduces to
+        the best-earning slot; with the ceiling binding it concedes
+        toward faster exits (owner, 2026-08-21: opportunity cost).
+
+        Paying slots first (owner, 2026-09-04): while any slot in the
+        range pays, the choice is among those — a deep buy-back's
+        paper profit no longer outbids a slot that actually earns.
+        Only when nothing pays does the raw score decide."""
+        lo, hi = round(lo, 3), round(hi, 3)
+        if hi < lo:
+            return hi
+        rows = self._exit_slots(slug, side, book, lo, hi, qty, basis, exclude)
+        if not rows:
+            return hi if side == "SELL" else lo
+        paying = [r for r in rows if r[1] >= EXIT_PAYS_MIN_USD]
+        px = self._top_slot(paying or rows, side)
+        return px if px is not None else (hi if side == "SELL" else lo)
 
     def _sell(self, now: float, actions: int) -> int:
         for slug, inv in list(self.inventory.items()):
@@ -3649,13 +3757,8 @@ class Family:
                                 self._mark(slug, "SELL", now)
                                 actions -= 1
                                 continue
-                if rest < 0.01:
-                    continue
-                if covered > 0.01 and not self._cooldown_ok(slug, "SELL",
-                                                            now):
-                    continue    # adjustments throttle; a bare position
-                                # gets its exit NOW (owner, 2026-08-22:
-                                # "no reason to wait")
+                # the stray checks below run even when the stock is
+                # fully covered (2026-09-04) — see the short branch
                 break_even = min(max(inv.get("cost", 0.0) / qty, 0.001), 0.989)
                 floor_px, score_basis = self._exit_floor(
                     slug, "SELL", break_even, book.tick, book=book, qty=qty)
@@ -3673,7 +3776,8 @@ class Family:
                 # never over-offers)
                 low_stray = [o for o in mine if o.price < lo - 1e-9
                              and o.id in self.orders]
-                if low_stray:
+                if low_stray and rest >= 0.01:    # as before: judged when
+                                                   # cover is being added
                     worst = min(low_stray, key=lambda o: o.price)
                     rr = self.desk.cancel(worst.id, worst.market)
                     if rr.ok:
@@ -3702,6 +3806,13 @@ class Family:
                                        "fill (owner, 2026-08-22)")
                         actions -= 1
                     continue
+                if rest < 0.01:
+                    continue
+                if covered > 0.01 and not self._cooldown_ok(slug, "SELL",
+                                                            now):
+                    continue    # adjustments throttle; a bare position
+                                # gets its exit NOW (owner, 2026-08-22:
+                                # "no reason to wait")
                 # sell at the FRONT of the profitable range (owner,
                 # 2026-08-22): join the ask touch — unless the touch is
                 # a giveaway against the model, then rest just under fair
@@ -3714,6 +3825,12 @@ class Family:
                     px = gate_px          # the gate's price IS the plan:
                                           # it was chosen as the least
                                           # give-up that pays for itself
+                planned = self._replace_at.pop(f"{slug}|SELL", None)
+                if (planned is not None
+                        and now - planned[1] <= REPLACE_PLAN_TTL_S
+                        and abs(planned[2] - rest) < 0.01):
+                    px = planned[0]       # what the mover promised, for
+                                          # this same size
                 px = min(max(px, 0.002), 0.999)
                 side, intent, rest_qty = "SELL", SELL_LONG, rest
                 why = "selling filled stock — it earns while it waits"
@@ -3775,16 +3892,37 @@ class Family:
                          if mine else None)
                 step_pred = None
                 if dead_s and step_tgt is not None and worst is not None:
-                    # what will the re-rest ACTUALLY price at? The
-                    # exit gate overrides everything downstream — the
-                    # nh-dem loop proved comparing against the raw
-                    # step target is not enough (owner, 2026-08-30)
-                    gate_p = self._exit_gate(
-                        slug, "BUY",
-                        min(max(-inv.get("cost", 0.0) / -qty, 0.002),
-                            0.999),
-                        worst.qty, book, now)
-                    step_pred = gate_p if gate_p is not None else step_tgt
+                    # what will the re-rest ACTUALLY price at? The exit
+                    # gate has the last word (owner, 2026-08-30, the
+                    # nh-dem loop); with no gate the slot optimizer
+                    # does — scored on the book WITHOUT this order,
+                    # which is how the re-rest must see it too
+                    # (2026-09-04: comparing against the raw step
+                    # target re-placed one buy-back at 42c every minute
+                    # for three hours). The prediction is handed to the
+                    # re-rest so the pair lands where it says.
+                    received_w = min(max(-inv.get("cost", 0.0) / -qty,
+                                         0.002), 0.999)
+                    cap_w, basis_w = self._exit_floor(
+                        slug, "BUY", received_w, book.tick, book=book,
+                        qty=-qty)
+                    gate_p = self._exit_gate(slug, "BUY", received_w,
+                                             worst.qty, book, now)
+                    if gate_p is not None:
+                        step_pred = gate_p
+                    else:
+                        gone_w = (worst.price, worst.qty)
+                        lv_w = self._levels_less(book.side("BUY"), gone_w)
+                        bid_w = (lv_w[0][0] if lv_w
+                                 else received_w - book.tick)
+                        hi_w = min(cap_w,
+                                   (book.asks[0][0] - book.tick)
+                                   if book.asks else cap_w)
+                        hi_w = max(hi_w, step_tgt)
+                        step_pred = self._best_exit_px(
+                            slug, "BUY", book, min(bid_w, hi_w), hi_w,
+                            worst.qty, basis=basis_w, exclude=gone_w)
+                    step_pred = snap_price(step_pred, book.tick, "BUY")
                 if (dead_s and rest < 0.01 and actions > 0
                         and step_pred is not None
                         and step_pred > worst.price + book.tick / 2):
@@ -3792,6 +3930,8 @@ class Family:
                     if rr.ok:
                         self.orders.pop(worst.id, None)
                         self.evidence.order_gone(worst.market, worst.id)
+                        self._replace_at[f"{slug}|BUY"] = (step_pred, now,
+                                                           worst.qty)
                         # what the step buys, scored the same way the
                         # exit mover scores its own moves: the model's
                         # estimate at the new price less what it was
@@ -3827,12 +3967,12 @@ class Family:
                         covered -= worst.qty
                         rest = -qty - covered
                         actions -= 1
-                if rest < 0.01:
-                    continue
-                if covered > 0.01 and not self._cooldown_ok(slug, "BUY",
-                                                            now):
-                    continue    # same rule for covers: bare shorts get
-                                # their buy-back immediately
+                # the stray checks below run even when the short is
+                # fully covered — a buy-back stranded far under the
+                # touch is wasted whether or not more cover is due
+                # (2026-09-04: covers placed at a 10:29Z restart sat 14
+                # ticks under the bid for twelve hours, untouched,
+                # because "nothing left to cover" skipped them)
                 received = min(max(-inv.get("cost", 0.0) / -qty, 0.002), 0.999)
                 cap_px, score_basis = self._exit_floor(
                     slug, "BUY", received, book.tick, book=book, qty=-qty)
@@ -3851,7 +3991,10 @@ class Family:
                 # basis ghosts) retreats the same way
                 high_stray = [o for o in mine if o.price > hi + 1e-9
                               and o.id in self.orders]
-                if high_stray:
+                if high_stray and rest >= 0.01:   # as before: judged when
+                                                   # cover is being added
+                                                   # (the gate's blessing
+                                                   # is sized to `rest`)
                     worst = max(high_stray, key=lambda o: o.price)
                     rr = self.desk.cancel(worst.id, worst.market)
                     if rr.ok:
@@ -3880,11 +4023,25 @@ class Family:
                                        "fill (owner, 2026-08-22)")
                         actions -= 1
                     continue
+                if rest < 0.01:
+                    continue
+                if covered > 0.01 and not self._cooldown_ok(slug, "BUY",
+                                                            now):
+                    continue    # same rule for covers: bare shorts get
+                                # their buy-back immediately
                 px = self._best_exit_px(slug, "BUY", book,
                                         min(bid_touch, hi), hi, rest,
                                         basis=score_basis)
                 if gate_px is not None:
                     px = gate_px
+                planned = self._replace_at.pop(f"{slug}|BUY", None)
+                if (planned is not None
+                        and now - planned[1] <= REPLACE_PLAN_TTL_S
+                        and abs(planned[2] - rest) < 0.01):
+                    px = planned[0]       # what the mover or the step-up
+                                          # promised this pass, for this
+                                          # same size (a different size
+                                          # is a different gate answer)
                 px = min(max(px, 0.001), 0.999)
                 side, intent, rest_qty = "BUY", SELL_SHORT, rest
                 why = ("buying back the short at or under what it sold "
