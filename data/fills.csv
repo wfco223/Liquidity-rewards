@@ -1219,3 +1219,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788628539.1,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,20,0.07,bond,1.9184,1.17,0.009875,6,9,0.689,0.09,0.1,-0.0601,-147,bond more: split — 20 at 7c carry the share; never dearer than his first price,CACBXXC5PMVG
 1788628680.5,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,3,0.09,bond,0,0.04,0.009875,7,9,0.753,0.09,0.1,-0.0801,-150,bond: took 3 NO at 9c — it was in the way of our resting order,CADDTQN7AMVZ
 1788629654.1,politics,ewc-usgub-mi-2026-11-03-rep,SELL,-10,0.1,fix,1.5201,0.71,0.059775,5,10,0.165,0.11,0.12,-0.0402,-10,size trimmed by 10 to the exchange's count (order CACM1CRJ0MVK),CACM1CRJ0MVK
+1788629799.1,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,5,0.07,bond,0,0.04,0.009875,7,10,0.794,0.06,0.08,-0.0601,-155,bond: took 5 NO at 7c — it was in the way of our resting order,CADMY218RMVR
+1788638314.9,politics,scc-hrep-rep-2026-11-03-gte200,SELL,-0.05,0.65,fix,,59.27,,,,,,,,,size trimmed by 0.05 to the exchange's count (order C8F8W0KBPMW0),C8F8W0KBPMW0
+1788638314.9,politics,scc-hrep-rep-2026-11-03-gte200,SELL,-0.07,0.65,fix,,43.16,,,,,,,,,size trimmed by 0.07 to the exchange's count (order C8F8W0KBPMW0),C8F8W0KBPMW0
+1788638314.9,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,-1.03,0.97,fix,,12.71,,,,,,,,,size trimmed by 1.03 to the exchange's count (order C9N773YXPMVG),C9N773YXPMVG
+1788638314.9,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,-0.98,0.97,fix,0.1064,0.19,0.9999,93,96,0.656,0.95,0.97,0.0299,57,size trimmed by 0.98 to the exchange's count (order C9N773YXPMVG),C9N773YXPMVG
+1788638314.9,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-0.33,0.8,fix,,70.28,,,,,,,,,size trimmed by 0.33 to the exchange's count (order C8DCB2024MW0),C8DCB2024MW0
+1788638314.9,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-0.67,0.8,fix,,40.95,,,,,,,,,size trimmed by 0.67 to the exchange's count (order C8DCB2024MW0),C8DCB2024MW0
