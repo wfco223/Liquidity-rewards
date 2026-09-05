@@ -1227,3 +1227,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788638314.9,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-0.33,0.8,fix,,70.28,,,,,,,,,size trimmed by 0.33 to the exchange's count (order C8DCB2024MW0),C8DCB2024MW0
 1788638314.9,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-0.67,0.8,fix,,40.95,,,,,,,,,size trimmed by 0.67 to the exchange's count (order C8DCB2024MW0),C8DCB2024MW0
 1788646825.6,politics,usgubewc-usgub-vt-2026-11-03-dem,SELL,1,0.11,earn,0,5.65,0.0904,7,10,0.588,,,-0.0196,-1,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CACXHPKYMMW1
+1788651837.8,politics,usgubewc-usgub-vt-2026-11-03-dem,SELL,1,0.11,void,0,5.65,0.0904,7,10,0.588,,,-0.0196,-1,voided: the exchange has no trade for order CACXHPKYMMW1 — the row of 09-05 22:2,CACXHPKYMMW1
