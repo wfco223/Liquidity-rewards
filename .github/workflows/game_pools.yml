@@ -1,0 +1,231 @@
+name: Game pools
+
+# READ-ONLY. GET only; places nothing, commits nothing. The report goes to
+# the job summary (readable on a phone from the Actions tab) and the log.
+#
+# Owner, 2026-09-05: "a quick and dirty estimate of the rewards pools that
+# exist across all markets for that game" — the Miami–Stanford game, for
+# a day-of-game experiment. Finds the event by search, lists its open
+# markets, asks the incentives endpoint which carry a live liquidity
+# program, groups them by PROGRAM (a pool belongs to a program period and
+# is shared by every market on it), and reads each book's touch.
+#
+# Runs once when this file lands on main (the repo's probe pattern), and
+# on manual dispatch from the Actions tab — never on a schedule (owner,
+# 2026-08-24).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/game_pools.yml
+  workflow_dispatch:
+    inputs:
+      seed:
+        description: "search phrase, or an event slug"
+        default: "Miami Stanford"
+      teams:
+        description: "comma-separated words that must all appear in the event title (blank: take the search's best match)"
+        default: "Miami,Stanford"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: game-pools
+  cancel-in-progress: false
+
+jobs:
+  pools:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Ask the exchange
+        env:
+          SEED: ${{ github.event.inputs.seed || 'Miami Stanford' }}
+          TEAMS: ${{ github.event.inputs.teams || 'Miami,Stanford' }}
+        run: |
+          pip install -q -r requirements.txt
+          python3 - <<'EOF'
+          import collections, datetime as dt, io, os, re, time, requests
+          import track_rewards as tr
+
+          SEED = (os.environ.get("SEED") or "").strip()
+          WORDS = [w.strip().lower() for w in (os.environ.get("TEAMS") or "").split(",")
+                   if w.strip()]
+          BUF = io.StringIO(); _p = print
+          def print(*a, **k):
+              _p(*a, **k); _p(*a, **{**k, "file": BUF})
+
+          def get(url, **params):
+              for attempt in range(5):
+                  try:
+                      r = requests.get(url, params=params or None, timeout=25)
+                  except Exception as e:  # noqa: BLE001
+                      err = f"{type(e).__name__}: {e}"
+                  else:
+                      if r.status_code < 400:
+                          return r.json(), None
+                      err = f"HTTP {r.status_code}"
+                      if r.status_code not in (429, 500, 502, 503, 504):
+                          return None, err
+                  time.sleep(1.5 * (attempt + 1))
+              return None, err
+
+          def num(x):
+              try:
+                  return float(x)
+              except (TypeError, ValueError):
+                  return 0.0
+
+          def open_markets(ev):
+              return [m for m in (ev.get("markets") or [])
+                      if m.get("slug") and not m.get("closed")]
+
+          # --- the event(s) ----------------------------------------------------
+          events = []
+          if SEED and " " not in SEED:
+              j, err = get(f"{tr.GATEWAY}/v1/events/slug/{SEED}")
+              if j:
+                  ev = j.get("event") or j
+                  if open_markets(ev):
+                      events.append(ev)
+          if not events:
+              j, err = get(tr.GATEWAY + "/v1/search", query=SEED, limit=25)
+              cands = []
+              for ev in (j or {}).get("events") or []:
+                  opens = open_markets(ev)
+                  if not opens:
+                      continue
+                  title = str(ev.get("title") or "")
+                  hit = all(w in title.lower() for w in WORDS) if WORDS else True
+                  cands.append((hit, len(opens), ev))
+              print(f"searched '{SEED}': {len(cands)} events with open markets"
+                    + (f"  (error: {err})" if err else ""))
+              for hit, n, ev in sorted(cands, key=lambda c: (-c[0], -c[1])):
+                  print(f"   {'*' if hit else ' '} {str(ev.get('slug') or '?'):<44s} "
+                        f"{n:>3d} open   {str(ev.get('title') or '')[:60]}")
+              matched = [ev for hit, n, ev in cands if hit]
+              if matched:
+                  events = matched
+              elif cands:
+                  cands.sort(key=lambda c: -c[1])
+                  events = [cands[0][2]]
+                  print("no title matched every word — taking the search's best match")
+          if not events:
+              print("could not find the event")
+              raise SystemExit(0)
+
+          markets = []
+          for ev in events:
+              for m in open_markets(ev):
+                  markets.append({"slug": m["slug"], "event": ev.get("slug") or "?",
+                                  "title": str(m.get("question") or m.get("title") or "")})
+          print(f"\nevents: {len(events)}   open markets: {len(markets)}")
+          for ev in events:
+              print(f"   {ev.get('slug')}   {str(ev.get('title') or '')[:70]}   "
+                    f"starts {ev.get('startTime') or ev.get('startDate') or ev.get('eventStartTime') or '?'}")
+
+          # --- the pools -------------------------------------------------------
+          # symbols must be a LIST (a comma-joined string silently matches nothing)
+          prog_of = {}
+          slugs = [m["slug"] for m in markets]
+          for i in range(0, len(slugs), 40):
+              j, err = get(tr.HOSTS[0] + "/v1/incentives",
+                           symbols=slugs[i:i + 40], pageSize=100)
+              if j is None:
+                  print(f"incentives batch {i // 40 + 1}: {err}")
+                  continue
+              for p in j.get("programs") or []:
+                  s = p.get("marketSlug") or ""
+                  for tp in p.get("timePeriods") or []:
+                      if str(tp.get("status") or "").lower() not in ("active", "live", "status_live"):
+                          continue
+                      prog_of[s] = {
+                          "pid": str(tp.get("programId") or p.get("programId") or "?"),
+                          "pool": num(tp.get("rewardPool")),
+                          "target": num(tp.get("targetSize")),
+                          "df": num(tp.get("discountFactor")),
+                          "start": str(tp.get("start") or ""),
+                          "end": str(tp.get("end") or ""),
+                          "type": str(p.get("programType") or tp.get("programType") or ""),
+                          "event_start": str(p.get("eventStartTime") or ""),
+                      }
+              time.sleep(0.3)
+
+          def days_of(pr):
+              try:
+                  a = dt.datetime.fromisoformat(pr["start"].replace("Z", "+00:00"))
+                  b = dt.datetime.fromisoformat(pr["end"].replace("Z", "+00:00"))
+                  return max((b - a).total_seconds() / 86400.0, 0.0)
+              except Exception:  # noqa: BLE001
+                  return None
+
+          by_pid = collections.defaultdict(list)
+          for s, pr in prog_of.items():
+              by_pid[pr["pid"]].append(s)
+          funded = [m for m in markets if m["slug"] in prog_of]
+          bare = [m for m in markets if m["slug"] not in prog_of]
+          print(f"\nmarkets with a live liquidity program: {len(funded)} of {len(markets)}"
+                f"   ({len(by_pid)} distinct programs)")
+
+          print("\nPROGRAMS (a pool is shared by every market on the program)")
+          print(f"  {'program':<28s} {'pool $':>8s} {'per day':>8s} {'target':>7s} "
+                f"{'df':>4s} {'mkts':>4s}  period")
+          total_pool = total_day = 0.0
+          for pid, ss in sorted(by_pid.items(), key=lambda kv: -prog_of[kv[1][0]]["pool"]):
+              pr = prog_of[ss[0]]
+              d = days_of(pr)
+              per_day = pr["pool"] / d if d and d > 1.0 else pr["pool"]
+              total_pool += pr["pool"]; total_day += per_day
+              print(f"  {pid[:28]:<28s} {pr['pool']:>8,.0f} {per_day:>8,.0f} "
+                    f"{pr['target']:>7,.0f} {pr['df']:>4.2f} {len(ss):>4d}  "
+                    f"{pr['start'][:16]} -> {pr['end'][:16]}"
+                    + (f"  ({d:.1f} d)" if d is not None else ""))
+              kinds = collections.Counter(re.sub(r"-\d{4}-\d{2}-\d{2}.*$", "", s) for s in ss)
+              print(f"      {', '.join(f'{k} x{n}' for k, n in kinds.most_common(6))}")
+          print(f"  {'TOTAL':<28s} {total_pool:>8,.0f} {total_day:>8,.0f}")
+          if bare:
+              print(f"\n{len(bare)} open markets carry NO live program (earn nothing):")
+              for m in bare[:40]:
+                  print(f"   {m['slug'][:60]}")
+              if len(bare) > 40:
+                  print(f"   ... and {len(bare) - 40} more")
+
+          # --- the books -------------------------------------------------------
+          print("\nBOOKS (funded markets; pool = the program's whole pool, shared)")
+          print(f"  {'market':<48s} {'pool':>6s} {'tgt':>6s} {'bid':>5s} {'ask':>5s} "
+                f"{'sprd':>4s} {'bid sz':>7s} {'ask sz':>7s}")
+          rows = []
+          for m in funded:
+              s = m["slug"]; pr = prog_of[s]
+              j, err = get(f"{tr.GATEWAY}/v1/markets/{s}/book", depth=20)
+              md = (j or {}).get("book") or (j or {}).get("marketData") or (j or {})
+              bids = [(num(l.get("px")), num(l.get("qty"))) for l in md.get("bids") or []]
+              asks = [(num(l.get("px")), num(l.get("qty")))
+                      for l in md.get("offers") or md.get("asks") or []]
+              bids.sort(key=lambda x: -x[0]); asks.sort(key=lambda x: x[0])
+              bid, bq = bids[0] if bids else (None, 0.0)
+              ask, aq = asks[0] if asks else (None, 0.0)
+              spread = (ask - bid) if bid is not None and ask is not None else None
+              rows.append((s, pr, bid, ask, spread, bq, aq, sum(q for _, q in bids), sum(q for _, q in asks)))
+              time.sleep(0.15)
+          rows.sort(key=lambda r: (-r[1]["pool"], r[0]))
+          for s, pr, bid, ask, spread, bq, aq, bt, at in rows:
+              print(f"  {s[:48]:<48s} {pr['pool']:>6,.0f} {pr['target']:>6,.0f} "
+                    f"{(f'{bid*100:.0f}c' if bid is not None else '-'):>5s} "
+                    f"{(f'{ask*100:.0f}c' if ask is not None else '-'):>5s} "
+                    f"{(f'{spread*100:.0f}' if spread is not None else '-'):>4s} "
+                    f"{bq:>7,.0f} {aq:>7,.0f}")
+          thin = [r for r in rows if r[7] + r[8] < 2 * r[1]["target"]]
+          print(f"\n{len(thin)} of {len(rows)} funded books rest less than Target Size on "
+                "both sides combined — an order there is alone with the pool")
+
+          with open(os.environ["GITHUB_STEP_SUMMARY"], "a") as f:
+              f.write(f"## Game pools — {SEED}\n\n```\n{BUF.getvalue()}\n```\n")
+          EOF
