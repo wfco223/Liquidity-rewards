@@ -2294,19 +2294,20 @@ class TestBuyingMoreWithTheMoneyThere(Base):
         o = self.buys()[0]
         self.assertEqual(o.qty, float(int(20.0 / o.price)))
 
-    def test_no_buying_power_means_no_order_and_a_wait(self):
+    def test_no_buying_power_means_the_bonds_only_sell_until_money_returns(self):
+        # owner, 2026-09-05: with no money to deploy nothing is bought;
+        # the buy-more comes back once money does
         self.r.exchange.buying_power = lambda: 0.4
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertEqual(self.buys(), [])
-        self.assertIn("no buying power", self.b._more_note[AL])
+        self.assertTrue(self.b.money_out)
         more = self.b.view(self.now + 1, self.positions())["rows"][0]["more"]
-        self.assertIsNotNone(more["retry_at"])
+        self.assertIn("no money", more["paused"])
         self.r.exchange.buying_power = lambda: 500.0
-        self.b.cycle(self.now + 60, self.positions(), on=True)
-        self.assertEqual(self.buys(), [])                       # still waiting
-        self.r.cache.put(AL, yes_book(self.now + 1900))         # a fresh book, later
-        self.b.cycle(self.now + 1900, self.positions(), on=True)
-        self.assertTrue(self.buys())                            # the wait is over
+        self.r.cache.put(AL, yes_book(self.now + 61))            # a fresh book, later
+        self.b.cycle(self.now + 61, self.positions(), on=True)
+        self.assertIsNone(self.b.money_out)
+        self.assertTrue(self.buys())                            # the money is back
 
     def _refusing(self, note):
         from v3.orders import OrderResult
@@ -2922,3 +2923,79 @@ class TestSplitPlacement(Base):
         v = self.b.view(self.now, self.positions())["rows"][0]["more"]
         self.assertEqual(len(v["orders"]), 2)
         self.assertGreaterEqual(v["order"]["share"], 0.30)
+
+
+class TestNoMoneyToDeploy(Base):
+    """Owner, 2026-09-05: "When there is no money to deploy, all the bond
+    functions except for selling shares to generate proceeds (never
+    below cost) is the only thing that should be going on. No more
+    buying or sniping." """
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=5.0)   # a minnow: the sniper dances
+        self.r.cache.put(AL, minnow_book(self.now, minnows=5.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.bp = 500.0
+        self.r.exchange.buying_power = lambda: self.bp
+
+    def cyc(self, t):
+        self.r.cache.put(AL, minnow_book(t, minnows=5.0))
+        return self.b.cycle(t, self.positions(), on=True)
+
+    def row(self, v):
+        return next(r for r in v["rows"] if r["market"] == AL)
+
+    def test_with_no_money_the_bonds_only_sell(self):
+        self.cyc(self.now)
+        self.assertTrue(self.b._more_orders(AL))                       # buying more
+        self.assertTrue(self.orders(AL, "SELL", decoy=True))           # the sniper's decoy
+        self.assertIsNone(self.b.money_out)
+        self.bp = 3.0                                                  # the money is gone
+        t = self.now + 61
+        self.cyc(t)
+        self.assertTrue(self.b.money_out)
+        self.assertEqual(self.b._more_orders(AL), [])                  # the buy-more came off
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])      # the decoy came off
+        self.assertTrue(self.orders(AL, "SELL", decoy=False))          # the exit stays
+        freed = self.b.money_out["freed"]
+        self.assertGreater(freed, 0.0)
+        self.assertIn("money_out", [e["event"] for e in self.b.log])
+        # nothing new is bought, sniped or baited while it lasts
+        t2 = t + MOVE_COOLDOWN_S + 61
+        self.cyc(t2)
+        self.assertEqual(self.b._more_orders(AL), [])
+        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
+        self.assertTrue(self.orders(AL, "SELL", decoy=False))
+        self.assertFalse(self.b.place_bait(AL, t2, self.positions())["ok"])
+        v = self.b.view(t2, self.positions())
+        self.assertTrue(v["money_out"])
+        self.assertIn("no money", self.row(v)["more"]["paused"])
+        # our own collateral coming back is not new money
+        self.bp = 40.0 + freed
+        self.cyc(t2 + 61)
+        self.assertTrue(self.b.money_out)
+        self.assertEqual(self.b._more_orders(AL), [])
+        # proceeds beyond it: buying resumes
+        self.bp = 51.0 + freed
+        self.cyc(t2 + 122)
+        self.assertIsNone(self.b.money_out)
+        self.assertIn("money_back", [e["event"] for e in self.b.log])
+        self.assertTrue(self.b._more_orders(AL))
+
+    def test_the_mode_survives_a_restart(self):
+        self.bp = 3.0
+        self.cyc(self.now)
+        self.assertTrue(self.b.money_out)
+        d = self.b.to_dict()
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(d)
+        self.assertEqual(b2.money_out, self.b.money_out)
+
+    def test_unknown_buying_power_changes_nothing(self):
+        del self.r.exchange.buying_power
+        self.cyc(self.now)
+        self.assertIsNone(self.b.money_out)
+        self.assertTrue(self.b._more_orders(AL))
