@@ -1156,3 +1156,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788616964.7,politics,enwc-uspres-nom-dem-2028-andbes,SELL,0.58,0.06,backfill,,9.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA19F632JMVF
 1788616964.7,politics,ewc-usse-ak-2026-11-03-rep,SELL,20,0.37,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAAAESJGWMW0
 1788616964.7,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,0.33,0.8,backfill,,70.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8DCB2024MW0
+1788618832.4,politics,enwc-uspres-nom-dem-2028-andbes,SELL,0.96,0.06,backfill,,11.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA19F632JMVF
+1788618844.5,politics,enwc-uspres-nom-dem-2028-andbes,SELL,0.96,0.06,backfill,,11.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA19F632JMVF
