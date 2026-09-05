@@ -871,3 +871,35 @@ Tuesday Sep 1).*
 
 **Check.** data/rewards.csv days 29-31 and Sep 2-3; MoV = the 11
 vmc-ussep-mov-ma-dem markets.
+
+### P17 — written 2026-09-05 ~01:30Z, BEFORE the game-day experiment runs
+*The setup: the Game day family (v3/gameday.py) rests ONE share a side
+at the touch on seven markets of each of Saturday's two biggest college
+games — moneyline, the spread and total nearest 50c, first-half winner,
+a first-half spread, a team total, a first-touchdown prop — and pulls
+everything at kickoff. About $14 of collateral. The Miami–Stanford probe
+(2026-09-04): 295 markets, $42,000 in pools, Target Sizes 100–200k on
+the main lines and 10–25k on the small ones, df 0.10–0.30.*
+
+1. **A side under Target Size pays nothing.** Every scout market-day
+   whose side rested under the program's Target Size (the prop, and
+   any period market whose books were thin) posts $0.00 for us in
+   data/rewards.csv, our order at the touch notwithstanding. Wrong if
+   any such market-day pays ≥ $0.05 — then the "side must reach Target
+   Size" reading of the terms is wrong or incomplete, which would
+   matter far more than this experiment.
+2. **A share against the walls earns pennies.** The main-line scouts
+   (moneyline, spread, total) each post under $0.10 for the day: one
+   share beside 30,000–200,000 resting, at df 0.10–0.15. Wrong if any
+   main-line market-day pays us ≥ $0.50.
+3. **Game-day flow fills them.** At least half the scouts fill before
+   kickoff. Wrong if fewer than 7 of 14 fill (data/fills.csv, family
+   gameday, purpose earn).
+4. **The fills are cheap.** The hour-on grade of those fills (fill_graded
+   in the family log) has a median adverse move ≤ 5c a share. Wrong if
+   the median exceeds 5c — then day-of markets are not where a resting
+   strategy belongs, however large the pools.
+
+**Check.** data/rewards.csv rows for the two game slugs on the game
+date; data/fills.csv and data/trades.csv for family gameday; the
+kickoff_pull log events for what left and when.

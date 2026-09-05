@@ -59,7 +59,7 @@ class TestMonitorFloor(unittest.TestCase):
 
     def test_every_family_is_present_and_off(self):
         self.assertEqual(set(self.mon.families),
-                         {"politics", "cfb", "nfl", "nba"})
+                         {"politics", "cfb", "nfl", "nba", "gameday"})
         for sw in self.mon.switches.values():
             self.assertFalse(sw.on)
         self.assertFalse(self.mon.master.on)

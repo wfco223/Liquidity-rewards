@@ -28,7 +28,7 @@ import threading
 import time
 from pathlib import Path
 
-from . import basketball, football, politics
+from . import basketball, football, gameday, politics
 from .alerts import Alerts
 from .api import ApiError, Client, GATEWAY
 from .books import BookCache
@@ -95,6 +95,9 @@ FAMILIES = {
     "cfb": (football.cfb, football.cfb_discover),
     "nfl": (football.nfl, football.nfl_discover),
     "nba": (basketball.nba, basketball.nba_discover),
+    # the game-day experiment (owner, 2026-09-05): a share a side on a
+    # few markets of tomorrow's two biggest college games, off at kickoff
+    "gameday": (gameday.config, gameday.discover),
 }
 
 
@@ -3904,7 +3907,8 @@ class Monitor:
             if day_totals:
                 self.actuals_by_day = day_totals
         summaries = {}
-        fam_pct = {"politics": 25, "cfb": 78, "nfl": 88, "nba": 92}
+        fam_pct = {"politics": 25, "cfb": 78, "nfl": 88, "nba": 92,
+                   "gameday": 95}
         for key, fam in self.families.items():
             self._stage(f"{fam.cfg.name}: discovering, reading terms, "
                         f"scoring books", fam_pct.get(key, 94))
