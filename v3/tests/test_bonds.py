@@ -2248,6 +2248,36 @@ class TestTheLedgerIsRebuiltFromTheExchange(Base):
         # the buy-more default is the claimed lot (fees aside); nothing counted twice
         self.assertAlmostEqual(b2.more_cap[AL]["usd"], 97.0, places=2)
 
+    def test_a_rebuild_leaves_the_engines_stock_alone(self):
+        # owner, 2026-09-05 (Alabama dem): 20 engine shares in a listed
+        # market were claimed as a bond at a rebuild — the ledger had
+        # never booked a lot there. A rebuild claims back only what the
+        # ledger once held; the engine's stock stays uncounted.
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.97, 100.0,
+                                                     self.now - 200))
+        self.bond(AL, "YES", 100.0, 0.97)              # his bond, booked
+        self.exch(TN, 30.0, 0.98)                      # the engine's stock: no lot ever
+        self.b.approve(TN, self.now)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.b.held(TN, "YES"), 0.0)
+        self.assertGreater(self.b._exch_seen.get(TN, 0.0), 0.5)
+        d = self.b.to_dict()
+        d["lots"], d["engine_out"], d["more_cap"] = {}, [], {}   # the wipe
+        self.assertIn(AL, d["lot_ts"])
+        self.assertNotIn(TN, d["lot_ts"])
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
+                   clock=lambda: self.r.now, sleep=lambda s: None,
+                   parse=self.b.parse)
+        self.r.fam.freeze_dyn.clear()
+        b2.restore(d)
+        b2.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(b2.held(AL, "YES"), 100.0)     # his bond, back
+        self.assertEqual(b2.held(TN, "YES"), 0.0)       # the engine's, untouched
+        self.assertFalse(self.r.fam._frozen(TN))
+        row = next(r for r in b2.view(self.now + 60, self.positions())["rows"]
+                   if r["market"] == TN)
+        self.assertEqual(row["uncounted"], 30.0)        # shown, for him to count in if he wants
+
     def test_engine_stock_before_his_first_purchase_is_still_uncounted(self):
         self.exch(AL, 500.0, 0.92)                # the engine's own stock, no bond lot
         self.b.cycle(self.now, self.positions(), on=True)
@@ -2999,3 +3029,36 @@ class TestNoMoneyToDeploy(Base):
         self.cyc(self.now)
         self.assertIsNone(self.b.money_out)
         self.assertTrue(self.b._more_orders(AL))
+
+
+class TestCountOut(Base):
+    """Owner, 2026-09-05: "I'm pretty sure I didn't place this order on
+    the bonds page. Now I can't sell it under cost." His tap hands the
+    shares back to the engine: not a bond any more."""
+
+    def test_the_shares_go_back_to_the_engine(self):
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.b._orders(AL))                       # exit and buy-more rest
+        self.assertTrue(self.r.fam._frozen(AL))                   # the engine is out
+        money_in = self.b.money_in
+        r = self.b.uncount(AL, self.now + 1)
+        self.assertTrue(r["ok"], r["note"])
+        self.assertIn("no longer counted as bond", r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertEqual(self.b._orders(AL), [])                  # the bond's orders came off
+        self.assertEqual([o for o in self.r.exchange.live.values() if o["market"] == AL], [])
+        self.assertNotIn(AL, self.b.lot_ts)
+        self.assertNotIn(AL, self.b._exch_seen)
+        self.assertNotIn(AL, self.b.more_cap)
+        self.assertAlmostEqual(self.b.money_in, money_in - 98.0, places=2)
+        self.assertNotIn(AL, self.r.fam.bond_qty)
+        self.assertFalse(self.r.fam._frozen(AL))                  # the engine may act again
+        self.assertIn("uncounted", [e["event"] for e in self.b.log])
+        # the next pass claims nothing back: the position is the engine's
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertNotIn(AL, self.b.engine_out)
+        self.assertFalse(self.b.uncount(AL, self.now + 61)["ok"])
