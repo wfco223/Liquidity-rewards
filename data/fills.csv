@@ -1212,3 +1212,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788625915.7,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,12,0.04,void,0.1702,0.42,0.000225,2,6,0.386,0.05,0.07,0.0398,-172,voided: the exchange has no trade for order CABRTGV9YMW1 — the row of 09-05 15:4,CABRTGV9YMW1
 1788625915.7,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,2,0.93,void,0.7173,0.08,0.996675,93,96,0.795,0.93,0.94,-0.0667,126,voided: the exchange has no trade for order CAC1KS726MVR — the row of 09-05 15:4,CAC1KS726MVR
 1788625915.7,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,1,0.05,void,2.8829,0.15,0.000225,2,5,0.696,0.04,0.07,-0.0498,-197,voided: the exchange has no trade for order CAC2EATRCMVZ — the row of 09-05 15:5,CAC2EATRCMVZ
+1788626590.6,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,1,0.21,sell,0,0,0.21875,21,24,0.809,0.21,0.23,0.0088,1,taker dump — sold into the bid (the carved exception),CACYJQ2T4MW1
+1788626849.6,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,2,0.04,manual,2.0066,0.3,0.0004,4,8,0.447,0.03,0.06,-0.0396,-381,the owner's own order — the engine leaves it alone,CACPKYP80MVF
+1788627761.3,politics,ewc-usgub-mi-2026-11-03-rep,SELL,10,0.1,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CACM1CRJ0MVK
+1788627780.0,politics,ewc-usgub-mi-2026-11-03-rep,SELL,10,0.1,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CACM1CRJ0MVK
