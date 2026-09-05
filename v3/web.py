@@ -980,7 +980,9 @@ function bRow(r,d,b,sw,held){
  if(held)h+=bCalc(r)+bSniper(r,b,sw)+bExitAt(r)+bSellLadder(r)+bMore(r,b,sw)+bBait(r);
  h+=bLadder(r,b);
  if(!r.odds_changed)h+=bBuyAt(r);
- h+='<div>'+bBtn('Remove from list','if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')','off')+'</div>';
+ h+='<div>'+bBtn('Remove from list','if(confirm(\'Remove from the bond list?\'))bOp(\'bonds_remove\',\''+m+'\')','off');
+ if(held)h+=' '+bBtn('Count out — not a bond','if(confirm(\'Hand these shares back to the engine? They stop being a bond: the bond orders here come off and the engine exit rules apply, which may sell under cost. Nothing is sold by this tap.\'))bOp(\'bonds_uncount\',\''+m+'\')','off');
+ h+='</div>';
  return h+'</details></div>';
 }
 function render(d){

@@ -738,9 +738,15 @@ class Bonds:
                 # (owner, 2026-09-03), or on the rebuild of a wiped
                 # ledger. Before that the engine's stock is shown as
                 # uncounted, and he can count it in from the page.
+                # a rebuild claims back only what the ledger once booked
+                # (lot_ts survives a wiped ledger): the engine's stock in a
+                # listed market was never a lot, and claiming it made a
+                # bond of an engine fill he could then not sell under
+                # cost (owner, 2026-09-05, Alabama dem)
                 if not (ledger > 0.005 or slug in self.engine_out
                         or (self._rebuilding
-                            and self._exch_seen.get(slug, 0.0) > 0.5)):
+                            and self._exch_seen.get(slug, 0.0) > 0.5
+                            and slug in self.lot_ts)):
                     self._over_since.pop(slug, None)
                     self._less.pop(slug, None)
                     continue
@@ -1005,6 +1011,47 @@ class Bonds:
                   cost=round(qty * per, 2))
         return {"ok": True, "note": f"counting {qty:g} {side} shares as bond "
                                     f"at {per * 100:.1f}c"}
+
+    def uncount(self, slug: str, now: float) -> dict:
+        """His tap (2026-09-05: "I'm pretty sure I didn't place this order
+        on the bonds page. Now I can't sell it under cost"): the shares
+        here stop being a bond. The lot leaves the ledger, the bond's own
+        orders in the market come off, and the engine — whose stock this
+        was — takes the position back under its own exit rules, which
+        may sell under cost. Nothing is sold by the tap itself."""
+        lot = self.lots.get(slug)
+        qty = abs(float((lot or {}).get("qty") or 0.0))
+        if qty < 0.005:
+            return {"ok": False, "note": "no bond shares counted here"}
+        side = self._side_of(slug)
+        pulled = 0
+        for o in self._orders(slug):
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if r.ok:
+                self.fam.orders.pop(o.id, None)
+                f = self.fill_book.get(o.id)
+                if f is not None:
+                    f["open"] = False
+                    f["ts"] = round(now, 1)
+                pulled += 1
+        cost = float(lot.get("cost") or 0.0)
+        self.lots.pop(slug, None)
+        self.lot_ts.pop(slug, None)
+        getattr(self, "_exch_seen", {}).pop(slug, None)
+        for d in (self.exch_max, self.exit_px, self.slot, self.dance, self.more_cap,
+                  self._more_retry, self._more_note, self._over_since, self._less,
+                  self.unconfirmed, self.moved_at, self.moved_more_at):
+            d.pop(slug, None)
+        self.money_in = round(self.money_in - cost, 4)
+        self.engine_out.discard(slug)
+        self.fam.freeze_dyn.discard(slug)
+        self._mark_engine()
+        self._log(event="uncounted", market=slug, side=side, qty=round(qty, 2),
+                  orders=pulled, note="handed back to the engine by the owner — not a bond")
+        return {"ok": True,
+                "note": (f"{qty:g} {side} shares here are no longer counted as bond: "
+                         f"{pulled} bond order{'s' if pulled != 1 else ''} came off and "
+                         f"the engine's own exit rules apply — they may sell under cost")}
 
     def set_exit(self, slug: str, price, now: float) -> dict:
         """His exit price (owner, 2026-09-04: "Give me the option to
