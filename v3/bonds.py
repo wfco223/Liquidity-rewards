@@ -86,6 +86,14 @@ MONEY_MIN_USD = 5.0         # money below this waits
 PING_EVERY_USD = 100.0      # a phone ping per this much bought
 KEEP_FRACTION = 0.6         # the resting slot keeps this much of the best reward
 BEHIND_MAX_TICKS = 8
+# The split (owner, 2026-09-05): the placement with the least exposure
+# that still reaches the threshold — 60% of the best reward for the
+# exit, 30% of the side for the buy-more — may be a FEW shares up front
+# (each counts most for the score) and the rest behind (where they
+# hardly sell). Two orders only when they cut exposure by this much.
+SPLIT_MARGIN = 0.25
+SPLIT_NEAR_QTYS = (1, 2, 3, 5, 8, 10, 15, 20, 30, 45, 60, 80, 100, 150,
+                   200, 300, 500, 750, 1000)
 MOVE_COOLDOWN_S = 300.0     # an order moves at most this often (owner, 2026-09-03:
                             # "taking 30 minutes to move out of this clearly bad
                             # position is too long. Let's say 5 minutes tops")
@@ -1390,7 +1398,10 @@ class Bonds:
             main = self._orders(slug, bs, decoy=False)
             self._earn_seen[slug] = sum(o.qty for o in main)
             if main:
-                self._earn_px[slug] = main[0].price
+                # a sale is booked at the level nearest the touch — the
+                # one a taker reaches first — when the exit is split
+                self._earn_px[slug] = (min(o.price for o in main) if bs == "SELL"
+                                       else max(o.price for o in main))
             self._exch_seen[slug] = self.exchange_held(slug, side, positions)
         return {"placed": placed, "cash": round(self.cash, 2)}
 
@@ -1437,34 +1448,7 @@ class Bonds:
                    for p, q in raw]
         levels = [(p, q) for p, q in raw if q > 1e-9]
         pool = self.fam._side_pool(slug, prog) if prog is not None else None
-        own = book.side(bs)
-        touch = own[0][0] if own else None
-        # the candidates run from the CLOSEST price allowed — cost, or
-        # the current price when moving back (never forward) — out to
-        # BEHIND_MAX_TICKS behind the touch; "the best reward" is the
-        # best of those, at cost included (owner, 2026-09-03: "resting
-        # beyond where they need to be to earn 60%")
-        if side == "YES":
-            origin = start if start is not None else (
-                max(bound, 0.001) if bound > 0 else (touch if touch is not None else 0.999))
-            origin = max(origin, bound)
-            far = (touch if touch is not None else origin) + BEHIND_MAX_TICKS * tick
-            n = max(int(round((far - origin) / tick)), 0)
-            cands = [self._snap_up(origin + i * tick, tick) for i in range(n + 1)]
-            cands = [p for p in cands if p <= 0.999
-                     and not (book.bids and p <= book.bids[0][0] + 1e-9)]
-            ref = touch if touch is not None else origin
-        else:
-            origin = start if start is not None else (
-                min(bound, 0.999) if bound < 0.999 else (touch if touch is not None else 0.001))
-            origin = min(origin, bound)
-            far = (touch if touch is not None else origin) - BEHIND_MAX_TICKS * tick
-            n = max(int(round((origin - far) / tick)), 0)
-            cands = [self._snap_down(origin - i * tick, tick) for i in range(n + 1)]
-            cands = [p for p in cands if p >= 0.001
-                     and not (book.asks and p >= book.asks[0][0] - 1e-9)]
-            ref = touch if touch is not None else origin
-        cands = list(dict.fromkeys(cands))
+        cands, ref = self._exit_cands(slug, side, book, bound, start)
         if not cands:
             return None
         scored = []
@@ -1491,6 +1475,285 @@ class Bonds:
                 return px, est, ticks, est / best, qty
         px, est, ticks = scored[0]
         return px, est, ticks, 1.0, qty
+
+    def _exit_cands(self, slug: str, side: str, book, bound: float,
+                    start: float | None) -> tuple[list, float | None]:
+        """The exit's candidate prices, closest first — from cost (or the
+        current price when only moving back) out to BEHIND_MAX_TICKS
+        behind the touch — and the touch they are measured from. "The
+        best reward" is the best of these, at cost included (owner,
+        2026-09-03: "resting beyond where they need to be to earn 60%")."""
+        tick = book.tick or 0.01
+        bs, _ = self.earn(side)
+        own = book.side(bs)
+        touch = own[0][0] if own else None
+        if side == "YES":
+            origin = start if start is not None else (
+                max(bound, 0.001) if bound > 0 else (touch if touch is not None else 0.999))
+            origin = max(origin, bound)
+            far = (touch if touch is not None else origin) + BEHIND_MAX_TICKS * tick
+            n = max(int(round((far - origin) / tick)), 0)
+            cands = [self._snap_up(origin + i * tick, tick) for i in range(n + 1)]
+            cands = [p for p in cands if p <= 0.999
+                     and not (book.bids and p <= book.bids[0][0] + 1e-9)]
+            ref = touch if touch is not None else origin
+        else:
+            origin = start if start is not None else (
+                min(bound, 0.999) if bound < 0.999 else (touch if touch is not None else 0.001))
+            origin = min(origin, bound)
+            far = (touch if touch is not None else origin) - BEHIND_MAX_TICKS * tick
+            n = max(int(round((origin - far) / tick)), 0)
+            cands = [self._snap_down(origin - i * tick, tick) for i in range(n + 1)]
+            cands = [p for p in cands if p >= 0.001
+                     and not (book.asks and p >= book.asks[0][0] - 1e-9)]
+            ref = touch if touch is not None else origin
+        return list(dict.fromkeys(cands)), ref
+
+    # -- the split (owner, 2026-09-05) ---------------------------------------
+
+    def _fill_p(self, slug: str, bs: str, ticks: int) -> float:
+        """Chance an order of ours at this depth fills within a day, from
+        the family's fill model (our own fills over our own resting
+        time, the crossing proxy as its prior)."""
+        fm = getattr(self.fam, "fillmodel", None)
+        if fm is not None:
+            try:
+                return float(fm.p_fill(slug, bs, int(max(ticks, 0))))
+            except Exception:  # noqa: BLE001 — the prior stands in
+                pass
+        return {0: 0.30, 1: 0.14, 2: 0.07}.get(int(max(ticks, 0)), 0.03)
+
+    @staticmethod
+    def _ticks_behind(bs: str, touch: float | None, px: float, tick: float) -> int | None:
+        """Ticks behind the touch on book side `bs`: 0 at the touch, None
+        inside it (a new best)."""
+        if touch is None:
+            return 0
+        d = int(round(((px - touch) if bs == "SELL" else (touch - px)) / tick))
+        return d if d >= 0 else None
+
+    def _share_lots(self, slug: str, bs: str, book, lots: list,
+                    all_ours: bool = False) -> tuple[float, float]:
+        """(share of the side's score, $/day) for one or two lots of ours
+        resting together, each measured with the other on the book so
+        the shares add. Net of our bond orders on the side (the exit's
+        reading) or of every order of ours (the buy-more's)."""
+        from .scoring import estimate_join
+        prog = self.fam.terms.get(slug)
+        if prog is None or not lots:
+            return 0.0, 0.0
+        if all_ours and hasattr(prog, "is_live") and not prog.is_live():
+            return 0.0, 0.0
+        pool = self.fam._side_pool(slug, prog)
+        tick = book.tick or 0.01
+        if all_ours:
+            mine: dict[float, float] = {}
+            for o in list(self.fam.orders.values()):
+                if o.market == slug and o.side == bs:
+                    mine[round(o.price, 4)] = mine.get(round(o.price, 4), 0.0) + o.qty
+            levels = [(p, q - mine.get(round(p, 4), 0.0)) for p, q in book.side(bs)]
+            levels = [(p, q) for p, q in levels if q > 1e-9]
+        else:
+            levels = self._levels_net(slug, bs, book)
+        share = 0.0
+        for i, (px, q) in enumerate(lots):
+            if q < 1e-9:
+                continue
+            others = levels + [(p2, q2) for j, (p2, q2) in enumerate(lots)
+                               if j != i and q2 > 1e-9]
+            j = estimate_join(bs, others, tick, float(prog.df), float(prog.target), px, q)
+            if j.qualifies and j.in_window:
+                share += float(j.share)
+        return share, (share * pool if pool else 0.0)
+
+    def _exposure(self, slug: str, bs: str, book, lots: list) -> float:
+        """Expected shares of ours filled a day across these lots."""
+        tick = book.tick or 0.01
+        own = book.side(bs)
+        touch = own[0][0] if own else None
+        tot = 0.0
+        for px, q in lots:
+            t = self._ticks_behind(bs, touch, px, tick)
+            tot += q * self._fill_p(slug, bs, 0 if t is None else t)
+        return tot
+
+    @staticmethod
+    def _near_qtys(qty: float) -> list[int]:
+        ns = {q for q in SPLIT_NEAR_QTYS if q < qty}
+        ns |= {int(math.ceil(qty * f)) for f in (0.05, 0.1, 0.2, 0.3, 0.5)}
+        return sorted(n for n in ns if 1 <= n < qty)
+
+    def _exit_plan(self, slug: str, side: str, book, qty: float,
+                   bound: float) -> dict | None:
+        """Where the exit rests (owner, 2026-09-05: "minimal exposure and
+        yet reach the 60%"): the placement with the least expected
+        shares sold a day that still keeps KEEP_FRACTION of the best
+        reward. One level is the standing answer — the farthest slot
+        that keeps the target. A split puts a few shares up front, where
+        each counts most for the score, and the rest behind, where they
+        hardly sell; it is taken only when it cuts exposure by
+        SPLIT_MARGIN or more. The near level joins the touch or sits
+        behind it — never inside it (exits join the touch, 2026-08-22)
+        and never at cost. Levels come back (price, qty, ticks_behind),
+        near first."""
+        single = self._best_slot(slug, side, book, qty, bound)
+        if single is None:
+            return None
+        s_px, s_est, s_ticks, s_keep, _size = single
+        bs, _ = self.earn(side)
+        best = s_est / max(s_keep, 1e-9) if s_est > 0 else 0.0
+        s_exp = self._exposure(slug, bs, book, [(s_px, qty)])
+        plan = {"levels": [(s_px, qty, int(s_ticks))], "est": s_est, "keep": s_keep,
+                "best": best, "exposure": s_exp, "single": single,
+                "single_exposure": s_exp, "split": False}
+        if best <= 0 or qty < 2:
+            return plan
+        tick = book.tick or 0.01
+        own = book.side(bs)
+        touch = own[0][0] if own else None
+        cands, _ref = self._exit_cands(slug, side, book, bound, None)
+        depth = {p: self._ticks_behind(bs, touch, p, tick) for p in cands}
+        if side == "YES":
+            near_c = [p for p in cands if depth[p] is not None and p > bound + tick / 2]
+        else:
+            near_c = [p for p in cands if depth[p] is not None and p < bound - tick / 2]
+        target = KEEP_FRACTION * best - 1e-12
+        found = None
+        for npx in near_c:
+            nt = depth[npx]
+            p_n = self._fill_p(slug, bs, nt)
+            for fpx in cands:
+                ft = depth[fpx]
+                if ft is None or ft <= nt:
+                    continue
+                p_f = self._fill_p(slug, bs, ft)
+                for n in self._near_qtys(qty):
+                    m = qty - n
+                    _share, est = self._share_lots(slug, bs, book, [(npx, float(n)), (fpx, m)])
+                    if est < target:
+                        continue
+                    exp = n * p_n + m * p_f
+                    if found is None or exp < found[0] - 1e-9:
+                        found = (exp, npx, float(n), nt, fpx, m, ft, est)
+        if found is not None and found[0] <= (1.0 - SPLIT_MARGIN) * s_exp + 1e-12:
+            exp, npx, n, nt, fpx, m, ft, est = found
+            plan.update({"levels": [(npx, n, nt), (fpx, m, ft)], "est": est,
+                         "keep": est / best, "exposure": exp, "split": True})
+        return plan
+
+    @staticmethod
+    def _engine_exit(o: FamilyOrder) -> bool:
+        """The engine's own exit — placed by it, moved by it — as against
+        one he moved or set by hand, which it sizes around and leaves."""
+        return str(o.why or "").startswith("bond:") and not getattr(o, "pinned", False)
+
+    @staticmethod
+    def _sort_near(bs: str, orders: list) -> list:
+        return sorted(orders, key=lambda o: (o.price if bs == "SELL" else -o.price, o.id))
+
+    @staticmethod
+    def _same_lots(lots: list, target: list) -> bool:
+        if len(lots) != len(target):
+            return False
+        for (px, q), t in zip(lots, target):
+            if abs(px - t[0]) > 1e-9 or abs(q - t[1]) >= max(1.0, 0.1 * t[1]):
+                return False
+        return True
+
+    def _exit_why(self, kind: str, i: int, n_levels: int, ticks: int, plan: dict) -> str:
+        keep = plan["keep"]
+        tk = f"{ticks} tick{'s' if ticks != 1 else ''}"
+        if n_levels > 1:
+            if i == 0:
+                near_q = plan["levels"][0][1]
+                where = "at the touch" if ticks == 0 else f"{tk} behind"
+                return (f"bond: split — {near_q:g} share{'s' if near_q != 1 else ''} "
+                        f"{where} carry {keep:.0%} of the best reward")
+            return f"bond: split — the rest {tk} behind, where it hardly sells"
+        if kind == "earn_moved_back":
+            return "bond: moved back behind the touch — still earning, selling slower"
+        if kind == "earn_moved_up":
+            return "bond: moved up to keep 60% of the best reward"
+        if kind == "earn_resized":
+            return "bond: resized to the whole lot"
+        if kind == "exit_unsplit":
+            return f"bond: back to one level, {tk} behind — the split no longer paid"
+        return (f"bond: resting {tk} behind the touch, keeping {keep:.0%} of the best reward"
+                if ticks else "bond: resting at the touch — it earns while it waits")
+
+    def _slot_view(self, plan: dict, target: list) -> dict:
+        s = plan["single"]
+        return {"px": target[0][0], "ticks": int(target[0][2]),
+                "keep": round(plan["keep"], 3), "est": round(plan["est"], 4),
+                "size": round(sum(q for _, q, _ in target), 2),
+                "levels": [[px, round(q, 2), int(t)] for px, q, t in target],
+                "split": len(target) > 1,
+                "exposure": round(plan["exposure"], 2),
+                "single": {"px": s[0], "ticks": int(s[2]), "keep": round(s[3], 3),
+                           "est": round(s[1], 4),
+                           "exposure": round(plan["single_exposure"], 2)}}
+
+    def _apply_exit_plan(self, slug: str, side: str, bs: str, intent: str,
+                         mine: list, target: list, plan: dict, kind: str,
+                         pos: float, now: float) -> dict | None:
+        """Bring the engine's exits to `target` — (price, qty, ticks) near
+        first — with the book never carrying more than the lot for longer
+        than one place-first move: surplus orders come off first
+        (farthest first), then the levels that shrink, then those that
+        grow or appear."""
+        mine = list(mine)
+        while len(mine) > len(target):
+            o = mine.pop()
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if not r.ok:
+                return None
+            self.fam.orders.pop(o.id, None)
+            self._log(event="exit_level_pulled", market=slug, price=o.price,
+                      qty=o.qty, note="one level is enough here now")
+        order = sorted(range(len(target)),
+                       key=lambda i: target[i][1] - (mine[i].qty if i < len(mine) else 0.0))
+        for i in order:
+            px, q, ticks = target[i]
+            why = self._exit_why(kind, i, len(target), int(ticks), plan)
+            cur = mine[i] if i < len(mine) else None
+            if (cur is not None and abs(cur.price - px) < 1e-9
+                    and abs(cur.qty - q) < max(1.0, 0.1 * q)):
+                cur.why = why
+                continue
+            if cur is not None:
+                r = self.fam.desk.reprice(
+                    {"id": cur.id, "market": slug, "side": bs,
+                     "price": cur.price, "size": cur.qty,
+                     "intent": cur.intent}, px, q, initiator="owner")
+                if not (r.ok and r.order_id):
+                    return None
+                if r.two_orders:
+                    self._two_orders(slug, cur.id, r)
+                else:
+                    self.fam.orders.pop(cur.id, None)
+                use_intent = cur.intent
+            else:
+                r = self.fam.desk.place_resting(slug, bs, px, q, net_position=pos,
+                                                initiator="owner", intent=intent)
+                if not (r.ok and r.order_id):
+                    self._log(event="earn_refused", market=slug, note=r.note[:120])
+                    return None
+                use_intent = r.intent or intent
+            self.fam.orders[r.order_id] = FamilyOrder(
+                id=r.order_id, market=slug, side=bs, price=(r.price or px), qty=q,
+                intent=use_intent, placed_ts=now, purpose="bond", why=why)
+        self.moved_at[slug] = now
+        self.slot[slug] = self._slot_view(plan, target)
+        total = sum(q for _, q, _ in target)
+        self._log(event=kind, market=slug, side=side, price=target[0][0], qty=total,
+                  ticks=int(target[0][2]), keep=round(plan["keep"], 3),
+                  levels=[[px, q] for px, q, _ in target],
+                  exposure=round(plan["exposure"], 2),
+                  one_level=round(plan["single_exposure"], 2))
+        return {"market": slug, "bond": side, "side": bs, "price": target[0][0],
+                "qty": total, "ticks": int(target[0][2]),
+                "moved": kind not in ("earn_rested", "earn_resized"),
+                "levels": [[px, q] for px, q, _ in target]}
 
     def _bound(self, slug: str, side: str, tick: float) -> float:
         """The YES price the exit may not cross: the price paid, on the
@@ -1539,8 +1802,10 @@ class Bonds:
         follows. Returns the survivors, oldest first, and whether a
         cancel failed — nothing new is placed until the extra is gone."""
         pull = [o for o in main if self._is_extra(o)]
+        # over the lot: the engine's own come off before anything he
+        # moved or set himself, oldest first
         keep = sorted((o for o in main if not self._is_extra(o)),
-                      key=lambda o: (o.placed_ts, o.id))
+                      key=lambda o: (0 if self._engine_exit(o) else 1, o.placed_ts, o.id))
         while len(keep) > 1 and sum(o.qty for o in keep) > room + 0.5:
             pull.append(keep.pop(0))
         stuck = False
@@ -1592,13 +1857,15 @@ class Bonds:
         if stuck:
             return None           # an extra exit still rests: nothing new until it is gone
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
-        # the managed order (the oldest) gets the lot less what every
-        # other order of ours already offers — decoys, his hand orders,
-        # a second level of the bond's own: never more than is held
-        elsewhere = d_qty + others + sum(o.qty for o in main[1:])
+        # the engine's own exits — one level, or its split — get the lot
+        # less what every other order of ours already offers: decoys,
+        # his hand orders, exits he moved himself. Never more than held.
+        mine = self._sort_near(bs, [o for o in main if self._engine_exit(o)])
+        his = [o for o in main if not self._engine_exit(o)]
+        elsewhere = d_qty + others + sum(o.qty for o in his)
         lot_qty = float(math.floor(held - elsewhere))
         if lot_qty < 1.0:
-            for o in main[:1]:
+            for o in mine:
                 r = self.fam.desk.cancel(o.id, slug, initiator="owner")
                 if r.ok:
                     self.fam.orders.pop(o.id, None)
@@ -1613,8 +1880,14 @@ class Bonds:
             # slot logic stays out of it until he clears the pin
             want = self._pin_price(side, book, float(pin["px"]))
             size = max(lot_qty, 1.0)
-            if main:
-                cur = main[0]
+            while len(mine) > 1:                 # a split folds into his one price
+                o = mine.pop()
+                r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+                if not r.ok:
+                    return None
+                self.fam.orders.pop(o.id, None)
+            if mine:
+                cur = mine[0]
                 if abs(cur.price - want) < 1e-9 and abs(size - cur.qty) < max(1.0, 0.1 * size):
                     pin["applied"] = True
                     return None
@@ -1652,97 +1925,67 @@ class Bonds:
                       price=px, qty=size)
             return {"market": slug, "bond": side, "side": bs, "price": px,
                     "qty": size, "pinned": True}
-        if main:
-            # one exit order: it moves back on the cooldown when it has
-            # become the touch, and is resized to what earns when the
-            # lot or the book changed; never a second exit for the rest
-            cur = main[0]
-            if now - self.moved_at.get(slug, 0.0) < MOVE_COOLDOWN_S or decoys:
-                return None
-            own = book.side(bs)
-            touch = own[0][0] if own else None
+        # the plan, measured from cost outward: one level (the farthest
+        # keeping KEEP_FRACTION of the best) or the split that keeps it
+        # with less exposure (owner, 2026-09-05)
+        plan = self._exit_plan(slug, side, book, max(lot_qty, 1.0), bound)
+        if plan is None:
+            return None
+        if not mine:
+            return self._apply_exit_plan(slug, side, bs, intent, [], plan["levels"], plan,
+                                         "exit_split" if plan["split"] else "earn_rested",
+                                         pos, now)
+        if now - self.moved_at.get(slug, 0.0) < MOVE_COOLDOWN_S or decoys:
+            return None
+        lots = [(o.price, o.qty) for o in mine]
+        best = plan["best"]
+        _sh, est_cur = self._share_lots(slug, bs, book, lots)
+        size_now = sum(q for _, q in lots)
+        size_ok = abs(size_now - lot_qty) < max(1.0, 0.1 * lot_qty)
+        if self._same_lots(lots, plan["levels"]) and size_ok:
+            return None                            # where the plan wants it
+        own = book.side(bs)
+        touch = own[0][0] if own else None
+        if len(mine) == 1 and len(plan["levels"]) == 1:
+            # one order stays one order, on the standing rules: a step UP
+            # only when where it sits no longer keeps the target (owner,
+            # 2026-09-03: "shouldn't a contingent of my orders resting a
+            # step back move up since I'm not at 60%"), a step BACK only
+            # from the touch, a resize when the lot changed — never a
+            # chase forward, never past cost
+            cur = mine[0]
+            slot = plan["single"]
             at_front = touch is not None and (
                 (side == "YES" and cur.price <= touch + 1e-9)
                 or (side == "NO" and cur.price >= touch - 1e-9))
-            # the slot, measured from cost outward: the farthest price
-            # keeping KEEP_FRACTION of the best, and the size that does
-            slot = self._best_slot(slug, side, book, max(lot_qty, 1.0), bound)
-            if slot is None:
-                return None
-            best = slot[1] / max(slot[3], 1e-9)
-            est_cur = self._est_at(slug, bs, book, cur.price, cur.qty)
             back = ((side == "YES" and slot[0] > cur.price + tick / 2)
                     or (side == "NO" and slot[0] < cur.price - tick / 2))
             forward = ((side == "YES" and slot[0] < cur.price - tick / 2)
                        or (side == "NO" and slot[0] > cur.price + tick / 2))
-            # a step UP only when where it sits no longer keeps the
-            # target (owner, 2026-09-03: "shouldn't a contingent of my
-            # orders resting a step back move up since I'm not at
-            # 60%"), with the whole lot, never past cost. A step back
-            # only from the touch.
             move = (forward and est_cur < KEEP_FRACTION * best - 1e-12) or (back and at_front)
-            new_px = slot[0] if move else cur.price
-            size = max(lot_qty, 1.0)               # everything held is offered
-            if new_px == cur.price and abs(size - cur.qty) < max(1.0, 0.1 * size):
+            if not move and size_ok:
                 return None                        # not moving, size close enough
-            r = self.fam.desk.reprice(
-                {"id": cur.id, "market": slug, "side": bs,
-                 "price": cur.price, "size": cur.qty,
-                 "intent": cur.intent}, new_px, size, initiator="owner")
-            if not (r.ok and r.order_id):
-                return None
-            if r.two_orders:
-                self._two_orders(slug, cur.id, r)
-            else:
-                self.fam.orders.pop(cur.id, None)
-            moved = new_px != cur.price
-            self.fam.orders[r.order_id] = FamilyOrder(
-                id=r.order_id, market=slug, side=bs,
-                price=(r.price or new_px), qty=size,
-                intent=cur.intent, placed_ts=now, purpose="bond",
-                why=("bond: moved back behind the touch — still earning, "
-                     "selling slower" if (moved and back) else
-                     "bond: moved up to keep 60% of the best reward" if moved else
-                     "bond: resized to the whole lot"))
-            self.moved_at[slug] = now
-            self.slot[slug] = {"px": (r.price or new_px), "ticks": slot[2],
-                               "keep": round(slot[3], 3), "est": round(slot[1], 4),
-                               "size": size}
-            self._log(event=("earn_moved_back" if (moved and back)
-                             else "earn_moved_up" if moved else "earn_resized"),
-                      market=slug, side=side, price=(r.price or new_px),
-                      qty=size, ticks=slot[2],
-                      keep=round(est_cur / best, 3) if best > 0 else None)
-            return {"market": slug, "bond": side, "side": bs,
-                    "price": (r.price or new_px), "qty": size, "moved": moved}
-        qty = lot_qty
-        if qty < 1.0:
+            here = self._ticks_behind(bs, touch, cur.price, tick)
+            target = [(slot[0], lot_qty, int(slot[2])) if move
+                      else (cur.price, lot_qty, 0 if here is None else here)]
+            kind = ("earn_moved_back" if (move and back)
+                    else "earn_moved_up" if move else "earn_resized")
+            if not move:
+                plan = dict(plan, levels=target, est=est_cur,
+                            keep=(est_cur / best if best > 0 else 1.0),
+                            exposure=self._exposure(slug, bs, book, [(cur.price, lot_qty)]))
+            return self._apply_exit_plan(slug, side, bs, intent, mine, target, plan, kind, pos, now)
+        # a change of shape — one level to two, two to one, or a split
+        # re-laid — only for the margin, unless the arrangement fell
+        # under the target or the lot changed
+        keeps = est_cur >= KEEP_FRACTION * best - 1e-12
+        exp_cur = self._exposure(slug, bs, book, lots)
+        better = plan["exposure"] <= (1.0 - SPLIT_MARGIN) * exp_cur + 1e-12
+        if keeps and size_ok and not better:
             return None
-        slot = self._best_slot(slug, side, book, qty, bound)
-        if slot is None:
-            return None
-        want, est, ticks, keep, size = slot
-        qty = size
-        r = self.fam.desk.place_resting(slug, bs, want, qty, net_position=pos,
-                                        initiator="owner", intent=intent)
-        if not (r.ok and r.order_id):
-            self._log(event="earn_refused", market=slug, note=r.note[:120])
-            return None
-        self.fam.orders[r.order_id] = FamilyOrder(
-            id=r.order_id, market=slug, side=bs, price=(r.price or want),
-            qty=qty, intent=r.intent or intent, placed_ts=now, purpose="bond",
-            why=(f"bond: resting {ticks} tick{'s' if ticks != 1 else ''} "
-                 f"behind the touch, keeping {keep:.0%} of the best reward"
-                 if ticks else "bond: resting at the touch — it earns while "
-                               "it waits"))
-        self.moved_at[slug] = now
-        self.slot[slug] = {"px": (r.price or want), "ticks": ticks,
-                           "keep": round(keep, 3), "est": round(est, 4),
-                           "size": qty}
-        self._log(event="earn_rested", market=slug, side=side,
-                  price=(r.price or want), qty=qty, ticks=ticks)
-        return {"market": slug, "bond": side, "side": bs,
-                "price": (r.price or want), "qty": qty, "ticks": ticks}
+        kind = "exit_split" if len(plan["levels"]) > 1 else "exit_unsplit"
+        return self._apply_exit_plan(slug, side, bs, intent, mine, plan["levels"],
+                                     plan, kind, pos, now)
 
     # -- bait ----------------------------------------------------------------
 
@@ -1995,17 +2238,15 @@ class Bonds:
             return 0.0, 0.0
         return float(j.share), (float(j.share) * pool if pool else 0.0)
 
-    def _more_slot(self, slug: str, side: str, book, cap_usd: float):
-        """The cheapest bond price, never dearer than his original
-        purchase here and inside the spread, where up to cap_usd of
-        ours captures MORE_SHARE of its side: (price, qty, share, est)
-        or None."""
-        far, _ = self.entry(side)
+    def _more_cands(self, slug: str, side: str, book) -> list[float]:
+        """The buy-more's candidate prices, cheapest first: never dearer
+        than his original purchase here, inside the spread at most, out
+        to BEHIND_MAX_TICKS behind the touch."""
         tick = book.tick or 0.01
         bids, asks = book.bids, book.asks
         px0 = self._first_px(slug)
         if px0 <= 0:
-            return None
+            return []
         if side == "YES":
             hi = min((asks[0][0] - tick) if asks else 0.99, px0)
             lo = ((bids[0][0] if bids else hi) - BEHIND_MAX_TICKS * tick)
@@ -2020,7 +2261,15 @@ class Bonds:
             cands = [self._snap_up(lo + i * tick, tick) for i in range(n + 1)]
             cands = [p for p in cands if max(0.001, px0, 1.0 - PRICE_CAP) <= p <= 0.999]
             cands.sort(reverse=True)                       # cheapest NO first
-        for px in list(dict.fromkeys(cands)):
+        return list(dict.fromkeys(cands))
+
+    def _more_slot(self, slug: str, side: str, book, cap_usd: float):
+        """The cheapest bond price, never dearer than his original
+        purchase here and inside the spread, where up to cap_usd of
+        ours captures MORE_SHARE of its side: (price, qty, share, est)
+        or None."""
+        far, _ = self.entry(side)
+        for px in self._more_cands(slug, side, book):
             cost = px if side == "YES" else round(1.0 - px, 4)
             qty = float(math.floor(cap_usd / cost)) if cost > 0 else 0.0
             if qty < 1.0:
@@ -2029,6 +2278,75 @@ class Bonds:
             if share + 1e-9 >= MORE_SHARE:
                 return px, qty, share, est
         return None
+
+    def _overpay(self, slug: str, side: str, book, lots: list) -> float:
+        """The buy-more's exposure (owner, 2026-09-05): expected dollars a
+        day paid above the cheapest price it may rest at — each lot's
+        shares x its cost above the cheapest x the fill chance at its
+        depth."""
+        far, _ = self.entry(side)
+        cands = self._more_cands(slug, side, book)
+        if not cands:
+            return 0.0
+
+        def cost(px: float) -> float:
+            return px if side == "YES" else round(1.0 - px, 4)
+        c_min = min(cost(p) for p in cands)
+        tick = book.tick or 0.01
+        own = book.side(far)
+        touch = own[0][0] if own else None
+        tot = 0.0
+        for px, q in lots:
+            t = self._ticks_behind(far, touch, px, tick)
+            tot += q * max(cost(px) - c_min, 0.0) * self._fill_p(slug, far, 0 if t is None else t)
+        return tot
+
+    def _more_plan(self, slug: str, side: str, book, cap_usd: float) -> dict | None:
+        """Where the buy-more rests: one order at the cheapest price that
+        captures MORE_SHARE of its side (the standing answer), or the
+        split — a few shares dearer carrying the share, the rest cheaper
+        still — when that cuts the expected overpay by SPLIT_MARGIN.
+        Levels come back (price, qty), dearer first."""
+        single = self._more_slot(slug, side, book, cap_usd)
+        if single is None:
+            return None
+        px1, q1, share1, est1 = single
+        far, _ = self.entry(side)
+        s_over = self._overpay(slug, side, book, [(px1, q1)])
+        plan = {"levels": [(px1, q1)], "share": share1, "est": est1,
+                "exposure": s_over, "single": single, "single_exposure": s_over,
+                "split": False}
+        cands = self._more_cands(slug, side, book)
+        if s_over <= 1e-9 or len(cands) < 2:
+            return plan                      # already the cheapest: nothing to save
+
+        def cost(px: float) -> float:
+            return px if side == "YES" else round(1.0 - px, 4)
+        found = None
+        for npx in cands:                    # the dearer level
+            cn = cost(npx)
+            if cn <= 0:
+                continue
+            for fpx in cands:                # the cheaper level
+                cf = cost(fpx)
+                if cf <= 0 or cf >= cn - 1e-9:
+                    continue
+                for n in self._near_qtys(math.floor(cap_usd / cn) + 1):
+                    m = float(math.floor((cap_usd - n * cn) / cf))
+                    if m < 1.0:
+                        break
+                    share, est = self._share_lots(slug, far, book,
+                                                  [(npx, float(n)), (fpx, m)], all_ours=True)
+                    if share + 1e-9 < MORE_SHARE:
+                        continue
+                    over = self._overpay(slug, side, book, [(npx, n), (fpx, m)])
+                    if found is None or over < found[0] - 1e-9:
+                        found = (over, npx, float(n), fpx, m, share, est)
+        if found is not None and found[0] <= (1.0 - SPLIT_MARGIN) * s_over + 1e-12:
+            over, npx, n, fpx, m, share, est = found
+            plan.update({"levels": [(npx, n), (fpx, m)], "share": share, "est": est,
+                         "exposure": over, "split": True})
+        return plan
 
     def _buying_power(self, now: float) -> float | None:
         """The account's free buying power, read at most every
@@ -2068,9 +2386,12 @@ class Bonds:
 
     def _keep_buying(self, slug: str, side: str, positions: dict,
                      now: float) -> dict | None:
-        """The buy-more order (owner, 2026-09-03): rests at the cheapest
-        price that captures MORE_SHARE of its side, sized to the cap;
-        moves when it no longer captures that, on the cooldown; pulled
+        """The buy-more (owner, 2026-09-03): rests where up to the cap
+        captures MORE_SHARE of its side at the least cost — one order at
+        the cheapest such price, or (2026-09-05) a few shares dearer
+        carrying the share with the rest cheaper still, when that cuts
+        the expected overpay by SPLIT_MARGIN. Moves on the cooldown when
+        it no longer captures the share or a cheaper way appears; pulled
         when no price inside the cap can, or when nothing is held."""
         cap = self.more_cap.get(slug) or {}
         cap_usd = float(cap.get("usd") or 0.0)
@@ -2091,103 +2412,142 @@ class Bonds:
             return None
         far, intent = self.entry(side)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
+
+        def cost(px: float) -> float:
+            return px if side == "YES" else round(1.0 - px, 4)
+        plan = None
         if cur:
             if now < self._more_retry.get(slug, 0.0):
                 return None     # a refusal is fresh: the resting bid stays
                                 # (2026-09-05: it used to be pulled for a
                                 # move and then wait out the whole window)
-            o = cur[0]
             tick = book.tick or 0.01
-            cost = o.price if side == "YES" else round(1.0 - o.price, 4)
-            want_qty = float(math.floor(cap_usd / cost)) if cost > 0 else 0.0
-            share, _est = self._share_at(slug, far, book, o.price, o.qty)
+            cur = sorted(cur, key=lambda o: -cost(o.price))     # dearer first
+            lots = [(o.price, o.qty) for o in cur]
+            share, _est = self._share_lots(slug, far, book, lots, all_ours=True)
             if now - self.moved_more_at.get(slug, 0.0) < MOVE_COOLDOWN_S:
                 return None
-            slot = self._more_slot(slug, side, book, cap_usd)
+            plan = self._more_plan(slug, side, book, cap_usd)
+            spent = sum(q * cost(px) for px, q in lots)
+            sized = abs(spent - cap_usd) < 1.5 * max(cost(px) for px, _ in lots)
             # a cheaper price that still captures the share (owner,
             # 2026-09-03: "Couldn't the bid do better by standing a
             # little further back"): on the cooldown the order steps
-            # back to it, as it steps up when its share falls short
-            cheaper = slot is not None and (
-                (side == "YES" and slot[0] < o.price - tick / 2)
-                or (side == "NO" and slot[0] > o.price + tick / 2))
-            if (share + 1e-9 >= MORE_SHARE and abs(o.qty - want_qty) < 1.0
-                    and not cheaper):
+            # back to it, as it steps up when its share falls short. A
+            # change of shape — one order to two, or back — only for
+            # the margin.
+            cheaper = (plan is not None and len(cur) == 1 and len(plan["levels"]) == 1
+                       and ((side == "YES" and plan["levels"][0][0] < cur[0].price - tick / 2)
+                            or (side == "NO" and plan["levels"][0][0] > cur[0].price + tick / 2)))
+            reshaped = (plan is not None and len(plan["levels"]) != len(cur)
+                        and plan["exposure"] <= (1.0 - SPLIT_MARGIN)
+                        * self._overpay(slug, side, book, lots) + 1e-12)
+            if share + 1e-9 >= MORE_SHARE and sized and not cheaper and not reshaped:
                 return None
             if self._placing_blocked():
                 return None         # a move today is a pull with no put-back
-            if slot is None:
+            if plan is None:
                 self._pull_more(slug, f"no price inside the cap captures "
                                       f"{MORE_SHARE:.0%} of the side now")
                 return None
-            if abs(slot[0] - o.price) < 1e-9 and abs(slot[1] - o.qty) < 1.0:
+            if self._same_lots(lots, plan["levels"]):
                 return None
             self._pull_more(slug, "stepping back to a cheaper price that still "
-                                  "captures the share" if cheaper else "moving")
-        slot = self._more_slot(slug, side, book, cap_usd)
-        if slot is None:
+                                  "captures the share" if cheaper
+                            else "splitting: a few shares dearer carry the share, "
+                                 "the rest cheaper" if (reshaped and len(plan["levels"]) > 1)
+                            else "back to one order" if reshaped else "moving")
+        if plan is None:
+            plan = self._more_plan(slug, side, book, cap_usd)
+        if plan is None:
             note = f"no price inside the cap captures {MORE_SHARE:.0%} of its side"
             if self._more_note.get(slug) != note:
                 self._more_note[slug] = note
                 self._log(event="more_none", market=slug, note=note)
             return None
-        px, qty, share, est = slot
         if now < self._more_retry.get(slug, 0.0):
             return None                        # refused lately: it waits
+        levels = [(px, q) for px, q in plan["levels"]]         # dearer first
         # sized to the money in the account (2026-09-04: an order the
         # account could not fund was sent every minute, the exchange
         # trimmed or killed it, and the trimmed remainders sat as
-        # strays nothing tracked)
+        # strays nothing tracked); the cheaper level gives way first
         bp = self._buying_power(now)
         if bp is not None:
-            cost = px if side == "YES" else round(1.0 - px, 4)
-            afford = float(math.floor(bp / cost)) if cost > 0 else 0.0
-            if afford < 1.0:
+            budget = bp
+            sized_levels = []
+            for px, q in levels:
+                c = cost(px)
+                afford = float(math.floor(budget / c)) if c > 0 else 0.0
+                q2 = min(q, afford)
+                if q2 >= 1.0:
+                    sized_levels.append((px, q2))
+                    budget -= q2 * c
+            if not sized_levels:
                 note = f"no buying power for more (${bp:,.2f} free)"
                 if self._more_note.get(slug) != note:
                     self._more_note[slug] = note
                     self._log(event="more_none", market=slug, note=note)
                 self._more_retry[slug] = now + MORE_RETRY_BP_S
                 return None
-            if afford < qty:
-                qty = afford
-                share, est = self._share_at(slug, far, book, px, qty)
-        r = self.fam.desk.place_resting(slug, far, px, qty, net_position=pos,
-                                        initiator="owner", intent=intent)
-        trimmed = ""
-        if not (r.ok and r.order_id):
-            if r.order_id and float(getattr(r, "resting_qty", 0.0) or 0.0) >= 1.0:
-                # the exchange kept part of it: that part is ours and
-                # counts, never a stray for the next pass to stack on
-                trimmed = (f"the exchange kept {r.resting_qty:g} of {qty:g} "
-                           f"(the money there)")
-                qty = float(r.resting_qty)
-                share, est = self._share_at(slug, far, book, r.price or px, qty)
+            levels = sized_levels
+        out_levels: list[list[float]] = []
+        for k, (px, qty) in enumerate(levels):
+            r = self.fam.desk.place_resting(slug, far, px, qty, net_position=pos,
+                                            initiator="owner", intent=intent)
+            trimmed = ""
+            if not (r.ok and r.order_id):
+                if r.order_id and float(getattr(r, "resting_qty", 0.0) or 0.0) >= 1.0:
+                    # the exchange kept part of it: that part is ours and
+                    # counts, never a stray for the next pass to stack on
+                    trimmed = (f"the exchange kept {r.resting_qty:g} of {qty:g} "
+                               f"(the money there)")
+                    qty = float(r.resting_qty)
+                else:
+                    self._log(event="more_refused", market=slug, note=r.note[:120])
+                    blocked = ("placements blocked" in r.note
+                               or "looks like a VPN" in r.note)
+                    self._more_retry[slug] = now + (MORE_RETRY_BLOCKED_S if blocked
+                                                    else MORE_RETRY_S)
+                    break                      # what rested stays; the rest waits
+            px = r.price or px
+            share_o, est_o = self._share_at(slug, far, book, px, qty)
+            if len(levels) == 1:
+                why = (f"bond more: buying up to ${cap_usd:,.2f} more, never dearer "
+                       f"than his first price — {share_o:.0%} of the "
+                       f"{'bid' if far == 'BUY' else 'ask'} side at {px * 100:g}c")
+            elif k == 0:
+                why = (f"bond more: split — {qty:g} at {px * 100:g}c carry the share, "
+                       f"never dearer than his first price")
             else:
-                self._log(event="more_refused", market=slug, note=r.note[:120])
-                blocked = ("placements blocked" in r.note
-                           or "looks like a VPN" in r.note)
-                self._more_retry[slug] = now + (MORE_RETRY_BLOCKED_S if blocked
-                                                else MORE_RETRY_S)
-                return None
-        px = r.price or px
-        self.fam.orders[r.order_id] = FamilyOrder(
-            id=r.order_id, market=slug, side=far, price=px, qty=qty,
-            intent=(r.intent or intent), placed_ts=now, purpose="bond",
-            why=f"bond more: buying up to ${cap_usd:,.2f} more, never dearer "
-                f"than his first price — {share:.0%} of the "
-                f"{'bid' if far == 'BUY' else 'ask'} side at {px * 100:g}c")
-        self.fill_book[r.order_id] = {"slug": slug, "side": side, "qty": 0.0,
-                                      "px": px, "ts": round(now, 1), "open": True}
+                why = f"bond more: split — the rest, {qty:g} at {px * 100:g}c, cheaper"
+            self.fam.orders[r.order_id] = FamilyOrder(
+                id=r.order_id, market=slug, side=far, price=px, qty=qty,
+                intent=(r.intent or intent), placed_ts=now, purpose="bond", why=why)
+            self.fill_book[r.order_id] = {"slug": slug, "side": side, "qty": 0.0,
+                                          "px": px, "ts": round(now, 1), "open": True}
+            out_levels.append([px, qty])
+            if trimmed:
+                self._log(event="more_trimmed", market=slug, side=side, price=px,
+                          qty=qty, share=round(share_o, 3), est=round(est_o, 4),
+                          note=trimmed)
+        if not out_levels:
+            return None
         self.moved_more_at[slug] = now
         self._more_note.pop(slug, None)
         self._more_retry.pop(slug, None)
-        self._log(event=("more_trimmed" if trimmed else
+        share, est = self._share_lots(slug, far, book,
+                                      [(px, q) for px, q in out_levels], all_ours=True)
+        self._log(event=("more_split" if len(out_levels) > 1 else
                          "more_moved" if cur else "more_rested"), market=slug,
-                  side=side, price=px, qty=qty, share=round(share, 3),
-                  est=round(est, 4), note=trimmed)
-        return {"market": slug, "bond": side, "side": far, "price": px,
-                "qty": qty, "more": True}
+                  side=side, price=out_levels[0][0],
+                  qty=sum(q for _, q in out_levels), share=round(share, 3),
+                  est=round(est, 4), levels=out_levels,
+                  overpay=round(plan["exposure"], 4),
+                  one_order=round(plan["single_exposure"], 4))
+        return {"market": slug, "bond": side, "side": far, "price": out_levels[0][0],
+                "qty": sum(q for _, q in out_levels), "more": True,
+                "levels": out_levels}
 
     # -- the sniper ----------------------------------------------------------
 
@@ -2915,16 +3275,22 @@ class Bonds:
                "note": self._more_note.get(slug)}
         cur = self._more_orders(slug)
         if cur:
-            o = cur[0]
-            share, est = (self._share_at(slug, far, book, o.price, o.qty)
+            cur = sorted(cur, key=lambda o: (-o.price if side == "YES" else o.price))
+            lots = [(o.price, o.qty) for o in cur]
+            share, est = (self._share_lots(slug, far, book, lots, all_ours=True)
                           if book is not None else (0.0, 0.0))
+            o = cur[0]
+            # `order` is the dearer level with the share of the whole;
+            # `orders` lists every level when the buy-more is split
             out["order"] = {"price": o.price, "qty": o.qty,
                             "share": round(share, 4), "est": round(est, 4)}
+            out["orders"] = [{"price": x.price, "qty": x.qty} for x in cur]
         elif book is not None and out["cap_usd"] >= 1.0:
-            slot = self._more_slot(slug, side, book, out["cap_usd"])
-            if slot:
-                out["slot"] = {"price": slot[0], "qty": slot[1],
-                               "share": round(slot[2], 4), "est": round(slot[3], 4)}
+            plan = self._more_plan(slug, side, book, out["cap_usd"])
+            if plan:
+                out["slot"] = {"price": plan["levels"][0][0], "qty": plan["levels"][0][1],
+                               "share": round(plan["share"], 4), "est": round(plan["est"], 4),
+                               "levels": [[px, q] for px, q in plan["levels"]]}
         return out
 
     def live_rows(self, now: float, positions: dict | None = None) -> dict:

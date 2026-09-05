@@ -903,3 +903,35 @@ the main lines and 10–25k on the small ones, df 0.10–0.30.*
 **Check.** data/rewards.csv rows for the two game slugs on the game
 date; data/fills.csv and data/trades.csv for family gameday; the
 kickoff_pull log events for what left and when.
+
+### P18 — written 2026-09-05 ~05:00Z, BEFORE the split placement runs
+*The setup (owner: "the placement should be selected so as to have
+minimal exposure and yet reach the 60% or 30% threshold"): a bond exit,
+or its buy-more, may now rest at TWO levels — a few shares up front
+where each counts most for the score, the rest behind where they hardly
+sell — when the fill model says that cuts expected fills (exits) or
+expected overpay (buy-more) by at least 25% against the one-level
+answer. The bonds log records each split with `exposure` (expected
+shares sold a day) and `one_level` (the same for the single level it
+replaced).*
+
+1. **Splits keep the threshold.** Every split exit's market-day pays at
+   least 55% of what the whole lot at the touch would have (the calc
+   block's "whole lot at the touch" figure, recorded at the time),
+   i.e. the 60% target less measurement noise. Wrong if a split
+   market-day pays under 50% of that figure.
+2. **Splits sell less.** Over the first week, shares sold from split
+   exits per share-day resting are under 75% of the rate from
+   single-level exits over the previous week (data/trades.csv, bond
+   sales; the bonds log `sold` events). Wrong if the rate is not lower.
+3. **The few up front are what sells.** Of the shares sold from split
+   exits, at least 80% come from the near level. Wrong if the far level
+   sells more than a fifth — then the fill model's depth prior is off
+   and the exposure figure with it.
+4. **No churn.** Split exits re-lay themselves at most once a day per
+   market on average (bonds log events exit_split, exit_unsplit). Wrong
+   if it is more than twice a day — then the margin is too thin.
+
+**Check.** The bonds log (exit_split / exit_unsplit / more_split with
+their exposure figures); data/trades.csv for bond sales by price level;
+data/rewards.csv for the market-days.
