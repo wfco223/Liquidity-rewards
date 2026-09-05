@@ -126,7 +126,15 @@ RECORD_EVERY_S = 300.0
 RECORD_KEEP = 8000
 LESS_CONFIRM_S = 300.0      # a smaller reading must hold this long...
 LESS_CONFIRM_READS = 3      # ...over this many reads
-MORE_RETRY_S = 1800.0       # a refused buy-more waits this long to try again
+# A refused buy-more tries again soon (owner, 2026-09-05: "The replacements
+# need to happen faster, it waits too long to place a bid" — the 30-minute
+# wait left the New York bid off the book for half an hour after one
+# refusal). Two minutes after an ordinary refusal; one minute after the
+# placement breaker's (it probes once a minute); ten when the account has
+# no buying power, since that only changes when something sells.
+MORE_RETRY_S = 120.0
+MORE_RETRY_BLOCKED_S = 60.0
+MORE_RETRY_BP_S = 600.0
 BP_EVERY_S = 60.0           # buying power read at most this often
 
 
@@ -2008,6 +2016,10 @@ class Bonds:
         far, intent = self.entry(side)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
         if cur:
+            if now < self._more_retry.get(slug, 0.0):
+                return None     # a refusal is fresh: the resting bid stays
+                                # (2026-09-05: it used to be pulled for a
+                                # move and then wait out the whole window)
             o = cur[0]
             tick = book.tick or 0.01
             cost = o.price if side == "YES" else round(1.0 - o.price, 4)
@@ -2059,7 +2071,7 @@ class Bonds:
                 if self._more_note.get(slug) != note:
                     self._more_note[slug] = note
                     self._log(event="more_none", market=slug, note=note)
-                self._more_retry[slug] = now + MORE_RETRY_S
+                self._more_retry[slug] = now + MORE_RETRY_BP_S
                 return None
             if afford < qty:
                 qty = afford
@@ -2077,7 +2089,10 @@ class Bonds:
                 share, est = self._share_at(slug, far, book, r.price or px, qty)
             else:
                 self._log(event="more_refused", market=slug, note=r.note[:120])
-                self._more_retry[slug] = now + MORE_RETRY_S
+                blocked = ("placements blocked" in r.note
+                           or "looks like a VPN" in r.note)
+                self._more_retry[slug] = now + (MORE_RETRY_BLOCKED_S if blocked
+                                                else MORE_RETRY_S)
                 return None
         px = r.price or px
         self.fam.orders[r.order_id] = FamilyOrder(

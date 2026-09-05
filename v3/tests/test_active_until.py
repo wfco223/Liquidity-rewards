@@ -24,6 +24,20 @@ class TestTheClockTime(unittest.TestCase):
         self.assertIsNone(Monitor._et_today("soon", now))
         self.assertIsNone(Monitor._et_today("", now))
 
+    def test_a_time_tomorrow_or_on_a_date(self):
+        # owner, 2026-09-05: "set the college football to be active
+        # until a time tomorrow"
+        now = dt.datetime(2026, 9, 5, 22, 30, tzinfo=ET).timestamp()     # Saturday night
+        tomorrow = dt.datetime(2026, 9, 6, 17, 0, tzinfo=ET).timestamp()
+        self.assertEqual(Monitor._et_at("17:00 tomorrow", now), tomorrow)
+        self.assertEqual(Monitor._et_at("tomorrow 17:00", now), tomorrow)
+        self.assertEqual(Monitor._et_at("2026-09-06 17:00", now), tomorrow)
+        self.assertEqual(Monitor._et_at("17:00 today", now),
+                         dt.datetime(2026, 9, 5, 17, 0, tzinfo=ET).timestamp())
+        self.assertIsNone(Monitor._et_at("tomorrow", now))
+        self.assertIsNone(Monitor._et_at("17:00 someday", now))
+        self.assertIsNone(Monitor._et_at("2026-13-01 17:00", now))
+
 
 class TestTheTap(unittest.TestCase):
     def setUp(self):
@@ -57,6 +71,19 @@ class TestTheTap(unittest.TestCase):
         r = self.mon.set_active_until("cfb", "")
         self.assertTrue(r["ok"])
         self.assertEqual(fam.active_until, 0.0)
+
+    def test_tomorrow_from_the_switch_page(self):
+        fam = self.mon.families["cfb"]
+        r = self.mon.set_active_until("cfb", "17:00 tomorrow")
+        self.assertTrue(r["ok"], r["note"])
+        self.assertIn("5:00 PM ET tomorrow", r["note"])
+        at = dt.datetime.fromtimestamp(fam.active_until, ET)
+        self.assertEqual(at.date(), dt.datetime.now(ET).date() + dt.timedelta(days=1))
+        self.assertEqual((at.hour, at.minute), (17, 0))
+        self.assertGreater(fam.active_until, time.time())
+        # a week and more out is refused: the window re-decides week to week
+        far = (dt.datetime.now(ET).date() + dt.timedelta(days=9)).isoformat()
+        self.assertFalse(self.mon.set_active_until("cfb", f"{far} 17:00")["ok"])
 
     def test_a_past_time_and_a_bad_family_are_refused(self):
         earlier = dt.datetime.fromtimestamp(time.time() - 3600.0, ET)
