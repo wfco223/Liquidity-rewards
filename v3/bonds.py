@@ -1503,6 +1503,61 @@ class Bonds:
             return self._snap_up(px, tick) if px > 0 else 0.0
         return self._snap_down(px, tick) if px > 0 else 0.999
 
+    def _others_on(self, slug: str, bs: str) -> float:
+        """Shares of ours on the earn side that are NOT this bond's own
+        orders — his hand orders, anything adopted, an engine order —
+        each offering the same shares. The bond sizes its exit around
+        them so nothing is offered twice (owner, 2026-09-05: "I'm
+        currently resting more sell orders than I have shares to
+        sell")."""
+        return sum(o.qty for o in list(self.fam.orders.values())
+                   if o.market == slug and o.side == bs and o.purpose != "bond")
+
+    def _two_orders(self, slug: str, old_id: str, r) -> None:
+        """A move whose cancel failed: the original still rests beside
+        its replacement. Marked and logged — no notification (owner,
+        2026-09-05: "I don't want a notification every time") — and the
+        next pass pulls it."""
+        old = self.fam.orders.get(old_id)
+        if old is not None:
+            old.why = "bond: extra exit — the cancel failed during a move, coming off"
+        self._log(event="two_exits", market=slug, id=old_id, note=r.note[:160])
+
+    @staticmethod
+    def _is_extra(o: FamilyOrder) -> bool:
+        return (str(o.why or "").startswith("bond: extra exit")
+                or o.why == "cancel failed during a move — retrying")
+
+    def _trim_exits(self, slug: str, main: list, room: float) -> tuple[list, bool]:
+        """Never more offered than held. Leftovers of a move whose cancel
+        failed come off first. A deliberate split across two price
+        levels STAYS (owner, 2026-09-05: keep "splitting orders between
+        two price levels when appropriate to meet the rewards percentage
+        share thresholds"); only when the split itself offers more than
+        `room` (the lot less decoys and his own orders) do the oldest
+        come off until it fits, one always kept for the sizing that
+        follows. Returns the survivors, oldest first, and whether a
+        cancel failed — nothing new is placed until the extra is gone."""
+        pull = [o for o in main if self._is_extra(o)]
+        keep = sorted((o for o in main if not self._is_extra(o)),
+                      key=lambda o: (o.placed_ts, o.id))
+        while len(keep) > 1 and sum(o.qty for o in keep) > room + 0.5:
+            pull.append(keep.pop(0))
+        stuck = False
+        for o in pull:
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if r.ok:
+                self.fam.orders.pop(o.id, None)
+                self._log(event="extra_exit_pulled", market=slug, price=o.price,
+                          qty=o.qty, note="more exits resting than shares held — "
+                                          "the extra came off")
+            else:
+                stuck = True
+                o.why = "bond: extra exit — the cancel failed, retrying"
+                self._log(event="extra_exit_stuck", market=slug, price=o.price,
+                          qty=o.qty, note=r.note[:120])
+        return keep, stuck
+
     def _keep_earning(self, slug: str, side: str, positions: dict,
                       now: float) -> dict | None:
         """The bond's main resting order, sized to the ledger (and never
@@ -1529,11 +1584,28 @@ class Bonds:
             return None
         tick = book.tick or 0.01
         bound = self._bound(slug, side, tick)
-        main = self._orders(slug, bs, decoy=False)
         decoys = self._orders(slug, bs, decoy=True)
-        resting = sum(o.qty for o in main) + sum(o.qty for o in decoys)
+        others = self._others_on(slug, bs)
+        d_qty = sum(o.qty for o in decoys)
+        main, stuck = self._trim_exits(slug, self._orders(slug, bs, decoy=False),
+                                       held - d_qty - others)
+        if stuck:
+            return None           # an extra exit still rests: nothing new until it is gone
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
-        lot_qty = float(math.floor(held - sum(o.qty for o in decoys)))
+        # the managed order (the oldest) gets the lot less what every
+        # other order of ours already offers — decoys, his hand orders,
+        # a second level of the bond's own: never more than is held
+        elsewhere = d_qty + others + sum(o.qty for o in main[1:])
+        lot_qty = float(math.floor(held - elsewhere))
+        if lot_qty < 1.0:
+            for o in main[:1]:
+                r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+                if r.ok:
+                    self.fam.orders.pop(o.id, None)
+                    self._log(event="earn_pulled", market=slug, price=o.price,
+                              qty=o.qty, note=f"other orders of ours already offer the "
+                                              f"lot ({elsewhere:g} of {held:g} shares)")
+            return None
         pin = self.exit_px.get(slug)
         if pin:
             # his price (owner, 2026-09-04): the whole lot rests there,
@@ -1554,7 +1626,9 @@ class Bonds:
                      "intent": cur.intent}, want, size, initiator="owner")
                 if not (r.ok and r.order_id):
                     return None
-                if not r.two_orders:
+                if r.two_orders:
+                    self._two_orders(slug, cur.id, r)
+                else:
                     self.fam.orders.pop(cur.id, None)
                 use_intent = cur.intent
             else:
@@ -1617,7 +1691,9 @@ class Bonds:
                  "intent": cur.intent}, new_px, size, initiator="owner")
             if not (r.ok and r.order_id):
                 return None
-            if not r.two_orders:
+            if r.two_orders:
+                self._two_orders(slug, cur.id, r)
+            else:
                 self.fam.orders.pop(cur.id, None)
             moved = new_px != cur.price
             self.fam.orders[r.order_id] = FamilyOrder(
@@ -2313,7 +2389,9 @@ class Bonds:
                  "size": d.qty, "intent": d.intent}, m_px, initiator="owner")
             if not (r.ok and r.order_id):
                 return None
-            if not r.two_orders:
+            if r.two_orders:
+                self._two_orders(slug, d.id, r)
+            else:
                 self.fam.orders.pop(d.id, None)
             qty = d.qty
         else:
