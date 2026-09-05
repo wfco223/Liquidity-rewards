@@ -871,8 +871,9 @@ function bTop(r,L,held){
   if(r.unconfirmed)h+='<div class="sub warn">The exchange shows '+r.unconfirmed.exch+' of '+r.unconfirmed.ledger+' here but the transaction record shows no sale (it puts you at '+r.unconfirmed.record+'). Kept until the record explains it.</div>';
   if(mk)h+='<div class="sub">bid <b class="'+(black?'ok':'warn')+'">'+pc(mk.bid)+'</b> vs your cost '+pc(mk.cost)+' ('+(mk.edge>=0?'+':'−')+(Math.abs(mk.edge)*100).toFixed(1)+'¢ a share)'+(r.cost_src&&r.cost_src!=='record'?' <span class="muted">· cost from the '+(r.cost_src==='exchange'?'exchange’s own figure':r.cost_src==='record+exchange'?'record and the exchange’s figure':'ledger')+'</span>':'')+'</div>';
   var ex=bExit(r);
-  var e=ex.length?('exit '+ex[0].qty+' @ '+pc(bTerms(r,ex[0].price))+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex[0].est)+'/day</b>'):'<span class="warn">no exit resting</span>';
-  var mo=(r.more&&r.more.order)?(' · buying more '+r.more.order.qty+' @ '+pc(r.more.order.price)):'';
+  var e=ex.length?('exit '+ex.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}).join(' + ')+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex.reduce(function(s,o){return s+(o.est||0);},0))+'/day</b>'):'<span class="warn">no exit resting</span>';
+  var mos=(r.more&&r.more.orders&&r.more.orders.length)?r.more.orders:((r.more&&r.more.order)?[r.more.order]:[]);
+  var mo=mos.length?(' · buying more '+mos.map(function(o){return o.qty+' @ '+pc(o.price);}).join(' + ')):'';
   h+='<div class="sub"><b>'+r.qty+' held @ '+pc(r.cost_px)+'</b> · '+e+mo+(r.rewards?' · earned '+usd(r.rewards):'')+'</div>';
  } else {
   h+='<div class="sub">Silver '+bOdds(r)+(r.cost!=null?' · take '+pc(r.cost)+', '+r.size+' avail'+(r.days!=null?' · '+bPct(r['yield'])+' in '+r.days+'d ≈ '+bPct(r.annual)+'/yr':''):' · nothing to take')+'</div>';
@@ -895,6 +896,8 @@ function bCalc(r){
   h+='<div>'+(o.decoy?'decoy ':'exit ')+o.qty+' @ '+pc(bTerms(r,o.price))+(o.ticks?', '+o.ticks+' tick'+(o.ticks>1?'s':'')+' behind':', at the touch')+': '+(o.qualifies?bPct(o.share)+' of the side × '+(pool==null?'?':usd(pool))+' = <b>'+usd(o.est)+'/day</b>':'<span class="warn">earning nothing</span>')+'</div>';
  });
  if(c.touch)h+='<div class="muted">the whole lot at the touch ('+pc(bTerms(r,c.touch.price))+') would take '+bPct(c.touch.share)+' = '+usd(c.touch.est)+'/day</div>';
+ var s=r.slot;
+ if(s&&s.split&&s.levels&&s.single)h+='<div class="muted">split: the '+s.levels[0][1]+' up front carry '+Math.round((s.keep||0)*100)+'% of the best reward; expected to sell ~'+s.exposure+' shares a day, against ~'+s.single.exposure+' with the whole lot at '+pc(bTerms(r,s.single.px))+'</div>';
  return h;
 }
 function bSniper(r,b,sw){
@@ -918,9 +921,9 @@ function bMore(r,b,sw){
  var m=esc(r.market);var pct=Math.round((b.more_share||0.3)*100);
  var h='Buy more: up to $'+bField('bmore-'+m,bKeep('bmore-'+m)||(mo.cap_usd||0).toFixed(2),'6em')+' '+bBtn('Set','bMoreSet(\''+m+'\')')+(mo.cap_px!=null?'<br>at '+pc(mo.cap_px)+' or better (your first price here)':'');
  if(mo.paused)h+='<br><span class="warn">'+esc(mo.paused)+'</span>';
- else if(mo.order)h+='<br>resting '+mo.order.qty+' @ '+pc(mo.order.price)+': '+bPct(mo.order.share)+' of its side = <b>'+usd(mo.order.est)+'/day</b>';
+ else if(mo.order){var ol=(mo.orders&&mo.orders.length>1)?mo.orders:[mo.order];h+='<br>resting '+ol.map(function(o){return o.qty+' @ '+pc(o.price);}).join(' + ')+': '+bPct(mo.order.share)+' of its side'+(ol.length>1?' together':'')+' = <b>'+usd(mo.order.est)+'/day</b>';}
  else if(mo.retry_at)h+='<br><span class="muted">'+(mo.note?esc(mo.note)+' · ':'')+'tries again '+when(mo.retry_at)+'</span>';
- else if(mo.slot)h+='<br>would rest '+mo.slot.qty+' @ '+pc(mo.slot.price)+' ('+bPct(mo.slot.share)+')'+(sw.on?'':' — bonds switch off');
+ else if(mo.slot){var sl=(mo.slot.levels&&mo.slot.levels.length>1)?mo.slot.levels.map(function(l){return l[1]+' @ '+pc(l[0]);}).join(' + '):(mo.slot.qty+' @ '+pc(mo.slot.price));h+='<br>would rest '+sl+' ('+bPct(mo.slot.share)+')'+(sw.on?'':' — bonds switch off');}
  else h+='<br><span class="muted">not resting: '+(mo.note?esc(mo.note):'no price at or under your first price captures '+pct+'% of its side')+'</span>';
  return '<div class="sub">'+h+'</div>';
 }

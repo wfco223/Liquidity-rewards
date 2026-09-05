@@ -14,6 +14,7 @@ import calendar
 import copy
 import unittest
 
+from v3 import bonds as bonds_mod
 from v3.api import ApiError
 from v3.bonds import (DANCE_MAX_MOVES, DANCE_WAIT_S, DECOY_QTY, HIGH_ODDS,
                       KEEP_FRACTION, LOW_ODDS, MINNOW_MAX, MOVE_COOLDOWN_S,
@@ -1417,16 +1418,27 @@ class TestBuyingMore(Base):
         for p in [c for c in (round(px - k * 0.01, 2) for k in range(1, 4)) if c > 0]:
             q = float(int(98.0 / p))
             self.assertLess(self.b._share_at(AL, "BUY", book, p, q)[0], 0.30)
-        o = self.more(AL)
-        self.assertEqual(len(o), 1)
-        self.assertEqual((o[0].side, o[0].price, o[0].qty), ("BUY", px, qty))
-        self.assertTrue(o[0].why.startswith("bond more"))
+        o = sorted(self.more(AL), key=lambda x: -x.price)
+        # one order at that price, or (2026-09-05) the split: a few at
+        # his first price carrying the share, the rest cheaper — together
+        # never over the cap, never dearer than his first price, inside
+        # the spread, capturing the share
+        self.assertTrue(o)
+        self.assertTrue(all(x.side == "BUY" and x.why.startswith("bond more") for x in o))
+        self.assertTrue(all(x.price <= 0.98 + 1e-9 for x in o))
+        self.assertLessEqual(sum(x.qty * x.price for x in o), 98.0 + 1e-6)
+        self.assertGreaterEqual(
+            self.b._share_lots(AL, "BUY", book, [(x.price, x.qty) for x in o], all_ours=True)[0], 0.30)
         self.assertLess(o[0].price, book.asks[0][0])       # inside the spread: post-only
+        if len(o) == 1:
+            self.assertEqual((o[0].price, o[0].qty), (px, qty))
         v = self.b.view(self.now + 1, self.positions())["rows"][0]["more"]
-        self.assertEqual((v["cap_usd"], v["order"]["price"]), (98.0, px))
+        self.assertEqual((v["cap_usd"], v["order"]["price"]), (98.0, o[0].price))
         self.assertGreaterEqual(v["order"]["share"], 0.30)
+        self.assertEqual(len(v["orders"]), len(o))
         # a fill on it books through the record, at any time while it rests
         oid = o[0].id
+        px = o[0].price
         self.assertTrue(self.b.fill_book[oid]["open"])
         self.r.exchange.recent_trades = lambda limit=25: TestFiveExecutionsAreFive.rows(oid, 3, px)
         self.exch(AL, 103.0, 0.98)                          # the exchange shows the 3 too
@@ -1439,10 +1451,10 @@ class TestBuyingMore(Base):
         self.bond(ALD, "NO", 100.0, 0.02)                 # 100 NO @ 98c
         self.b.cycle(self.now, self.positions(), on=True)
         o = self.more(ALD)
-        self.assertEqual(len(o), 1)
-        self.assertEqual(o[0].side, "SELL")
-        self.assertGreater(o[0].price, 0.01)               # above the 1c bid
-        self.assertLessEqual(1.0 - o[0].price, 0.995)      # inside the price cap
+        self.assertTrue(o)
+        self.assertTrue(all(x.side == "SELL" for x in o))
+        self.assertTrue(all(x.price > 0.01 for x in o))               # above the 1c bid
+        self.assertTrue(all(1.0 - x.price <= 0.995 for x in o))      # inside the price cap
 
     def test_nothing_rests_when_no_price_captures_30_percent(self):
         self.bond(AL, "YES", 100.0, 0.98)
@@ -1953,15 +1965,26 @@ class TestAContingentMovesUp(Base):
         best = slot[1] / slot[3]
         self.assertLess(est_before, 0.6 * best)                 # under the target where it sits
         self.b.cycle(self.now, self.positions(), on=True)
-        ex = self.orders(ALD, "BUY", decoy=False)
-        self.assertEqual(len(ex), 1)
+        ex = sorted(self.orders(ALD, "BUY", decoy=False), key=lambda o: -o.price)
+        # a contingent moves up (owner, 2026-09-03), here as the split
+        # (2026-09-05): the shares up front sit at the slot and carry the
+        # 60%, the rest behind; everything held is offered, never past cost
         self.assertAlmostEqual(ex[0].price, slot[0])
-        self.assertEqual(ex[0].qty, 265.0)                      # everything, nothing kept back
-        self.assertLessEqual(ex[0].price, 0.05 + 1e-9)          # never past cost
-        self.assertIn("earn_moved_up", [e["event"] for e in self.b.log])
+        self.assertEqual(sum(o.qty for o in ex), 265.0)         # everything, nothing kept back
+        self.assertTrue(all(o.price <= 0.05 + 1e-9 for o in ex))   # never past cost
+        # the target, kept — the plan's own reading (the fixture's book
+        # never carried our orders, so a re-measure nets them out wrong)
+        self.assertGreaterEqual(self.b.slot[ALD]["keep"], 0.6 - 1e-9)
+        self.assertGreaterEqual(self.b.slot[ALD]["est"], 0.6 * best - 1e-6)
+        evs = [e["event"] for e in self.b.log]
+        self.assertTrue("earn_moved_up" in evs or "exit_split" in evs)
+        if len(ex) > 1:
+            self.assertLess(self.b.slot[ALD]["exposure"], 0.75 * self.b.slot[ALD]["single"]["exposure"])
 
     def test_an_exit_keeping_its_share_does_not_chase(self):
-        # sitting at the slot already: nothing to do
+        # sitting at the slot already: no move forward. The split may
+        # re-lay it (a few up front, the rest behind) — that is not a
+        # chase: nothing rests closer to the other side than the slot
         slot = self.b._best_slot(ALD, "NO", self.book, 265.0, self.b._bound(ALD, "NO", 0.01))
         self.r.fam.orders["X2"] = FamilyOrder(id="X2", market=ALD, side="BUY", price=slot[0],
                                               qty=slot[4], intent=SELL_SHORT, placed_ts=self.now,
@@ -1970,8 +1993,21 @@ class TestAContingentMovesUp(Base):
                                       "size": slot[4], "intent": SELL_SHORT}
         self.b.moved_at[ALD] = self.now - 3600
         self.b.cycle(self.now, self.positions(), on=True)
-        self.assertIn("X2", self.r.fam.orders)
+        ex = self.orders(ALD, "BUY", decoy=False)
+        self.assertTrue(all(o.price <= slot[0] + 1e-9 for o in ex))
+        self.assertEqual(sum(o.qty for o in ex), 265.0)
         self.assertNotIn("earn_moved_up", [e["event"] for e in self.b.log])
+
+    def test_one_level_only_when_the_split_saves_too_little(self):
+        # the margin (owner, 2026-09-05: "25% less exposure to justify two
+        # orders"): with fills equally likely at every depth a split
+        # saves nothing, and one order rests as before
+        self.b._fill_p = lambda slug, bs, ticks: 0.1
+        self.b.cycle(self.now, self.positions(), on=True)
+        ex = self.orders(ALD, "BUY", decoy=False)
+        self.assertEqual(len(ex), 1)
+        self.assertEqual(ex[0].qty, 265.0)
+        self.assertFalse(self.b.slot[ALD]["split"])
 
 
 class TestTheBuyMoreOrderStepsBack(Base):
@@ -2010,20 +2046,52 @@ class TestTheBuyMoreOrderStepsBack(Base):
         self.b.moved_more_at[ALD] = self.now - 3600          # cooldown over: steps back
         self.b.cycle(self.now + 1, self.positions(), on=True)
         cur = self.b._more_orders(ALD)
-        self.assertEqual(len(cur), 1)
-        self.assertAlmostEqual(cur[0].price, slot[0])
-        self.assertGreaterEqual(self.b._share_at(ALD, "SELL", self.book, cur[0].price, cur[0].qty)[0], 0.30)
+        self.assertNotIn("M1", self.r.fam.orders)
+        self.assertTrue(cur)
+        # cheaper than where it sat, as a whole: one order at the cheapest
+        # price that captures the share, or (2026-09-05) the split — a few
+        # at his first price carrying the share, the rest cheaper still;
+        # never dearer than his first price, the share kept either way
+        self.assertTrue(all(o.price >= 0.04 - 1e-9 for o in cur))
+        self.assertGreater(max(o.price for o in cur), 0.04)
+        self.assertGreaterEqual(
+            self.b._share_lots(ALD, "SELL", self.book, [(o.price, o.qty) for o in cur],
+                               all_ours=True)[0], 0.30)
+        self.assertLessEqual(sum(o.qty * (1.0 - o.price) for o in cur), 69.12 + 1e-6)
+        self.assertLess(self.b._overpay(ALD, "NO", self.book, [(o.price, o.qty) for o in cur]),
+                        self.b._overpay(ALD, "NO", self.book, [(0.04, 72.0)]))
         ev = [e for e in self.b.log if e["event"] == "more_pulled"]
-        self.assertIn("stepping back", ev[-1]["note"])
+        self.assertTrue("stepping back" in ev[-1]["note"] or "splitting" in ev[-1]["note"])
 
-    def test_already_at_the_cheapest_slot_it_stays(self):
-        slot = self.b._more_slot(ALD, "NO", self.book, 69.12)
+    def test_already_where_the_plan_wants_it_it_stays(self):
+        plan = self.b._more_plan(ALD, "NO", self.book, 69.12)
         self.b.more_cap[ALD] = {"usd": 69.12, "by": "owner", "first": "", "px": 0.04}
-        self.rest_more_at(slot[0], slot[1])
+        for i, (px, q) in enumerate(plan["levels"]):
+            oid = f"M{i + 1}"
+            self.r.fam.orders[oid] = FamilyOrder(id=oid, market=ALD, side="SELL", price=px,
+                                                 qty=q, intent=BUY_SHORT, placed_ts=self.now,
+                                                 purpose="bond", why="bond more: buying")
+            self.r.exchange.live[oid] = {"id": oid, "market": ALD, "side": "SELL", "price": px,
+                                         "size": q, "intent": BUY_SHORT}
         self.b.moved_more_at[ALD] = self.now - 3600
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertIn("M1", self.r.fam.orders)
         self.assertNotIn("more_pulled", [e["event"] for e in self.b.log])
+
+    def test_the_margin_decides_two_orders_or_one(self):
+        # owner, 2026-09-05: "25% less exposure to justify two orders". Here
+        # the split cuts the expected overpay by about 95%, so it is taken;
+        # demand a 99% cut and one order rests at the cheapest price that
+        # captures the share, as before
+        from unittest import mock
+        slot = self.b._more_slot(ALD, "NO", self.book, 69.12)
+        plan = self.b._more_plan(ALD, "NO", self.book, 69.12)
+        self.assertTrue(plan["split"])
+        self.assertLessEqual(plan["exposure"], 0.75 * plan["single_exposure"])
+        with mock.patch.object(bonds_mod, "SPLIT_MARGIN", 0.99):
+            plan = self.b._more_plan(ALD, "NO", self.book, 69.12)
+        self.assertFalse(plan["split"])
+        self.assertEqual(plan["levels"], [(slot[0], slot[1])])
 
 
 class TestADecoyNeverRestsUnderCost(Base):
@@ -2293,14 +2361,16 @@ class TestBuyingMoreWithTheMoneyThere(Base):
             return r
         self.r.desk.place_resting = trimmed
         self.b.cycle(self.now, self.positions(), on=True)
-        o = self.buys()[0]
-        self.assertEqual(o.qty, 40.0)
-        self.assertEqual(o.purpose, "bond")
+        first = self.buys()
+        self.assertTrue(first)
+        for o in first:
+            self.assertEqual(o.qty, 40.0)
+            self.assertEqual(o.purpose, "bond")
         ev = [e for e in self.b.log if e["event"] == "more_trimmed"]
         self.assertIn("kept 40", ev[0]["note"])
         # the next pass does not stack another on top
         self.b.cycle(self.now + 60, self.positions(), on=True)
-        self.assertEqual(len(self.buys()), 1)
+        self.assertEqual(len(self.buys()), len(first))
 
     def test_a_refused_order_waits_before_trying_again(self):
         from v3.orders import OrderResult
@@ -2600,6 +2670,14 @@ class TestNeverOfferedTwice(Base):
         return [o for o in self.r.exchange.live.values()
                 if o["market"] == slug and o["side"] == "SELL"]
 
+    def one_level_only(self):
+        """Pin the exit to one level (a margin no split can meet) where a
+        test is about something other than the split."""
+        from unittest import mock
+        p = mock.patch.object(bonds_mod, "SPLIT_MARGIN", 9.0)
+        p.start()
+        self.addCleanup(p.stop)
+
     def test_his_own_ask_shrinks_the_bond_exit(self):
         self.b.approve(AL, self.now)
         self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
@@ -2609,15 +2687,15 @@ class TestNeverOfferedTwice(Base):
         ours = self.orders(AL, "SELL")
         self.assertEqual(sum(o.qty for o in ours), 1500.0)       # the lot, once
         bond = [o for o in ours if o.purpose == "bond"]
-        self.assertEqual(len(bond), 1)
-        self.assertEqual(bond[0].qty, 1000.0)
+        self.assertTrue(bond)
+        self.assertEqual(sum(o.qty for o in bond), 1000.0)        # sized around his 500
 
     def test_his_ask_for_the_whole_lot_pulls_the_bond_exit(self):
         self.b.approve(AL, self.now)
         self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
         self.bond(AL, "YES", 1500.0, 0.89)
         self.b.cycle(self.now, self.positions(), on=True)
-        self.assertEqual(len(self.orders(AL, "SELL")), 1)         # the bond's exit
+        self.assertEqual(sum(o.qty for o in self.orders(AL, "SELL")), 1500.0)   # the bond's exit
         self.hand_sell(AL, 1500.0, 0.97)                            # he offers the lot himself
         self.b.cycle(self.now + 60, self.positions(), on=True)
         ours = self.orders(AL, "SELL")
@@ -2626,6 +2704,7 @@ class TestNeverOfferedTwice(Base):
         self.assertEqual(len(self.live_asks(AL)), 1)
 
     def test_a_move_whose_cancel_failed_leaves_one_exit_not_two(self):
+        self.one_level_only()
         self.b.approve(AL, self.now)
         self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)
         self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
@@ -2689,13 +2768,17 @@ class TestNeverOfferedTwice(Base):
             self.r.cache.put(AL, minnow_book(self.now + dt, minnows=30.0))
             self.b.cycle(self.now + dt, self.positions(), on=True)
             ours = self.orders(AL, "SELL")
-            self.assertEqual(len(ours), 2)
-            self.assertEqual(sum(o.qty for o in ours), 1500.0)
-            self.assertEqual(len({round(o.price, 4) for o in ours}), 2)
-            self.assertEqual(len(self.live_asks(AL)), 2)
-        self.assertIn("split2", self.r.fam.orders)                  # his level untouched
+            self.assertGreaterEqual(len(ours), 2)
+            self.assertEqual(sum(o.qty for o in ours), 1500.0)   # the lot, once
+            self.assertEqual(sum(o["size"] for o in self.live_asks(AL)), 1500.0)
+            his = self.r.fam.orders.get("split2")
+            self.assertIsNotNone(his)                              # his level untouched
+            self.assertEqual((his.price, his.qty), (round(first.price + 0.01, 4), 500.0))
+            engine = [o for o in ours if o.id != "split2"]
+            self.assertEqual(sum(o.qty for o in engine), 1000.0)  # sized around his
 
     def test_a_split_that_offers_more_than_held_is_trimmed_to_the_lot(self):
+        self.one_level_only()
         self.b.approve(AL, self.now)
         self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)
         self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
@@ -2708,3 +2791,134 @@ class TestNeverOfferedTwice(Base):
         ours = self.orders(AL, "SELL")
         self.assertLessEqual(sum(o.qty for o in ours), 1500.0)
         self.assertLessEqual(sum(o["size"] for o in self.live_asks(AL)), 1500.0)
+
+
+class TestSplitPlacement(Base):
+    """Owner, 2026-09-05: "the placement should be selected so as to have
+    minimal exposure and yet reach the 60% or 30% threshold as
+    applicable ... a few shares at a more risky level and then others at
+    a safer level." Two orders only when they cut exposure by a quarter."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+
+    def live_asks(self, slug):
+        return [o for o in self.r.exchange.live.values()
+                if o["market"] == slug and o["side"] == "SELL"]
+
+    def exits(self):
+        return sorted(self.orders(AL, "SELL", decoy=False), key=lambda o: o.price)
+
+    def test_a_thin_touch_gets_a_few_up_front_and_the_rest_behind(self):
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}
+        out = self.b.cycle(self.now, self.positions(), on=True)
+        ex = self.exits()
+        self.assertEqual(len(ex), 2)
+        near, far = ex
+        self.assertAlmostEqual(near.price, 0.90)                 # joins the touch, never inside it
+        self.assertLess(near.qty, far.qty)                       # a few up front, the rest behind
+        self.assertEqual(near.qty + far.qty, 1500.0)             # the lot, once
+        self.assertEqual(sum(o["size"] for o in self.live_asks(AL)), 1500.0)
+        self.assertTrue(all(o.price >= 0.90 - 1e-9 for o in ex))    # never at cost (89c)
+        slot = self.b.slot[AL]
+        self.assertTrue(slot["split"])
+        self.assertGreaterEqual(slot["keep"], 0.6)
+        self.assertLessEqual(slot["exposure"], 0.75 * slot["single"]["exposure"])
+        book = self.r.cache.any_age(AL)
+        best = self.b._best_slot(AL, "YES", book, 1500.0, self.b._bound(AL, "YES", 0.01))
+        _share, est = self.b._share_lots(AL, "SELL", book, [(o.price, o.qty) for o in ex])
+        self.assertGreaterEqual(est, 0.6 * best[1] / best[3] - 1e-9)   # the target, kept
+        self.assertIn("exit_split", [e["event"] for e in self.b.log])
+        self.assertEqual(out["placed"][0]["levels"], [[near.price, near.qty], [far.price, far.qty]])
+        self.assertTrue(near.why.startswith("bond: split"))
+        # the card: both levels, the reward kept, expected sales against one level
+        row = self.b.view(self.now, self.positions())["rows"][0]
+        self.assertEqual(len(row["slot"]["levels"]), 2)
+        self.assertIn("exposure", row["slot"]["single"])
+        self.assertEqual(len([o for o in row["calc"]["orders"] if not o["decoy"]]), 2)
+
+    def test_no_split_when_nothing_behind_the_touch_keeps_the_target(self):
+        # NY Governor dem (the owner's card): 210 at the touch was the
+        # 60% exactly — nothing moved back keeps it, so one order rests
+        book = Book(bids=((0.90, 146.0), (0.84, 25.0)),
+                    asks=((0.94, 20.0), (0.95, 999.0), (0.96, 10.0), (0.99, 2114.0)),
+                    tick=0.01, fetched_at=self.now)
+        self.r.exchange.books[AL] = book
+        self.r.cache.put(AL, book)
+        self.bond(AL, "YES", 210.0, 0.905)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}
+        self.b.cycle(self.now, self.positions(), on=True)
+        ex = self.exits()
+        self.assertEqual(len(ex), 1)
+        self.assertEqual(ex[0].qty, 210.0)
+        self.assertFalse(self.b.slot[AL]["split"])
+
+    def test_the_split_folds_back_to_one_level_when_it_stops_keeping_the_target(self):
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(len(self.exits()), 2)
+        # fills now equally likely at every depth: the split saves nothing
+        # but still keeps the target, so it is left alone (no churn) ...
+        self.b._fill_p = lambda slug, bs, ticks: 0.1
+        t = self.now + MOVE_COOLDOWN_S + 1
+        self.r.cache.put(AL, minnow_book(t, minnows=30.0))
+        self.b.cycle(t, self.positions(), on=True)
+        self.assertEqual(len(self.exits()), 2)
+        # ... until a wall lands at the touch and it no longer keeps 60%
+        t2 = t + MOVE_COOLDOWN_S + 1
+        wall = minnow_book(t2, minnows=3000.0)
+        self.r.exchange.books[AL] = wall
+        self.r.cache.put(AL, wall)
+        self.b.cycle(t2, self.positions(), on=True)
+        ex = self.exits()
+        self.assertEqual(len(ex), 1)
+        self.assertEqual(ex[0].qty, 1500.0)
+        self.assertLessEqual(sum(o["size"] for o in self.live_asks(AL)), 1500.0)
+        self.assertIn("exit_unsplit", [e["event"] for e in self.b.log])
+
+    def test_the_pair_is_resized_as_one_when_the_lot_grows(self):
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(len(self.exits()), 2)
+        self.b._book_lot(AL, "YES", 500.0, 500.0 * 0.89, ref="test")
+        self.exch(AL, 2000.0, 0.89)
+        t = self.now + MOVE_COOLDOWN_S + 1
+        self.r.cache.put(AL, minnow_book(t, minnows=30.0))
+        self.b.cycle(t, self.positions(), on=True)
+        ex = self.exits()
+        self.assertEqual(sum(o.qty for o in ex), 2000.0)
+        self.assertEqual(sum(o["size"] for o in self.live_asks(AL)), 2000.0)
+        self.assertGreaterEqual(self.b.slot[AL]["keep"], 0.6)
+
+    def test_the_buy_more_splits_to_pay_less(self):
+        self.r.exchange.books[AL] = yes_book(self.now)
+        self.r.cache.put(AL, yes_book(self.now))
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.more_cap[AL] = {"usd": 98.0, "by": "owner", "first": "test", "px": 0.98}
+        book = self.r.cache.any_age(AL)
+        single = self.b._more_slot(AL, "YES", book, 98.0)
+        plan = self.b._more_plan(AL, "YES", book, 98.0)
+        self.assertTrue(plan["split"])
+        (dpx, dq), (cpx, cq) = plan["levels"]
+        self.assertGreater(dpx, cpx)                              # a few dearer, the rest cheaper
+        self.assertLess(dq, cq)
+        self.assertLessEqual(dpx, 0.98 + 1e-9)                    # never dearer than his first price
+        self.assertLessEqual(dq * dpx + cq * cpx, 98.0 + 1e-6)    # never over the cap
+        self.assertGreaterEqual(plan["share"], 0.30)
+        self.assertLessEqual(plan["exposure"], 0.75 * plan["single_exposure"])
+        self.assertLessEqual(cpx, single[0])                      # cheaper than the one-order answer
+        self.b.cycle(self.now, self.positions(), on=True)
+        more = sorted(self.b._more_orders(AL), key=lambda o: -o.price)
+        self.assertEqual([(o.price, o.qty) for o in more], [(dpx, dq), (cpx, cq)])
+        self.assertTrue(all(o.why.startswith("bond more") for o in more))
+        self.assertIn("more_split", [e["event"] for e in self.b.log])
+        v = self.b.view(self.now, self.positions())["rows"][0]["more"]
+        self.assertEqual(len(v["orders"]), 2)
+        self.assertGreaterEqual(v["order"]["share"], 0.30)
