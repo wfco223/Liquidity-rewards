@@ -7382,3 +7382,13 @@ date,market,program_type,reward_usd,status
 2026-09-02,vmc-ussep-mov-ma-dem-2026-09-01-mar5-10,liquidityProgram,0.04,PAID
 2026-09-02,vmc-ussep-mov-ma-dem-2026-09-01-margte40,liquidityProgram,0.24,PAID
 2026-09-02,vmc-ussep-mov-ma-dem-2026-09-01-mou0-5,liquidityProgram,0.17,PAID
+2026-09-03,aachc-cfb-wins-2026-11-28-kan-7pt5wins,liquidityProgram,4.21,PENDING
+2026-09-03,aachc-cfb-wins-2026-11-28-okst-8pt5wins,liquidityProgram,0.75,PENDING
+2026-09-03,aachc-cfb-wins-2026-11-28-washst-3pt5wins,liquidityProgram,1.08,PENDING
+2026-09-03,paccc-usse-midterms-2026-11-03-rep,liquidityProgram,0.11,PENDING
+2026-09-03,scc-hrep-rep-2026-11-03-gte235,liquidityProgram,1,PENDING
+2026-09-03,scc-senate-gop-2026-11-03-51,liquidityProgram,0.37,PENDING
+2026-09-03,scc-senate-gop-2026-11-03-55,liquidityProgram,0.28,PENDING
+2026-09-03,usgubewc-usgub-ct-2026-11-03-dem,liquidityProgram,1.04,PENDING
+2026-09-03,usgubewc-usgub-tx-2026-11-03-dem,liquidityProgram,2.35,PENDING
+2026-09-03,vmc-ussep-mov-ma-dem-2026-09-01-mar0-5,liquidityProgram,0.01,PENDING
