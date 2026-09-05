@@ -1248,7 +1248,8 @@ GRAPH_JS = """
 function fmtT(ts){var d=new Date(ts*1000);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
 var FAMS=[['Politics','est_politics','#7fd77f'],['Bonds','est_bonds','#4a90e2'],
           ['College football','est_cfb','#e0b83a'],
-          ['NFL','est_nfl','#6fa8dc'],['NBA','est_nba','#c08fd0']];
+          ['NFL','est_nfl','#6fa8dc'],['NBA','est_nba','#c08fd0'],
+          ['Game day','est_gameday','#f08a5d']];
 function stacked(d,win){
  var now=Date.now()/1000, series=[], names=[];
  FAMS.forEach(function(f){
