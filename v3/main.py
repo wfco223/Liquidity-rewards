@@ -1805,7 +1805,19 @@ class Monitor:
                     new_px, new_q if qty is not None else None,
                     initiator="owner")
                 if r.ok:
-                    del fam.orders[order_id]
+                    if r.two_orders:
+                        # the original refused to cancel and still rests:
+                        # it stays tracked and the cancel is retried every
+                        # cycle. Deleting the record here let the exchange's
+                        # copy be adopted as a hand order, and the bond then
+                        # offered its whole lot on top of it (owner,
+                        # 2026-09-05: "resting more sell orders than I have
+                        # shares to sell")
+                        rec.why = "cancel failed during a move — retrying"
+                        fam._log(event="two_orders", market=rec.market,
+                                 id=rec.id, note=r.note[:160])
+                    else:
+                        del fam.orders[order_id]
                     from .family import FamilyOrder
                     now = time.time()
                     pinning = pin and rec.purpose != "manual"
