@@ -1206,3 +1206,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788624018.3,politics,ussewc-usse-ky-2026-11-03-rep,BUY,-0.01,0.93,fix,6.2497,0.58,0.99715,,,0.591,,,-0.0671,143.01,size trimmed by 0.01 to the exchange's count (order CABRWMWA6MVR),CABRWMWA6MVR
 1788624018.3,politics,usgubewc-usgub-nh-2026-11-03-dem,BUY,1.01,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CABWCQK86MVV
 1788624018.3,politics,ussewc-usse-id-2026-11-03-rep,BUY,0.01,0.96,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CABV05JGJMW1
+1788624158.3,politics,paccc-usho-midterms-2026-11-03-rep,SELL,1,0.181,earn,17.0431,0.56,0.1726,15,19,0.732,0.18,0.181,-0.0084,-1,1 tick behind the touch — we would hold 0% of the ask side,CABTQSNJMMVF
+1788624158.3,politics,scc-hrep-rep-2026-11-03-gte220,BUY,2,0.24,sell,0,0.04,0.132825,15,19,0.248,0.15,0.25,0.1072,-5,buying back the short at or under what it sold for — the bid earns while it wait,CACA4WBXRMVR
+1788624398.3,politics,paccc-usho-midterms-2026-11-03-rep,SELL,9,0.181,earn,35.5091,0.63,0.1726,17,20,0.781,0.18,0.181,-0.0084,-10,1 tick behind the touch — we would hold 0% of the ask side,CABTQSNJMMVF
+1788625915.7,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,12,0.04,void,0.1702,0.42,0.000225,2,6,0.386,0.05,0.07,0.0398,-172,voided: the exchange has no trade for order CABRTGV9YMW1 — the row of 09-05 15:4,CABRTGV9YMW1
+1788625915.7,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,2,0.93,void,0.7173,0.08,0.996675,93,96,0.795,0.93,0.94,-0.0667,126,voided: the exchange has no trade for order CAC1KS726MVR — the row of 09-05 15:4,CAC1KS726MVR
+1788625915.7,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,1,0.05,void,2.8829,0.15,0.000225,2,5,0.696,0.04,0.07,-0.0498,-197,voided: the exchange has no trade for order CAC2EATRCMVZ — the row of 09-05 15:5,CAC2EATRCMVZ
