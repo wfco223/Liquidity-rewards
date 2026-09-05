@@ -152,6 +152,12 @@ MORE_RETRY_S = 120.0
 MORE_RETRY_BLOCKED_S = 60.0
 MORE_RETRY_BP_S = 600.0
 BP_EVERY_S = 60.0           # buying power read at most this often
+# The bond acts on a book this fresh — inside the desk's own 120s window
+# by a margin, because a cycle's earlier calls take time and a book judged
+# fresh at the top of the pass was refused as stale at placement (2026-09-05:
+# a buy-more pulled for a move, then "no book fresher than 120s" — gone
+# until the retry).
+BOOK_ACT_S = 90.0
 
 
 def side_for(odds: float | None) -> str | None:
@@ -1083,7 +1089,7 @@ class Bonds:
         q = float(math.floor(q))
         if q < 1.0:
             return {"ok": False, "note": "at least one share"}
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return {"ok": False, "note": "no fresh book — try again in a moment"}
         tick = book.tick or 0.01
@@ -1856,7 +1862,7 @@ class Bonds:
                    self.exchange_held(slug, side, positions))
         if held < 1.0:
             return None
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return None
         tick = book.tick or 0.01
@@ -2022,7 +2028,7 @@ class Bonds:
                                          "until there is; bait is a buy"}
         if self._bait_orders(slug):
             return {"ok": False, "note": "a bait already rests here — pull it first"}
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return {"ok": False, "note": "no fresh book — try again in a moment"}
         far, intent = self.entry(side)
@@ -2463,7 +2469,7 @@ class Bonds:
                 self._pull_more(slug, "nothing held here" if cap_usd >= 1.0
                                 else "buy-more amount is zero")
             return None
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return None
         far, intent = self.entry(side)
@@ -2690,7 +2696,7 @@ class Bonds:
         its price. When the minnow moves more than DANCE_MAX_MOVES
         times, reaches the far touch, or crosses under our cost, it is
         taken at once. No minnow in front: no decoy, no dance."""
-        book = self.fam.cache.fresh(slug, 120.0, now)
+        book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return None
         bs, intent = self.earn(side)
