@@ -996,6 +996,7 @@ function render(d){
  var tx=b.tax||{};var tax=b.budget_mode==='tax';var e=b.earned||{};
  out+='<div class="card"><b>Money</b>';
  out+='<div class="sub"><b>'+usd(b.money||0)+'</b> to deploy = budget '+usd(b.budget||0)+' + proceeds '+usd(b.cash||0)+' · held at cost '+usd(b.held_cost||0)+'</div>';
+ if(b.money_out){var mo=b.money_out;out+='<div class="sub warn"><b>No money to deploy</b> since '+when(mo.since)+' ('+usd(mo.bp||0)+' free on the exchange): the bonds only sell, never below cost. '+(mo.pulled||0)+' buy-more order'+(mo.pulled===1?'':'s')+', every decoy and bait came off ('+usd(mo.freed||0)+' freed). Nothing is bought, sniped or baited until '+usd((b.money_back_usd||50)+(mo.freed||0))+' is free.</div>';}
  out+='<div class="sub">Earned <b>'+usd(e.total||0)+'</b> = '+usd(e.sales||0)+' on sales + '+usd(e.rewards||0)+' rewards'+(e.today?' ('+usd(e.today)+' today)':'')+'</div>';
  out+='<div id="bmsg">'+(window._bNote||'')+'</div>';
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';

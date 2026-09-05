@@ -147,6 +147,11 @@ PIN_RELEASE_DWELL_S = 120.0
 # believes, and the model's expected fills are graded against actual
 # fills in the log every hour ("the full risk must be extremely well
 # calibrated because that could open us up to a lot of exposure").
+# the fills journal keeps a week of rows, plus anything in a market still
+# held, bounded at FILLS_KEEP rows (owner, 2026-08-22). The reconciler
+# adds nothing older than this keeps — it would only fall off again.
+FILLS_KEEP = 600
+FILLS_KEEP_S = 7 * 86400.0
 PF_CHARGE_FLOOR = 0.05   # a vanished order waits this long for the lagging
                        # position feed before it counts as a silent cancel
 
@@ -1898,12 +1903,12 @@ class Family:
             # — closed cards show for 3 days, open ones until profitable
             # — so keep a week of rows plus anything belonging to a
             # market we still hold, bounded at 600
-            cutoff = now - 7 * 86400.0
+            cutoff = now - FILLS_KEEP_S
             keep = [r2 for r2 in self.fills
                     if r2.get("ts", 0.0) >= cutoff
                     or abs((self.inventory.get(r2.get("market"))
                             or {}).get("qty", 0.0)) > 0.005]
-            self.fills = keep[-600:]
+            self.fills = keep[-FILLS_KEEP:]
         except Exception:  # noqa: BLE001 — the journal never breaks a fill
             pass
 
