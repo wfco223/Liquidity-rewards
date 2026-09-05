@@ -2983,6 +2983,8 @@ class Monitor:
             r = self.bonds.unignore(market)
         elif op == "bonds_remove":
             r = self.bonds.remove(market, now)
+        elif op == "bonds_uncount":
+            r = self.bonds.uncount(market, now)
         elif op == "bonds_scan":
             new = self.bonds.scan(now, force=True)
             r = {"ok": True, "note": f"scanned — {len(new)} new candidate"
