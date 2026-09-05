@@ -330,6 +330,16 @@ class FamilyConfig:
     terms_active_s: float = 600.0       # live terms for markets we're in
     terms_full_s: float = 3600.0        # the whole universe's terms
     discover_s: float = 6 * 3600.0
+    # The game-day experiment (owner, 2026-09-05): rest scout_qty shares
+    # on BOTH sides of every market discovery picked — at the touch when
+    # scout_join, a tick behind otherwise — and place nothing else (no
+    # planner entries, probes or growth). Discovery rows carry "start",
+    # the kickoff; with kickoff_pull every scout leaves when the game
+    # starts, and filled shares exit through the ordinary machinery.
+    scout_all: bool = False
+    scout_qty: float = 1.0
+    scout_join: bool = True
+    kickoff_pull: bool = True
     log_keep: int = 300
 
 
@@ -500,6 +510,10 @@ class Family:
         # active until 5:00 pm eastern today"): until this time the
         # family rests as in resting hours, whatever the window says
         self.active_until: float = 0.0
+        # market -> kickoff epoch, from discovery rows that carry one
+        # (the game-day family); kept past discovery so the kickoff
+        # pull still knows a game that has left the universe
+        self.event_start: dict[str, float] = {}
         # the owner's bond shares per market, signed YES (owner,
         # 2026-09-02: "the engine does not need to ignore these
         # markets, only the orders I place"; "I only want to know for a
@@ -785,6 +799,12 @@ class Family:
             return
         fresh = set(found) - set(self.universe)
         self.universe = found
+        for s, row in found.items():
+            if isinstance(row, dict) and row.get("start"):
+                self.event_start[s] = float(row["start"])
+        for s in [s for s, t in self.event_start.items()
+                  if t < now - 3 * 86400.0]:
+            self.event_start.pop(s, None)      # games long over
         if self.names is not None:
             for slug, row in found.items():
                 if row.get("name"):
@@ -2025,6 +2045,26 @@ class Family:
                     actions -= 1
             return self._finish(summary, now)
 
+        # kickoff (the game-day experiment, owner 2026-09-05): a scout
+        # leaves when its game starts — in-game prices move too fast for
+        # a one-share test of RESTING. Exits for filled shares stay.
+        if self.cfg.kickoff_pull and self.event_start:
+            for rec in list(self.orders.values()):
+                if actions <= 0:
+                    break
+                if rec.purpose in ("sell", "manual", "bond"):
+                    continue
+                if not self.kicked_off(rec.market, now):
+                    continue
+                r = self.desk.cancel(rec.id, rec.market)
+                if r.ok:
+                    self._log(event="kickoff_pull", market=rec.market,
+                              side=rec.side, price=rec.price,
+                              note="the game has started — the scout "
+                                   "reports in")
+                    del self.orders[rec.id]
+                    actions -= 1
+
         # grade fills that have had their hour: the adverse move a fill
         # actually cost is the calibration everything else leans on
         for mk in list(self.pending_marks):
@@ -2104,14 +2144,19 @@ class Family:
         # risk (starving it behind entries left shorts uncovered, 23:53Z)
         actions = self._sell(now, actions)
 
-        # 5) probes: buy information where it is missing
-        actions = self._probe(now, positions, actions)
+        if self.cfg.scout_all:
+            # the game-day experiment: a share a side at the touch on
+            # every market discovery picked, and nothing else
+            actions = self._scout_all(now, positions, actions)
+        else:
+            # 5) probes: buy information where it is missing
+            actions = self._probe(now, positions, actions)
 
-        # 6) new entries, best scoreboard candidates first
-        actions = self._enter(now, positions, actions)
+            # 6) new entries, best scoreboard candidates first
+            actions = self._enter(now, positions, actions)
 
-        # 7) growth: seed the markets whose goal needs confidence first
-        self._grow(now, positions, actions)
+            # 7) growth: seed the markets whose goal needs confidence first
+            self._grow(now, positions, actions)
         return self._finish(summary, now)
 
     def _read_live(self, now: float) -> None:
@@ -4095,6 +4140,77 @@ class Family:
 
     # --------------------------------------------------------------- books
 
+    def kicked_off(self, slug: str, now: float) -> bool:
+        """Has this market's game started? False when no kickoff is known."""
+        t = self.event_start.get(slug)
+        return t is not None and now >= t
+
+    def _scout_all(self, now: float, positions: dict, actions: int) -> int:
+        """The game-day experiment's placer (owner, 2026-09-05): on every
+        market discovery picked, one scout of scout_qty shares on each
+        side — joining the touch, post-only, never crossing — while the
+        family and per-market money allow and the game has not started.
+        Purpose "earn", so the estimator, the fill model, the exits and
+        the calibration note all treat it as an ordinary resting order;
+        the `why` marks it as the experiment's."""
+        if actions <= 0:
+            return actions
+        for slug in sorted(self.universe, key=lambda s: self._label(s)):
+            if actions <= 0:
+                break
+            if (not self.enterable(slug) or self._dead_here(slug)
+                    or self.kicked_off(slug, now)):
+                continue
+            prog, _why = self._prog_row(slug)
+            if prog is None:
+                continue                # no live program read: not yet
+            book = self.cache.fresh(slug, BOOK_MAX_AGE, now)
+            if book is None or not book.bids or not book.asks:
+                continue                # a two-sided book or nothing
+            bid, ask = book.bids[0][0], book.asks[0][0]
+            if ask - bid < book.tick / 2:
+                continue                # locked or crossed: stand aside
+            have = {o.side for o in list(self.orders.values())
+                    if o.market == slug and o.purpose != "sell"}
+            for side in ("BUY", "SELL"):
+                if actions <= 0:
+                    break
+                if side in have or not self._cooldown_ok(slug, side, now):
+                    continue
+                if self.cfg.scout_join:
+                    px = bid if side == "BUY" else ask
+                else:
+                    px = (bid - book.tick) if side == "BUY" else (ask + book.tick)
+                px = snap_price(round(px, 4), book.tick, side)
+                if not (0.001 <= px <= 0.999):
+                    continue
+                guess = BUY_LONG if side == "BUY" else BUY_SHORT
+                cost = capital_at_risk(guess, px, self.cfg.scout_qty)
+                if self.market_spent(slug) + cost > self.cfg.per_market_usd + 1e-9:
+                    continue
+                if self.family_spent() + cost > self.cfg.capital_usd + 1e-9:
+                    return actions      # the ceiling: nothing more anywhere
+                r = self.desk.place_resting(
+                    slug, side, px, self.cfg.scout_qty,
+                    net_position=(positions.get(slug) or (0.0,))[0],
+                    verify=self.cfg.verify_resting)
+                self._mark(slug, side, now)
+                if r.ok and r.order_id:
+                    self.orders[r.order_id] = FamilyOrder(
+                        id=r.order_id, market=slug, side=side,
+                        price=(r.price or px), qty=self.cfg.scout_qty,
+                        intent=r.intent, placed_ts=now, purpose="earn",
+                        why=("game-day scout — one share at the touch, "
+                             "to learn what the pool pays a small order "
+                             "and what fills it before kickoff"))
+                    self._log(event="scout", market=slug, side=side,
+                              price=(r.price or px), qty=self.cfg.scout_qty)
+                else:
+                    self._log(event="refused", market=slug, side=side,
+                              note=r.note[:90])
+                actions -= 1
+        return actions
+
     def _probe(self, now: float, positions: dict, actions: int) -> int:
         if self.cfg.probe_usd <= 0 or actions <= 0:
             return actions
@@ -4569,6 +4685,7 @@ class Family:
             "silent_cancels": self.silent_cancels,
             "placed_at": self.placed_at,
             "active_until": self.active_until,
+            "event_start": self.event_start,
             "pos_moves": self.pos_moves[-500:],
             "pending_pages": self.pending_pages,
             "gone_pending": {oid: {"rec": asdict(g["rec"]),
@@ -4643,6 +4760,8 @@ class Family:
         self.fills = list(d.get("fills") or [])
         self.dump_today = float(d.get("dump_today") or 0.0)
         self.active_until = float(d.get("active_until") or 0.0)
+        self.event_start = {str(k): float(v) for k, v in
+                            (d.get("event_start") or {}).items()}
         if d.get("cfg_sig") == self._cfg_sig():
             self.scoreboard = dict(d.get("scoreboard") or {})
         else:
