@@ -1361,6 +1361,11 @@ function rwcard(){
  var h='';
  var nr=(j.new_rows||[]);
  h+='<div class="kpi"><div><div class="v">'+(j.new_count||0)+'</div><div class="l">new rows</div></div></div>';
+ (j.progress||[]).forEach(function(p){
+  var pct=(p.pct==null?0:p.pct);
+  h+='<div class="sub"><b>'+esc((p.day||'').slice(5))+'</b>: '+p.appeared+' of '+p.expected+' markets we estimated have appeared'+(p.expected?' ('+pct+'%)':'')+(p.pending?' \\u00b7 '+p.pending+' pending':'')+(p.paid?' \\u00b7 '+p.paid+' paid':'')+(p.extra?' \\u00b7 '+p.extra+' posted that we did not estimate':'')+'</div>';
+  h+='<div class="mtrack"><div class="mfill" style="width:'+pct+'%"></div></div>';
+ });
  var dk=Object.keys(j.days||{}).sort().reverse().slice(0,4);
  if(dk.length){h+='<div class="sub">'+dk.map(function(x){return x.slice(5)+' '+usd(j.days[x]);}).join(' \u00b7 ')+'</div>';}
  nr.slice().reverse().forEach(function(r){
