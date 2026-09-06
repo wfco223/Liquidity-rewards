@@ -7818,6 +7818,7 @@ date,market,program_type,reward_usd,status
 2026-09-04,aachc-cfb-wins-2026-11-28-byu-8pt5wins,liquidityProgram,0.12,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-cah-5pt5wins,liquidityProgram,0.05,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-cah-6pt5wins,liquidityProgram,0.02,PENDING
+2026-09-04,aachc-cfb-wins-2026-11-28-cah-7pt5wins,liquidityProgram,0.14,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-cin-3pt5wins,liquidityProgram,0.17,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-cin-5pt5wins,liquidityProgram,0.09,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-cin-6pt5wins,liquidityProgram,0.17,PENDING
@@ -7974,6 +7975,7 @@ date,market,program_type,reward_usd,status
 2026-09-04,aachc-cfb-wins-ou-2026-11-28-boise,liquidityProgram,0.11,PENDING
 2026-09-04,aachc-cfb-wins-ou-2026-11-28-boscol,liquidityProgram,0.01,PENDING
 2026-09-04,aachc-cfb-wins-ou-2026-11-28-cah,liquidityProgram,0.04,PENDING
+2026-09-04,aachc-cfb-wins-ou-2026-11-28-cin,liquidityProgram,0.02,PENDING
 2026-09-04,aachc-cfb-wins-ou-2026-11-28-clmsn,liquidityProgram,0.04,PENDING
 2026-09-04,aachc-cfb-wins-ou-2026-11-28-col,liquidityProgram,0.09,PENDING
 2026-09-04,aachc-cfb-wins-ou-2026-11-28-flst,liquidityProgram,0.03,PENDING
@@ -8000,7 +8002,7 @@ date,market,program_type,reward_usd,status
 2026-09-04,aachc-cfb-wins-ou-2026-11-28-wake,liquidityProgram,0.05,PENDING
 2026-09-04,aachc-cfb-wins-ou-2026-11-28-wash,liquidityProgram,0.1,PENDING
 2026-09-04,enwc-usgubp-ri-2026-09-09-dem-danmck,liquidityProgram,1.22,PENDING
-2026-09-04,enwc-usgubp-ri-2026-09-09-rep-elapel,liquidityProgram,4.77,PENDING
+2026-09-04,enwc-usgubp-ri-2026-09-09-rep-elapel,liquidityProgram,5.23,PENDING
 2026-09-04,enwc-usgubp-ri-2026-09-09-rep-robrai,liquidityProgram,0.06,PENDING
 2026-09-04,enwc-uspres-nom-dem-2028-andbes,liquidityProgram,0.01,PENDING
 2026-09-04,enwc-uspres-nom-dem-2028-markel,liquidityProgram,0.01,PENDING
@@ -8034,6 +8036,7 @@ date,market,program_type,reward_usd,status
 2026-09-04,scc-hrep-rep-2026-11-03-gte180,liquidityProgram,0.42,PENDING
 2026-09-04,scc-hrep-rep-2026-11-03-gte185,liquidityProgram,0.4,PENDING
 2026-09-04,scc-hrep-rep-2026-11-03-gte190,liquidityProgram,0.26,PENDING
+2026-09-04,scc-hrep-rep-2026-11-03-gte195,liquidityProgram,0.08,PENDING
 2026-09-04,scc-hrep-rep-2026-11-03-gte200,liquidityProgram,0.11,PENDING
 2026-09-04,scc-hrep-rep-2026-11-03-gte205,liquidityProgram,0.37,PENDING
 2026-09-04,scc-hrep-rep-2026-11-03-gte210,liquidityProgram,0.8,PENDING
@@ -8043,6 +8046,7 @@ date,market,program_type,reward_usd,status
 2026-09-04,scc-senate-gop-2026-11-03-48,liquidityProgram,0.25,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-51,liquidityProgram,0.43,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-52,liquidityProgram,0.08,PENDING
+2026-09-04,scc-senate-gop-2026-11-03-53,liquidityProgram,0.28,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-54,liquidityProgram,0.05,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-55,liquidityProgram,0.34,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-lte45,liquidityProgram,2.48,PENDING
