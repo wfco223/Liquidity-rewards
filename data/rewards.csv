@@ -7828,11 +7828,13 @@ date,market,program_type,reward_usd,status
 2026-09-04,aachc-cfb-wins-2026-11-28-mspst-5pt5wins,liquidityProgram,0.66,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-ncst-8pt5wins,liquidityProgram,0.03,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-nebr-4pt5wins,liquidityProgram,0.16,PENDING
+2026-09-04,aachc-cfb-wins-2026-11-28-nw-4pt5wins,liquidityProgram,0.01,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-ohiost-10pt5wins,liquidityProgram,0.04,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-ohiost-11pt5wins,liquidityProgram,0.14,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-okl-8pt5wins,liquidityProgram,0.12,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-okl-9pt5wins,liquidityProgram,0.02,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-ore-10pt5wins,liquidityProgram,0.63,PENDING
+2026-09-04,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,liquidityProgram,0.02,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-pitt-8pt5wins,liquidityProgram,0.05,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-sc-7pt5wins,liquidityProgram,0.39,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-syra-3pt5wins,liquidityProgram,0.08,PENDING
@@ -7877,11 +7879,13 @@ date,market,program_type,reward_usd,status
 2026-09-04,scc-hrep-rep-2026-11-03-gte180,liquidityProgram,0.42,PENDING
 2026-09-04,scc-hrep-rep-2026-11-03-gte205,liquidityProgram,0.37,PENDING
 2026-09-04,scc-hrep-rep-2026-11-03-gte235,liquidityProgram,0.23,PENDING
+2026-09-04,scc-senate-gop-2026-11-03-51,liquidityProgram,0.43,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-54,liquidityProgram,0.05,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-lte45,liquidityProgram,2.48,PENDING
 2026-09-04,usgubewc-usgub-ar-2026-11-03-rep,liquidityProgram,1.64,PENDING
 2026-09-04,usgubewc-usgub-co-2026-11-03-rep,liquidityProgram,1.94,PENDING
 2026-09-04,usgubewc-usgub-ct-2026-11-03-dem,liquidityProgram,0.47,PENDING
+2026-09-04,usgubewc-usgub-ct-2026-11-03-rep,liquidityProgram,1.69,PENDING
 2026-09-04,usgubewc-usgub-fl-2026-11-03-rep,liquidityProgram,0.9,PENDING
 2026-09-04,usgubewc-usgub-hi-2026-11-03-dem,liquidityProgram,0.72,PENDING
 2026-09-04,usgubewc-usgub-il-2026-11-03-rep,liquidityProgram,1.05,PENDING
