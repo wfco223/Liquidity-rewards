@@ -2669,6 +2669,32 @@ class TestSellingIntoTheBids(Base):
         self.assertIn("nothing sold", r["note"])
         self.assertEqual(self.b.held(AL, "YES"), 100.0)
 
+    def test_his_under_cost_tap_sells_and_books_the_loss(self):
+        # owner, 2026-09-06: "I sold a few below cost to free up money
+        # to use in cheaper markets. I need a way of doing that with a
+        # button and I need to make sure the sales are recognized and
+        # the proceeds counted as available capital"
+        self.bond(AL, "YES", 100.0, 0.95)
+        self.book(AL, ((0.93, 60.0), (0.50, 20000.0)), ((0.99, 300.0), (0.999, 20000.0)))
+        self.b.cycle(self.now, self.positions(), on=True)
+        money0 = self.b._money()
+        put_in0 = self.b.money_in
+        r = self.b.sell_into(AL, 93, 20, self.now)                   # the plain button still refuses
+        self.assertFalse(r["ok"])
+        self.assertIn("not above your cost", r["note"])
+        r = self.b.sell_into(AL, 93, 20, self.now, under_cost=True)  # his under-cost tap sells
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 80.0)
+        self.assertAlmostEqual(self.b.cash, 20 * 0.93, places=2)     # the proceeds are cash now
+        self.assertAlmostEqual(self.b._money(), money0 + 20 * 0.93, places=2)   # available capital
+        self.assertAlmostEqual(self.b.realized, 20 * (0.93 - 0.95), places=2)   # the loss is booked
+        ev = [e for e in self.b.log if e["event"] == "sold_into"][0]
+        self.assertTrue(ev["under_cost"])
+        self.assertAlmostEqual(ev["gain"], -0.40, places=2)
+        e = self.b._earned()
+        self.assertAlmostEqual(e["sales"], -0.40, places=2)          # and the card shows it
+        self.assertAlmostEqual(self.b.money_in, put_in0, places=4)     # put in untouched
+
     def test_a_no_bond_sells_into_the_yes_asks(self):
         self.bond(ALD, "NO", 50.0, 0.02)                              # cost 98c NO
         self.book(ALD, ((0.005, 400.0), (0.001, 20000.0)),
