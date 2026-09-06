@@ -1628,3 +1628,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788732687.6,politics,ussewc-usse-nm-2026-11-03-dem,SELL,55.75,0.96,hand,,0.07,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CB5ZS1ZACQ3Z
 1788732687.6,politics,ussewc-usse-nm-2026-11-03-dem,SELL,8.33,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CB61TB09CQ3R
 1788732687.6,politics,scc-hrep-rep-2026-11-03-gte205,BUY,0.13,0.52,backfill,,1.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB57N5HTJQ46
+1788732987.6,politics,ewc-usse-ia-2026-11-03-dem,SELL,48,0.34,sell,0,0,0.351625,33,36,0.482,0.34,0.35,0.0116,12,taker dump — sold into the bid (the carved exception),CB6B61YPCQ3N
+1788734543.1,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.04,0.65,backfill,,0.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB6H2BY6AQ3H
+1788734581.6,politics,ussewc-usse-nj-2026-11-03-dem,BUY,1,0.98,sell,0.0353,2.4,0.99565,96,99,0.005,0.98,0.99,-0.0156,0,buying back the short at or under what it sold for — the bid earns while it wait,CB4NJCWW6Q3R
+1788734701.6,cfb,aachc-cfb-wins-2026-11-28-minnst-6pt5wins,BUY,1,0.61,sell,0.9259,1.41,,47,55,0.601,0.61,0.62,0.1,2,buying back the short at or under what it sold for — the bid earns while it wait,CB5HG7008Q48
+1788735121.6,politics,ewc-usgub-ga-2026-11-03-dem,SELL,10,0.59,sell,2.0985,0.96,0.5602,56,60,0.084,0.58,0.59,-0.0298,0,selling filled stock — it earns while it waits,CB5ZDHBQAQ3N
+1788735370.5,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,153.92,0.05,backfill,,1.98,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB567JHHEQ3N
+1788736081.6,politics,ewc-usp-2028-11-07-jdvan,SELL,1,0.22,sell,0,0,,24,27,0.61,0.22,0.24,0.03,11,taker dump — sold into the bid (the carved exception),CB72YPR9WQ3Z
+1788736247.9,politics,ewc-usp-2028-11-07-dontru,SELL,0.31,0.08,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB6Z3KX1YQ45
+1788736294.4,politics,ussewc-usse-nm-2026-11-03-dem,SELL,64,0.97,void,0.1579,1.21,0.99445,92,97,0,0.93,0.96,0.0244,0,voided: the exchange has no trade for order CB553XKZ0Q3R — the row of 09-06 22:0,CB553XKZ0Q3R
+1788736294.4,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.04,0.65,backfill,,0.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB6H2BY6AQ3H
+1788736294.4,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,153.92,0.05,backfill,,1.98,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB567JHHEQ3N
+1788736294.4,politics,ewc-usp-2028-11-07-dontru,SELL,0.31,0.08,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB6Z3KX1YQ45
