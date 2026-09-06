@@ -1463,3 +1463,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788707612.2,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,0.25,0.04,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAZG78CDEQ3H
 1788707612.2,politics,ussewc-usse-ri-2026-11-03-rep,SELL,14.01,0.03,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB015R3JJQ3Y
 1788707612.2,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,BUY,0.94,0.49,backfill,,1.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAYH4GG6WQ45
+1788707672.4,politics,ussewc-usse-mt-2026-11-03-rep,SELL,1,0.86,sell,0.0812,0.84,0.984575,90,94,0.477,0.85,0.93,0.1246,0,selling filled stock — it earns while it waits,CAZM1FJCRQ3Y
+1788707814.5,politics,ussewc-usse-la-2026-11-03-dem,SELL,0.01,0.06,backfill,,0.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB05S385MQ3H
+1788707881.5,politics,ussewc-usse-la-2026-11-03-dem,SELL,5,0.06,earn,0.253,0.22,0.036075,2,6,0.293,0.05,0.06,-0.0239,-5,3 ticks in front of the touch — we would hold 97% of the ask side,CB05S385MQ3H
+1788707881.5,cfb,aachc-cfb-wins-2026-11-28-mspst-4pt5wins,BUY,2,0.67,sell,17.8571,0.72,,58,70,0.112,0.67,0.68,0.02,0,buying back the short at or under what it sold for — the bid earns while it wait,CAZRGMPQAQ3Y
+1788708168.6,politics,usgubewc-usgub-fl-2026-11-03-rep,SELL,50,0.82,earn,0.1576,0.42,0.782875,79,82,0.701,0.81,0.82,-0.0371,-50,2 ticks in front of the touch — we would hold 85% of the ask side,CB030W82EQ3N
+1788708168.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,20,0.49,sell,1.7439,0.19,0.5,47,51,0.578,0.488,0.49,0.01,0,selling filled stock — it earns while it waits,CB08W9ZTGQ3Z
+1788708310.7,cfb,aachc-cfb-wins-2026-11-28-mspst-4pt5wins,SELL,0.9,0.55,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CB0F0BN3GQ3T
+1788708618.0,cfb,aachc-cfb-wins-2026-11-28-byu-8pt5wins,SELL,0.01,0.5,earn,0.8523,0.3,,60,73,0,0.49,0.71,0.18,-0.01,joins the touch — the book has been quiet,CB09GQ0J4Q46
+1788708618.0,cfb,aachc-cfb-wins-2026-11-28-okst-5pt5wins,BUY,1,0.49,earn,4.99,0.54,,48,56,0,0.49,0.5,-0.03,1,joins the touch — the book has been quiet,CB032HP86Q46
+1788708978.0,cfb,aachc-cfb-wins-2026-11-28-cah-6pt5wins,BUY,0.5,0.66,earn,1.125,0.95,,62,69,0,0.38,0.64,0.01,0.5,1 tick behind the touch — we would hold 60% of the bid side,CAZTQCRAEQ3Z
+1788709458.1,politics,usgubewc-usgub-ne-2026-11-03-rep,SELL,1,0.95,sell,0,0,0.96315,90,94,0.61,0.95,0.96,0.0131,5,taker dump — sold into the bid (the carved exception),CB0RPQXX6Q3H
+1788710615.0,politics,ussewc-usse-va-2026-11-03-rep,SELL,10,0.05,earn,0.2809,0.23,0.005325,1,6,0.552,0.05,0.09,-0.0447,-30,1 tick behind the touch — we would hold 4% of the ask side,CB0V9KP1TQ3H
+1788710700.5,politics,ewc-usp-2028-11-07-jdvan,SELL,8,0.24,sell,0,0,,24,27,0.642,0.24,0.25,0.01,26,taker dump — sold into the bid (the carved exception),CB11RQJ06Q3Y
+1788710710.5,politics,ussewc-usse-sd-2026-11-03-rep,BUY,10,0.89,backfill,,0.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB0N7E1VPQ45
+1788710895.8,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,10,0.03,earn,2.8409,1.06,0.005425,2,7,0.324,0.07,0.09,-0.0246,-10,at the touch — a fill here is 1 ticks inside value (Silver + evidence),CB05S38A4Q3H
+1788711102.5,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,2,0.94,earn,3.7447,0.39,0.9889,96,99,0.152,0.94,0.98,-0.0489,2,5 ticks in front of the touch — we would hold 100% of the bid side,CB0SZKRJMQ3Y
+1788711242.6,politics,ussewc-usse-ri-2026-11-03-rep,BUY,14,0.02,void,0.2967,0.36,0.000775,2,7,0.413,0.01,0.03,0.0192,-46,voided: the exchange has no trade for order CAZRC02PJQ3T — the row of 09-06 14:5,CAZRC02PJQ3T
+1788711242.6,politics,ussewc-usse-la-2026-11-03-dem,SELL,0.01,0.06,backfill,,0.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB05S385MQ3H
+1788711242.6,politics,ussewc-usse-sd-2026-11-03-rep,BUY,10,0.89,backfill,,0.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB0N7E1VPQ45
+1788711242.6,cfb,aachc-cfb-wins-2026-11-28-mspst-4pt5wins,SELL,0.9,0.55,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CB0F0BN3GQ3T
