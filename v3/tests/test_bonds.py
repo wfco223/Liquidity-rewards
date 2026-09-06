@@ -4,7 +4,7 @@ The spec and its corrections, in bonds.py's docstring. Here: the
 nightly Silver check proposes at both ends and drops silently; the
 owner alone adds; the engine keeps quoting bond markets but exits only
 its own non-bond stock; the bond ledger is the module's own; a held
-bond's order sits behind the touch keeping 60% of the best reward and
+bond's order sits behind the touch keeping KEEP_FRACTION of the best reward and
 never under cost; a minnow in front is led down by a decoy and taken
 at its price; a hand sale is never reinvested; one ping per $100 bought;
 nothing is bought where no bond sale of ours rests.
@@ -132,7 +132,8 @@ class TestTheBand(unittest.TestCase):
         self.assertEqual(scan_due(t + 86400 + 120, "2026-09-03"), "2026-09-04")
 
     def test_the_owners_numbers(self):
-        self.assertEqual(KEEP_FRACTION, 0.6)
+        self.assertEqual(KEEP_FRACTION, 0.8)      # owner, 2026-09-06: 80% for exits
+        self.assertEqual(bonds_mod.MORE_SHARE, 0.5)   # and 50% for new buys
         self.assertEqual(PING_EVERY_USD, 100.0)
         self.assertEqual(DECOY_QTY, 10.0)
         self.assertEqual(MINNOW_MAX, 25.0)
@@ -239,7 +240,7 @@ class TestThePage(Base):
         self.assertEqual(tn["cost"], 0.98)
         self.assertAlmostEqual(tn["yield"], (1 - 0.98) / 0.98, places=4)
         self.assertIsNotNone(tn["earn"])
-        self.assertEqual(v["keep"], 0.6)
+        self.assertEqual(v["keep"], KEEP_FRACTION)
 
 
 class TestTheRestingOrder(Base):
@@ -254,17 +255,23 @@ class TestTheRestingOrder(Base):
         self.r.cache.put(AL, minnow_book(self.now))
         self.bond(AL, "YES", 1500.0, 0.89)
         out = self.b.cycle(self.now, self.positions(), on=True)
-        ask = self.orders(AL, "SELL", decoy=False)[0]
-        self.assertEqual((ask.purpose, ask.intent), ("bond", SELL_LONG))
-        # at 60% kept it sits three ticks back (0.2^3 x 1500 = 12 vs 5),
-        # with the whole lot (owner, 2026-09-03: "You don't have to
-        # reserve any shares to maturity")
-        self.assertAlmostEqual(ask.price, 0.93)
-        self.assertEqual(out["placed"][0]["ticks"], 3)
-        self.assertGreaterEqual(self.b.slot[AL]["keep"], 0.6)
-        self.assertEqual(ask.qty, 1500.0)
+        asks = sorted(self.orders(AL, "SELL", decoy=False), key=lambda o: o.price)
+        self.assertTrue(all((o.purpose, o.intent) == ("bond", SELL_LONG) for o in asks))
+        # at 80% kept (owner, 2026-09-06) one level would have to sit two
+        # ticks back with the whole lot; the split does it with a few
+        # shares at the touch and the rest three ticks back, selling
+        # half as much a day — and the whole lot is offered (owner,
+        # 2026-09-03: "You don't have to reserve any shares to maturity")
+        self.assertEqual(len(asks), 2)
+        self.assertAlmostEqual(asks[0].price, 0.90)
+        self.assertLess(asks[0].qty, 50.0)
+        self.assertAlmostEqual(asks[1].price, 0.93)
+        self.assertEqual(sum(o.qty for o in asks), 1500.0)
+        self.assertGreaterEqual(self.b.slot[AL]["keep"], KEEP_FRACTION)
+        self.assertLess(self.b.slot[AL]["exposure"], self.b.slot[AL]["single"]["exposure"])
+        self.assertEqual(sum(q for _, q in out["placed"][0]["levels"]), 1500.0)
         self.b.cycle(self.now + 60, self.positions(), on=True)
-        self.assertEqual(len(self.orders(AL, "SELL", decoy=False)), 1)   # one exit
+        self.assertEqual(len(self.orders(AL, "SELL", decoy=False)), 2)   # the same two
 
     def test_never_under_cost(self):
         self.b.approve(AL, self.now)
@@ -2967,6 +2974,12 @@ class TestNoMoneyToDeploy(Base):
         self.b.set_budget(1000.0)
         self.r.exchange.books[AL] = minnow_book(self.now, minnows=5.0)   # a minnow: the sniper dances
         self.r.cache.put(AL, minnow_book(self.now, minnows=5.0))
+        # one level (a margin no split can meet): the exit sits behind
+        # the minnow, so the sniper has something to lead
+        from unittest import mock
+        p = mock.patch.object(bonds_mod, "SPLIT_MARGIN", 9.0)
+        p.start()
+        self.addCleanup(p.stop)
         self.bond(AL, "YES", 1500.0, 0.89)
         self.bp = 500.0
         self.r.exchange.buying_power = lambda: self.bp

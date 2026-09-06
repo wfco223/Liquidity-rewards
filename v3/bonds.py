@@ -84,11 +84,12 @@ LOW_ODDS = 0.01             # NO bond: Silver's odds for YES at or below
 PRICE_CAP = 0.995           # never pay more than this per dollar of bond
 MONEY_MIN_USD = 5.0         # money below this waits
 PING_EVERY_USD = 100.0      # a phone ping per this much bought
-KEEP_FRACTION = 0.6         # the resting slot keeps this much of the best reward
+KEEP_FRACTION = 0.8         # the resting slot keeps this much of the best reward
+                            # (owner, 2026-09-06: 80%, up from 60%)
 BEHIND_MAX_TICKS = 8
 # The split (owner, 2026-09-05): the placement with the least exposure
-# that still reaches the threshold — 60% of the best reward for the
-# exit, 30% of the side for the buy-more — may be a FEW shares up front
+# that still reaches the threshold — KEEP_FRACTION of the best reward for
+# the exit, MORE_SHARE of the side for the buy-more — may be a FEW shares up front
 # (each counts most for the score) and the rest behind (where they
 # hardly sell). Two orders only when they cut exposure by this much.
 SPLIT_MARGIN = 0.25
@@ -122,7 +123,8 @@ TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed t
 HOLD_ENGINE_S = 600.0       # after clearing our orders out of a take's way, the engine waits this long
 CLEAR_WAIT_S = 5.0          # how long a cleared order gets to leave the open-order list
 RECONFIRM_S = 3600.0        # a booked fill is re-checked against the record this long
-MORE_SHARE = 0.30           # the buy-more order rests only where it captures this much of its side
+MORE_SHARE = 0.50           # the buy-more order rests only where it captures this much of its side
+                            # (owner, 2026-09-06: 50%, up from 30%)
 # Owner, 2026-09-05: "When there is no money to deploy, all the bond
 # functions except for selling shares to generate proceeds (never below
 # cost) is the only thing that should be going on. No more buying or
@@ -1744,7 +1746,7 @@ class Bonds:
         if kind == "earn_moved_back":
             return "bond: moved back behind the touch — still earning, selling slower"
         if kind == "earn_moved_up":
-            return "bond: moved up to keep 60% of the best reward"
+            return f"bond: moved up to keep {KEEP_FRACTION:.0%} of the best reward"
         if kind == "earn_resized":
             return "bond: resized to the whole lot"
         if kind == "exit_unsplit":

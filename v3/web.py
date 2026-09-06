@@ -931,7 +931,7 @@ function bSniper(r,b,sw){
 }
 function bMore(r,b,sw){
  var mo=r.more;if(!mo)return '';
- var m=esc(r.market);var pct=Math.round((b.more_share||0.3)*100);
+ var m=esc(r.market);var pct=Math.round((b.more_share||0.5)*100);
  var h='Buy more: up to $'+bField('bmore-'+m,bKeep('bmore-'+m)||(mo.cap_usd||0).toFixed(2),'6em')+' '+bBtn('Set','bMoreSet(\''+m+'\')')+(mo.cap_px!=null?'<br>at '+pc(mo.cap_px)+' or better (your first price here)':'');
  if(mo.paused)h+='<br><span class="warn">'+esc(mo.paused)+'</span>';
  else if(mo.order){var ol=(mo.orders&&mo.orders.length>1)?mo.orders:[mo.order];h+='<br>resting '+ol.map(function(o){return o.qty+' @ '+pc(o.price);}).join(' + ')+': '+bPct(mo.order.share)+' of its side'+(ol.length>1?' together':'')+' = <b>'+usd(mo.order.est)+'/day</b>';}
@@ -1018,7 +1018,7 @@ function render(d){
  out+='<details ontoggle="bTog(this,\'-money\')"'+(window._bOpen['-money']?' open':'')+'><summary style="font-size:16px;padding:8px 0;cursor:pointer">Details</summary>';
  out+='<div class="sub">Budget '+(tax?'= taxes owed '+usd(tx.owed||0)+' ('+Math.round((tx.rate||0.22)*100)+'% of '+usd(tx.gross||0)+' paid)':'fixed by you')+(b.spent?' − '+usd(b.spent)+' spent':'')+' · Silver checked '+(b.scan_day?esc(b.scan_day):'never')+'</div>';
  out+='<div>'+bField('bbud',bKeep('bbud'),'7em')+' '+bBtn('Set budget','bBudget()')+(tax?'':bBtn('Follow taxes owed','bOp(\'bonds_budget_tax\',\'-\')'))+bBtn('Check Silver now','bOp(\'bonds_scan\',\'-\')')+'</div>';
- out+='<div class="muted" style="margin-top:6px">A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO. You buy in with Enter; the exit rests where it keeps '+Math.round((b.keep||0.6)*100)+'% of the best reward with only the shares that need to be out, never under what you paid; a second order buys more up to an amount you set, never over your first price; the sniper leads a small order in front of the exit down and buys it; bait pulls the other side\'s offers up. From your first purchase until you hold nothing, the engine stays out of the market. Rewards shown are what the bond orders measured while resting.</div>';
+ out+='<div class="muted" style="margin-top:6px">A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO. You buy in with Enter; the exit rests where it keeps '+Math.round((b.keep||0.8)*100)+'% of the best reward with only the shares that need to be out, never under what you paid; a second order buys more up to an amount you set, never over your first price; the sniper leads a small order in front of the exit down and buys it; bait pulls the other side\'s offers up. From your first purchase until you hold nothing, the engine stays out of the market. Rewards shown are what the bond orders measured while resting.</div>';
  out+='</details></div>';
  var pr=b.proposed||[];
  if(pr.length){out+='<div class="card"><b>New from Silver</b>';
