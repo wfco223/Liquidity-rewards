@@ -1640,3 +1640,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788736294.4,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.04,0.65,backfill,,0.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB6H2BY6AQ3H
 1788736294.4,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,153.92,0.05,backfill,,1.98,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB567JHHEQ3N
 1788736294.4,politics,ewc-usp-2028-11-07-dontru,SELL,0.31,0.08,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB6Z3KX1YQ45
+1788736761.2,politics,ewc-usp-2028-11-07-dontru,SELL,-0.31,0.08,fix,0.7845,0.18,,5,9,0.642,0.03,0.08,-0.01,83.69,size trimmed by 0.31 to the exchange's count (order CB6Z3KX1YQ45),CB6Z3KX1YQ45
