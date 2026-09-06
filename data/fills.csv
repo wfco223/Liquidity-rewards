@@ -1380,3 +1380,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788699905.9,cfb,aachc-cfb-wins-2026-11-28-fl-9pt5wins,BUY,0.9,0.23,backfill,,0.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAXQZE0C2Q46
 1788699905.9,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,BUY,1,0.45,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAY48KBVAQ45
 1788699905.9,cfb,aachc-cfb-wins-2026-11-28-cah-6pt5wins,BUY,0.4,0.58,backfill,,0.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAXW288RWQ3R
+1788700061.2,politics,ussewc-usse-ar-2026-11-03-dem,BUY,2,0.13,sell,0,0.02,0.01625,3,8,0.351,0.06,0.14,0.1138,0,buying back the short at or under what it sold for — the bid earns while it wait,CAYFSJ3G2Q3Z
+1788700204.7,politics,ussewc-usse-ky-2026-11-03-dem,BUY,6,0.02,hand,,1.15,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CAXJX7PGCQ3T
+1788700205.4,cfb,aachc-cfb-wins-2026-11-28-tx-10pt5wins,SELL,3,0.41,sell,0,1.87,,,,0.038,,,,0,selling filled stock — it earns while it waits,CAWXSABPJQ3Z
+1788700205.4,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,SELL,1,0.5,sell,0,0.08,,,,0.761,,,,0,selling filled stock — it earns while it waits,CAYF36RTAQ3H
+1788700255.1,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,4.99,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAYHP0HA2Q3H
+1788700255.1,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,0.01,0.14,hand,,0.1,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAYECJAZMQ48
+1788700359.7,politics,ussewc-usse-ky-2026-11-03-dem,BUY,6,0.02,hand,,1.15,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CAXJX7PGCQ3T
+1788700359.7,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,4.99,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAYHP0HA2Q3H
+1788700359.7,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,0.01,0.14,hand,,0.1,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAYECJAZMQ48
+1788700359.7,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,BUY,-1,0.45,fix,0.0663,0.38,,45,54,0.702,0.49,0.5,-0.04,0,size trimmed by 1 to the exchange's count (order CAY48KBVAQ45),CAY48KBVAQ45
+1788700359.7,cfb,aachc-cfb-wins-2026-11-28-tx-10pt5wins,BUY,1,0.38,hand,,1.27,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C42CJG2KMFSM
