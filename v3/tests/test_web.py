@@ -244,6 +244,8 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("Sell under cost", web.BONDS_JS)
         self.assertIn("under_cost:true", web.BONDS_JS)
         self.assertIn("UNDER what you paid", web.BONDS_JS)
+        # and the unconfirmed banner books a sale on the owner's word
+        self.assertIn("bonds_book_sale", web.BONDS_JS)
 
     def test_orders_page_has_no_hand_place_form(self):
         from v3 import web

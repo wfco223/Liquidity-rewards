@@ -3027,6 +3027,8 @@ class Monitor:
             r = self.bonds.uncount(market, now)
         elif op == "bonds_qualify":
             r = self.qualify_bond(market)
+        elif op == "bonds_book_sale":
+            r = self.bonds.book_sale(market, now, getattr(self, "_bond_positions", None))
         elif op == "bonds_scan":
             new = self.bonds.scan(now, force=True)
             r = {"ok": True, "note": f"scanned — {len(new)} new candidate"
