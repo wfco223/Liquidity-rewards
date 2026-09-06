@@ -1652,7 +1652,24 @@ class Monitor:
         """The watched-races button (owner, 2026-08-28 "give me a button
         to auto qualify the ask side", then 2026-08-30 "keeps placing
         orders until the target size is reached"): build the ask side up
-        to Target Size, however many orders that takes.
+        to Target Size, however many orders that takes."""
+        return self.qualify_side(market, "SELL")
+
+    def qualify_bond(self, market: str) -> dict:
+        """The bonds-page button (owner, 2026-09-06: "a button for each
+        bond that is not qualified to automatically qualify it"): the
+        same process on the side the bond earns on — the ask side of a
+        YES bond, the bid side of a NO bond."""
+        side = self.bonds._side_of(market)
+        bs, _ = self.bonds.earn(side)
+        return self.qualify_side(market, bs)
+
+    def qualify_side(self, market: str, bs: str) -> dict:
+        """Build one side of the book (`bs`: SELL = the asks, BUY = the
+        bids) up to Target Size with headroom, however many orders that
+        takes. The wall rests at the far edge — 99.9c for an ask wall,
+        0.1c for a bid wall — where it carries the side over the line
+        without ever trading.
 
         The exchange trims each order to free buying power (~300 shares
         at a time on the boosted races), so a 10,000-share wall is ~30
@@ -1661,10 +1678,12 @@ class Monitor:
         returns at once, and tapping again reports progress. Every
         order goes on the owner's hand rail (purpose "manual") — the
         automation never touches the result."""
-        import math
         import threading
 
         from . import survey as sv
+        if bs not in ("BUY", "SELL"):
+            return {"ok": False, "note": f"no such book side: {bs}"}
+        word = "ask" if bs == "SELL" else "bid"
         jobs = getattr(self, "_qualify_jobs", None)
         if jobs is None:
             jobs = self._qualify_jobs = {}
@@ -1683,23 +1702,22 @@ class Monitor:
             except Exception as e:  # noqa: BLE001
                 return {"ok": False, "note": f"could not read the book: {e}"}
             fam.cache.put(market, book)
-            ask_total = sum(q for _, q in book.asks)
+            side_total = sum(q for _, q in book.side(bs))
             # build PAST the line, not to it (owner, 2026-09-01: "make
             # it so my orders buy 125% of the target size"). A side
             # sitting exactly at Target Size drops under it the moment
             # somebody else pulls, and under the line the whole side
             # pays nobody.
             goal = prog.target * sv.QUALIFY_TARGET_MULT
-            gap = goal - ask_total
+            gap = goal - side_total
             if gap <= 0:
                 return {"ok": False, "note":
-                        f"the ask side already qualifies with room — "
-                        f"{ask_total:,.0f} shares resting vs a Target Size "
+                        f"the {word} side already qualifies with room — "
+                        f"{side_total:,.0f} shares resting vs a Target Size "
                         f"of {prog.target:,.0f} "
-                        f"({ask_total / prog.target:.0%})"}
-            tick = book.tick or 0.01
-            px = round(math.floor(0.999 / tick + 1e-9) * tick, 3)
-            collat = gap * (1.0 - px)
+                        f"({side_total / prog.target:.0%})"}
+            px = sv.wall_price(bs, book.tick or 0.01)
+            collat = sv.wall_collateral(bs, px, gap)
             if collat > self.QUALIFY_MAX_COLLATERAL:
                 return {"ok": False, "note":
                         f"refused: closing the {gap:,.0f}-share gap would "
@@ -1707,14 +1725,14 @@ class Monitor:
                         f"button's ${self.QUALIFY_MAX_COLLATERAL:,.0f} cap"}
             job = jobs[market] = {"state": "running", "placed": 0,
                                   "shares": 0.0, "target": prog.target,
-                                  "goal": goal,
+                                  "goal": goal, "bs": bs,
                                   "started": time.time(), "stop": "",
-                                  "ask_total": ask_total}
+                                  "ask_total": side_total}
             threading.Thread(target=self._qualify_run, args=(market, fam),
                              daemon=True,
                              name=f"qualify-{market[:20]}").start()
             return {"ok": True, "note":
-                    f"building the wall to {sv.QUALIFY_TARGET_MULT:.0%} of "
+                    f"building the {word} wall to {sv.QUALIFY_TARGET_MULT:.0%} of "
                     f"Target Size ({goal:,.0f} shares): {gap:,.0f} to go at "
                     f"{px * 100:.1f}c (~${collat:,.2f} collateral). "
                     f"Running in the background — tap again for progress."}
@@ -1727,9 +1745,10 @@ class Monitor:
         got, n = job.get("shares", 0.0), job.get("placed", 0)
         tgt, now_t = job.get("target", 0.0), job.get("ask_total", 0.0)
         goal = job.get("goal", tgt)
+        word = "bid" if job.get("bs") == "BUY" else "ask"
         head = (f"{'building' if job.get('state') == 'running' else 'done'}: "
                 f"{n} order{'s' if n != 1 else ''}, {got:,.0f} shares "
-                f"rested — ask side {now_t:,.0f} of {goal:,.0f} "
+                f"rested — {word} side {now_t:,.0f} of {goal:,.0f} "
                 f"({(now_t / tgt) if tgt else 0:.0%} of Target Size)")
         if job.get("state") == "running":
             return head + " — still going"
@@ -1741,7 +1760,7 @@ class Monitor:
                        else " — stopped")
 
     def _qualify_run(self, market: str, fam) -> dict:
-        """Place asks until the side clears Target Size with the
+        """Place wall orders until the side clears Target Size with the
         owner's headroom. The gap is recomputed from a FRESH book every
         pass, so the run self-corrects for other people's orders, for
         the exchange's trims, and for an order that lands late — it
@@ -1750,8 +1769,9 @@ class Monitor:
 
         from . import survey as sv
 
-        from .family import FamilyOrder
+        from .family import QUALIFY_WALL_WHY, FamilyOrder
         job = self._qualify_jobs[market]
+        bs = job.get("bs") or "SELL"
         deadline = time.time() + self.QUALIFY_MAX_S
         zero_streak = 0
         # the shares this run set out to add. A second belt beside the
@@ -1778,7 +1798,7 @@ class Monitor:
                 prog = fam.terms.get(market)
                 target = prog.target if prog is not None else job["target"]
                 goal = target * sv.QUALIFY_TARGET_MULT
-                ask_total = sum(q for _, q in book.asks)
+                ask_total = sum(q for _, q in book.side(bs))
                 job["ask_total"], job["target"] = ask_total, target
                 job["goal"] = goal
                 gap = goal - ask_total
@@ -1797,15 +1817,14 @@ class Monitor:
                     job["stop"] = (f"buying power down to ${bp:,.2f} — "
                                    f"free some and tap again")
                     break
-                tick = book.tick or 0.01
-                px = round(math.floor(0.999 / tick + 1e-9) * tick, 3)
+                px = sv.wall_price(bs, book.tick or 0.01)
                 net = 0.0
                 try:
                     net = (self.client.positions_net().get(market)
                            or (0.0,))[0]
                 except Exception:  # noqa: BLE001
                     pass
-                r = fam.desk.place_resting(market, "SELL", px,
+                r = fam.desk.place_resting(market, bs, px,
                                            float(math.ceil(gap)),
                                            net_position=net,
                                            initiator="owner", verify=False)
@@ -1818,10 +1837,10 @@ class Monitor:
                     job["placed"] += 1
                     job["shares"] += rested
                     fam.orders[r.order_id] = FamilyOrder(
-                        id=r.order_id, market=market, side="SELL",
+                        id=r.order_id, market=market, side=bs,
                         price=(r.price or px), qty=rested, intent=r.intent,
                         placed_ts=time.time(), purpose="manual",
-                        why="the owner's qualify-ask wall")
+                        why=QUALIFY_WALL_WHY)
                 else:
                     # never seen resting: it may still land late, so
                     # never re-post for those shares — the next pass
@@ -2076,8 +2095,19 @@ class Monitor:
     def bonds_live(self) -> dict:
         """One tick of the bonds page's live line: the rows of the
         markets he is in, on the books the stream has in the cache."""
-        return self.bonds.live_rows(time.time(),
+        rows = self.bonds.live_rows(time.time(),
                                     getattr(self, "_bond_positions", None))
+        self._note_walls(rows.values())
+        return rows
+
+    def _note_walls(self, rows) -> None:
+        """A wall run's one-line standing on the bond rows it concerns,
+        so the card shows the build without another tap."""
+        jobs = getattr(self, "_qualify_jobs", None) or {}
+        for row in rows:
+            job = jobs.get(row.get("market"))
+            if job:
+                row["qualify"] = self._qualify_note(job)
 
     def _kick_tracker(self) -> None:
         """Ask 1.0 (same container) to refresh rewards.csv on GitHub so
@@ -2994,6 +3024,8 @@ class Monitor:
             r = self.bonds.remove(market, now)
         elif op == "bonds_uncount":
             r = self.bonds.uncount(market, now)
+        elif op == "bonds_qualify":
+            r = self.qualify_bond(market)
         elif op == "bonds_scan":
             new = self.bonds.scan(now, force=True)
             r = {"ok": True, "note": f"scanned — {len(new)} new candidate"
@@ -3844,6 +3876,7 @@ class Monitor:
             pass
         try:
             d["bonds"] = self.bonds.view(time.time())
+            self._note_walls(d["bonds"].get("rows") or [])
             d["est_bonds"] = {"dots": list(self.bonds.dots)}
         except Exception as e:  # noqa: BLE001
             d["bonds"] = {"rows": [], "proposed": [], "error": str(e)[:120]}

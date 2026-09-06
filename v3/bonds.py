@@ -76,7 +76,7 @@ from __future__ import annotations
 import math
 import time
 
-from .family import FamilyOrder, slug_days_out
+from .family import QUALIFY_WALL_WHY, FamilyOrder, slug_days_out
 from .intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 
 HIGH_ODDS = 0.99            # YES bond: Silver's odds for YES at or above
@@ -1844,9 +1844,13 @@ class Bonds:
         each offering the same shares. The bond sizes its exit around
         them so nothing is offered twice (owner, 2026-09-05: "I'm
         currently resting more sell orders than I have shares to
-        sell")."""
+        sell"). His qualifying wall is the exception (owner, 2026-09-06:
+        a button on every bond that is not qualified): it sits at the far
+        edge of the book only to carry the side over Target Size, a short
+        beside the lot, and the exit keeps its full size in front of it."""
         return sum(o.qty for o in list(self.fam.orders.values())
-                   if o.market == slug and o.side == bs and o.purpose != "bond")
+                   if o.market == slug and o.side == bs and o.purpose != "bond"
+                   and o.why != QUALIFY_WALL_WHY)
 
     def _two_orders(self, slug: str, old_id: str, r) -> None:
         """A move whose cancel failed: the original still rests beside
@@ -2763,11 +2767,25 @@ class Bonds:
             ok = bool(j.qualifies and j.in_window)
             touch = {"price": tp, "share": round(j.share, 4), "qualifies": ok,
                      "est": round(j.share * pool, 4) if (ok and pool) else 0.0}
+        # the side against the line, for the qualify button (owner,
+        # 2026-09-06): the same goal the button builds to, 125% of Target
+        # Size, and what a wall closing the gap would hold
+        from .survey import QUALIFY_TARGET_MULT, wall_collateral, wall_price
+        side_size = sum(q for _, q in levels)
+        target = float(prog.target)
+        goal = target * QUALIFY_TARGET_MULT
+        gap = max(goal - side_size, 0.0)
+        wpx = wall_price(ebs, tick)
         return {"side": ebs, "pool_day": round(float(prog.daily_pool or 0.0), 2),
                 "event_n": n,
                 "side_pool": (round(pool, 4) if pool is not None else None),
-                "target": float(prog.target), "df": float(prog.df),
-                "side_size": round(sum(q for _, q in levels), 1),
+                "target": target, "df": float(prog.df),
+                "side_size": round(side_size, 1),
+                "goal": round(goal, 1),
+                "qualified": bool(not target or side_size >= target),
+                "has_room": bool(not target or side_size >= goal),
+                "gap": round(gap, 1), "wall_px": wpx,
+                "wall_usd": round(wall_collateral(ebs, wpx, gap), 2),
                 "orders": orders, "touch": touch}
 
     def _work_minnows(self, slug: str, side: str, positions: dict,

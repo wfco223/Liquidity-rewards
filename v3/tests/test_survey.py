@@ -457,6 +457,18 @@ class TestQualifyHeadroom(unittest.TestCase):
     def test_the_multiplier_is_a_quarter_over(self):
         self.assertAlmostEqual(QUALIFY_TARGET_MULT, 1.25)
 
+    def test_the_wall_rests_at_the_far_edge_of_its_side(self):
+        from v3.survey import wall_collateral, wall_price
+        self.assertAlmostEqual(wall_price("SELL", 0.01), 0.99)
+        self.assertAlmostEqual(wall_price("SELL", 0.001), 0.999)
+        self.assertAlmostEqual(wall_price("BUY", 0.01), 0.01)
+        self.assertAlmostEqual(wall_price("BUY", 0.001), 0.001)
+        self.assertAlmostEqual(wall_price("SELL", 0.005), 0.995)
+        self.assertAlmostEqual(wall_price("BUY", 0.005), 0.005)
+        # either wall holds the same buying power a share
+        self.assertAlmostEqual(wall_collateral("SELL", 0.99, 1000.0), 10.0)
+        self.assertAlmostEqual(wall_collateral("BUY", 0.01, 1000.0), 10.0)
+
     def test_the_goal_is_target_times_the_multiplier(self):
         self.assertAlmostEqual(7500 * QUALIFY_TARGET_MULT, 9375)
 

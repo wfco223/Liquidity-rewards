@@ -3092,3 +3092,197 @@ class TestCountOut(Base):
         self.assertEqual(self.b.held(AL, "YES"), 0.0)
         self.assertNotIn(AL, self.b.engine_out)
         self.assertFalse(self.b.uncount(AL, self.now + 61)["ok"])
+
+
+class TestQualifyTheSide(Base):
+    """Owner, 2026-09-06: "I need a button for each bond that is not
+    qualified to automatically qualify it. That may require placing
+    multiple orders for ask side markets. We already have a process for
+    this so you should try to use that." The watched-races wall, on the
+    side the bond earns on; the bond's exit is sized as if the wall
+    were not there."""
+
+    def _mon(self):
+        import types
+        from v3.main import Monitor
+        r = self.r
+        m = types.SimpleNamespace(
+            families={"politics": r.fam}, client=r.exchange, names=r.names,
+            bonds=self.b,
+            QUALIFY_MAX_ORDERS=Monitor.QUALIFY_MAX_ORDERS,
+            QUALIFY_MAX_S=Monitor.QUALIFY_MAX_S,
+            QUALIFY_BP_FLOOR=Monitor.QUALIFY_BP_FLOOR,
+            QUALIFY_MAX_COLLATERAL=Monitor.QUALIFY_MAX_COLLATERAL,
+            _qualify_jobs={})
+        m._qualify_note = Monitor._qualify_note
+        for name in ("_rested_size", "_qualify_run", "qualify_side",
+                     "qualify_ask", "qualify_bond", "_note_walls"):
+            setattr(m, name, types.MethodType(getattr(Monitor, name), m))
+        # a real exchange puts our rested order INTO the book, on the
+        # side its intent rests on; the fake one must too
+        real = r.exchange.post
+
+        def posting(url, body, path=None, **kw):
+            resp = real(url, body, path=path, **kw)
+            if url.endswith("/v1/orders"):
+                from v3.intents import REST_SIDE
+                live = r.exchange.live[resp["order"]["id"]]
+                b = r.exchange.books[body["marketSlug"]]
+                lvl = (float(body["price"]["value"]), live["size"])
+                if REST_SIDE[body["intent"]] == "BUY":
+                    b2 = Book(bids=tuple(sorted(list(b.bids) + [lvl], reverse=True)),
+                              asks=b.asks, tick=b.tick, fetched_at=b.fetched_at)
+                else:
+                    b2 = Book(bids=b.bids, asks=tuple(sorted(list(b.asks) + [lvl])),
+                              tick=b.tick, fetched_at=b.fetched_at)
+                r.exchange.books[body["marketSlug"]] = b2
+            return resp
+        r.exchange.post = posting
+        return m
+
+    def wall(self, slug, bs, qty, px, oid="wall1"):
+        """A wall order of his, as the button leaves it."""
+        from v3.family import QUALIFY_WALL_WHY
+        intent = BUY_SHORT if bs == "SELL" else BUY_LONG
+        self.r.exchange.live[oid] = {"id": oid, "market": slug, "side": bs,
+                                     "price": px, "size": qty, "intent": intent}
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=slug, side=bs, price=px, qty=qty, intent=intent,
+            placed_ts=self.now, purpose="manual", why=QUALIFY_WALL_WHY)
+
+    def thin_yes_book(self):
+        # the ask side far under Target Size: 30 at the touch, 100 behind
+        return Book(bids=((0.88, 50.0), (0.50, 20000.0)),
+                    asks=((0.90, 30.0), (0.95, 100.0)), tick=0.01,
+                    fetched_at=self.now)
+
+    def test_his_ask_wall_does_not_shrink_the_bond_exit(self):
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.wall(AL, "SELL", 10000.0, 0.99)          # a short beside the lot
+        self.b.cycle(self.now, self.positions(), on=True)
+        bond = [o for o in self.orders(AL, "SELL") if o.purpose == "bond"]
+        self.assertTrue(bond)
+        self.assertEqual(sum(o.qty for o in bond), 1500.0)   # the whole lot, in front
+        self.assertTrue(all(o.price < 0.99 for o in bond))
+        self.assertIn("wall1", self.r.fam.orders)             # and the wall untouched
+
+    def test_his_bid_wall_does_not_shrink_a_no_bonds_exit(self):
+        self.b.approve(ALD, self.now)
+        self.bond(ALD, "NO", 800.0, 0.02)
+        self.wall(ALD, "BUY", 10000.0, 0.01)
+        self.b.cycle(self.now, self.positions(), on=True)
+        bond = [o for o in self.orders(ALD, "BUY") if o.purpose == "bond"]
+        self.assertTrue(bond)
+        self.assertEqual(sum(o.qty for o in bond), 800.0)
+
+    def test_his_own_ask_that_is_not_a_wall_still_counts(self):
+        # the never-offered-twice rule stands for every other hand order
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.r.exchange.live["h1"] = {"id": "h1", "market": AL, "side": "SELL",
+                                      "price": 0.97, "size": 500.0, "intent": SELL_LONG}
+        self.r.fam.orders["h1"] = FamilyOrder(
+            id="h1", market=AL, side="SELL", price=0.97, qty=500.0, intent=SELL_LONG,
+            placed_ts=self.now, purpose="manual", why="placed by the owner")
+        self.b.cycle(self.now, self.positions(), on=True)
+        bond = [o for o in self.orders(AL, "SELL") if o.purpose == "bond"]
+        self.assertEqual(sum(o.qty for o in bond), 1000.0)
+
+    def test_the_card_shows_the_side_against_the_line(self):
+        self.seed(AL, self.thin_yes_book())
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        c = self.b.live_rows(self.now)[AL]["calc"]
+        self.assertFalse(c["qualified"])
+        self.assertFalse(c["has_room"])
+        self.assertAlmostEqual(c["goal"], 6250.0)
+        self.assertAlmostEqual(c["gap"], 6250.0 - c["side_size"], places=1)
+        self.assertAlmostEqual(c["wall_px"], 0.99)
+        self.assertAlmostEqual(c["wall_usd"], round(c["gap"] * 0.01, 2), places=2)
+        # a bond behind a qualifying wall wants no button
+        self.seed(TN, minnow_book(self.now, minnows=30.0))
+        self.bond(TN, "YES", 100.0, 0.90)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        c = self.b.live_rows(self.now + 60)[TN]["calc"]
+        self.assertTrue(c["qualified"])
+        self.assertTrue(c["has_room"])
+        self.assertEqual(c["gap"], 0.0)
+
+    def test_a_no_bonds_button_builds_the_bid_side_and_the_exit_stays(self):
+        thin = Book(bids=((0.01, 400.0),), asks=((0.02, 60.0), (0.60, 20000.0)),
+                    tick=0.01, fetched_at=self.now)
+        self.seed(ALD, thin)
+        self.b.approve(ALD, self.now)
+        self.bond(ALD, "NO", 800.0, 0.02)
+        self.b.cycle(self.now, self.positions(), on=True)
+        exit0 = [o for o in self.orders(ALD, "BUY") if o.purpose == "bond"]
+        self.assertEqual(sum(o.qty for o in exit0), 800.0)
+        m = self._mon()
+        out = m.qualify_bond(ALD)
+        self.assertTrue(out["ok"], out["note"])
+        self.assertIn("bid wall", out["note"])
+        self.assertIn("1.0c", out["note"])
+        job = m._qualify_run(ALD, self.r.fam)
+        self.assertEqual(job["bs"], "BUY")
+        self.assertGreaterEqual(job["ask_total"], 6250.0)
+        walls = [o for o in self.r.fam.orders.values()
+                 if o.market == ALD and o.purpose == "manual"]
+        self.assertEqual(len(walls), job["placed"])
+        self.assertTrue(walls)
+        self.assertTrue(all(o.side == "BUY" and abs(o.price - 0.01) < 1e-9 for o in walls))
+        self.assertIn("bid side", m._qualify_note(job))
+        # the note rides on the rows, page and live line alike
+        rows = self.b.live_rows(self.now + 60)
+        m._note_walls(rows.values())
+        self.assertIn("done", rows[ALD]["qualify"])
+        # and the bond's exit is untouched by the wall behind it
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        exit1 = [o for o in self.orders(ALD, "BUY") if o.purpose == "bond"]
+        self.assertEqual(sum(o.qty for o in exit1), 800.0)
+
+    def test_a_yes_bonds_button_builds_the_ask_side(self):
+        self.seed(AL, self.thin_yes_book())
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        m = self._mon()
+        out = m.qualify_bond(AL)
+        self.assertTrue(out["ok"], out["note"])
+        self.assertIn("ask wall", out["note"])
+        job = m._qualify_run(AL, self.r.fam)
+        self.assertEqual(job["bs"], "SELL")
+        self.assertGreaterEqual(job["ask_total"], 6250.0)
+        walls = [o for o in self.r.fam.orders.values()
+                 if o.market == AL and o.purpose == "manual"]
+        self.assertTrue(walls)
+        self.assertTrue(all(o.side == "SELL" and abs(o.price - 0.99) < 1e-9 for o in walls))
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        bond = [o for o in self.orders(AL, "SELL") if o.purpose == "bond"]
+        self.assertEqual(sum(o.qty for o in bond), 100.0)
+
+    def test_the_button_refuses_a_side_already_over_the_line(self):
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 100.0, 0.90)         # yes_book: 20,000 at 99.9c
+        out = self._mon().qualify_bond(AL)
+        self.assertFalse(out["ok"])
+        self.assertIn("already qualifies", out["note"])
+
+    def test_the_tap_routes_through_the_bonds_ops(self):
+        import types
+        from v3.main import Monitor
+        calls = []
+        m = types.SimpleNamespace(
+            bonds=self.b, last_state=None, _audit=lambda d: calls.append(("audit", d)),
+            freeze_payload=lambda: None,
+            store=types.SimpleNamespace(save_local=lambda st: None,
+                                        save_remote=lambda st: None),
+            qualify_bond=lambda market: (calls.append(("qualify", market))
+                                         or {"ok": True, "note": "building"}))
+        m.bonds_op = types.MethodType(Monitor.bonds_op, m)
+        out = m.bonds_op("bonds_qualify", AL)
+        self.assertTrue(out["ok"])
+        self.assertIn(("qualify", AL), calls)
+        self.assertTrue(any(k == "audit" and d["op"] == "bonds_qualify" for k, d in calls))
