@@ -1305,3 +1305,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788666563.5,politics,enwc-uspres-nom-rep-2028-jdvan,SELL,0.19,0.5,backfill,,1.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAMSCBXF8PQ1
 1788666563.5,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-1,0.8,fix,,70.28,,,,,,,,,size trimmed by 1 to the exchange's count (order C8DCB2024MW0),C8DCB2024MW0
 1788666563.5,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,3,0.72,backfill,,0.22,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAP9MHCCWPPT
+1788666623.5,cfb,aachc-cfb-wins-2026-11-28-syra-4pt5wins,SELL,1,0.54,sell,0,0,,52,58,0.374,0.54,0.55,0.01,0,taker dump — sold into the bid (the carved exception),CAPHBEGQGPQ0
+1788666683.5,cfb,aachc-cfb-wins-2026-11-28-syra-4pt5wins,BUY,1,0.54,sell,0.037,0.26,,52,58,0.374,0.54,0.55,-0.01,1,buying back the short at or under what it sold for — the bid earns while it wait,CAPAX2P3MPQ1
+1788666803.5,politics,ussewc-usse-va-2026-11-03-rep,SELL,10,0.05,earn,6.2469,0.78,0.005325,1,5,0.421,0.03,0.09,-0.0447,-20,1 tick behind the touch — we would hold 2% of the ask side,CANY9P696PPZ
+1788666863.5,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,2,0.14,earn,6.2499,1,0.012375,6,11,0.564,0.1,0.16,-0.1276,-31,3 ticks in front of the touch — we would hold 95% of the ask side,CANRY7WC2PPY
+1788666923.5,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,1,0.2,earn,6.2294,1.02,0.14,18,21,0.74,0.19,0.24,-0.06,-20,5 ticks in front of the touch — we would hold 100% of the ask side,CANRY7W5RPPY
+1788666983.5,politics,ussewc-usse-sd-2026-11-03-rep,BUY,27,0.93,bond,1.935,0.33,0.992325,94,97,0.45,0.85,0.95,-0.0623,34,bond more: split — 27 at 93c carry the share; never dearer than his first price,CAPB70SD4PPT
+1788667043.5,politics,ussewc-usse-ky-2026-11-03-dem,SELL,1,0.05,bond,2.5238,0.43,0.002575,2,5,0.696,0.04,0.08,-0.0474,-36,bond more: split — 1 at 5c carry the share; never dearer than his first price,CAP9B9V4APPX
+1788667043.5,politics,ussewc-usse-ri-2026-11-03-rep,SELL,26,0.03,bond,1.9578,0.29,0.000775,2,8,0.45,0.02,0.1,-0.0292,-57,bond more: split — 26 at 3c carry the share; never dearer than his first price,CAPCFRMK4PPW
+1788667163.5,politics,ussewc-usse-ok-2026-11-03-rep,BUY,8,0.97,sell,0.9077,0.83,0.999675,96,99,0.45,0.95,0.98,-0.0297,0,buying back the short at or under what it sold for — the bid earns while it wait,CANZFS3ZYPPZ
+1788667403.5,politics,usgubewc-usgub-ne-2026-11-03-rep,BUY,1,0.94,earn,0.3125,1.15,0.96315,91,95,0.53,0.89,0.96,-0.0232,6,5 ticks in front of the touch — we would hold 100% of the bid side,CANRWQ9KRPPT
+1788667403.5,politics,ussewc-usse-il-2026-11-03-dem,BUY,10,0.96,earn,0.0158,0.93,0.9957,95,99,0.603,0.91,0.99,-0.0357,10,1 tick behind the touch — we would hold 1% of the bid side,CANYNG01PPQ0
+1788667643.5,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,10,0.85,earn,0.8033,1.22,0.86,84,89,0.493,0.85,0.89,-0.01,10,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CANS3NQKMPPX
+1788668949.7,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,2,0.3,sell,0.0058,1.98,,2,7,0.453,0.01,0.3,-0.25,64,selling filled stock — it earns while it waits,CANE6CMZYPPZ
+1788669609.7,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,54,0.08,bond,1.9175,0.45,0.009925,9,12,0.849,0.09,0.97,-0.0701,-266,bond more: buying up to $50.00 more; never dearer than his first price — 37% of ,CAPV3BE8TPPZ
+1788669685.3,cfb,aachc-cfb-wins-2026-11-28-tenn-6pt5wins,SELL,1,0.6,sell,7.4999,0.1,,71,81,0.115,0.59,0.6,0.16,0,selling filled stock — it earns while it waits,CAQ56BJ72PPS
+1788669755.6,politics,ussewc-usse-ms-2026-11-03-dem,SELL,0.01,0.07,backfill,,1.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CANYQJZ62PPT
+1788669865.3,politics,ussewc-usse-sd-2026-11-03-rep,BUY,10,0.92,bond,2.1552,0.1,0.992325,93,98,0.619,0.84,0.93,-0.0723,44,bond more: split — 10 at 92c carry the share; never dearer than his first price,CAQ6SQEPJPPY
+1788670080.7,politics,usgubewc-usgub-pa-2026-11-03-rep,SELL,1,0.05,bond,5.0203,1.27,0.00155,2,5,0.586,0.04,0.08,-0.0485,-48,bond more: split — 1 at 5c carry the share; never dearer than his first price,CAP9CWN12PPS
+1788670170.0,politics,ussewc-usse-ms-2026-11-03-dem,SELL,0.01,0.07,backfill,,1.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CANYQJZ62PPT
+1788670170.0,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-3,0.72,fix,2.5178,0.26,,64,78,0.152,0.61,0.67,0.01,3,size trimmed by 3 to the exchange's count (order CAP9MHCCWPPT),CAP9MHCCWPPT
