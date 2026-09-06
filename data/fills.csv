@@ -1360,3 +1360,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788695826.4,politics,ussewc-usse-wy-2026-11-03-dem,SELL,-1,0.04,fix,0.2785,8.02,2.5e-05,3,7,0.581,0.02,0.03,-0.04,-2,size trimmed by 1 to the exchange's count (order CANS998GRPPY),CANS998GRPPY
 1788695826.4,politics,enwc-ussep-de-2026-09-15-rep-johshu,SELL,-1,0.11,fix,6.2424,9,,10,14,0.561,0.09,0.11,0.01,98,size trimmed by 1 to the exchange's count (order CAMYCRX1GPPS),CAMYCRX1GPPS
 1788695826.4,politics,enwc-uspres-nom-rep-2028-tedcru,SELL,-6.12,0.05,fix,1.2318,9.18,,4,22,0.459,,,0.05,179.88,size trimmed by 6.12 to the exchange's count (order CAMT9X940PPX),CAMT9X940PPX
+1788696851.4,cfb,aachc-cfb-wins-2026-11-28-fl-9pt5wins,SELL,1,0.03,sell,0,0.02,,6,10,0.776,0.02,0.24,0.05,0,selling filled stock — it earns while it waits,CAXRG9JPJQ3R
+1788697001.4,cfb,aachc-cfb-wins-2026-11-28-colst-4pt5wins,BUY,2.1,0.57,backfill,,0.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAXJ1FTVCQ3R
+1788697354.3,politics,ewc-usgub-az-2026-11-03-dem,BUY,3,0.87,hand,,24.3,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C8EJCJ070MVF
+1788697354.3,politics,usgubewc-usgub-ne-2026-11-03-rep,SELL,0.9,0.93,hand,,44.87,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C8JME37YPMVZ
+1788697354.3,politics,enwc-uspres-nom-dem-2028-jonste,BUY,4,0.02,hand,,33.11,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C8ZDH8HA6MW0
+1788697354.3,politics,usgubewc-usgub-ar-2026-11-03-dem,SELL,2.4,0.05,backfill,,6.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C9REYD9BYMVZ
+1788697354.3,politics,ussewc-usse-co-2026-11-03-rep,BUY,2.58,0.05,hand,,12.73,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C9M4YYEGMMVR
+1788697354.3,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,2.01,0.97,hand,,12.71,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C9N773YXPMVG
+1788697354.3,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.12,0.65,hand,,59.27,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C8F8W0KBPMW0
+1788697354.3,cfb,aachc-cfb-wins-2026-11-28-syra-4pt5wins,SELL,0.5,0.46,hand,,1.3,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C50YZYTQCKDM
+1788697354.3,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,1,0.8,backfill,,70.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8DCB2024MW0
+1788697354.3,cfb,aachc-cfb-wins-2026-11-28-colst-4pt5wins,BUY,2.1,0.57,backfill,,0.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAXJ1FTVCQ3R
