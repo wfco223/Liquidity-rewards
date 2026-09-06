@@ -7874,6 +7874,7 @@ date,market,program_type,reward_usd,status
 2026-09-04,aachc-cfb-wins-2026-11-28-missr-7pt5wins,liquidityProgram,0.06,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-mspst-4pt5wins,liquidityProgram,3.94,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-mspst-5pt5wins,liquidityProgram,0.66,PENDING
+2026-09-04,aachc-cfb-wins-2026-11-28-mst-5pt5wins,liquidityProgram,0.32,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-ncst-7pt5wins,liquidityProgram,0.06,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-ncst-8pt5wins,liquidityProgram,0.03,PENDING
 2026-09-04,aachc-cfb-wins-2026-11-28-nd-11pt5wins,liquidityProgram,0.08,PENDING
@@ -8012,6 +8013,7 @@ date,market,program_type,reward_usd,status
 2026-09-04,scc-senate-gop-2026-11-03-51,liquidityProgram,0.43,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-52,liquidityProgram,0.08,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-54,liquidityProgram,0.05,PENDING
+2026-09-04,scc-senate-gop-2026-11-03-55,liquidityProgram,0.34,PENDING
 2026-09-04,scc-senate-gop-2026-11-03-lte45,liquidityProgram,2.48,PENDING
 2026-09-04,usgubewc-usgub-al-2026-11-03-rep,liquidityProgram,0.99,PENDING
 2026-09-04,usgubewc-usgub-ar-2026-11-03-dem,liquidityProgram,5.66,PENDING
@@ -8069,6 +8071,7 @@ date,market,program_type,reward_usd,status
 2026-09-04,ussewc-usse-ky-2026-11-03-rep,liquidityProgram,4.31,PENDING
 2026-09-04,ussewc-usse-la-2026-11-03-rep,liquidityProgram,1.08,PENDING
 2026-09-04,ussewc-usse-ma-2026-11-03-dem,liquidityProgram,2.49,PENDING
+2026-09-04,ussewc-usse-ma-2026-11-03-rep,liquidityProgram,0.37,PENDING
 2026-09-04,ussewc-usse-mt-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-04,ussewc-usse-mt-2026-11-03-setbod,liquidityProgram,1.26,PENDING
 2026-09-04,ussewc-usse-nj-2026-11-03-dem,liquidityProgram,0.56,PENDING
@@ -8093,4 +8096,5 @@ date,market,program_type,reward_usd,status
 2026-09-04,vmc-ussep-mov-ma-dem-2026-09-01-mar0-5,liquidityProgram,0.01,PENDING
 2026-09-04,vmc-ussep-mov-ma-dem-2026-09-01-mar20-25,liquidityProgram,0.02,PENDING
 2026-09-04,vmc-ussep-mov-ma-dem-2026-09-01-mar5-10,liquidityProgram,0.01,PENDING
+2026-09-04,vmc-ussep-mov-ma-dem-2026-09-01-mou0-5,liquidityProgram,0.1,PENDING
 2026-09-05,aec-cfb-mia-stan-2026-09-04,liquidityProgram,0.03,PENDING
