@@ -3509,3 +3509,91 @@ class TestEverySaleIsABondSale(Base):
         self.assertAlmostEqual(b3.money_in, 12.0, places=4)
         n_saved = len([e for e in d3["log"] if e["event"] == "money_in_corrected"])
         self.assertEqual(len([e for e in b3.log if e["event"] == "money_in_corrected"]), n_saved)
+
+
+class TestTheRecordExplainsASale(Base):
+    """Owner, 2026-09-06, WV Senate rep: the exchange showed 0 of 49 for
+    hours, the record held the 49-share sale, and the ledger's walk of
+    the record said 4.12 — one misread row throws an absolute count.
+    "This order is what is missing. Can you fix it." The record agrees
+    when its exits since the lot was last booked cover the missing
+    shares, and his tap on the banner books the sale on his word."""
+
+    def setUp(self):
+        super().setUp()
+        from v3.main import parse_activities
+        self.b.parse = parse_activities
+
+    def confirm(self, slug, exch_qty, yes_px):
+        self.exch(slug, exch_qty, yes_px)
+        for dt in (60, 200, 400):
+            self.b.cycle(self.now + dt, self.positions(), on=True)
+
+    def test_recent_exits_confirm_the_sale_when_the_walk_is_wrong(self):
+        # the record: the purchase, a phantom 4-share buy the walk cannot
+        # see through, and the sale; the walk says 4 are still held
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.97, 49.0, self.now - 1000))
+        self.r.exchange.trades.append(self.trade_row("B9", BUY_LONG, 0.97, 4.0, self.now - 900))
+        self.bond(AL, "YES", 49.0, 0.97)                              # booked now: lot_ts = now
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.r.exchange.trades.append(self.trade_row("S1", SELL_LONG, 0.97, 49.0, self.now + 50,
+                                                     commission=-0.02))
+        self.confirm(AL, 0.0, 0.0)
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertNotIn(AL, self.b.unconfirmed)
+        self.assertAlmostEqual(self.b.cash, 49 * 0.97 + 0.02, places=4)
+        ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"][0]
+        self.assertEqual(ev["priced"], "record")
+        self.assertIn("49 sold since the last purchase", ev["note"])
+
+    def test_exits_the_ledger_booked_itself_do_not_confirm_a_glitch(self):
+        # our own exit sold 20 and the ledger booked it; the record shows
+        # that exit. A feed glitch then shows 20 fewer than the ledger:
+        # the booked exit must not stand in for the missing shares.
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.97, 100.0, self.now - 1000))
+        self.bond(AL, "YES", 100.0, 0.97)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.r.exchange.trades.append(self.trade_row("S1", SELL_LONG, 0.98, 20.0, self.now + 10))
+        self.b._unbook_lot(AL, "YES", 20.0)                           # as the sold path books it
+        self.b._booked_out[AL] = 20.0
+        self.exch(AL, 60.0, 0.97)                                     # the glitch: 20 short of 80
+        for dt in (60, 200, 400):
+            self.b.cycle(self.now + dt, self.positions(), on=True)
+        self.assertEqual(self.b.held(AL, "YES"), 80.0)                # kept
+        self.assertIn(AL, self.b.unconfirmed)
+        self.exch(AL, 80.0, 0.97)                                     # the feed recovers
+        self.b.cycle(self.now + 500, self.positions(), on=True)
+        self.assertNotIn(AL, self.b.unconfirmed)
+
+    def test_his_tap_books_a_sale_the_record_never_shows(self):
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.97, 49.0, self.now - 1000))
+        self.bond(AL, "YES", 49.0, 0.97)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.confirm(AL, 0.0, 0.0)                                    # no sale on record
+        self.assertIn(AL, self.b.unconfirmed)
+        self.assertEqual(self.b.held(AL, "YES"), 49.0)
+        r = self.b.book_sale(AL, self.now + 500, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertNotIn(AL, self.b.unconfirmed)
+        self.assertAlmostEqual(self.b.cash, 49 * 0.97, places=2)      # at cost: no price on record
+        self.assertAlmostEqual(self.b.realized, 0.0, places=2)
+        self.assertIn("priced from the cost", r["note"])
+        # nothing to book when the exchange shows what the ledger has
+        self.bond(TN, "YES", 10.0, 0.97)
+        self.assertFalse(self.b.book_sale(TN, self.now + 501, self.positions())["ok"])
+
+    def test_booked_out_follows_the_lot(self):
+        self.bond(AL, "YES", 100.0, 0.95)
+        self.r.exchange.books[AL] = Book(bids=((0.98, 60.0), (0.50, 20000.0)),
+                                         asks=((0.99, 300.0), (0.999, 20000.0)), tick=0.01,
+                                         fetched_at=self.now)
+        self.r.cache.put(AL, self.r.exchange.books[AL])
+        self.assertTrue(self.b.sell_into(AL, 98, 20, self.now)["ok"])
+        self.assertEqual(self.b._booked_out[AL], 20.0)
+        d = self.b.to_dict()
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(d)
+        self.assertEqual(b2._booked_out[AL], 20.0)                    # survives a restart
+        self.b._book_lot(AL, "YES", 5.0, 4.85, ref="T2")              # a new booking resets it
+        self.assertNotIn(AL, self.b._booked_out)
