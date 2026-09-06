@@ -1439,7 +1439,8 @@ class Bonds:
                 self.exit_px.pop(s, None)        # out of the position: the pin is spent
         # the money gate is judged switch on or off (the families read it
         # too); its pulls happen only with the switch on
-        selling_only = self._money_gate(self._buying_power(now), now, act=on)
+        selling_only = self._money_gate(self._buying_power(now), now, act=on,
+                                        walls=self._wall_held())
         if on:
             for slug in self._working():
                 side = self._side_of(slug)
@@ -2463,7 +2464,22 @@ class Bonds:
         h = getattr(self.fam.desk, "health", None)
         return bool(h is not None and h.blocked())
 
-    def _money_gate(self, bp: float | None, now: float, act: bool = True) -> bool:
+    def _wall_held(self) -> float:
+        """What his qualifying walls hold on the exchange: a cent a share
+        on a whole-cent book, a tenth of that on a fine one. Owner,
+        2026-09-06: "I don't want the money I have to deploy to be
+        affected by the qualifying orders. They're imaginary in a sense
+        because they'll never be filled" — so the money gate adds this
+        back before judging whether there is money to deploy. Sizing a
+        buy still uses what the exchange will really fund: it trims or
+        kills an order past its free buying power (2026-09-04)."""
+        from .survey import wall_collateral
+        return sum(wall_collateral(o.side, o.price, o.qty)
+                   for o in list(self.fam.orders.values())
+                   if o.why == QUALIFY_WALL_WHY)
+
+    def _money_gate(self, bp: float | None, now: float, act: bool = True,
+                    walls: float = 0.0) -> bool:
         """Owner, 2026-09-05: "When there is no money to deploy, all the
         bond functions except for selling shares to generate proceeds
         (never below cost) is the only thing that should be going on. No
@@ -2471,23 +2487,25 @@ class Bonds:
         the buy-more bids, decoys and bait come off and nothing is
         bought, taken or baited; the exits keep working. Buying resumes
         once MONEY_BACK_USD is free beyond what pulling our own bids
-        freed. The state is judged whether or not the bonds switch is on
-        (the families read it too); `act` says whether to pull. True
-        while the bonds only sell."""
-        if bp is None:
+        freed. `walls` — what his qualifying walls hold — counts as free
+        (owner, 2026-09-06). The state is judged whether or not the
+        bonds switch is on (the families read it too); `act` says
+        whether to pull. True while the bonds only sell."""
+        free = None if bp is None else bp + walls
+        if free is None:
             out = bool(self.money_out)           # unknown: the mode stands as it is
         elif self.money_out:
             need = MONEY_BACK_USD + float(self.money_out.get("freed") or 0.0)
-            if bp >= need:
-                self._log(event="money_back", bp=round(bp, 2),
-                          note=f"${bp:,.2f} free: buying and the sniper resume")
+            if free >= need:
+                self._log(event="money_back", bp=round(bp, 2), walls=round(walls, 2),
+                          note=f"${free:,.2f} free: buying and the sniper resume")
                 self.money_out = None
                 return False
             out = True
-        elif bp < NO_MONEY_USD:
+        elif free < NO_MONEY_USD:
             self.money_out = {"since": round(now, 1), "bp": round(bp, 2),
-                              "freed": 0.0, "pulled": 0}
-            self._log(event="money_out", bp=round(bp, 2),
+                              "walls": round(walls, 2), "freed": 0.0, "pulled": 0}
+            self._log(event="money_out", bp=round(bp, 2), walls=round(walls, 2),
                       note="no money to deploy: exits only — no buying, no sniping, "
                            "no bait")
             out = True
@@ -3514,6 +3532,7 @@ class Bonds:
                 "budget_mode": self.budget_mode, "tax": self.tax_owed() or None,
                 "money": round(self._money(), 2),
                 "money_out": self.money_out,
+                "wall_held": round(self._wall_held(), 2),
                 "no_money_usd": NO_MONEY_USD, "money_back_usd": MONEY_BACK_USD,
                 "earned": self._earned(),
                 "unpinged": round(self.unpinged, 2),

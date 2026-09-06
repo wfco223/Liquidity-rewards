@@ -3028,6 +3028,46 @@ class TestNoMoneyToDeploy(Base):
         self.assertIn("money_back", [e["event"] for e in self.b.log])
         self.assertTrue(self.b._more_orders(AL))
 
+    def wall(self, qty, px=0.99, oid="wall1"):
+        """A qualifying wall of his: a short beside the lot, holding
+        (1 - price) a share on the exchange."""
+        from v3.family import QUALIFY_WALL_WHY
+        self.r.exchange.live[oid] = {"id": oid, "market": AL, "side": "SELL",
+                                     "price": px, "size": qty, "intent": BUY_SHORT}
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=AL, side="SELL", price=px, qty=qty, intent=BUY_SHORT,
+            placed_ts=self.now, purpose="manual", why=QUALIFY_WALL_WHY)
+
+    def test_what_the_qualifying_walls_hold_is_not_money_gone(self):
+        # owner, 2026-09-06: "I don't want the money I have to deploy to
+        # be affected by the qualifying orders. They're imaginary in a
+        # sense because they'll never be filled"
+        self.wall(6000.0)                                   # holds $60 at 99c
+        self.assertAlmostEqual(self.b._wall_held(), 60.0)
+        self.bp = 3.0                                       # the exchange shows $3 free
+        self.cyc(self.now)
+        self.assertIsNone(self.b.money_out)                 # $63 to deploy, not $3
+        self.assertTrue(self.orders(AL, "SELL", decoy=True))
+        v = self.b.view(self.now, self.positions())
+        self.assertAlmostEqual(v["wall_held"], 60.0)
+        self.assertIsNone(v["money_out"])
+        # take the wall away and the same $3 is no money
+        self.r.fam.orders.pop("wall1"); self.r.exchange.live.pop("wall1")
+        self.cyc(self.now + 61)
+        self.assertTrue(self.b.money_out)
+        self.assertEqual(self.b.money_out["walls"], 0.0)
+
+    def test_the_walls_count_toward_the_money_coming_back(self):
+        self.bp = 3.0
+        self.cyc(self.now)
+        self.assertTrue(self.b.money_out)
+        freed = self.b.money_out["freed"]
+        self.wall(6000.0)                                   # $60 parked in a wall
+        self.bp = 3.0 + freed                               # only our own collateral came back
+        self.cyc(self.now + 61)
+        self.assertIsNone(self.b.money_out)                 # $63 + freed clears $50 + freed
+        self.assertIn("money_back", [e["event"] for e in self.b.log])
+
     def test_the_mode_survives_a_restart(self):
         self.bp = 3.0
         self.cyc(self.now)
