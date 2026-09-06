@@ -1345,3 +1345,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788676743.9,cfb,aachc-cfb-wins-2026-11-28-colst-4pt5wins,SELL,1,0.55,earn,0.0222,1.01,,46,54,0.199,0.54,0.55,-0.05,-2,at the touch — a fill here is 1 ticks inside value (evidence band only; confiden,CAR0QYBQ6PPS
 1788677106.4,politics,ussewc-usse-ms-2026-11-03-dem,SELL,4.99,0.07,earn,0.2999,3.63,0.02185,3,8,0.231,0.03,0.07,-0.0482,-4.99,3 ticks in front of the touch — we would hold 100% of the ask side,CANYQJZ62PPT
 1788677423.1,politics,ussewc-usse-sd-2026-11-03-rep,BUY,1,0.92,backfill,,0.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAR8SZ49JPPZ
+1788677483.1,cfb,aachc-cfb-wins-2026-11-28-okst-8pt5wins,BUY,2,0.17,earn,3.6585,0.02,,32,36,0.746,0.01,0.18,-0.17,2,at the touch — a fill here is 13 ticks inside value (evidence band only; confide,CAS2MASY6PQ1
+1788677592.7,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,SELL,0.5,0.44,earn,1.3066,0.03,,29,50,0,0.43,0.55,-0.06,-0.5,joins the touch — the book has been quiet,CAS2TPG0WPQ0
