@@ -1228,3 +1228,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788638314.9,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-0.67,0.8,fix,,40.95,,,,,,,,,size trimmed by 0.67 to the exchange's count (order C8DCB2024MW0),C8DCB2024MW0
 1788646825.6,politics,usgubewc-usgub-vt-2026-11-03-dem,SELL,1,0.11,earn,0,5.65,0.0904,7,10,0.588,,,-0.0196,-1,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CACXHPKYMMW1
 1788651837.8,politics,usgubewc-usgub-vt-2026-11-03-dem,SELL,1,0.11,void,0,5.65,0.0904,7,10,0.588,,,-0.0196,-1,voided: the exchange has no trade for order CACXHPKYMMW1 — the row of 09-05 22:2,CACXHPKYMMW1
+1788656517.0,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,1,0.2,sell,0,0,0.217125,21,24,0.783,0.2,0.21,0.0171,0,taker dump — sold into the bid (the carved exception),CAM55752WPPW
+1788656968.2,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,20,0.04,bond,0,0.03,0.009925,7,10,0.802,0.04,0.05,-0.0301,-175,bond: took 20 NO at 4c — it was in the way of our resting order,CAM87SV4TPPX
+1788657211.9,politics,ussewc-usse-nm-2026-11-03-dem,BUY,0.05,0.96,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAMA6HBM8PPV
+1788657295.6,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,2,0.04,bond,0,0.04,0.009925,7,10,0.83,0.02,0.03,-0.0301,-177,bond: took 2 NO at 4c — it was in the way of our resting order,CAMA70JTTPPS
+1788657295.6,politics,ussewc-usse-nm-2026-11-03-dem,BUY,17,0.96,bond,0,0.04,0.99445,93,97,0,0.95,0.96,-0.0344,64,bond: took 17.05 YES at 96c — it was in the way of our resting order,CAMA6HBM8PPV
+1788659146.3,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-4,0.22,fix,0.6818,3.5,0.1705,18,22,0.753,0.18,0.22,-0.0495,-38,size trimmed by 4 to the exchange's count (order C9MHWS6JGMVK),C9MHWS6JGMVK
+1788659146.3,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-0.35,0.22,fix,,3.51,,,,,,,,,size trimmed by 0.35 to the exchange's count (order C9MHWS6JGMVK),C9MHWS6JGMVK
+1788659146.3,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-9.65,0.22,fix,2.551,2.64,0.1705,17,21,0.694,0.21,0.22,-0.0495,-34,size trimmed by 9.65 to the exchange's count (order C9MHWS6JGMVK),C9MHWS6JGMVK
+1788659146.3,politics,ussewc-usse-nm-2026-11-03-dem,BUY,0.05,0.96,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAMA6HBM8PPV
