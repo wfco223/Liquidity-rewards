@@ -65,6 +65,11 @@ class Base(unittest.TestCase):
         self.seed(ALD, no_book(self.r.now))
         self.r.fam.refresh_terms(self.r.exchange, self.r.now)
         self.now = self.r.now
+        # a budget wide enough that the room rule (owner, 2026-09-06)
+        # never bites unless a test sets one; tests about the budget set
+        # their own
+        self.b.budget = 100000.0
+        self.b.budget_mode = "fixed"
 
     def seed(self, slug, book):
         self.r.fam.universe[slug] = {"event_n": 1, "name": slug}
@@ -304,7 +309,7 @@ class TestTheSniper(Base):
     def setUp(self):
         super().setUp()
         self.b.approve(AL, self.now)
-        self.b.set_budget(1000.0)
+        self.b.set_budget(5000.0)        # covers the $1,350 held: the room rule stays out of these
         self.r.cache.put(AL, minnow_book(self.now, minnows=0.0, ask=0.99))
         self.bond(AL, "YES", 1500.0, 0.90)
         self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}   # no buy-more here
@@ -358,6 +363,30 @@ class TestTheSniper(Base):
         self.assertTrue(out["placed"][0]["taken"])
         self.assertEqual(self.orders(AL, "SELL", decoy=True), [])   # decoy killed
         self.assertNotIn(AL, self.b.dance)
+        self.assertEqual(self.b.held(AL, "YES"), 1520.0)
+
+    def test_the_take_waits_when_the_budget_is_full(self):
+        # owner, 2026-09-06: the take is a buy, so it stays inside the
+        # budget room like every other buy. $1,350 held against $1,300:
+        # the decoy dances, the minnow stays put, nothing is taken.
+        self.b.set_budget(1300.0)
+        self.assertLess(self.b.budget_room(), 0.0)
+        m_px = round(self.main.price - 0.01, 2)
+        self.book_with_minnow(m_px, 20.0, 60)
+        self.cyc(60)
+        self.book_with_minnow(m_px, 20.0, 60 + 7200 + 5)
+        self.cyc(60 + 7200 + 5)
+        self.assertEqual([o for o in self.r.fam.orders.values() if o.side == "BUY"], [])
+        self.assertEqual(self.b.held(AL, "YES"), 1500.0)
+        ev = [e for e in self.b.log if e["event"] == "take_skipped"]
+        self.assertTrue(ev)
+        self.assertIn("budget full", ev[0]["note"])
+        # room again: the next stay-put is taken
+        self.b.set_budget(5000.0)
+        self.book_with_minnow(m_px, 20.0, 60 + 14400 + 10)
+        self.cyc(60 + 14400 + 10)
+        self.book_with_minnow(m_px, 20.0, 60 + 21600 + 15)
+        self.cyc(60 + 21600 + 15)
         self.assertEqual(self.b.held(AL, "YES"), 1520.0)
 
     def test_each_move_restarts_the_clock_and_the_decoy_follows(self):
@@ -863,6 +892,7 @@ class TestTheBudgetFollowsTaxes(Base):
 
     def setUp(self):
         super().setUp()
+        self.b.budget, self.b.budget_mode = 0.0, "tax"          # as the app starts
         self.tax = {"owed": 220.0, "gross": 1000.0, "rate": 0.22}
         self.b.tax_owed = lambda: self.tax
 
@@ -2354,19 +2384,18 @@ class TestBuyingMoreWithTheMoneyThere(Base):
         o = self.buys()[0]
         self.assertEqual(o.qty, float(int(20.0 / o.price)))
 
-    def test_no_buying_power_means_the_bonds_only_sell_until_money_returns(self):
-        # owner, 2026-09-05: with no money to deploy nothing is bought;
-        # the buy-more comes back once money does
+    def test_no_buying_power_sizes_the_buy_more_to_nothing_until_money_returns(self):
+        # owner, 2026-09-06: the exchange's free money sizes an order,
+        # it never gates the bonds; with 40c free nothing can be funded
         self.r.exchange.buying_power = lambda: 0.4
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertEqual(self.buys(), [])
-        self.assertTrue(self.b.money_out)
         more = self.b.view(self.now + 1, self.positions())["rows"][0]["more"]
-        self.assertIn("no money", more["paused"])
+        self.assertIsNone(more["paused"])                       # not paused: unfunded
+        self.assertIn("no buying power", more["note"])
         self.r.exchange.buying_power = lambda: 500.0
-        self.r.cache.put(AL, yes_book(self.now + 61))            # a fresh book, later
-        self.b.cycle(self.now + 61, self.positions(), on=True)
-        self.assertIsNone(self.b.money_out)
+        self.r.cache.put(AL, yes_book(self.now + 700))           # a fresh book, later
+        self.b.cycle(self.now + 700, self.positions(), on=True)  # past the retry wait
         self.assertTrue(self.buys())                            # the money is back
 
     def _refusing(self, note):
@@ -3011,25 +3040,23 @@ class TestSplitPlacement(Base):
         self.assertGreaterEqual(v["order"]["share"], 0.30)
 
 
-class TestNoMoneyToDeploy(Base):
-    """Owner, 2026-09-05: "When there is no money to deploy, all the bond
-    functions except for selling shares to generate proceeds (never
-    below cost) is the only thing that should be going on. No more
-    buying or sniping." """
+class TestTheFamiliesGate(Base):
+    """Owner, 2026-09-05: "put a no money sell gate on politics and cfb".
+    Owner, 2026-09-06: "they can use any money available after reserving
+    all of the money available for bonds" — and the bonds themselves are
+    never gated on the exchange's free money, only sized by it."""
 
     def setUp(self):
         super().setUp()
         self.b.approve(AL, self.now)
         self.b.set_budget(1000.0)
-        self.r.exchange.books[AL] = minnow_book(self.now, minnows=5.0)   # a minnow: the sniper dances
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=5.0)
         self.r.cache.put(AL, minnow_book(self.now, minnows=5.0))
-        # one level (a margin no split can meet): the exit sits behind
-        # the minnow, so the sniper has something to lead
         from unittest import mock
         p = mock.patch.object(bonds_mod, "SPLIT_MARGIN", 9.0)
         p.start()
         self.addCleanup(p.stop)
-        self.bond(AL, "YES", 1500.0, 0.89)
+        self.bond(AL, "YES", 100.0, 0.89)
         self.bp = 500.0
         self.r.exchange.buying_power = lambda: self.bp
 
@@ -3040,46 +3067,37 @@ class TestNoMoneyToDeploy(Base):
     def row(self, v):
         return next(r for r in v["rows"] if r["market"] == AL)
 
-    def test_with_no_money_the_bonds_only_sell(self):
+    def test_the_families_stop_when_free_money_is_all_the_bonds_reserve(self):
+        # room = budget 1000 − 89 held = 911; the exchange shows 500 free:
+        # nothing beyond the reserve, so the families' gate is on
         self.cyc(self.now)
-        self.assertTrue(self.b._more_orders(AL))                       # buying more
-        self.assertTrue(self.orders(AL, "SELL", decoy=True))           # the sniper's decoy
-        self.assertIsNone(self.b.money_out)
-        self.bp = 3.0                                                  # the money is gone
-        t = self.now + 61
-        self.cyc(t)
+        self.assertAlmostEqual(self.b.budget_room(), 911.0, places=2)
         self.assertTrue(self.b.money_out)
-        self.assertEqual(self.b._more_orders(AL), [])                  # the buy-more came off
-        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])      # the decoy came off
-        self.assertTrue(self.orders(AL, "SELL", decoy=False))          # the exit stays
-        freed = self.b.money_out["freed"]
-        self.assertGreater(freed, 0.0)
-        self.assertIn("money_out", [e["event"] for e in self.b.log])
-        # nothing new is bought, sniped or baited while it lasts
-        t2 = t + MOVE_COOLDOWN_S + 61
-        self.cyc(t2)
-        self.assertEqual(self.b._more_orders(AL), [])
-        self.assertEqual(self.orders(AL, "SELL", decoy=True), [])
-        self.assertTrue(self.orders(AL, "SELL", decoy=False))
-        self.assertFalse(self.b.place_bait(AL, t2, self.positions())["ok"])
-        v = self.b.view(t2, self.positions())
-        self.assertTrue(v["money_out"])
-        self.assertIn("no money", self.row(v)["more"]["paused"])
-        # our own collateral coming back is not new money
-        self.bp = 40.0 + freed
-        self.cyc(t2 + 61)
-        self.assertTrue(self.b.money_out)
-        self.assertEqual(self.b._more_orders(AL), [])
-        # proceeds beyond it: buying resumes
-        self.bp = 51.0 + freed
-        self.cyc(t2 + 122)
+        self.assertAlmostEqual(self.b.money_out["reserve"], 911.0, places=2)
+        # the bonds keep buying: the buy-more rests, the decoy rests
+        self.assertTrue(self.b._more_orders(AL))
+        self.assertTrue(self.orders(AL, "SELL", decoy=True))
+        # more free money than the reserve plus $50: the families resume
+        self.bp = 911.0 + 51.0
+        self.cyc(self.now + 61)
         self.assertIsNone(self.b.money_out)
         self.assertIn("money_back", [e["event"] for e in self.b.log])
-        self.assertTrue(self.b._more_orders(AL))
+        # and nothing was pulled along the way
+        self.assertEqual([e for e in self.b.log if e["event"] == "money_pull"], [])
+
+    def test_a_dry_exchange_leaves_the_bond_bids_where_they_are(self):
+        self.cyc(self.now)
+        n_more = len(self.b._more_orders(AL))
+        self.assertGreater(n_more, 0)
+        self.bp = 1.91                                          # the exchange runs dry
+        self.cyc(self.now + 61)
+        self.assertTrue(self.b.money_out)                       # the families' flag
+        self.assertEqual(len(self.b._more_orders(AL)), n_more)  # the bids stay
+        self.assertTrue(self.orders(AL, "SELL", decoy=True))    # so does the decoy
+        v = self.b.view(self.now + 62, self.positions())
+        self.assertIsNone(self.row(v)["more"]["paused"])        # the bonds are not paused
 
     def wall(self, qty, px=0.99, oid="wall1"):
-        """A qualifying wall of his: a short beside the lot, holding
-        (1 - price) a share on the exchange."""
         from v3.family import QUALIFY_WALL_WHY
         self.r.exchange.live[oid] = {"id": oid, "market": AL, "side": "SELL",
                                      "price": px, "size": qty, "intent": BUY_SHORT}
@@ -3087,35 +3105,17 @@ class TestNoMoneyToDeploy(Base):
             id=oid, market=AL, side="SELL", price=px, qty=qty, intent=BUY_SHORT,
             placed_ts=self.now, purpose="manual", why=QUALIFY_WALL_WHY)
 
-    def test_what_the_qualifying_walls_hold_is_not_money_gone(self):
-        # owner, 2026-09-06: "I don't want the money I have to deploy to
-        # be affected by the qualifying orders. They're imaginary in a
-        # sense because they'll never be filled"
-        self.wall(6000.0)                                   # holds $60 at 99c
-        self.assertAlmostEqual(self.b._wall_held(), 60.0)
-        self.bp = 3.0                                       # the exchange shows $3 free
-        self.cyc(self.now)
-        self.assertIsNone(self.b.money_out)                 # $63 to deploy, not $3
-        self.assertTrue(self.orders(AL, "SELL", decoy=True))
-        v = self.b.view(self.now, self.positions())
-        self.assertAlmostEqual(v["wall_held"], 60.0)
-        self.assertIsNone(v["money_out"])
-        # take the wall away and the same $3 is no money
-        self.r.fam.orders.pop("wall1"); self.r.exchange.live.pop("wall1")
-        self.cyc(self.now + 61)
-        self.assertTrue(self.b.money_out)
-        self.assertEqual(self.b.money_out["walls"], 0.0)
-
-    def test_the_walls_count_toward_the_money_coming_back(self):
+    def test_what_the_qualifying_walls_hold_still_counts_as_free(self):
+        # owner, 2026-09-06: the walls are imaginary money-wise
+        self.b.set_budget(100.0)                                # room 11
+        self.wall(6000.0)                                       # holds $60
         self.bp = 3.0
         self.cyc(self.now)
-        self.assertTrue(self.b.money_out)
-        freed = self.b.money_out["freed"]
-        self.wall(6000.0)                                   # $60 parked in a wall
-        self.bp = 3.0 + freed                               # only our own collateral came back
+        self.assertIsNone(self.b.money_out)                     # 3 + 60 − 11 = 52: money enough
+        self.r.fam.orders.pop("wall1"); self.r.exchange.live.pop("wall1")
         self.cyc(self.now + 61)
-        self.assertIsNone(self.b.money_out)                 # $63 + freed clears $50 + freed
-        self.assertIn("money_back", [e["event"] for e in self.b.log])
+        self.assertTrue(self.b.money_out)                       # 3 − 11 < 10
+        self.assertEqual(self.b.money_out["walls"], 0.0)
 
     def test_the_mode_survives_a_restart(self):
         self.bp = 3.0
@@ -3131,6 +3131,94 @@ class TestNoMoneyToDeploy(Base):
         self.cyc(self.now)
         self.assertIsNone(self.b.money_out)
         self.assertTrue(self.b._more_orders(AL))
+
+
+class TestTheBudgetRoom(Base):
+    """Owner, 2026-09-06: "the bonds can use money so long as the amount
+    invested plus the buy orders in any given market are less than the
+    budget. To be clear orders across all the bond markets will exceed
+    the budget, but in any given market there should not be orders that
+    would put the total cost of bonds I own over the budget." """
+
+    def setUp(self):
+        super().setUp()
+        for s in (AL, TN):
+            self.b.approve(s, self.now)
+            self.r.exchange.books[s] = minnow_book(self.now, minnows=5.0)
+            self.r.cache.put(s, minnow_book(self.now, minnows=5.0))
+        from unittest import mock
+        p = mock.patch.object(bonds_mod, "SPLIT_MARGIN", 9.0)
+        p.start()
+        self.addCleanup(p.stop)
+        self.r.exchange.buying_power = lambda: 10000.0
+
+    def cyc(self, t):
+        for s in (AL, TN):
+            self.r.cache.put(s, minnow_book(t, minnows=5.0))
+        return self.b.cycle(t, self.positions(), on=True)
+
+    def more_usd(self, slug):
+        return sum(o.qty * o.price for o in self.b._more_orders(slug))
+
+    def test_each_markets_buy_orders_fit_the_room_and_together_may_exceed_it(self):
+        self.b.set_budget(300.0)
+        self.bond(AL, "YES", 100.0, 0.89)                       # $89 held
+        self.bond(TN, "YES", 100.0, 0.89)                       # $89 held: room 122
+        self.b.set_more_cap(AL, 500.0)                          # he would buy $500 more
+        self.b.set_more_cap(TN, 500.0)
+        self.cyc(self.now)
+        self.assertAlmostEqual(self.b.budget_room(), 122.0, places=2)
+        for s in (AL, TN):
+            self.assertTrue(self.b._more_orders(s))
+            self.assertLessEqual(self.more_usd(s), 122.0 + 1.0)   # each market fits the room
+        self.assertGreater(self.more_usd(AL) + self.more_usd(TN), 122.0)   # together they exceed it
+
+    def test_a_fill_anywhere_shrinks_the_room_everywhere(self):
+        self.b.set_budget(300.0)
+        self.bond(AL, "YES", 100.0, 0.89)
+        self.bond(TN, "YES", 100.0, 0.89)
+        self.b.set_more_cap(AL, 500.0)
+        self.b.set_more_cap(TN, 500.0)
+        self.cyc(self.now)
+        before = self.more_usd(TN)
+        self.assertGreater(before, 50.0)
+        # AL buys $100 more: the room falls to 22 and TN's bid must fit it
+        self.b._book_lot(AL, "YES", 112.0, 100.0, ref="F1")
+        self.b._pay(100.0)
+        self.assertAlmostEqual(self.b.budget_room(), 22.0, places=2)
+        self.cyc(self.now + MOVE_COOLDOWN_S + 61)
+        self.assertLessEqual(self.more_usd(TN), 23.0)
+        self.assertLess(self.more_usd(TN), before)
+
+    def test_a_full_budget_pulls_the_bids_and_stops_the_buys(self):
+        self.b.set_budget(150.0)
+        self.bond(AL, "YES", 100.0, 0.89)
+        self.b.set_more_cap(AL, 500.0)
+        self.cyc(self.now)
+        self.assertTrue(self.b._more_orders(AL))
+        self.bond(TN, "YES", 100.0, 0.89)                       # $178 held against $150
+        self.assertLess(self.b.budget_room(), 0.0)
+        self.cyc(self.now + 61)
+        self.assertEqual(self.b._more_orders(AL), [])           # pulled: over the budget
+        self.assertFalse(self.b.place_bait(AL, self.now + 62, self.positions())["ok"])
+        v = self.b.view(self.now + 62, self.positions())
+        self.assertIn("budget full", next(r for r in v["rows"] if r["market"] == AL)["more"]["paused"])
+        self.assertLess(v["room"], 0.0)
+        self.assertIn("more_none", [e["event"] for e in self.b.log])
+        # room comes back when he raises the budget
+        self.b.set_budget(400.0)
+        self.cyc(self.now + MOVE_COOLDOWN_S + 122)
+        self.assertTrue(self.b._more_orders(AL))
+
+    def test_the_budget_is_what_he_owes_while_it_follows_taxes(self):
+        self.b.tax_owed = lambda: {"owed": 250.0}
+        self.b.follow_tax()
+        self.bond(AL, "YES", 100.0, 0.89)
+        self.assertAlmostEqual(self.b.budget_total(), 250.0, places=2)
+        self.assertAlmostEqual(self.b.budget_room(), 250.0 - 89.0, places=2)
+        v = self.b.view(self.now, self.positions())
+        self.assertAlmostEqual(v["budget_total"], 250.0, places=2)
+        self.assertAlmostEqual(v["room"], 161.0, places=2)
 
 
 class TestFreshBooks(Base):
