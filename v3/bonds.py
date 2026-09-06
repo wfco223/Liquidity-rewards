@@ -536,6 +536,8 @@ class Bonds:
                 gone = round(booked - shares, 4)
                 cost = self._unbook_lot(slug, side, gone)
                 self.spent = round(max(self.spent - cost, 0.0), 4)
+                # never bought: not money put in either (2026-09-06)
+                self.money_in = round(max(self.money_in - cost, 0.0), 4)
                 if self.budget_mode != "tax":
                     self.budget = round(self.budget + cost, 4)
                 self._follow_tax()
@@ -820,13 +822,27 @@ class Bonds:
         cost = self._unbook_lot(slug, side, removed)
         # shares the exchange NEVER showed were never bought: their cost
         # goes back to the money. Shares it once showed and now does not
-        # were sold by hand; that money is his, not the ledger's.
+        # were SOLD — by his hand, by a settlement, or by an order the
+        # ledger missed — and every sale of bond shares is a bond sale
+        # (owner, 2026-09-06: "All sales of bonds are bond sales whether
+        # they are automated or manual"): the proceeds are the bonds'
+        # cash and the profit is earned, priced from the record.
         refund = round(cost * min(never_seen / removed, 1.0), 4) if removed > 0 else 0.0
         if refund > 0:
             self.spent = round(max(self.spent - refund, 0.0), 4)
             self.money_in = round(max(self.money_in - refund, 0.0), 4)
             if self.budget_mode != "tax":
                 self.budget = round(self.budget + refund, 4)
+        sold = round(max(removed - never_seen, 0.0), 4)
+        proceeds = fee = gain = 0.0
+        src = ""
+        if sold > 0.005:
+            sold_cost = round(cost - refund, 4)
+            proceeds, fee, src = self._record_exit(slug, side, sold, rec, sold_cost)
+            gain = round(proceeds - fee - sold_cost, 4)
+            self.cash = round(self.cash + proceeds - fee, 4)
+            self.realized = round(self.realized + gain, 4)
+            self.sold_usd = round(self.sold_usd + proceeds, 4)
         self._follow_tax()
         self._less.pop(slug, None)
         self.unconfirmed.pop(slug, None)
@@ -835,9 +851,67 @@ class Bonds:
                f"the record puts the bond side at {rec['qty']:g}")
         self._log(event="trimmed_to_exchange", market=slug, side=side,
                   qty=removed, cost=round(cost, 2), refund=round(refund, 2),
+                  sold=sold, proceeds=round(proceeds, 2), gain=round(gain, 2),
+                  priced=src, cash=round(self.cash, 2),
                   note=f"the exchange shows {exch:g} for {LESS_CONFIRM_S / 60:.0f} min "
                        f"and the record agrees ({why}); the ledger had {ledger:g}; "
-                       f"{never_seen:g} of those it never showed at all")
+                       f"{never_seen:g} of those it never showed at all"
+                       + (f"; {sold:g} sold outside the bond's own order — booked "
+                          f"as a bond sale at the {src}" if sold > 0.005 else ""))
+
+    def _record_exit(self, slug: str, side: str, qty: float, rec: dict,
+                     at_cost: float) -> tuple[float, float, str]:
+        """(proceeds, fee, source) for `qty` bond shares that left the
+        position outside the bond's own order: the record's newest exits
+        in the market, newest first, until they cover the shares; a
+        settlement pays the settlement price for what is left; with no
+        price in the record they are booked at cost, a gain of nothing.
+        Prices in the bond's own terms."""
+        rows = sorted((r for r in self._rec.values() if r.get("market") == slug),
+                      key=lambda r: -float(r.get("ts") or 0.0))
+        left = qty
+        proceeds = fee = 0.0
+        srcs: list[str] = []
+        settle = None
+        for r in rows:
+            if left <= 0.005:
+                break
+            t = str(r.get("type") or "")
+            if "RESOLUTION" in t:
+                px = r.get("price")
+                if px is not None and settle is None:
+                    px = float(px)
+                    settle = px if side == "YES" else round(1.0 - px, 4)
+                continue
+            if "TRADE" not in t:
+                continue
+            it = str(r.get("intent") or "")
+            bs = str(r.get("side") or "")
+            if side == "YES":
+                exit_ = it == SELL_LONG or (not it and bs == "SELL")
+            else:
+                exit_ = it == SELL_SHORT or (not it and bs == "BUY")
+            if not exit_:
+                continue
+            sh = float(r.get("shares") or 0.0)
+            px = float(r.get("price") or 0.0)
+            if sh <= 0 or px <= 0:
+                continue
+            per = px if side == "YES" else round(1.0 - px, 4)
+            take = min(sh, left)
+            proceeds += take * per
+            fee += float(r.get("commission") or 0.0) * take / sh
+            left -= take
+            if "record" not in srcs:
+                srcs.append("record")
+        if left > 0.005 and settle is not None:
+            proceeds += left * settle
+            left = 0.0
+            srcs.append("settlement")
+        if left > 0.005:
+            proceeds += at_cost * left / qty if qty > 0 else 0.0
+            srcs.append("cost")
+        return round(proceeds, 4), round(fee, 4), "+".join(srcs) or "cost"
         self._mark_engine()
 
     # ------------------------------------------------------------ earnings
@@ -3588,7 +3662,7 @@ class Bonds:
                 "budget_mode": self.budget_mode,
                 "unpinged": round(self.unpinged, 4),
                 "realized": round(self.realized, 4), "sold_usd": round(self.sold_usd, 4),
-                "money_in": round(self.money_in, 4), "money_in_v": 2,
+                "money_in": round(self.money_in, 4), "money_in_v": 3,
                 "accrued": self.accrued, "accrued_mkt": self.accrued_mkt,
                 "accrued_at": round(self._accrued_at, 1),
                 "lot_ts": self.lot_ts, "exch_max": self.exch_max,
@@ -3627,6 +3701,7 @@ class Bonds:
                 # 2026-09-03). Dropped; what it charged goes back.
                 spent = float(d.get("spent") or 0.0)
                 d["spent"] = round(max(spent - lot["cost"], 0.0), 4)
+                d["money_in"] = round(max(float(d.get("money_in") or 0.0) - lot["cost"], 0.0), 4)
                 if str(d.get("budget_mode") or "tax") != "tax":
                     d["budget"] = round(float(d.get("budget") or 0.0) + lot["cost"], 4)
                 unbooked.append({"event": "unbooked_unconfirmed", "market": str(k),
@@ -3643,17 +3718,35 @@ class Bonds:
         self.unpinged = float(d.get("unpinged") or 0.0)
         self.realized = float(d.get("realized") or 0.0)
         self.sold_usd = float(d.get("sold_usd") or 0.0)
-        if int(d.get("money_in_v") or 0) >= 2:
+        v = int(d.get("money_in_v") or 0)
+        ident = round(sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
+                          for l in self.lots.values())
+                      + self.cash - self.realized, 4)
+        if v >= 3:
             self.money_in = float(d.get("money_in") or 0.0)
+        elif v == 2:
+            # state from before every sale of bond shares was a bond
+            # sale (owner, 2026-09-06): shares sold outside the bond's
+            # own order left the ledger with their cost still in "put
+            # in" and their proceeds outside it, and the proceeds re-spent
+            # were charged again as new money ($266.41 on 2026-09-06).
+            # Re-seeded once from what holds.
+            before = float(d.get("money_in") or 0.0)
+            self.money_in = ident
+            if abs(before - ident) > 0.01:
+                unbooked.append({"event": "money_in_corrected", "before": round(before, 2),
+                                 "after": round(ident, 2),
+                                 "note": "put in re-seeded as held + proceeds waiting − "
+                                         "profit taken: sales outside the bond's own "
+                                         "order are bond sales now",
+                                 "ts": round(self._clock(), 1)})
         else:
             # state from before this was kept right: outside money is
             # what is held plus the proceeds waiting, less the profit
             # taken — the first seed added the sold shares' cost on top
             # of lots already bought with those proceeds (2026-09-03:
             # $973.55 "put in" against $897.75 held)
-            self.money_in = round(sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
-                                      for l in self.lots.values())
-                                  + self.cash - self.realized, 4)
+            self.money_in = ident
         self.accrued = {str(k): float(v) for k, v in (d.get("accrued") or {}).items()}
         self.accrued_mkt = {str(k): float(v) for k, v in (d.get("accrued_mkt") or {}).items()}
         self._accrued_at = float(d.get("accrued_at") or 0.0)
