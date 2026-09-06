@@ -539,6 +539,10 @@ class Family:
         # politics budget" — orders there answer to the bond budget, not
         # this family's ceiling, and never graduate
         self.bond_markets: set[str] = set()
+        # the event's market count as last seen for every market, so a
+        # short events feed (2026-09-05: the list went blind and every
+        # estimate read $0.00) does not take the divisor with it
+        self.event_n_seen: dict[str, int] = {}
         self.priority: set = set()   # markets to re-check first
         self.pending_pages: list = []   # open fills awaiting a mark
         self.log: list[dict] = []
@@ -797,6 +801,11 @@ class Family:
         estimate until you have a grasp of everything you need to know")."""
         u = self.universe.get(slug) or {}
         n = u.get("event_n")
+        if not n and slug not in self.universe:
+            # a market the list no longer carries (closed, or a feed that
+            # came back short) keeps the divisor it last had confirmed;
+            # a market listed WITHOUT one stays unconfirmed
+            n = self.event_n_seen.get(slug)
         if not n:
             return None
         # daily_pool, not pool: a bounded program's rewardPool covers
@@ -817,9 +826,24 @@ class Family:
         except Exception as e:  # noqa: BLE001 — keep the old universe
             self._log(event="discover_error", error=str(e)[:80])
             return
+        old = self.universe
+        if old and len(found) < 0.6 * len(old):
+            # a feed that came back empty or far short — a 200 with no
+            # events, the VPN flag on the read side — is no verdict on the
+            # markets we know: the last full list stands, what did come
+            # back is folded in, and discovery tries again in ten minutes
+            # (2026-09-05: the list went blind, every estimate read $0.00)
+            merged = dict(old)
+            merged.update(found)
+            self._log(event="discover_partial", got=len(found), kept=len(old),
+                      note="the events feed came back short — the last full list stands")
+            self.last_discover = now - self.cfg.discover_s + 600.0
+            found = merged
         fresh = set(found) - set(self.universe)
         self.universe = found
         for s, row in found.items():
+            if isinstance(row, dict) and row.get("event_n"):
+                self.event_n_seen[s] = int(row["event_n"])
             if isinstance(row, dict) and row.get("start"):
                 self.event_start[s] = float(row["start"])
         for s in [s for s, t in self.event_start.items()
@@ -864,9 +888,23 @@ class Family:
         except Exception as e:  # noqa: BLE001 — aged terms beat no terms
             self._log(event="terms_error", error=str(e)[:80])
             return
+        # a read that comes back with NO program for a batch of markets
+        # that had live ones is no data, not a verdict: one empty answer
+        # must not read as every program gone and clear the book (the
+        # 2026-09-05 evening: 470 politics and 34 cfb orders pulled as
+        # "program pays nothing" inside an hour). A program that ends
+        # while its neighbours still read live is still gone.
+        live_before = sum(1 for s in batch if self.terms.get(s) is not None)
+        got = sum(1 for s in batch if raw.get(s))
+        if got == 0 and live_before >= 3:
+            self._log(event="terms_suspect", asked=len(batch), live=live_before,
+                      note="the incentives read came back with no program for "
+                           "markets that had live ones — treated as no data")
+            return
         for slug in batch:
             raw.setdefault(slug, {})
-        sizes = {s: int((self.universe.get(s) or {}).get("event_n") or 0) or 1
+        sizes = {s: int((self.universe.get(s) or {}).get("event_n")
+                        or self.event_n_seen.get(s) or 0) or 1
                  for s in batch}
         changes = self.terms.refresh(raw, sizes, now=now)
         # the store only keeps LIVE programs; a slug we asked about that
@@ -4760,6 +4798,7 @@ class Family:
                              for oid, g in self.gone_pending.items()},
             "last_action": self.last_action,
             "known_dead": sorted(self.known_dead),
+            "event_n_seen": self.event_n_seen,
             "wind_down": self.wind_down[-400:],
             "seen_pids": sorted(self.seen_pids),
             "inv_since": self.inv_since,
@@ -4815,6 +4854,8 @@ class Family:
                 continue
         self.last_action = dict(d.get("last_action") or {})
         self.known_dead = set(d.get("known_dead") or ())
+        self.event_n_seen = {str(k): int(v) for k, v in
+                             (d.get("event_n_seen") or {}).items() if v}
         self.wind_down = list(d.get("wind_down") or ())
         self.seen_pids = set(d.get("seen_pids") or ())
         self.inv_since = dict(d.get("inv_since") or {})

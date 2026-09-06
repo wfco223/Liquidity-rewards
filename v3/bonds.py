@@ -108,8 +108,11 @@ DROPPED_KEEP = 30
 ENTER_MAX_LEVELS = 20       # the owner's entry sweeps at most this many levels
 LADDER_SHOW = 8             # entry-side levels the page shows to enter at
 ACCRUE_GAP_MAX_S = 600.0    # a gap between cycles longer than this counts as this
-BOOK_MAX_AGE_S = 300.0      # a listed market's book older than this is read again
-BOOK_READS_PER_CYCLE = 4    # at most this many such reads per cycle
+BOOK_MAX_AGE_S = 60.0       # a working market's book older than this is read again,
+BOOK_READS_PER_CYCLE = 40   # at the START of the pass, this many at most (owner,
+                            # 2026-09-05: "I just want the program to have up
+                            # to date data") — the stream only sends changes,
+                            # and a bond acts only on a book it can trust
 BAIT_QTY = 1.0              # the bait: one share a tick inside their best on the buy side
 BAIT_WAIT_S = 2 * 3600.0    # nobody followed in this long: the bait comes off
 BOOK_SHOW = 6               # levels per side the page shows
@@ -280,6 +283,7 @@ class Bonds:
         # cost"): the whole lot rests there, pinned, until he clears it
         self.exit_px: dict[str, dict] = {}     # slug -> {px (YES terms), bond_px, since, by}
         self.money_out: dict | None = None     # {since, bp, freed, pulled} while the bonds only sell
+        self.exit_note: dict[str, str] = {}    # slug -> why no exit rests, for the card
         # a sale by his hand the position feed has not shown yet: the
         # sync must not hand the sold shares back meanwhile
         self._await_drop: dict[str, tuple] = {}   # slug -> (qty sold, since)
@@ -1394,6 +1398,7 @@ class Bonds:
         self.scan(now)
         self._follow_tax()
         self._mark_engine()
+        self._refresh_books(now)             # fresh books BEFORE acting on them
         placed: list[dict] = []
         # sales: our earning order gave up shares and the ledger shrinks
         for slug in self._working():
@@ -1454,7 +1459,6 @@ class Bonds:
         self.dots.append([round(now, 1), round(rate, 2)])
         del self.dots[:-DOTS_KEEP]
         self._accrue(now)
-        self._refresh_books(now)
         if not hasattr(self, "_exch_seen"):
             self._exch_seen = {}
         for slug in set(self.approved) | set(self.lots):
@@ -1804,6 +1808,7 @@ class Bonds:
                                                 initiator="owner", intent=intent)
                 if not (r.ok and r.order_id):
                     self._log(event="earn_refused", market=slug, note=r.note[:120])
+                    self.exit_note[slug] = f"placement refused: {r.note[:90]}"
                     return None
                 use_intent = r.intent or intent
             self.fam.orders[r.order_id] = FamilyOrder(
@@ -1897,6 +1902,7 @@ class Bonds:
         never chases forward; it moves back, on a cooldown, only when
         it has become the touch."""
         bs, intent = self.earn(side)
+        self.exit_note.pop(slug, None)
         if self.held(slug, side) < 1.0:
             # nothing in the ledger: an earn order or decoy of ours still
             # resting here is stale (a lot trimmed away) — it comes off
@@ -1907,12 +1913,18 @@ class Bonds:
                     self._log(event="earn_pulled", market=slug, price=o.price,
                               qty=o.qty, note="no bond shares held here")
             return None
-        held = min(self.held(slug, side),
-                   self.exchange_held(slug, side, positions))
+        exch = self.exchange_held(slug, side, positions)
+        held = min(self.held(slug, side), exch)
         if held < 1.0:
+            self.exit_note[slug] = f"the exchange shows {exch:g} shares here — nothing to sell yet"
             return None
         book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
+            age = self.fam.cache.age(slug, now) if hasattr(self.fam.cache, "age") else None
+            self.exit_note[slug] = (f"no book under {BOOK_ACT_S:g}s old"
+                                    + (f" (last read {age / 60:.0f} min ago)"
+                                       if age is not None and age != float("inf") else "")
+                                    + " — reading it again next pass")
             return None
         tick = book.tick or 0.01
         bound = self._bound(slug, side, tick)
@@ -1997,6 +2009,7 @@ class Bonds:
         # with less exposure (owner, 2026-09-05)
         plan = self._exit_plan(slug, side, book, max(lot_qty, 1.0), bound)
         if plan is None:
+            self.exit_note[slug] = "no price above cost to rest at on this book"
             return None
         if not mine:
             return self._apply_exit_plan(slug, side, bs, intent, [], plan["levels"], plan,
@@ -2178,10 +2191,12 @@ class Bonds:
         """The stream sends a book only when it changes, so a quiet
         market's cached book just ages, and a listed market nothing
         else works is never read at all (owner, 2026-09-03: "A lot of
-        the books are stale"). Every cycle the oldest listed books past
-        BOOK_MAX_AGE_S are read again, a few at a time."""
+        the books are stale"). At the start of every pass the books of
+        every market the bond side works, past BOOK_MAX_AGE_S, are read
+        again, oldest first — so what the pass acts on is seconds old
+        and what it pulls it can put back."""
         due = []
-        for slug in self.approved:
+        for slug in sorted(set(self._working()) | set(self.approved)):
             age = self.fam.cache.age(slug, now) if hasattr(self.fam.cache, "age") else None
             if age is None:
                 b = self.fam.cache.any_age(slug)
@@ -3323,6 +3338,7 @@ class Bonds:
                      if (held > 0.005 or self._orders(slug)) else None),
             "dance": self.dance.get(slug),
             "stale": (book is None or now - book.fetched_at > 600.0),
+            "exit_note": self.exit_note.get(slug),
             "slot": self.slot.get(slug),
             "hold_until": (self.fam.hold_until.get(slug)
                            if self.fam.hold_until.get(slug, 0.0) > now else None),
