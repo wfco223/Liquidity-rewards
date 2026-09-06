@@ -274,6 +274,9 @@ class Bonds:
         self._rec_at: float = 0.0
         self._rec_deep: bool = False
         self._less: dict[str, dict] = {}       # slug -> {exch, since, reads}
+        # shares the ledger itself booked as sold since the lot was last
+        # booked: the record's exits beyond these are sales it missed
+        self._booked_out: dict[str, float] = {}
         self.unconfirmed: dict[str, dict] = {}  # slug -> smaller on the feed, no sale on record
         self.cost_src: dict[str, str] = {}     # slug -> where the cost basis came from
         self._more_retry: dict[str, float] = {}
@@ -402,6 +405,7 @@ class Bonds:
         counted in himself. A lot with no such backing is dropped at
         restore (the Hawaii case, 2026-09-03)."""
         self.lot_ts[slug] = self._clock()
+        self._booked_out.pop(slug, None)
         fresh = slug not in self.lots
         lot = self.lots.setdefault(slug, {"qty": 0.0, "cost": 0.0, "fills": [], "fees": 0.0})
         lot["fees"] = round(float(lot.get("fees") or 0.0) + fee, 4)
@@ -807,7 +811,17 @@ class Bonds:
         rec = self._record_position(slug, side)
         before = self.exch_max.get(slug, 0.0)
         never_seen = round(max(ledger - max(before, exch), 0.0), 4)
-        if not (rec["resolved"] or rec["qty"] <= exch + 0.5 or never_seen > 0.005):
+        removed = round(ledger - exch, 4)
+        # the record agrees when its walk says the shares are gone — or
+        # when its exits since this lot was last booked, beyond what the
+        # ledger booked itself, cover the missing shares. The walk is an
+        # absolute count and one misread row throws it (WV Senate rep,
+        # 2026-09-06: the record held the 49-share sale, the walk said
+        # 4.12); the recent exits are what a sale actually leaves behind.
+        missed = self._record_exits_since(slug, side, float(self.lot_ts.get(slug) or 0.0) - 60.0) \
+            - float(self._booked_out.get(slug) or 0.0)
+        if not (rec["resolved"] or rec["qty"] <= exch + 0.5 or never_seen > 0.005
+                or missed + 0.5 >= removed):
             if slug not in self.unconfirmed:
                 self._log(event="holding_unconfirmed", market=slug, side=side,
                           exch=exch, ledger=ledger, record=rec["qty"],
@@ -818,6 +832,61 @@ class Bonds:
             self.unconfirmed[slug] = {"exch": exch, "ledger": ledger,
                                       "since": st["since"], "record": rec["qty"]}
             return
+        why = ("settled" if rec["resolved"] else
+               f"never on the exchange" if never_seen >= removed - 0.005 else
+               f"the record puts the bond side at {rec['qty']:g}" if rec["qty"] <= exch + 0.5 else
+               f"the record shows {missed:g} sold since the last purchase")
+        self._write_off(slug, side, ledger, exch, rec, never_seen, why)
+
+    def _record_exits_since(self, slug: str, side: str, since: float) -> float:
+        """Shares the record shows leaving the bond side of this market
+        after `since`."""
+        total = 0.0
+        for r in self._rec.values():
+            if r.get("market") != slug or float(r.get("ts") or 0.0) < since:
+                continue
+            if "TRADE" not in str(r.get("type") or ""):
+                continue
+            it = str(r.get("intent") or "")
+            bs = str(r.get("side") or "")
+            if side == "YES":
+                exit_ = it == SELL_LONG or (not it and bs == "SELL")
+            else:
+                exit_ = it == SELL_SHORT or (not it and bs == "BUY")
+            if exit_:
+                total += float(r.get("shares") or 0.0)
+        return round(total, 4)
+
+    def book_sale(self, slug: str, now: float, positions: dict | None = None) -> dict:
+        """His tap on the unconfirmed banner (owner, 2026-09-06, WV Senate
+        rep: "This order is what is missing. Can you fix it"): the
+        exchange shows fewer shares than the ledger and he says he sold
+        them. His word stands in for the record's agreement — the
+        shares are booked as a bond sale at the record's price where it
+        has one, else at cost — and the five-minute wait is skipped."""
+        if slug not in self.lots:
+            return {"ok": False, "note": "no bond shares counted here"}
+        side = self._side_of(slug)
+        ledger = self.held(slug, side)
+        exch = self.exchange_held(slug, side, positions)
+        if exch + 0.5 >= ledger:
+            return {"ok": False, "note": f"the exchange shows {exch:g} of the {ledger:g} the "
+                                         f"ledger has — nothing to book as sold"}
+        self._refresh_record(now, force=True)
+        rec = self._record_position(slug, side)
+        before = self.exch_max.get(slug, 0.0)
+        never_seen = round(max(ledger - max(before, exch), 0.0), 4)
+        ev = self._write_off(slug, side, ledger, exch, rec, never_seen, "you say so")
+        return {"ok": True, "note": f"booked {ev['sold']:g} sold for {ev['proceeds']:.2f} "
+                                    f"({'+' if ev['gain'] >= 0 else '−'}${abs(ev['gain']):.2f}, "
+                                    f"priced from the {ev['priced']}); cash is now "
+                                    f"${self.cash:,.2f}"}
+
+    def _write_off(self, slug: str, side: str, ledger: float, exch: float, rec: dict,
+                   never_seen: float, why: str) -> dict:
+        """Shares the ledger holds and the exchange no longer shows leave
+        the ledger: what the exchange never showed is refunded, the rest
+        is a bond sale. Returns the log row."""
         removed = round(ledger - exch, 4)
         cost = self._unbook_lot(slug, side, removed)
         # shares the exchange NEVER showed were never bought: their cost
@@ -846,18 +915,16 @@ class Bonds:
         self._follow_tax()
         self._less.pop(slug, None)
         self.unconfirmed.pop(slug, None)
-        why = ("settled" if rec["resolved"] else
-               f"never on the exchange" if never_seen >= removed - 0.005 else
-               f"the record puts the bond side at {rec['qty']:g}")
-        self._log(event="trimmed_to_exchange", market=slug, side=side,
-                  qty=removed, cost=round(cost, 2), refund=round(refund, 2),
-                  sold=sold, proceeds=round(proceeds, 2), gain=round(gain, 2),
-                  priced=src, cash=round(self.cash, 2),
-                  note=f"the exchange shows {exch:g} for {LESS_CONFIRM_S / 60:.0f} min "
-                       f"and the record agrees ({why}); the ledger had {ledger:g}; "
-                       f"{never_seen:g} of those it never showed at all"
-                       + (f"; {sold:g} sold outside the bond's own order — booked "
-                          f"as a bond sale at the {src}" if sold > 0.005 else ""))
+        row = dict(event="trimmed_to_exchange", market=slug, side=side,
+                   qty=removed, cost=round(cost, 2), refund=round(refund, 2),
+                   sold=sold, proceeds=round(proceeds, 2), gain=round(gain, 2),
+                   priced=src, cash=round(self.cash, 2),
+                   note=f"the exchange shows {exch:g}; {why}; the ledger had {ledger:g}; "
+                        f"{never_seen:g} of those it never showed at all"
+                        + (f"; {sold:g} sold outside the bond's own order — booked "
+                           f"as a bond sale at the {src}" if sold > 0.005 else ""))
+        self._log(**row)
+        return row
 
     def _record_exit(self, slug: str, side: str, qty: float, rec: dict,
                      at_cost: float) -> tuple[float, float, str]:
@@ -1403,6 +1470,7 @@ class Bonds:
             self.cash = round(self.cash + proceeds - fee, 4)
             self.realized = round(self.realized + proceeds - fee - cost, 4)
             self.sold_usd = round(self.sold_usd + proceeds, 4)
+            self._booked_out[slug] = round(self._booked_out.get(slug, 0.0) + filled, 4)
             self.fam.orders[r.order_id] = FamilyOrder(
                 id=r.order_id, market=slug, side=bs, price=fill_px, qty=filled,
                 intent=(r.intent or intent), placed_ts=now, purpose="bond",
@@ -1504,6 +1572,7 @@ class Bonds:
                     self.cash = round(self.cash + proceeds, 4)
                     self.realized = round(self.realized + proceeds - cost, 4)
                     self.sold_usd = round(self.sold_usd + proceeds, 4)
+                    self._booked_out[slug] = round(self._booked_out.get(slug, 0.0) + sold, 4)
                     self._log(event="sold", market=slug, side=side,
                               qty=round(sold, 2), price=px,
                               proceeds=round(proceeds, 2),
@@ -3685,6 +3754,7 @@ class Bonds:
                 "slot": self.slot, "moved_at": self.moved_at,
                 "dance": self.dance,
                 "cost_src": self.cost_src, "unconfirmed": self.unconfirmed,
+                "booked_out": self._booked_out,
                 "more_retry": self._more_retry,
                 "exit_px": self.exit_px,
                 "money_out": self.money_out,
@@ -3806,6 +3876,7 @@ class Bonds:
         self.cost_src = {str(k): str(v) for k, v in (d.get("cost_src") or {}).items()}
         self.unconfirmed = {str(k): dict(v) for k, v
                             in (d.get("unconfirmed") or {}).items()}
+        self._booked_out = {str(k): float(v) for k, v in (d.get("booked_out") or {}).items()}
         self._more_retry = {str(k): float(v) for k, v
                             in (d.get("more_retry") or {}).items()}
         self.exit_px = {str(k): dict(v) for k, v in (d.get("exit_px") or {}).items()}
