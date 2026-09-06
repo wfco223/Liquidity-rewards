@@ -287,7 +287,7 @@ class Bonds:
         # exit a position at a given price if it is higher than my
         # cost"): the whole lot rests there, pinned, until he clears it
         self.exit_px: dict[str, dict] = {}     # slug -> {px (YES terms), bond_px, since, by}
-        self.money_out: dict | None = None     # {since, bp, freed, pulled} while the bonds only sell
+        self.money_out: dict | None = None     # {since, bp, walls, reserve}: the families' gate
         self.exit_note: dict[str, str] = {}    # slug -> why no exit rests, for the card
         # a sale by his hand the position feed has not shown yet: the
         # sync must not hand the sold shares back meanwhile
@@ -1588,18 +1588,16 @@ class Bonds:
         for s in list(self.exit_px):
             if self.held(s, self._side_of(s)) < 0.005:
                 self.exit_px.pop(s, None)        # out of the position: the pin is spent
-        # the money gate is judged switch on or off (the families read it
-        # too); its pulls happen only with the switch on
-        selling_only = self._money_gate(self._buying_power(now), now, act=on,
-                                        walls=self._wall_held())
+        # the families' gate, judged switch on or off: free money on the
+        # exchange beyond what the bonds may still spend (their room)
+        self._money_gate(self._buying_power(now), now, act=on,
+                         walls=self._wall_held(), reserve=self.budget_room())
         if on:
             for slug in self._working():
                 side = self._side_of(slug)
                 r = self._keep_earning(slug, side, positions, now)
                 if r:
                     placed.append(r)
-                if selling_only:
-                    continue            # no buying, no sniping (owner, 2026-09-05)
                 r = self._work_minnows(slug, side, positions, now)
                 if r:
                     placed.append(r)
@@ -2243,9 +2241,9 @@ class Bonds:
                                              "buying here, bait included"}
             return {"ok": False, "note": "not on the bond list"}
         side = meta["side"]
-        if self.money_out:
-            return {"ok": False, "note": "no money to deploy — the bonds only sell "
-                                         "until there is; bait is a buy"}
+        why_not = self._can_spend(1.0, now)          # a share costs under a dollar
+        if why_not:
+            return {"ok": False, "note": f"{why_not} — bait is a buy"}
         if self._bait_orders(slug):
             return {"ok": False, "note": "a bait already rests here — pull it first"}
         book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
@@ -2603,10 +2601,14 @@ class Bonds:
             bp = fn()
         except Exception:  # noqa: BLE001 — unknown, not zero
             return self._bp[0] if self._bp is not None else None
-        if bp is None:
+        try:
+            val = float(bp) if bp is not None else None
+        except (TypeError, ValueError):
+            val = None
+        if val is None:
             return None
-        self._bp = (float(bp), now)
-        return float(bp)
+        self._bp = (val, now)
+        return val
 
     def _placing_blocked(self) -> bool:
         """The exchange is refusing placements (2026-09-05, the VPN flag):
@@ -2629,69 +2631,82 @@ class Bonds:
                    for o in list(self.fam.orders.values())
                    if o.why == QUALIFY_WALL_WHY)
 
+    # -- the budget rule (owner, 2026-09-06) --------------------------------
+    def budget_total(self) -> float:
+        """The budget the bonds may hold at cost: what he owes in taxes
+        while the budget follows them, else the amount he set plus what
+        it has bought since."""
+        if self.budget_mode == "tax":
+            t = self.tax_owed()
+            owed = float((t or {}).get("owed") or 0.0)
+            if owed > 0:
+                return round(owed, 4)
+        return round(self._budget_now() + self.spent, 4)
+
+    def invested(self) -> float:
+        """Everything held as bonds, at cost with fees."""
+        return round(sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
+                         for l in self.lots.values()), 4)
+
+    def budget_room(self) -> float:
+        """Owner, 2026-09-06: "the bonds can use money so long as the
+        amount invested plus the buy orders in any given market are less
+        than the budget... in any given market there should not be
+        orders that would put the total cost of bonds I own over the
+        budget." What ONE market's buy orders may total: the budget less
+        everything held at cost. Every market gets the same room, so
+        across markets the orders may exceed the budget — a fill
+        anywhere shrinks the room everywhere and the next pass resizes."""
+        return round(self.budget_total() - self.invested(), 4)
+
+    def _can_spend(self, usd: float, now: float) -> str | None:
+        """Why a buy of `usd` may not go on now — over the room, or more
+        than the exchange will fund — or None when it may. The exchange's
+        free money is a sizing fact, never a gate on its own."""
+        room = self.budget_room()
+        if usd > room + 1e-9:
+            if room < 1.0:
+                return (f"budget full: ${self.invested():,.2f} in bonds against a "
+                        f"${self.budget_total():,.2f} budget")
+            return f"over the budget room (${room:,.2f} left for this market's buys)"
+        bp = self._buying_power(now)
+        if bp is not None and usd > bp + 1e-9:
+            return f"no buying power for it (${bp:,.2f} free on the exchange)"
+        return None
+
     def _money_gate(self, bp: float | None, now: float, act: bool = True,
-                    walls: float = 0.0) -> bool:
-        """Owner, 2026-09-05: "When there is no money to deploy, all the
-        bond functions except for selling shares to generate proceeds
-        (never below cost) is the only thing that should be going on. No
-        more buying or sniping." Under NO_MONEY_USD of free buying power
-        the buy-more bids, decoys and bait come off and nothing is
-        bought, taken or baited; the exits keep working. Buying resumes
-        once MONEY_BACK_USD is free beyond what pulling our own bids
-        freed. `walls` — what his qualifying walls hold — counts as free
-        (owner, 2026-09-06). The state is judged whether or not the
-        bonds switch is on (the families read it too); `act` says
-        whether to pull. True while the bonds only sell."""
-        free = None if bp is None else bp + walls
+                    walls: float = 0.0, reserve: float = 0.0) -> bool:
+        """The families' gate (owner, 2026-09-05: "put a no money sell
+        gate on politics and cfb"; 2026-09-06: "they can use any money
+        available after reserving all of the money available for
+        bonds"). Free money on the exchange, plus what his walls hold,
+        less the bonds' budget room: under NO_MONEY_USD the families
+        place nothing new that buys; back over MONEY_BACK_USD they
+        resume. The bonds themselves are not gated here — their buys
+        are bounded by the budget room, market by market, and sized to
+        what the exchange will fund. Nothing is pulled. True while the
+        families should only sell."""
+        free = None if bp is None else bp + walls - max(reserve, 0.0)
         if free is None:
-            out = bool(self.money_out)           # unknown: the mode stands as it is
-        elif self.money_out:
-            need = MONEY_BACK_USD + float(self.money_out.get("freed") or 0.0)
-            if free >= need:
+            return bool(self.money_out)          # unknown: the mode stands as it is
+        if self.money_out:
+            if free >= MONEY_BACK_USD:
                 self._log(event="money_back", bp=round(bp, 2), walls=round(walls, 2),
-                          note=f"${free:,.2f} free: buying and the sniper resume")
+                          reserve=round(reserve, 2),
+                          note=f"${free:,.2f} free beyond the bonds' reserve: politics "
+                               f"and cfb may buy again")
                 self.money_out = None
                 return False
-            out = True
-        elif free < NO_MONEY_USD:
+            return True
+        if free < NO_MONEY_USD:
             self.money_out = {"since": round(now, 1), "bp": round(bp, 2),
-                              "walls": round(walls, 2), "freed": 0.0, "pulled": 0}
+                              "walls": round(walls, 2), "reserve": round(reserve, 2)}
             self._log(event="money_out", bp=round(bp, 2), walls=round(walls, 2),
-                      note="no money to deploy: exits only — no buying, no sniping, "
-                           "no bait")
-            out = True
-        else:
-            return False
-        if out and act:
-            self._pull_buying()
-        return out
-
-    def _pull_buying(self) -> None:
-        """While the money is out: every order of the bond's that buys
-        comes off — buy-more bids, decoys, bait — and what they held is
-        counted, so their own collateral coming back is not mistaken
-        for new money."""
-        assert self.money_out is not None
-        why = "no money to deploy: the bonds only sell until there is"
-        freed = 0.0
-        pulled = 0
-        for slug in self._working():
-            side = self._side_of(slug)
-            before = {o.id: o for o in self._more_orders(slug)}
-            if before:
-                self._pull_more(slug, why)
-                gone = [o for oid, o in before.items() if oid not in self.fam.orders]
-                freed += sum(o.qty * (o.price if side == "YES" else round(1.0 - o.price, 4))
-                             for o in gone)
-                pulled += len(gone)
-            self._pull_decoys(slug, side)
-            if self._bait_orders(slug):
-                self.pull_bait(slug, why=why)
-        if pulled:
-            self.money_out["freed"] = round(float(self.money_out.get("freed") or 0.0) + freed, 2)
-            self.money_out["pulled"] = int(self.money_out.get("pulled") or 0) + pulled
-            self._log(event="money_pull", freed=round(freed, 2), pulled=pulled,
-                      note="buy-more bids off while the money is out")
+                      reserve=round(reserve, 2),
+                      note="no money beyond the bonds' reserve: politics and cfb "
+                           "place nothing new that buys")
+            return True
+        return False
 
     def _pull_more(self, slug: str, why: str) -> None:
         for o in self._more_orders(slug):
@@ -2728,6 +2743,19 @@ class Bonds:
                 self._pull_more(slug, "nothing held here" if cap_usd >= 1.0
                                 else "buy-more amount is zero")
             return None
+        # the budget rule (owner, 2026-09-06): this market's buy orders
+        # may total the room — the budget less everything held at cost
+        room = self.budget_room()
+        if room < 1.0:
+            note = (f"budget full: ${self.invested():,.2f} in bonds against a "
+                    f"${self.budget_total():,.2f} budget")
+            if cur:
+                self._pull_more(slug, note)
+            if self._more_note.get(slug) != note:
+                self._more_note[slug] = note
+                self._log(event="more_none", market=slug, note=note)
+            return None
+        cap_usd = min(cap_usd, room)
         book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return None
@@ -3155,6 +3183,16 @@ class Bonds:
             qty = float(min(qty, math.floor(size2)))
             if qty < 1.0:
                 return None
+        # the take is a buy: within this market's budget room, and no
+        # more than the exchange will fund (owner, 2026-09-06)
+        why_not = self._can_spend(qty * (px if side == "YES" else round(1.0 - px, 4)), now)
+        if why_not:
+            if self._more_note.get(slug + "|take") != why_not:
+                self._more_note[slug + "|take"] = why_not
+                self._log(event="take_skipped", market=slug, side=side, price=px,
+                          qty=qty, note=why_not)
+            return None
+        self._more_note.pop(slug + "|take", None)
         # a taker order fills and never rests, so it is not verified as
         # resting (the dump learned this): the fill shows up in the
         # position feed and the exchange's trade record
@@ -3606,8 +3644,10 @@ class Bonds:
                "cap_px": (round(px0 if side == "YES" else 1.0 - px0, 4) if px0 > 0 else None),
                "paused": ("the odds left the band: no new buying here"
                           if slug not in self.approved else
-                          "no money to deploy: nothing new is bought until there is"
-                          if self.money_out else None),
+                          f"budget full: ${self.invested():,.2f} in bonds against a "
+                          f"${self.budget_total():,.2f} budget"
+                          if self.budget_room() < 1.0 else None),
+               "room": round(max(self.budget_room(), 0.0), 2),
                "retry_at": (self._more_retry.get(slug)
                             if self._more_retry.get(slug, 0.0) > self._clock() else None),
                "note": self._more_note.get(slug)}
@@ -3683,6 +3723,9 @@ class Bonds:
                 "budget_mode": self.budget_mode, "tax": self.tax_owed() or None,
                 "money": round(self._money(), 2),
                 "money_out": self.money_out,
+                "budget_total": round(self.budget_total(), 2),
+                "invested": round(self.invested(), 2),
+                "room": round(self.budget_room(), 2),
                 "wall_held": round(self._wall_held(), 2),
                 "no_money_usd": NO_MONEY_USD, "money_back_usd": MONEY_BACK_USD,
                 "earned": self._earned(),

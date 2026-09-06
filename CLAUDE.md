@@ -72,6 +72,13 @@ long and accreted, so search it rather than reading it through.
   under cost, the loss shown in the confirm and booked as a bond sale,
   the proceeds cash at once. Owner's tap only; the engine never sells a
   bond under cost. Nothing else may cross.
+- Bond money (owner, 2026-09-06): the bonds buy within the budget
+  market by market — in any one market, what is held at cost plus that
+  market's buy orders stays under the budget; across markets the orders
+  may add up to more. The exchange's free money only sizes an order,
+  never gates one. Politics and cfb may buy only with free money beyond
+  what the bonds may still spend (their room). No engine pulls a
+  resting bid to "free money".
 - NO SCHEDULED GitHub Actions (owner, 2026-08-24: "remove the GitHub
   automation. It keeps running and I keep getting emails"). Every cron
   workflow is deleted; the monitor writes rewards.csv, fills.csv,
