@@ -1102,10 +1102,15 @@ class TestTheExchangeIsTheTruth(Base):
         self.assertEqual(self.b.held(AL, "YES"), 100.0)        # nor two
         self.b.cycle(self.now + 400, self.positions(), on=True)
         self.assertEqual(self.b.held(AL, "YES"), 60.0)         # three reads over 5 min: the truth
-        self.assertEqual(self.b.cash, 0.0)                     # a hand sale: not reinvested
+        # a hand sale is a bond sale (owner, 2026-09-06): with no price
+        # in the record the shares are booked at cost, a gain of nothing
+        self.assertAlmostEqual(self.b.cash, 40 * 0.98, places=4)
+        self.assertEqual(self.b.realized, 0.0)
+        self.assertAlmostEqual(self.b.sold_usd, 40 * 0.98, places=4)
         self.assertEqual(self.b.budget, 1000.0)                # and nothing refunded
         ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"]
-        self.assertEqual((ev[0]["qty"], ev[0]["refund"]), (40.0, 0.0))
+        self.assertEqual((ev[0]["qty"], ev[0]["refund"], ev[0]["sold"]), (40.0, 0.0, 40.0))
+        self.assertEqual(ev[0]["priced"], "cost")
 
     def test_one_short_read_writes_nothing_off(self):
         # the 2026-09-04 wipe: the feed showed every holding as zero on
@@ -1250,6 +1255,7 @@ class TestOnlyConfirmedFillsAreHeld(Base):
         self.assertEqual(b2.lots[AL]["fills"], ["T7"])
         self.assertAlmostEqual(b2.budget, 1000.0, places=2)   # the 9.30 came back
         self.assertEqual(b2.spent, 0.0)
+        self.assertEqual(b2.money_in, 0.0)                     # and left "put in" too
         ev = [e for e in b2.log if e["event"] == "unbooked_unconfirmed"]
         self.assertEqual((ev[0]["market"], ev[0]["qty"]), (ALD, 10.0))
 
@@ -1356,6 +1362,23 @@ class TestFiveExecutionsAreFive(Base):
         # and nothing changes once it agrees
         b2.cycle(self.now + 60, self.positions(), on=False)
         self.assertEqual(len([e for e in b2.log if e["event"] == "fill_corrected"]), 1)
+
+    def test_a_fill_booked_long_gives_the_money_back(self):
+        # 5 booked on an order that filled 1: the 4 were never bought,
+        # so their cost leaves spent AND put in (2026-09-06)
+        self.b._book_lot(AL, "YES", 5.0, 4.95, ref="C8R")
+        self.b._pay(4.95)
+        self.assertAlmostEqual(self.b.money_in, 4.95, places=4)
+        d = self.b.to_dict()
+        d.pop("fill_book", None)
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
+                   clock=lambda: self.now, sleep=lambda s: None)
+        b2.restore(d)
+        self.r.exchange.recent_trades = lambda limit=25: self.rows("C8R", 1)
+        b2.cycle(self.now + 30, self.positions(), on=False)
+        self.assertEqual(b2.held(AL, "YES"), 1.0)
+        self.assertAlmostEqual(b2.spent, 0.99, places=2)
+        self.assertAlmostEqual(b2.money_in, 0.99, places=2)
 
 
 class TestBuyingMore(Base):
@@ -3339,3 +3362,124 @@ class TestQualifyTheSide(Base):
         self.assertTrue(out["ok"])
         self.assertIn(("qualify", AL), calls)
         self.assertTrue(any(k == "audit" and d["op"] == "bonds_qualify" for k, d in calls))
+
+
+class TestEverySaleIsABondSale(Base):
+    """Owner, 2026-09-06: "All sales of bonds are bond sales whether they
+    are automated or manual." Shares the exchange once showed and no
+    longer does are booked as a sale at the record's price — proceeds
+    to the bonds' cash, profit to earned, put in untouched — and the
+    money that shares never bought leaves put in as well."""
+
+    def setUp(self):
+        super().setUp()
+        from v3.main import parse_activities
+        self.b.parse = parse_activities
+
+    @staticmethod
+    def resolution_row(market, price, ts, held=100.0):
+        import time as _t
+        iso = _t.strftime("%Y-%m-%dT%H:%M:%SZ", _t.gmtime(ts))
+        return {"type": "ACTIVITY_TYPE_POSITION_RESOLUTION", "positionResolution": {
+            "marketSlug": market, "updateTime": iso,
+            "settlementPrice": {"value": f"{price:.4f}"},
+            "beforePosition": {"quantity": f"{held:g}"},
+            "afterPosition": {"quantity": "0"}}}
+
+    def confirm(self, slug, exch_qty, yes_px):
+        self.exch(slug, exch_qty, yes_px)
+        for dt in (60, 200, 400):
+            self.b.cycle(self.now + dt, self.positions(), on=True)
+
+    def test_a_sale_outside_the_bonds_order_is_priced_from_the_record(self):
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.98, 100.0, self.now - 100))
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        put_in = self.b.money_in
+        # 40 sold by his hand at 99.5c, a 2c commission
+        self.r.exchange.trades.append(self.trade_row("S1", SELL_LONG, 0.995, 40.0, self.now + 50,
+                                                     commission=0.02))
+        self.confirm(AL, 60.0, 0.98)
+        self.assertEqual(self.b.held(AL, "YES"), 60.0)
+        self.assertAlmostEqual(self.b.cash, 40 * 0.995 - 0.02, places=4)
+        self.assertAlmostEqual(self.b.realized, 40 * 0.995 - 0.02 - 40 * 0.98, places=4)
+        self.assertAlmostEqual(self.b.sold_usd, 40 * 0.995, places=4)
+        self.assertAlmostEqual(self.b.money_in, put_in, places=4)     # put in is untouched
+        ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"][0]
+        self.assertEqual((ev["sold"], ev["priced"]), (40.0, "record"))
+        self.assertAlmostEqual(ev["proceeds"], 39.8, places=2)
+        self.assertAlmostEqual(ev["gain"], 0.58, places=2)
+        e = self.b._earned()
+        self.assertAlmostEqual(e["sales"], 0.58, places=2)          # and the card shows it
+
+    def test_a_no_bonds_sale_is_priced_in_no_terms(self):
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_SHORT, 0.02, 100.0, self.now - 100,
+                                                     market=ALD))
+        self.bond(ALD, "NO", 100.0, 0.02)                              # 98c a NO share
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.r.exchange.trades.append(self.trade_row("S1", SELL_SHORT, 0.01, 40.0, self.now + 50,
+                                                     market=ALD))     # 99c a NO share
+        self.confirm(ALD, -60.0, 0.02)
+        self.assertEqual(self.b.held(ALD, "NO"), 60.0)
+        self.assertAlmostEqual(self.b.cash, 40 * 0.99, places=4)
+        self.assertAlmostEqual(self.b.realized, 40 * 0.01, places=4)
+
+    def test_a_settlement_pays_the_settlement_price(self):
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.98, 100.0, self.now - 100))
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.r.exchange.trades.append(self.resolution_row(AL, 1.0, self.now + 50))
+        self.confirm(AL, 0.0, 0.0)
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertAlmostEqual(self.b.cash, 100.0, places=4)
+        self.assertAlmostEqual(self.b.realized, 2.0, places=4)
+        ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"][0]
+        self.assertEqual(ev["priced"], "settlement")
+        self.assertAlmostEqual(ev["gain"], 2.0, places=2)
+
+    def test_a_bond_that_loses_at_settlement_is_a_loss(self):
+        self.r.exchange.trades.append(self.trade_row("B1", BUY_LONG, 0.98, 100.0, self.now - 100))
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.r.exchange.trades.append(self.resolution_row(AL, 0.0, self.now + 50))
+        self.confirm(AL, 0.0, 0.0)
+        self.assertEqual(self.b.held(AL, "YES"), 0.0)
+        self.assertAlmostEqual(self.b.cash, 0.0, places=4)
+        self.assertAlmostEqual(self.b.realized, -98.0, places=4)
+
+    def test_shares_never_shown_are_still_refunded_not_sold(self):
+        # the Hawaii shape stands: what the exchange never showed was
+        # never bought — refunded, not booked as a sale
+        self.b._book_lot(AL, "YES", 10.0, 9.3, ref="T1")
+        self.b._pay(9.3)
+        for dt in (600, 700, 1000):
+            self.b.cycle(self.now + dt, {GA: (5.0, 3.0)}, on=True)
+        self.assertEqual(self.b.lots, {})
+        self.assertEqual(self.b.cash, 0.0)
+        self.assertEqual(self.b.money_in, 0.0)
+        ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"][0]
+        self.assertEqual((ev["sold"], ev["refund"]), (0.0, 9.3))
+
+    def test_put_in_is_re_seeded_once_from_what_holds(self):
+        # state saved before the rule: put in still carries the cost of
+        # shares sold outside the bond's order, and the re-spent proceeds
+        # on top. Re-seeded once as held + proceeds waiting − profit taken.
+        self.b._book_lot(AL, "YES", 10.0, 9.0, ref="T1")
+        self.b._pay(9.0)
+        d = self.b.to_dict()
+        self.assertEqual(d["money_in_v"], 3)
+        d["money_in_v"] = 2
+        d["money_in"] = 30.0
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(d)
+        self.assertAlmostEqual(b2.money_in, 9.0, places=4)
+        ev = [e for e in b2.log if e["event"] == "money_in_corrected"][0]
+        self.assertEqual((ev["before"], ev["after"]), (30.0, 9.0))
+        # once corrected, the figure is kept as it is
+        b3 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        d3 = b2.to_dict()
+        d3["money_in"] = 12.0
+        b3.restore(d3)
+        self.assertAlmostEqual(b3.money_in, 12.0, places=4)
+        n_saved = len([e for e in d3["log"] if e["event"] == "money_in_corrected"])
+        self.assertEqual(len([e for e in b3.log if e["event"] == "money_in_corrected"]), n_saved)
