@@ -1641,3 +1641,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788736294.4,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,153.92,0.05,backfill,,1.98,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB567JHHEQ3N
 1788736294.4,politics,ewc-usp-2028-11-07-dontru,SELL,0.31,0.08,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB6Z3KX1YQ45
 1788736761.2,politics,ewc-usp-2028-11-07-dontru,SELL,-0.31,0.08,fix,0.7845,0.18,,5,9,0.642,0.03,0.08,-0.01,83.69,size trimmed by 0.31 to the exchange's count (order CB6Z3KX1YQ45),CB6Z3KX1YQ45
+1788738212.9,politics,scc-senate-gop-2026-11-03-50,BUY,14,0.2,sell,2.0562,2.31,0.143575,15,20,0.266,0.16,0.22,0.0564,0,buying back the short at or under what it sold for — the bid earns while it wait,CB5K1ZS34Q3Y
+1788738768.9,politics,ewc-usse-tx-2026-11-03-rep,SELL,20,0.59,earn,9.6153,3.07,0.43915,56,60,0.744,0.57,0.59,-0.1508,-86,1 tick behind the touch — we would hold 5% of the ask side,CB535Z17TQ45
