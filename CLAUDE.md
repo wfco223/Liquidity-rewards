@@ -66,7 +66,12 @@ long and accreted, so search it rather than reading it through.
   2026-09-02) and closes one into it (2026-09-04, "sell my mass gov rep
   shares to the orders resting at 98 cents"), each level at its own
   price, never more than it shows, never under cost with fees, our own
-  exits pulled first. Nothing else may cross.
+  exits pulled first. One carve-out (owner, 2026-09-06 "I sold a few
+  below cost to free up money... I need a way of doing that with a
+  button"): the Sell-under-cost tap on a bond card sells into the bids
+  under cost, the loss shown in the confirm and booked as a bond sale,
+  the proceeds cash at once. Owner's tap only; the engine never sells a
+  bond under cost. Nothing else may cross.
 - NO SCHEDULED GitHub Actions (owner, 2026-08-24: "remove the GitHub
   automation. It keeps running and I keep getting emails"). Every cron
   workflow is deleted; the monitor writes rewards.csv, fills.csv,

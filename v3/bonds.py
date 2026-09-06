@@ -1300,14 +1300,20 @@ class Bonds:
         return n
 
     def sell_into(self, slug: str, price, qty, now: float,
-                  positions: dict | None = None) -> dict:
+                  positions: dict | None = None, under_cost: bool = False) -> dict:
         """His sale into the bids (owner, 2026-09-04: "I want the ability
         to sell my mass gov rep shares to the orders resting at 98
         cents"): the buyers resting on the exit side are taken from the
         best price out to his, each level at its own price and never
         more than it shows, never under his cost with fees, never more
         than he holds. Our own exits come off first; the record books
-        each sale; the proceeds join the cash."""
+        each sale; the proceeds join the cash.
+
+        `under_cost` is his Sell-under-cost tap (owner, 2026-09-06: "I
+        sold a few below cost to free up money to use in cheaper
+        markets. I need a way of doing that with a button"): the cost
+        floor is lifted for that one sale, the loss is booked as such,
+        and the proceeds are cash at once. Never set by the engine."""
         if slug not in self._working():
             return {"ok": False, "note": "not on the bond list"}
         side = self._side_of(slug)
@@ -1331,9 +1337,10 @@ class Bonds:
         if want < 1.0:
             return {"ok": False, "note": "at least one share"}
         cb = self.cost_basis(slug, side)
-        if cb > 0 and bp <= cb + 1e-9:
+        if cb > 0 and bp <= cb + 1e-9 and not under_cost:
             return {"ok": False, "note": f"{bp * 100:.1f}c is not above your cost "
-                                         f"({cb * 100:.1f}c a share with fees)"}
+                                         f"({cb * 100:.1f}c a share with fees) — the "
+                                         f"Sell-under-cost button takes a loss on purpose"}
         self._pull_exits(slug, side)
         bs, intent = self.earn(side)
         far = "BUY" if side == "YES" else "SELL"      # the side we hit: their bids for the bond
@@ -1359,7 +1366,7 @@ class Bonds:
             if bond_p < bp - 1e-9:
                 stop = f"the best bid left is {bond_p * 100:g}c, under your {bp * 100:g}c"
                 break
-            if bond_p <= cb + 1e-9:
+            if bond_p <= cb + 1e-9 and not under_cost:
                 stop = f"the best bid left, {bond_p * 100:g}c, is not above your cost"
                 break
             if last is not None and abs(p - last[0]) < 1e-9 and q >= last[1] - 1e-9:
@@ -1403,6 +1410,7 @@ class Bonds:
             self._log(event="sold_into", market=slug, side=side, price=per, qty=filled,
                       proceeds=round(proceeds, 2), fee=round(fee, 4),
                       gain=round(proceeds - fee - cost, 2), order_id=r.order_id,
+                      under_cost=bool(under_cost),
                       **({"note": note} if note else {}))
             sold += filled
             usd += proceeds
