@@ -1525,3 +1525,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788718194.6,politics,ussewc-usse-ms-2026-11-03-rep,BUY,0.02,0.96,backfill,,1.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB1AQ3A5TQ3N
 1788718194.6,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,1,0.8,backfill,,70.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8DCB2024MW0
 1788718194.6,cfb,aachc-cfb-wins-2026-11-28-ohiost-7pt5wins,BUY,0.9,0.8,backfill,,6.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAX3WBXXYQ45
+1788718194.6,politics,ewc-usp-2028-11-07-jdvan,SELL,6,0.24,sell,0,0,,24,27,0.633,0.24,0.25,0.01,13,taker dump — sold into the bid (the carved exception),CB2W2GPVJQ3T
+1788718804.0,cfb,aachc-cfb-wins-2026-11-28-uk-2pt5wins,SELL,0.01,0.71,earn,0.6818,0.15,,83,90,0,0.7,0.85,0.15,-0.01,joins the touch — the book has been quiet,CB2WJNNPMQ3Z
+1788719044.0,politics,ussewc-usse-ky-2026-11-03-rep,BUY,17,0.95,bond,0,0.02,0.997425,91,96,0.452,0.94,0.95,-0.0474,180,bond: took 17 YES at 95c — it was in the way of our resting order,CB324V1NTQ48
+1788719164.0,politics,enwc-uspres-nom-dem-2028-jonoss,BUY,3,0.25,sell,5.8774,0.27,,30,39,0.461,0.19,0.31,-0.1,0,buying back the short at or under what it sold for — the bid earns while it wait,CB2W3EX7CQ3Y
+1788719344.1,politics,enwc-uspres-nom-dem-2028-jonoss,BUY,3,0.24,sell,5.8578,0.05,,25,35,0.628,0.24,0.32,-0.06,0,buying back the short at or under what it sold for — the bid earns while it wait,CB33DTKA0Q3Z
+1788719524.1,politics,ussewc-usse-co-2026-11-03-dem,BUY,10,0.95,manual,0.2949,5.37,0.994725,96,99,0.511,0.91,0.95,-0.0447,10,the owner's own order — the engine leaves it alone,CAYGMRHBYQ3R
+1788719584.1,cfb,aachc-cfb-wins-2026-11-28-cin-5pt5wins,BUY,0.8,0.51,sell,3.21,7.04,,41,51,0.055,0.51,0.52,0.05,-0.2,an exit — its fill reduces the position it sits on,CAX51MRH4Q3R
+1788719644.1,politics,ussewc-usse-ms-2026-11-03-rep,BUY,10,0.96,earn,6.1421,0.4,0.97815,95,99,0.15,0.93,0.98,-0.0181,10,3 ticks in front of the touch — we would hold 98% of the bid side,CB2W4FP28Q3X
+1788719764.1,cfb,aachc-cfb-wins-2026-11-28-utahst-6pt5wins,SELL,1,0.01,sell,0,0,,6,23,0.106,0.01,0.02,0.13,0,taker dump — sold into the bid (the carved exception),CB389VSM0Q3Y
+1788719824.1,politics,ewc-usp-2028-11-07-dontru,SELL,5.9,0.08,sell,0.0169,0.44,,3,7,0.529,0.03,0.08,-0.03,84.1,selling filled stock — it earns while it waits,CB2WGM16PQ3R
+1788719884.1,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,BUY,0.06,0.49,manual,0.0258,5.47,,47,51,0.783,0.12,0.56,0,0.06,the owner's own order — the engine leaves it alone,CAYH4GG6WQ45
+1788719983.4,politics,enwc-uspres-nom-dem-2028-jonoss,SELL,3,0.27,sell,4.727,0.04,,20,26,0.715,0.2,0.29,-0.04,0,selling filled stock — it earns while it waits,CB38DXDAMQ3T
+1788720103.4,cfb,aachc-cfb-wins-2026-11-28-cah-4pt5wins,SELL,0.01,0.62,earn,0.0188,1.01,,67,82,0,0.84,0.85,0.13,-0.01,1 tick in front of the touch — we would hold 3% of the ask side,CB2FRG2ATQ46
+1788720103.4,cfb,aachc-cfb-wins-ou-2026-11-28-okl,SELL,1,0.34,sell,0,0,,55,82,0,0.34,0.35,0.38,0,taker dump — sold into the bid (the carved exception),CB3AYDGX4Q3N
+1788720343.4,politics,scc-senate-gop-2026-11-03-51,SELL,10,0.24,earn,0.7821,0.56,0.123725,11,17,0.193,0.23,0.98,-0.1163,-28,at the touch — a fill here is 11 ticks inside value (Silver + evidence),CB2X34X4AQ3Z
+1788721363.6,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,10,0.86,sell,0.0228,4.9,0.86,83,87,0.576,0.83,0.84,0,0,selling filled stock — it earns while it waits,CAZCGDFHRQ3R
+1788721483.6,politics,ewc-usse-tx-2026-11-03-rep,SELL,5,0.61,earn,0.0681,0.8,0.43915,55,59,0.702,0.57,0.61,-0.1709,-66,1 tick behind the touch — we would hold 1% of the ask side,CB2YY75TPQ48
+1788721723.6,politics,ussewc-usse-ma-2026-11-03-rep,SELL,5,0.02,earn,2.9696,0.93,2.5e-05,1,3,0.343,0.04,0.09,-0.02,-15,2 ticks in front of the touch — we would hold 98% of the ask side,CB2X829SPQ3H
