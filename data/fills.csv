@@ -1347,3 +1347,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788677423.1,politics,ussewc-usse-sd-2026-11-03-rep,BUY,1,0.92,backfill,,0.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAR8SZ49JPPZ
 1788677483.1,cfb,aachc-cfb-wins-2026-11-28-okst-8pt5wins,BUY,2,0.17,earn,3.6585,0.02,,32,36,0.746,0.01,0.18,-0.17,2,at the touch — a fill here is 13 ticks inside value (evidence band only; confide,CAS2MASY6PQ1
 1788677592.7,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,SELL,0.5,0.44,earn,1.3066,0.03,,29,50,0,0.43,0.55,-0.06,-0.5,joins the touch — the book has been quiet,CAS2TPG0WPQ0
+1788693488.5,cfb,aachc-cfb-wins-2026-11-28-washst-4pt5wins,SELL,1,0.36,sell,0,0.11,,71,79,0.322,0.36,0.86,0.39,0,selling filled stock — it earns while it waits,CAWF08AYGQ3N
+1788693848.6,cfb,aachc-cfb-wins-2026-11-28-boise-8pt5wins,BUY,0.01,0.74,sell,7.5,0.29,,71,78,0.619,0.72,0.99,-0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CAW38WFHAQ3X
+1788693848.6,cfb,aachc-cfb-wins-2026-11-28-fl-9pt5wins,BUY,1,0.11,sell,0,0.33,,10,21,0.502,0.01,0.12,-0.04,0,buying back the short at or under what it sold for — the bid earns while it wait,CAVYD0MSGQ3Y
+1788693848.6,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,BUY,1,0.54,sell,9.3382,0.33,,45,55,0.433,0.03,0.54,0.04,0,buying back the short at or under what it sold for — the bid earns while it wait,CAVTNV3QAQ3H
+1788695164.4,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,SELL,1,0.04,sell,3.75,0.37,,45,53,0.613,0.03,0.54,0.45,0,selling filled stock — it earns while it waits,CAX10ZV9JQ46
+1788695452.3,cfb,aachc-cfb-wins-2026-11-28-fl-9pt5wins,SELL,1,0.04,sell,0,0.04,,7,15,0.646,0.35,0.85,0.07,0,selling filled stock — it earns while it waits,CAXD3QCECQ3T
+1788695583.9,cfb,aachc-cfb-wins-2026-11-28-fl-9pt5wins,BUY,1,0.08,sell,0,0.04,,8,15,0.727,0.08,0.51,-0.03,0,buying back the short at or under what it sold for — the bid earns while it wait,CAXEC3KGAQ3X
+1788695766.4,cfb,aachc-cfb-wins-2026-11-28-syra-4pt5wins,BUY,1,0.64,sell,6.8182,0.69,,42,54,0.55,0.64,0.65,0.15,0,buying back the short at or under what it sold for — the bid earns while it wait,CAWR237FEQ3Y
+1788695766.4,cfb,aachc-cfb-wins-2026-11-28-colst-4pt5wins,SELL,1,0.63,earn,0.0853,0.2,,54,61,0.494,0.61,0.85,-0.06,-3,1 tick behind the touch — we would hold 1% of the ask side,CAXB3BHFYQ46
+1788695766.4,cfb,aachc-cfb-wins-2026-11-28-syra-4pt5wins,SELL,1,0.64,sell,0,0,,42,54,0.673,0.64,0.65,-0.15,0,taker dump — sold into the bid (the carved exception),CAXGSX23WQ3H
+1788695826.4,politics,ussewc-usse-wy-2026-11-03-dem,SELL,-1,0.04,fix,0.2785,8.02,2.5e-05,3,7,0.581,0.02,0.03,-0.04,-2,size trimmed by 1 to the exchange's count (order CANS998GRPPY),CANS998GRPPY
+1788695826.4,politics,enwc-ussep-de-2026-09-15-rep-johshu,SELL,-1,0.11,fix,6.2424,9,,10,14,0.561,0.09,0.11,0.01,98,size trimmed by 1 to the exchange's count (order CAMYCRX1GPPS),CAMYCRX1GPPS
+1788695826.4,politics,enwc-uspres-nom-rep-2028-tedcru,SELL,-6.12,0.05,fix,1.2318,9.18,,4,22,0.459,,,0.05,179.88,size trimmed by 6.12 to the exchange's count (order CAMT9X940PPX),CAMT9X940PPX
