@@ -3031,6 +3031,36 @@ class TestNoMoneyToDeploy(Base):
         self.assertTrue(self.b._more_orders(AL))
 
 
+class TestFreshBooks(Base):
+    """Owner, 2026-09-05: "I just want the program to have up to date
+    data." The bond side reads the books of the markets it works at the
+    start of every pass, so it acts on a book seconds old — and when it
+    still cannot act, the card says why."""
+
+    def test_a_stale_cache_is_read_again_before_acting(self):
+        self.b.approve(AL, self.now)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.r.exchange.books[AL] = minnow_book(self.now, minnows=30.0)     # the exchange, now
+        self.r.cache.put(AL, minnow_book(self.now - 400.0, minnows=30.0))  # the cache, 400s old
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertTrue(self.orders(AL, "SELL", decoy=False))               # the exit rests
+        self.assertLessEqual(self.r.cache.age(AL, self.now), 1.0)           # on a fresh read
+        self.assertNotIn(AL, self.b.exit_note)
+
+    def test_when_no_book_can_be_read_the_card_says_so(self):
+        self.b.approve(AL, self.now)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.r.cache.put(AL, minnow_book(self.now - 400.0, minnows=30.0))
+        del self.r.exchange.books[AL]                                        # the read fails
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.orders(AL, "SELL", decoy=False), [])
+        self.assertIn("no book", self.b.exit_note[AL])
+        row = next(r for r in self.b.view(self.now, self.positions())["rows"] if r["market"] == AL)
+        self.assertIn("no book", row["exit_note"])
+
+
 class TestCountOut(Base):
     """Owner, 2026-09-05: "I'm pretty sure I didn't place this order on
     the bonds page. Now I can't sell it under cost." His tap hands the

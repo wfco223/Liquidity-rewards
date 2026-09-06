@@ -878,7 +878,7 @@ function bTop(r,L,held){
   if(r.unconfirmed)h+='<div class="sub warn">The exchange shows '+r.unconfirmed.exch+' of '+r.unconfirmed.ledger+' here but the transaction record shows no sale (it puts you at '+r.unconfirmed.record+'). Kept until the record explains it.</div>';
   if(mk)h+='<div class="sub">bid <b class="'+(black?'ok':'warn')+'">'+pc(mk.bid)+'</b> vs your cost '+pc(mk.cost)+' ('+(mk.edge>=0?'+':'−')+(Math.abs(mk.edge)*100).toFixed(1)+'¢ a share)'+(r.cost_src&&r.cost_src!=='record'?' <span class="muted">· cost from the '+(r.cost_src==='exchange'?'exchange’s own figure':r.cost_src==='record+exchange'?'record and the exchange’s figure':'ledger')+'</span>':'')+'</div>';
   var ex=bExit(r);
-  var e=ex.length?('exit '+ex.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}).join(' + ')+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex.reduce(function(s,o){return s+(o.est||0);},0))+'/day</b>'):'<span class="warn">no exit resting</span>';
+  var e=ex.length?('exit '+ex.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}).join(' + ')+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex.reduce(function(s,o){return s+(o.est||0);},0))+'/day</b>'):'<span class="warn">no exit resting'+(r.exit_note?' — '+esc(r.exit_note):'')+'</span>';
   var mos=(r.more&&r.more.orders&&r.more.orders.length)?r.more.orders:((r.more&&r.more.order)?[r.more.order]:[]);
   var mo=mos.length?(' · buying more '+mos.map(function(o){return o.qty+' @ '+pc(o.price);}).join(' + ')):'';
   h+='<div class="sub"><b>'+r.qty+' held @ '+pc(r.cost_px)+'</b> · '+e+mo+(r.rewards?' · earned '+usd(r.rewards):'')+'</div>';
@@ -898,7 +898,7 @@ function bBook(r){
 function bCalc(r){
  var c=r.calc;if(!c)return '';
  var sideWord=(c.side==='SELL'?'ask':'bid');var pool=c.side_pool;var h='';
- h+='<div class="muted">'+sideWord+' side: '+c.side_size+' shares, Target Size '+c.target+' · side pool '+(pool==null?'unconfirmed':usd(pool)+'/day = '+usd(c.pool_day)+' ÷ '+(c.event_n||'?')+' ÷ 2')+'</div>';
+ h+='<div class="muted">'+sideWord+' side: '+c.side_size+' shares, Target Size '+c.target+' · side pool '+(pool==null?('unconfirmed'+(c.pool_day?' (program pool '+usd(c.pool_day)+'/day; markets in the event not known yet)':'')):usd(pool)+'/day = '+usd(c.pool_day)+' ÷ '+(c.event_n||'?')+' ÷ 2')+'</div>';
  (c.orders||[]).forEach(function(o){
   h+='<div>'+(o.decoy?'decoy ':'exit ')+o.qty+' @ '+pc(bTerms(r,o.price))+(o.ticks?', '+o.ticks+' tick'+(o.ticks>1?'s':'')+' behind':', at the touch')+': '+(o.qualifies?bPct(o.share)+' of the side × '+(pool==null?'?':usd(pool))+' = <b>'+usd(o.est)+'/day</b>':'<span class="warn">earning nothing</span>')+'</div>';
  });
