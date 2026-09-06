@@ -6417,23 +6417,30 @@ class TestQualifyAskButton(unittest.TestCase):
         m._qualify_note = Monitor._qualify_note
         m._rested_size = types.MethodType(Monitor._rested_size, m)
         m._qualify_run = types.MethodType(Monitor._qualify_run, m)
+        m.qualify_side = types.MethodType(Monitor.qualify_side, m)
         m.qualify_ask = types.MethodType(Monitor.qualify_ask, m)
-        # a real exchange puts our rested order INTO the book; the fake
-        # one must too, or the gap never closes
+        # a real exchange puts our rested order INTO the book, on the
+        # side its intent rests on; the fake one must too, or the gap
+        # never closes
         real = r.exchange.post
         def trimming(url, body, path=None, **kw):
                 resp = real(url, body, path=path, **kw)
                 if url.endswith("/v1/orders"):
+                    from v3.intents import REST_SIDE
                     from v3.scoring import Book
                     live = r.exchange.live[resp["order"]["id"]]
                     if trim is not None:
                         live["size"] = min(live["size"], trim)
                     b = r.exchange.books[body["marketSlug"]]
-                    asks = list(b.asks) + [(float(body["price"]["value"]),
-                                            live["size"])]
-                    r.exchange.books[body["marketSlug"]] = Book(
-                        bids=b.bids, asks=tuple(asks), tick=b.tick,
-                        fetched_at=b.fetched_at)
+                    lvl = (float(body["price"]["value"]), live["size"])
+                    if REST_SIDE[body["intent"]] == "BUY":
+                        r.exchange.books[body["marketSlug"]] = Book(
+                            bids=tuple(sorted(list(b.bids) + [lvl], reverse=True)),
+                            asks=b.asks, tick=b.tick, fetched_at=b.fetched_at)
+                    else:
+                        r.exchange.books[body["marketSlug"]] = Book(
+                            bids=b.bids, asks=tuple(sorted(list(b.asks) + [lvl])),
+                            tick=b.tick, fetched_at=b.fetched_at)
                 return resp
         r.exchange.post = trimming
         return m
@@ -6515,6 +6522,24 @@ class TestQualifyAskButton(unittest.TestCase):
         self.assertIn("still going", again["note"])
         self.assertIn("1,200 shares rested", again["note"])
         self.assertEqual(len(r.exchange.live), before)   # nothing placed
+
+    def test_the_same_process_builds_a_bid_wall_at_a_cent(self):
+        # owner, 2026-09-06: the bonds-page button on a NO bond builds
+        # the bid side, the wall at 1c on a whole-cent book
+        r, A = self._rig()
+        m = self._mon(r, trim=300.0)
+        out = m.qualify_side(A, "BUY")
+        self.assertTrue(out["ok"], out["note"])
+        self.assertIn("bid wall", out["note"])
+        job = m._qualify_run(A, r.fam)
+        self.assertGreaterEqual(job["ask_total"], 6250.0)
+        walls = [o for o in r.fam.orders.values()
+                 if o.market == A and o.purpose == "manual"]
+        self.assertEqual(len(walls), job["placed"])
+        self.assertGreater(len(walls), 10)
+        self.assertTrue(all(o.side == "BUY" and abs(o.price - 0.01) < 1e-9
+                            for o in walls))
+        self.assertIn("bid side", m._qualify_note(job))
 
     def test_button_refuses_without_terms(self):
         from v3.tests.test_family import Rig

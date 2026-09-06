@@ -348,6 +348,14 @@ class FamilyConfig:
     log_keep: int = 300
 
 
+# the owner's qualifying wall (2026-08-28 "give me a button to auto
+# qualify the ask side"; 2026-09-06, the same button on every bond that
+# is not qualified): a hand order that exists only to carry its side
+# over Target Size, resting where it will never trade. Everything that
+# sizes around his hand orders looks for this string.
+QUALIFY_WALL_WHY = "the owner's qualify-ask wall"
+
+
 @dataclass
 class FamilyOrder:
     id: str

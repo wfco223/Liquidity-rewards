@@ -228,6 +228,16 @@ class TestRedesign(unittest.TestCase):
         self.assertEqual(web.PAGES["/watch"][3], "quick")
         self.assertEqual(web.PAGES["/pay"][0], "Pay")
 
+    def test_bond_cards_carry_the_qualify_button(self):
+        # owner, 2026-09-06: "a button for each bond that is not
+        # qualified to automatically qualify it" — the watched-races
+        # wall, from the bond card, on the side the bond earns on
+        from v3 import web
+        self.assertIn("bonds_qualify", web.BONDS_JS)
+        self.assertIn("function bQualify", web.BONDS_JS)
+        self.assertIn("c.has_room===false", web.BONDS_JS)
+        self.assertIn("Top up to 125%", web.BONDS_JS)
+
     def test_orders_page_has_no_hand_place_form(self):
         from v3 import web
         self.assertNotIn("op:'place'", web.ORDERS_JS)
