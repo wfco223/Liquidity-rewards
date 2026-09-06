@@ -1505,3 +1505,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788714861.6,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,10,0.31,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CB1D2WKHGQ3T
 1788714861.6,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,0.3,0.02,backfill,,4.36,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAXS64VAJQ3R
 1788714861.6,politics,ewc-usgub-ia-2026-11-03-rep,BUY,10,0.3,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CB1J0VJ1PQ3R
+1788715881.4,cfb,aachc-cfb-wins-2026-11-28-rutger-4pt5wins,SELL,1,0.13,sell,0,0.02,,13,20,0.71,0.12,0.13,0.04,0,selling filled stock — it earns while it waits,CB2A9BHDEQ3Z
+1788716421.4,politics,ussewc-usse-co-2026-11-03-rep,BUY,18,0.05,bond,0,0.02,0.005275,4,8,0,0.02,0.05,0.0447,18,bond: sold 18 NO into the bids at 95c by you,CB2EN0NKYQ46
+1788716421.4,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,11,0.06,bond,0,0.02,0.001325,4,7,0.753,0.03,0.06,0.0587,0,bond: sold 11 NO into the bids at 94c by you,CB2EMXSHWQ48
+1788716421.4,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,12,0.94,bond,0,0.02,0.99645,94,97,0.741,0.93,0.94,-0.0565,194,bond: took 12 YES at 94c — it was in the way of our resting order,CB2F0SZFTQ3R
+1788716421.4,politics,ussewc-usse-ri-2026-11-03-rep,BUY,1,0.02,bond,0,0.01,0.000775,1,4,0.442,0.01,0.03,0.0192,-73,bond: sold 1 NO into the bids at 98c by you,CB2F47F6RQ3H
+1788716661.4,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,0.2,0.91,bond,0,0.02,0.990075,88,95,0,0.9,0.93,-0.0801,221.2,bond: took 0.2 YES at 91c — it was in the way of our resting order,CB2GPC6XPQ3N
+1788716901.4,politics,ussewc-usse-ky-2026-11-03-rep,BUY,2,0.95,bond,0,0.02,0.997425,89,95,0.438,0.94,0.96,-0.0474,163,bond: took 2 YES at 95c — it was in the way of our resting order,CB2J8ZT7MQ3X
+1788717332.0,cfb,aachc-cfb-wins-2026-11-28-ohiost-7pt5wins,BUY,0.9,0.8,backfill,,6.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAX3WBXXYQ45
+1788717369.5,politics,enwc-uspres-nom-dem-2028-jonoss,SELL,0.36,0.37,backfill,,0.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB1SZKMPWQ3Z
+1788717428.1,politics,enwc-uspres-nom-dem-2028-jonoss,SELL,3,0.37,earn,0.063,1,,23,35,0.028,0.23,0.37,-0.08,-3,1 tick behind the touch — we would hold 40% of the ask side,CB1SZKMPWQ3Z
+1788718059.3,politics,ussewc-usse-ms-2026-11-03-rep,BUY,0.02,0.96,backfill,,1.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB1AQ3A5TQ3N
+1788718194.6,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,1.6,0.04,hand,,17.59,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C8SY2CNF4MVR
+1788718194.6,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,11.03,0.04,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C9ZKJ6MSEMVK
+1788718194.6,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,2.01,0.97,hand,,12.71,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C9N773YXPMVG
+1788718194.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.12,0.65,hand,,59.27,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C8F8W0KBPMW0
+1788718194.6,politics,enwc-uspres-nom-dem-2028-andbes,SELL,6.25,0.06,backfill,,11.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CA19F632JMVF
+1788718194.6,politics,enwc-uspres-nom-dem-2028-jonoss,SELL,0.36,0.37,backfill,,0.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB1SZKMPWQ3Z
+1788718194.6,politics,ussewc-usse-ms-2026-11-03-rep,BUY,0.02,0.96,backfill,,1.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB1AQ3A5TQ3N
+1788718194.6,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,1,0.8,backfill,,70.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,C8DCB2024MW0
+1788718194.6,cfb,aachc-cfb-wins-2026-11-28-ohiost-7pt5wins,BUY,0.9,0.8,backfill,,6.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAX3WBXXYQ45
