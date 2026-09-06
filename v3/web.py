@@ -847,6 +847,7 @@ function bMoreSet(m){var x=parseFloat(bKeep('bmore-'+m));if(!(x>=0)){bSay('<div 
 function bExitSet(m){var x=parseFloat(bKeep('bexit-'+m));if(!(x>0)){bSay('<div class="bad">type the exit price in cents first</div>');return;}bOp('bonds_exit_at',m,x);}
 function bBuy(m){var q=parseFloat(bKeep('bbq-'+m));var p=parseFloat(bKeep('bbp-'+m));if(!(q>=1)||!(p>0)){bSay('<div class="bad">how many shares, and the price in cents?</div>');return;}if(confirm('Rest a buy for '+q+' shares at '+p+'¢?'))bOp('bonds_buy',m,{qty:q,px:p});}
 function bSellInto(m,px,qty,pr){if(confirm('Sell '+qty+' shares into the bids out to '+pc(px)+' for about '+usd(pr)+'? The commission comes off the proceeds. Our own exit comes off first.'))bOp('bonds_sell_into',m,{px:px,qty:qty});}
+function bQualify(m,side,gap,px,col){if(confirm('Build the '+side+' wall to 125% of Target Size? '+gap.toLocaleString()+' shares to go at '+pc(px)+' (~'+usd(col)+' of buying power held). It rests at the far edge of the book, behind your exit, which keeps its size. Placed in the background in as many orders as it takes — tap again for progress.'))bOp('bonds_qualify',m);}
 function bEnter(m,px,qty,cost,money){if(confirm('Buy '+qty+' shares out to '+pc(px)+' for about '+usd(cost)+'? Money: '+usd(money)+'.'))bOp('bonds_enter',m,px);}
 // the live line (owner, 2026-09-03): one stream carries the held
 // markets' rows as their books move; the page redraws only while you
@@ -903,6 +904,11 @@ function bCalc(r){
   h+='<div>'+(o.decoy?'decoy ':'exit ')+o.qty+' @ '+pc(bTerms(r,o.price))+(o.ticks?', '+o.ticks+' tick'+(o.ticks>1?'s':'')+' behind':', at the touch')+': '+(o.qualifies?bPct(o.share)+' of the side × '+(pool==null?'?':usd(pool))+' = <b>'+usd(o.est)+'/day</b>':'<span class="warn">earning nothing</span>')+'</div>';
  });
  if(c.touch)h+='<div class="muted">the whole lot at the touch ('+pc(bTerms(r,c.touch.price))+') would take '+bPct(c.touch.share)+' = '+usd(c.touch.est)+'/day</div>';
+ // the side under the line, or on it without headroom: the same wall
+ // the watched races get (owner, 2026-09-06: "a button for each bond
+ // that is not qualified to automatically qualify it")
+ if(c.has_room===false){h+='<div style="margin-top:6px">'+(c.qualified?'':'<span class="warn">the '+sideWord+' side is under Target Size: nobody on it is paid</span><br>')+bBtn(c.qualified?'Top up to 125%':'Qualify the '+sideWord+' side','bQualify(\''+esc(r.market)+'\',\''+sideWord+'\','+Math.ceil(c.gap||0)+','+(c.wall_px||0)+','+(c.wall_usd||0)+')')+'</div>';}
+ if(r.qualify)h+='<div class="muted">wall: '+esc(r.qualify)+'</div>';
  var s=r.slot;
  if(s&&s.split&&s.levels&&s.single)h+='<div class="muted">split: the '+s.levels[0][1]+' up front carry '+Math.round((s.keep||0)*100)+'% of the best reward; expected to sell ~'+s.exposure+' shares a day, against ~'+s.single.exposure+' with the whole lot at '+pc(bTerms(r,s.single.px))+'</div>';
  return h;
@@ -925,7 +931,7 @@ function bSniper(r,b,sw){
 }
 function bMore(r,b,sw){
  var mo=r.more;if(!mo)return '';
- var m=esc(r.market);var pct=Math.round((b.more_share||0.3)*100);
+ var m=esc(r.market);var pct=Math.round((b.more_share||0.5)*100);
  var h='Buy more: up to $'+bField('bmore-'+m,bKeep('bmore-'+m)||(mo.cap_usd||0).toFixed(2),'6em')+' '+bBtn('Set','bMoreSet(\''+m+'\')')+(mo.cap_px!=null?'<br>at '+pc(mo.cap_px)+' or better (your first price here)':'');
  if(mo.paused)h+='<br><span class="warn">'+esc(mo.paused)+'</span>';
  else if(mo.order){var ol=(mo.orders&&mo.orders.length>1)?mo.orders:[mo.order];h+='<br>resting '+ol.map(function(o){return o.qty+' @ '+pc(o.price);}).join(' + ')+': '+bPct(mo.order.share)+' of its side'+(ol.length>1?' together':'')+' = <b>'+usd(mo.order.est)+'/day</b>';}
@@ -1012,7 +1018,7 @@ function render(d){
  out+='<details ontoggle="bTog(this,\'-money\')"'+(window._bOpen['-money']?' open':'')+'><summary style="font-size:16px;padding:8px 0;cursor:pointer">Details</summary>';
  out+='<div class="sub">Budget '+(tax?'= taxes owed '+usd(tx.owed||0)+' ('+Math.round((tx.rate||0.22)*100)+'% of '+usd(tx.gross||0)+' paid)':'fixed by you')+(b.spent?' − '+usd(b.spent)+' spent':'')+' · Silver checked '+(b.scan_day?esc(b.scan_day):'never')+'</div>';
  out+='<div>'+bField('bbud',bKeep('bbud'),'7em')+' '+bBtn('Set budget','bBudget()')+(tax?'':bBtn('Follow taxes owed','bOp(\'bonds_budget_tax\',\'-\')'))+bBtn('Check Silver now','bOp(\'bonds_scan\',\'-\')')+'</div>';
- out+='<div class="muted" style="margin-top:6px">A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO. You buy in with Enter; the exit rests where it keeps '+Math.round((b.keep||0.6)*100)+'% of the best reward with only the shares that need to be out, never under what you paid; a second order buys more up to an amount you set, never over your first price; the sniper leads a small order in front of the exit down and buys it; bait pulls the other side\'s offers up. From your first purchase until you hold nothing, the engine stays out of the market. Rewards shown are what the bond orders measured while resting.</div>';
+ out+='<div class="muted" style="margin-top:6px">A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO. You buy in with Enter; the exit rests where it keeps '+Math.round((b.keep||0.8)*100)+'% of the best reward with only the shares that need to be out, never under what you paid; a second order buys more up to an amount you set, never over your first price; the sniper leads a small order in front of the exit down and buys it; bait pulls the other side\'s offers up. From your first purchase until you hold nothing, the engine stays out of the market. Rewards shown are what the bond orders measured while resting.</div>';
  out+='</details></div>';
  var pr=b.proposed||[];
  if(pr.length){out+='<div class="card"><b>New from Silver</b>';

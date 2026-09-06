@@ -932,6 +932,14 @@ replaced).*
    market on average (bonds log events exit_split, exit_unsplit). Wrong
    if it is more than twice a day — then the margin is too thin.
 
+*Amended 2026-09-06 (owner: "Make the target percentages 80% for exit
+orders and 50% for new buys"): from the deploy that carries it, exits
+keep 80% of the best reward and buy-more orders need 50% of their side.
+Claim 1 reads 75% (80% less noise, wrong under 70%) for market-days
+after the change; the 55%/50% reading stands for the days before it.
+Exits will sit nearer the touch and split more often, so claims 2–4
+are read per rule-period, not pooled.*
+
 **Check.** The bonds log (exit_split / exit_unsplit / more_split with
 their exposure figures); data/trades.csv for bond sales by price level;
 data/rewards.csv for the market-days.

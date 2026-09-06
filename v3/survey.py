@@ -193,6 +193,24 @@ def slug_group(slug: str) -> str:
 QUALIFY_TARGET_MULT = 1.25
 
 
+def wall_price(bs: str, tick: float) -> float:
+    """Where a qualifying wall rests: the last tick inside the price
+    bounds on its side — 99.9c for an ask wall (99c on a whole-cent
+    book), 0.1c for a bid wall (1c). It carries the side over Target
+    Size from where it will never trade."""
+    import math
+    tick = tick or 0.01
+    if bs == "SELL":
+        return round(math.floor(0.999 / tick + 1e-9) * tick, 3)
+    return round(math.ceil(0.001 / tick - 1e-9) * tick, 3)
+
+
+def wall_collateral(bs: str, px: float, qty: float) -> float:
+    """Buying power a wall of `qty` at `px` holds: a short ask holds
+    (1 - price) a share, a bid holds the price."""
+    return qty * ((1.0 - px) if bs == "SELL" else px)
+
+
 # A stratum needs MIN_SAMPLES scored sides to rank, which is half that
 # many markets. One holding fewer can NEVER rank however long it runs,
 # so it is merged into its parent rather than left collecting draws it
