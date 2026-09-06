@@ -1338,3 +1338,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788673484.2,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.63,earn,0.0163,0.4,,47,58,0.185,0.62,0.63,-0.1,-2,at the touch — a fill here is 2 ticks inside value (evidence band only; confiden,CAQS8G566PPT
 1788673664.2,cfb,aachc-cfb-wins-2026-11-28-mst-4pt5wins,SELL,1,0.55,sell,0.0765,2.18,,55,61,0.594,0.54,0.56,0.03,0,selling filled stock — it earns while it waits,CAPB7A8S0PPY
 1788673784.2,politics,enwc-uspres-nom-rep-2028-tedcru,SELL,0.12,0.05,backfill,,3.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAMT9X940PPX
+1788674766.0,cfb,aachc-cfb-wins-2026-11-28-uk-6pt5wins,SELL,1,0.24,sell,0.2336,0.49,,26,40,0.488,0.23,0.29,0.1,0,selling filled stock — it earns while it waits,CAR055FVPPPZ
+1788674826.0,politics,ussewc-usse-ri-2026-11-03-rep,SELL,2,0.03,bond,2.7174,0.36,0.000775,6,11,0.706,0.02,0.11,-0.0292,-60,bond more: split — 2 at 3c carry the share; never dearer than his first price,CAR3B8CMJPPY
+1788674926.2,politics,ussewc-usse-sd-2026-11-03-rep,BUY,1,0.92,backfill,,0.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAR8SZ49JPPZ
+1788676083.9,cfb,aachc-cfb-wins-2026-11-28-boise-8pt5wins,SELL,0.01,0.75,earn,7.4499,0.03,,57,66,0.488,0.5,0.86,-0.13,-0.01,11 ticks in front of the touch — we would hold 99% of the ask side,CARQC9FXRPPZ
+1788676743.9,cfb,aachc-cfb-wins-2026-11-28-colst-4pt5wins,SELL,1,0.55,earn,0.0222,1.01,,46,54,0.199,0.54,0.55,-0.05,-2,at the touch — a fill here is 1 ticks inside value (evidence band only; confiden,CAR0QYBQ6PPS
+1788677106.4,politics,ussewc-usse-ms-2026-11-03-dem,SELL,4.99,0.07,earn,0.2999,3.63,0.02185,3,8,0.231,0.03,0.07,-0.0482,-4.99,3 ticks in front of the touch — we would hold 100% of the ask side,CANYQJZ62PPT
+1788677423.1,politics,ussewc-usse-sd-2026-11-03-rep,BUY,1,0.92,backfill,,0.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAR8SZ49JPPZ
