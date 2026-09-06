@@ -238,6 +238,13 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("c.has_room===false", web.BONDS_JS)
         self.assertIn("Top up to 125%", web.BONDS_JS)
 
+    def test_bond_cards_can_sell_under_cost_on_purpose(self):
+        # owner, 2026-09-06: a button to sell below cost to free money
+        from v3 import web
+        self.assertIn("Sell under cost", web.BONDS_JS)
+        self.assertIn("under_cost:true", web.BONDS_JS)
+        self.assertIn("UNDER what you paid", web.BONDS_JS)
+
     def test_orders_page_has_no_hand_place_form(self):
         from v3 import web
         self.assertNotIn("op:'place'", web.ORDERS_JS)
