@@ -1325,3 +1325,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788670080.7,politics,usgubewc-usgub-pa-2026-11-03-rep,SELL,1,0.05,bond,5.0203,1.27,0.00155,2,5,0.586,0.04,0.08,-0.0485,-48,bond more: split — 1 at 5c carry the share; never dearer than his first price,CAP9CWN12PPS
 1788670170.0,politics,ussewc-usse-ms-2026-11-03-dem,SELL,0.01,0.07,backfill,,1.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CANYQJZ62PPT
 1788670170.0,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-3,0.72,fix,2.5178,0.26,,64,78,0.152,0.61,0.67,0.01,3,size trimmed by 3 to the exchange's count (order CAP9MHCCWPPT),CAP9MHCCWPPT
+1788670302.3,politics,ussewc-usse-wy-2026-11-03-dem,SELL,1,0.04,earn,0.1834,1.94,2.5e-05,1,5,0.42,0.03,0.04,-0.04,-1,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CANS998GRPPY
+1788670542.3,politics,enwc-uspres-nom-rep-2028-jdvan,SELL,1.81,0.5,sell,0.0049,3.18,0.5,47,51,0.574,0.47,0.51,0,0.19,selling filled stock — it earns while it waits,CAMSCBXF8PQ1
+1788671278.6,politics,ussewc-usse-ri-2026-11-03-rep,SELL,1,0.06,bond,5.6818,0.1,0.000775,3,10,0.617,0.03,0.15,-0.0592,-58,bond more: split — 1 at 6c carry the share; never dearer than his first price,CAQH4EKHRPPV
+1788671338.6,cfb,aachc-cfb-wins-2026-11-28-lou-6pt5wins,BUY,0.01,0.98,earn,0.3261,0.39,,77,90,0,0.69,0.95,0.15,0.01,joins the touch — the book has been quiet,CAQCS554GPMV
+1788671818.6,politics,ussewc-usse-sc-2026-11-03-rep,SELL,10,0.91,sell,0.0242,2.47,0.9238,89,95,0.397,0.9,0.99,0.0138,0,selling filled stock — it earns while it waits,CANQ6SBZRPPZ
+1788671878.7,politics,enwc-ussep-de-2026-09-15-rep-johshu,SELL,1,0.11,sell,6.1143,3.36,,9,14,0.373,0.09,0.11,0,99,selling filled stock — it earns while it waits,CAMYCRX1GPPS
+1788671962.1,politics,enwc-uspres-nom-rep-2028-tedcru,SELL,0.12,0.05,backfill,,3.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAMT9X940PPX
+1788672031.2,politics,enwc-uspres-nom-rep-2028-tedcru,SELL,6,0.05,sell,0.5532,3.58,,2,7,0.102,0.01,0.05,-0.01,186,selling filled stock — it earns while it waits,CAMT9X940PPX
+1788672811.2,politics,ussewc-usse-sd-2026-11-03-rep,BUY,1,0.89,bond,0,0.02,0.992325,85,92,0.62,0.81,0.91,-0.1023,45,bond more: split — 1 at 89c carry the share; never dearer than his first price,CAQY7RHBJPQ0
+1788673051.2,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,17,0.08,bond,6.249,0.05,0.009925,9,13,0.855,0.06,0.08,-0.0701,-283,bond more: buying up to $50.00 more; never dearer than his first price — 34% of ,CAQZ7QBG8PPW
+1788673484.2,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.63,earn,0.0163,0.4,,47,58,0.185,0.62,0.63,-0.1,-2,at the touch — a fill here is 2 ticks inside value (evidence band only; confiden,CAQS8G566PPT
+1788673664.2,cfb,aachc-cfb-wins-2026-11-28-mst-4pt5wins,SELL,1,0.55,sell,0.0765,2.18,,55,61,0.594,0.54,0.56,0.03,0,selling filled stock — it earns while it waits,CAPB7A8S0PPY
+1788673784.2,politics,enwc-uspres-nom-rep-2028-tedcru,SELL,0.12,0.05,backfill,,3.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAMT9X940PPX
