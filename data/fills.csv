@@ -1954,3 +1954,32 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788779328.1,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.32,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBH8YWTHEQ3T
 1788779328.1,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,5.32,0.05,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CBHAYFCD4Q3H
 1788779328.1,cfb,aachc-cfb-wins-2026-11-28-sc-7pt5wins,BUY,0.5,0.58,backfill,,0.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBG5GJ272Q3N
+1788779355.6,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.71,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBHBK1GAGQ3N
+1788779388.1,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,3,0.05,bond,0,0.02,0.00015,8,14,0.908,0.04,0.08,-0.0499,-207,bond: took 3.71 NO at 5c — it was in the way of our resting order,CBHBK1GAGQ3N
+1788779568.2,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,2.28,0.05,bond,0,0.02,0.00015,9,14,0.914,0.04,0.08,-0.0499,-209.28,bond: took 2.28 NO at 5c — it was in the way of our resting order,CBHC093MAQ3X
+1788779628.2,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,9,0.08,sell,5.6239,0.64,0.001175,4,6,0.811,0.03,0.46,0.0788,0,buying back the short at or under what it sold for — the bid earns while it wait,CBGTQVZ72Q3R
+1788779808.2,cfb,aachc-cfb-wins-2026-11-28-sc-7pt5wins,SELL,1,0.36,sell,3.5714,0.07,,52,61,0,0.35,0.55,0.2,0,selling filled stock — it earns while it waits,CBHD9ZY66Q3N
+1788779961.6,politics,ussewc-usse-ri-2026-11-03-rep,SELL,2,0.03,bond,4.1639,0.08,0.000825,5,9,0.863,0.02,0.1,-0.0292,-46,bond more: split — 2 at 3c carry the share; never dearer than his first price,CBHEG1CT8Q3H
+1788779990.0,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.28,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBHGYCVGEQ46
+1788780004.6,politics,usgubewc-usgub-ma-2026-11-03-dem,SELL,0.37,0.96,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBHG7R20EQ3X
+1788780021.6,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,5,0.05,bond,0,0.02,0.00015,9,14,0.92,0.04,0.08,-0.0499,-215,bond: took 5.28 NO at 5c — it was in the way of our resting order,CBHGYCVGEQ46
+1788780021.6,politics,usgubewc-usgub-ma-2026-11-03-dem,SELL,5,0.96,bond,0,0,0.999525,94,98,0,0.93,0.97,0.0395,13,bond: sold 5.37 YES into the bids at 96c by you,CBHG7R20EQ3X
+1788780081.6,politics,usgubewc-usgub-hi-2026-11-03-rep,BUY,19,0.04,bond,0,0.02,0.000125,3,6,0.609,0.03,0.07,0.0399,0,bond: sold 19 NO into the bids at 96c by you,CBHH3RBN2Q3N
+1788780081.6,politics,ussewc-usse-ok-2026-11-03-dem,BUY,7.2,0.05,bond,0,0.01,0.000375,4,8,0.358,0.04,0.06,0.0496,-10.8,bond: sold 7.2 NO into the bids at 95c by you,CBHGPJ92GQ3Y
+1788780081.6,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,3,0.96,bond,0,0.02,0.999525,95,98,0.455,0.96,0.97,-0.0395,16,bond: took 3 YES at 96c — it was in the way of our resting order,CBHG8WBNTQ3T
+1788780081.6,politics,ussewc-usse-id-2026-11-03-todach,SELL,27,0.04,sell,0,0,,4,9,0.05,0.04,0.05,0.03,0,taker dump — sold into the bid (the carved exception),CBHHFHRHGQ48
+1788780288.4,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.29,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBHHZMAP0Q3X
+1788780328.9,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,2,0.05,bond,0,0.02,0.00015,9,14,0.925,0.04,0.08,-0.0499,-217,bond: took 2.29 NO at 5c — it was in the way of our resting order,CBHHZMAP0Q3X
+1788780448.9,politics,ussewc-usse-nj-2026-11-03-dem,SELL,10,0.96,sell,1.7858,0.74,0.9955,95,98,0.738,0.95,0.96,0.0355,0,selling filled stock — it earns while it waits,CBGXY0MW8Q48
+1788780680.6,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,-5.32,0.05,fix,0,0.03,0.00015,8,14,0.9,0.05,0.08,-0.0499,-203.32,size trimmed by 5.32 to the exchange's count (order CBHAYFCD4Q3H),CBHAYFCD4Q3H
+1788780680.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,4.35,0.22,hand,,3.51,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C9MHWS6JGMVK
+1788780680.6,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,1.03,0.97,hand,,12.71,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C9N773YXPMVG
+1788780680.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.05,0.65,hand,,59.27,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C8F8W0KBPMW0
+1788780680.6,politics,ewc-usp-2028-11-07-jdvan,SELL,5.99,0.24,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAZ8XD9X8Q3H
+1788780680.6,politics,usgubewc-usgub-ne-2026-11-03-rep,SELL,0.12,0.95,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CB0RPQXX6Q3H
+1788780680.6,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,2.4,0.02,hand,,4.36,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAXS64VAJQ3R
+1788780680.6,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.71,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBHBK1GAGQ3N
+1788780680.6,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.28,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBHGYCVGEQ46
+1788780680.6,politics,usgubewc-usgub-ma-2026-11-03-dem,SELL,0.37,0.96,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBHG7R20EQ3X
+1788780680.6,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.29,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBHHZMAP0Q3X
+1788780680.6,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,BUY,0.94,0.49,backfill,,5.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CAYH4GG6WQ45
