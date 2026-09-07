@@ -36,6 +36,7 @@ from .family import Family
 from .floor import Floor
 from .names import Names
 from .orders import OrderDesk, PlaceHealth
+from .places import Places
 from .estimator import Estimator
 from .silver import SilverFairs
 from .state import StateStore
@@ -928,8 +929,13 @@ class Monitor:
         self.audit: list[dict] = []
         self.last_state: dict = {}
         self.boots: list[float] = []
+        # the addresses this server has run from and the exchange's verdict
+        # on each (owner, 2026-09-07: "which places Polymarket thinks are
+        # vpn and which are okay")
+        self.places = Places(on_change=self._place_changed)
         # one answer for every desk: is the exchange taking our orders?
-        self.place_health = PlaceHealth(on_change=self._place_health_changed)
+        self.place_health = PlaceHealth(on_change=self._place_health_changed,
+                                        on_verdict=self._place_verdict)
         self.master = MasterSwitch(alert=self.alerts.notify,
                                    name="3.0 master switch", scope="all of 3.0")
         # The floor handshake (v3/floor.py): master ON asks 1.0 and 2.0 to
@@ -1169,6 +1175,31 @@ class Monitor:
             self._note(f"exchange accepts placements again: {note}")
             self.alerts.notify("3.0: placements accepted again", note)
 
+    def _place_verdict(self, kind: str, now: float) -> None:
+        """Every word from the exchange on our placements, pinned to the
+        address the host shows (v3/places.py)."""
+        if kind == "refused":
+            self.places.refused(now)
+        elif kind == "recovered":
+            self.places.recovered(now)
+        else:
+            self.places.accepted(now)
+
+    def _place_changed(self, ip: str, prior: str, meta: dict) -> None:
+        """The host shows a new outbound address. Seen before as a VPN:
+        say so at once, before the first refusal."""
+        if prior == "vpn":
+            last = time.strftime("%m-%d %H:%M", time.gmtime(float(meta.get("last_vpn") or 0)))
+            self._note(f"outbound address {ip}: the exchange called it a VPN "
+                       f"before (last {last}Z, {int(meta.get('refused') or 0)} refusals)")
+            self.alerts.notify(
+                "3.0: this address was called a VPN before",
+                f"The server is on {ip}, which the exchange refused as a VPN "
+                f"(last {last}Z). Orders will likely be refused here; "
+                f"tap Deploy for another address.", priority="high")
+        else:
+            self._note(f"outbound address {ip} ({'new' if prior == 'new' else prior + ' before'})")
+
     def _note(self, msg: str) -> None:
         self.errors.append(f"{time.strftime('%m-%d %H:%M:%S')} {msg}")
         del self.errors[:-40]
@@ -1215,6 +1246,8 @@ class Monitor:
         self.ladder_day = str(saved.get("ladder_day") or "")
         if saved.get("bonds"):
             self.bonds.restore(saved["bonds"])
+        if saved.get("places"):
+            self.places.restore(saved["places"])
         pl = saved.get("pos_last") or {}
         if pl.get("pos") and time.time() - float(pl.get("at") or 0.0) < 3600.0:
             # the last accepted position read survives a restart, so a
@@ -1319,6 +1352,7 @@ class Monitor:
             "cancel_jobs": list(getattr(self, "cancel_jobs", [])),
             "rss_mb": round(rss_mb(), 1),
             "bonds": self.bonds.to_dict(),
+            "places": self.places.to_dict(),
             "pos_last": {"at": round(getattr(self, "_pos_last_at", 0.0), 1),
                          "pos": {k: list(v) for k, v in
                                  (getattr(self, "_pos_last", None) or {}).items()}},
@@ -3797,6 +3831,7 @@ class Monitor:
             **{k: self._family_switch_state(k) for k in self.families}}
         st["floor"] = self.floor.status()
         st["place_health"] = self.place_health.view()
+        st["places"] = self.places.view()
         return st
 
     def _family_switch_state(self, key: str) -> dict:
@@ -3839,7 +3874,7 @@ class Monitor:
                   "saved_at", "build", "boot_ts", "errors", "audit",
                   "master_switch", "flatten", "flat_stats", "summaries",
                   "silver", "silver_log", "grades", "paid_total", "ws",
-                  "alerts_log", "rewards_last", "floor", "place_health")
+                  "alerts_log", "rewards_last", "floor", "place_health", "places")
 
     def build_phone_payload(self) -> dict:
         st = self.public_state()
@@ -4113,6 +4148,14 @@ class Monitor:
             self.silver.refresh(now)     # TTL-gated inside
         except Exception as e:  # noqa: BLE001 — the model never kills the loop
             self._note(f"silver: {e}")
+        # which address the host shows, hourly and at boot — a deploy
+        # that lands on an address the exchange called a VPN is said at
+        # once (owner, 2026-09-07)
+        if self.places.due(now):
+            try:
+                self.places.check(now, why="hourly" if self._first_cycle_done else "boot")
+            except Exception as e:  # noqa: BLE001 — a lookup never breaks the loop
+                self._note(f"places: {e}")
         # the payout watcher (ported from 2.0, owner-approved): every five
         # minutes, diff the exchange's posted rewards and push the phone
         # the moment something new lands

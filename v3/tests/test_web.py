@@ -244,6 +244,14 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("Sell under cost", web.BONDS_JS)
         self.assertIn("under_cost:true", web.BONDS_JS)
 
+    def test_the_switch_page_lists_the_places(self):
+        # owner, 2026-09-07: "which places Polymarket thinks are vpn and
+        # which are okay" — the addresses this server has run from
+        from v3 import web
+        self.assertIn("function placesCard(pl)", web.SWITCH_JS)
+        self.assertIn("out+=placesCard(d.places||{});", web.SWITCH_JS)
+        self.assertIn("Tap Deploy on DigitalOcean for another address", web.SWITCH_JS)
+
     def test_the_band_is_printed_to_the_half_point(self):
         # owner, 2026-09-07: the band is 98.5% / 1.5%; "99%" would misstate it
         from v3 import web
