@@ -3767,3 +3767,68 @@ class TestTheBoard(Base):
         self.b.approve(TN, self.now)
         rows = {r["market"]: r for r in self.b.view(self.now, self.positions())["rows"]}
         self.assertIsNone(rows[TN]["board"])
+
+
+class TestExitsClaimedBack(Base):
+    """RI Senate rep, 2026-09-06: the bond's exit came back from the
+    open-order list as "the owner's own order" and the bond sized around
+    it — "no exit resting" with no reason. The bond claims back an exit
+    it placed; a hand order of his stays his, and the card says why the
+    bond rests nothing."""
+
+    ADOPTED = "the owner's own order — the engine leaves it alone"
+
+    def test_an_exit_relabelled_as_his_is_the_bonds_again(self):
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        exits = self.orders(AL, "SELL", decoy=False)
+        self.assertTrue(exits)
+        self.assertTrue(all(o.id in self.b.placed_ids[AL] for o in exits))
+        for o in exits:                                          # the family's mislabel
+            o.purpose, o.why = "manual", self.ADOPTED
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        again = self.orders(AL, "SELL", decoy=False)
+        self.assertTrue(again)
+        self.assertTrue(all(o.purpose == "bond" and o.why.startswith("bond:") for o in again))
+        self.assertEqual(sum(o.qty for o in again), 100.0)      # the lot, once
+        self.assertIn("exit_reclaimed", [e["event"] for e in self.b.log])
+        self.assertIsNone(self.b.exit_note.get(AL))
+
+    def test_before_ids_were_kept_an_order_sized_to_the_lot_is_claimed(self):
+        # the state from before this code: no ids, one adopted order
+        # sized to the lot on the earn side — the RI case
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 47.0, 0.973)
+        self.r.exchange.live["h1"] = {"id": "h1", "market": AL, "side": "SELL",
+                                      "price": 0.97, "size": 47.26, "intent": SELL_LONG}
+        self.r.fam.orders["h1"] = FamilyOrder(
+            id="h1", market=AL, side="SELL", price=0.97, qty=47.26, intent=SELL_LONG,
+            placed_ts=self.now, purpose="manual", why=self.ADOPTED)
+        self.assertNotIn(AL, self.b.placed_ids)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertIn("exit_reclaimed", [e["event"] for e in self.b.log])
+        # claimed back, then sized to the lot like any exit of the bond's
+        self.assertEqual([o for o in self.orders(AL, "SELL") if o.purpose == "manual"], [])
+        bond = [o for o in self.orders(AL, "SELL") if o.purpose == "bond"]
+        self.assertTrue(bond)
+        self.assertAlmostEqual(sum(o.qty for o in bond), 47.0, places=2)
+        self.assertTrue(self.b.placed_ids[AL])
+        self.assertIsNone(self.b.exit_note.get(AL))
+
+    def test_his_own_hand_order_stays_his_and_the_card_says_so(self):
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.r.exchange.live["h2"] = {"id": "h2", "market": AL, "side": "SELL",
+                                      "price": 0.97, "size": 100.0, "intent": SELL_LONG}
+        self.r.fam.orders["h2"] = FamilyOrder(
+            id="h2", market=AL, side="SELL", price=0.97, qty=100.0, intent=SELL_LONG,
+            placed_ts=self.now, purpose="manual", why="placed by the owner")
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(self.r.fam.orders["h2"].purpose, "manual")   # untouchable
+        self.assertEqual([o for o in self.orders(AL, "SELL") if o.purpose == "bond"], [])
+        note = self.b.exit_note.get(AL) or ""
+        self.assertIn("your own order", note)
+        self.assertIn("100 @ 97c", note)
+        row = self.b.live_rows(self.now, self.positions())[AL]
+        self.assertIn("your own order", row["exit_note"])

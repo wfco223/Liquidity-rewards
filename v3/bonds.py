@@ -298,6 +298,7 @@ class Bonds:
         self.exit_px: dict[str, dict] = {}     # slug -> {px (YES terms), bond_px, since, by}
         self.money_out: dict | None = None     # {since, bp, walls, reserve}: the families' gate
         self.exit_note: dict[str, str] = {}    # slug -> why no exit rests, for the card
+        self.placed_ids: dict[str, list[str]] = {}   # slug -> ids of exits this bond placed
         # a sale by his hand the position feed has not shown yet: the
         # sync must not hand the sold shares back meanwhile
         self._await_drop: dict[str, tuple] = {}   # slug -> (qty sold, since)
@@ -1618,6 +1619,13 @@ class Bonds:
                 r = self._keep_earning(slug, side, positions, now)
                 if r:
                     placed.append(r)
+                # the exits this bond has resting, by id, so one that comes
+                # back from the open-order list as "the owner's" is known
+                ids = self.placed_ids.setdefault(slug, [])
+                for o in self._orders(slug, self.earn(side)[0], decoy=False):
+                    if o.id not in ids:
+                        ids.append(o.id)
+                del ids[:-40]
                 r = self._work_minnows(slug, side, positions, now)
                 if r:
                     placed.append(r)
@@ -1884,6 +1892,26 @@ class Bonds:
                          "keep": est / best, "exposure": exp, "split": True})
         return plan
 
+    def _reclaim_exits(self, slug: str, bs: str, held: float) -> None:
+        """An exit this bond placed that the family re-recorded as "the
+        owner's own order" (the open-order list left it out for a read,
+        RI Senate rep 2026-09-06) is the bond's again: its id is one the
+        bond placed — or, before the bond kept ids, it is sized to the
+        lot on the earn side. A hand order set by his own hand keeps its
+        text and is never claimed."""
+        ADOPTED = "the owner's own order — the engine leaves it alone"
+        known = set(self.placed_ids.get(slug) or [])
+        fresh = slug not in self.placed_ids          # before ids were kept
+        for o in list(self.fam.orders.values()):
+            if o.market != slug or o.side != bs or o.purpose != "manual" or o.why != ADOPTED:
+                continue
+            if o.id in known or (fresh and o.qty <= held + 1.0):
+                o.purpose = "bond"
+                o.why = "bond: resting — the bond's exit, claimed back after the book lost it for a read"
+                self._log(event="exit_reclaimed", market=slug, price=o.price, qty=o.qty,
+                          id=o.id, note="came back from the open-order list as the owner's; "
+                                        "it is the exit this bond placed")
+
     @staticmethod
     def _engine_exit(o: FamilyOrder) -> bool:
         """The engine's own exit — placed by it, moved by it — as against
@@ -2104,6 +2132,7 @@ class Bonds:
             return None
         tick = book.tick or 0.01
         bound = self._bound(slug, side, tick)
+        self._reclaim_exits(slug, bs, held)
         decoys = self._orders(slug, bs, decoy=True)
         others = self._others_on(slug, bs)
         d_qty = sum(o.qty for o in decoys)
@@ -2127,6 +2156,15 @@ class Bonds:
                     self._log(event="earn_pulled", market=slug, price=o.price,
                               qty=o.qty, note=f"other orders of ours already offer the "
                                               f"lot ({elsewhere:g} of {held:g} shares)")
+            his_all = his + [o for o in list(self.fam.orders.values())
+                             if o.market == slug and o.side == bs and o.purpose != "bond"
+                             and o.why != QUALIFY_WALL_WHY]
+            what = " + ".join(f"{o.qty:g} @ {(o.price if side == 'YES' else 1.0 - o.price) * 100:g}c"
+                              for o in his_all[:3])
+            self.exit_note[slug] = (f"your own order{'s' if len(his_all) != 1 else ''} "
+                                    f"({what}) already offer the lot — the bond rests "
+                                    f"nothing on top; pull {'them' if len(his_all) != 1 else 'it'} "
+                                    f"and the exit rests")
             return None
         pin = self.exit_px.get(slug)
         if pin:
@@ -3874,6 +3912,7 @@ class Bonds:
                 "dance": self.dance,
                 "cost_src": self.cost_src, "unconfirmed": self.unconfirmed,
                 "booked_out": self._booked_out,
+                "placed_ids": self.placed_ids,
                 "more_retry": self._more_retry,
                 "exit_px": self.exit_px,
                 "money_out": self.money_out,
@@ -3998,6 +4037,7 @@ class Bonds:
         self.unconfirmed = {str(k): dict(v) for k, v
                             in (d.get("unconfirmed") or {}).items()}
         self._booked_out = {str(k): float(v) for k, v in (d.get("booked_out") or {}).items()}
+        self.placed_ids = {str(k): [str(x) for x in v] for k, v in (d.get("placed_ids") or {}).items()}
         self._more_retry = {str(k): float(v) for k, v
                             in (d.get("more_retry") or {}).items()}
         self.exit_px = {str(k): dict(v) for k, v in (d.get("exit_px") or {}).items()}

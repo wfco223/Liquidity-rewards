@@ -916,7 +916,7 @@ function bTop(r,L,held){
   var ex=bExit(r);
   var e=ex.length?('exit '+ex.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}).join(' + ')+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex.reduce(function(s,o){return s+(o.est||0);},0))+'/day</b>'):'<span class="warn">no exit resting'+(r.exit_note?' — '+esc(r.exit_note):'')+'</span>';
   var mos=(r.more&&r.more.orders&&r.more.orders.length)?r.more.orders:((r.more&&r.more.order)?[r.more.order]:[]);
-  var mo=mos.length?(' · buying more '+mos.map(function(o){return o.qty+' @ '+pc(o.price);}).join(' + ')):'';
+  var mo=mos.length?(' · buying more '+mos.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}).join(' + ')):'';
   h+='<div class="sub"><b>'+r.qty+' held @ '+pc(r.cost_px)+'</b> · '+e+mo+(r.rewards?' · earned '+usd(r.rewards):'')+'</div>';
  } else {
   h+='<div class="sub">Silver '+bOdds(r)+(r.cost!=null?' · take '+pc(r.cost)+', '+r.size+' avail'+(r.days!=null?' · '+bPct(r['yield'])+' in '+r.days+'d ≈ '+bPct(r.annual)+'/yr':''):' · nothing to take')+'</div>';
@@ -969,9 +969,9 @@ function bMore(r,b,sw){
  var m=esc(r.market);var pct=Math.round((b.more_share||0.5)*100);
  var h='Buy more: up to $'+bField('bmore-'+m,bKeep('bmore-'+m)||(mo.cap_usd||0).toFixed(2),'6em')+' '+bBtn('Set','bMoreSet(\''+m+'\')')+(mo.cap_px!=null?'<br>at '+pc(mo.cap_px)+' or better (your first price here)':'');
  if(mo.paused)h+='<br><span class="warn">'+esc(mo.paused)+'</span>';
- else if(mo.order){var ol=(mo.orders&&mo.orders.length>1)?mo.orders:[mo.order];h+='<br>resting '+ol.map(function(o){return o.qty+' @ '+pc(o.price);}).join(' + ')+': '+bPct(mo.order.share)+' of its side'+(ol.length>1?' together':'')+' = <b>'+usd(mo.order.est)+'/day</b>';}
+ else if(mo.order){var ol=(mo.orders&&mo.orders.length>1)?mo.orders:[mo.order];h+='<br>resting '+ol.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}).join(' + ')+': '+bPct(mo.order.share)+' of its side'+(ol.length>1?' together':'')+' = <b>'+usd(mo.order.est)+'/day</b>';}
  else if(mo.retry_at)h+='<br><span class="muted">'+(mo.note?esc(mo.note)+' · ':'')+'tries again '+when(mo.retry_at)+'</span>';
- else if(mo.slot){var sl=(mo.slot.levels&&mo.slot.levels.length>1)?mo.slot.levels.map(function(l){return l[1]+' @ '+pc(l[0]);}).join(' + '):(mo.slot.qty+' @ '+pc(mo.slot.price));h+='<br>would rest '+sl+' ('+bPct(mo.slot.share)+')'+(sw.on?'':' — bonds switch off');}
+ else if(mo.slot){var sl=(mo.slot.levels&&mo.slot.levels.length>1)?mo.slot.levels.map(function(l){return l[1]+' @ '+pc(bTerms(r,l[0]));}).join(' + '):(mo.slot.qty+' @ '+pc(bTerms(r,mo.slot.price)));h+='<br>would rest '+sl+' ('+bPct(mo.slot.share)+')'+(sw.on?'':' — bonds switch off');}
  else h+='<br><span class="muted">not resting: '+(mo.note?esc(mo.note):'no price at or under your first price captures '+pct+'% of its side')+'</span>';
  return '<div class="sub">'+h+'</div>';
 }
