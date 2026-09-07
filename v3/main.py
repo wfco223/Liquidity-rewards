@@ -1431,8 +1431,7 @@ class Monitor:
         st["saved_at"] = time.time()
         self.last_state = st
         self.freeze_payload()      # a switch flip shows immediately
-        self.store.save_local(st)
-        self.store.save_remote_soon(st)
+        self.store.save_soon(st, force_remote=True)
         return s
 
     @staticmethod
@@ -1521,8 +1520,7 @@ class Monitor:
         st["saved_at"] = now
         self.last_state = st
         self.freeze_payload()
-        self.store.save_local(st)
-        self.store.save_remote_soon(st)
+        self.store.save_soon(st, force_remote=True)
         return {"ok": True, "note": note, "active_until": fam.active_until}
 
     @staticmethod
@@ -1587,8 +1585,7 @@ class Monitor:
         st["saved_at"] = now
         self.last_state = st
         self.freeze_payload()
-        self.store.save_local(st)
-        self.store.save_remote_soon(st)
+        self.store.save_soon(st, force_remote=True)
         return {"ok": True, "note": note, "graduated": sorted(fam.graduated)}
 
     def _fair_for(self, slug: str) -> float | None:
@@ -1630,8 +1627,7 @@ class Monitor:
         st["saved_at"] = time.time()
         self.last_state = st
         self.freeze_payload()
-        self.store.save_local(st)
-        self.store.save_remote_soon(st)
+        self.store.save_soon(st, force_remote=True)
         return {"ok": True, "note": note}
 
     def owner_place(self, market: str, side: str, price: float,
@@ -2724,6 +2720,23 @@ class Monitor:
                     f"  fresh-REST={_shape(fresh)}")
                 done += 1
 
+    def _publish_rewards_behind(self, rows: list) -> None:
+        """rewards.csv written on its own thread — two GitHub round
+        trips that must not hold a tap or the cycle. One at a time; a
+        second call while one runs is dropped (the next posting or the
+        hourly publish writes the same file)."""
+        t = getattr(self, "_rw_pub", None)
+        if t is not None and t.is_alive():
+            return
+
+        def run():
+            try:
+                self.publish_rewards_csv(rows=rows)
+            except Exception as e:  # noqa: BLE001 — reporting never breaks
+                self._note(f"rewards.csv publish: {e}")
+        self._rw_pub = threading.Thread(target=run, daemon=True, name="rewards-csv")
+        self._rw_pub.start()
+
     def publish_rewards_csv(self, rows: list | None = None) -> bool:
         """The exchange's posted-payout file, written NOW. Owner,
         2026-08-26: politics Aug-24 posted at 01:13Z, the watcher saw
@@ -3075,13 +3088,18 @@ class Monitor:
         self._audit({"op": op, "market": market, "initiator": "owner",
                      "ok": bool(r.get("ok")), "ts": now})
         if r.get("ok"):
+            t1 = time.time()
             st = dict(self.last_state) if self.last_state else {}
             st["bonds"] = self.bonds.to_dict()
             st["saved_at"] = now
             self.last_state = st
             self.freeze_payload()
-            self.store.save_local(st)
-            self.store.save_remote_soon(st)      # behind the request, never in it
+            t2 = time.time()
+            self.store.save_soon(st, force_remote=True)   # behind the request, never in it
+            t3 = time.time()
+            if t3 - now > 3.0:
+                self._note(f"slow tap {op}: {t1 - now:.1f}s op, {t2 - t1:.1f}s payload, "
+                           f"{t3 - t2:.1f}s snapshot")
         return r
 
     def publish_ladders(self, now: float) -> None:
@@ -3515,10 +3533,7 @@ class Monitor:
         # tapping refresh actively kept the file stale. Any caller
         # publishes now; the write is a no-op when nothing changed,
         # and these rows spare it a second fetch.
-        try:
-            self.publish_rewards_csv(rows=rows)
-        except Exception as e:  # noqa: BLE001 — reporting never breaks
-            self._note(f"rewards.csv publish: {e}")
+        self._publish_rewards_behind(rows)
         for d, v in totals.items():
             self.actuals_by_day[d] = round(v, 2)
         # ...and per family, so the ledger grades each one on its own
@@ -3554,12 +3569,12 @@ class Monitor:
             for k in sorted(self.actuals_by_fam)[:len(self.actuals_by_fam) - 4000]:
                 del self.actuals_by_fam[k]
         # the baseline must survive a deploy between now and the next save
-        # — local AND remote, immediately (a rebuild replaces the disk)
+        # — local AND remote, at once but BEHIND the answer (2026-09-07:
+        # the GitHub round trips here held the phone's tap for minutes)
         if self.last_state:
             self.last_state["rewards_seen"] = self.rewards_seen
             self.last_state["actuals_by_day"] = self.actuals_by_day
-            self.store.save_local(self.last_state)
-            self.store.save_remote(self.last_state)
+            self.store.save_soon(self.last_state, force_remote=True)
         days = {d: round(v, 2) for d, v in sorted(totals.items())}
         if first:
             # the FIRST check has nothing to compare against — every row
@@ -3832,6 +3847,7 @@ class Monitor:
         st["floor"] = self.floor.status()
         st["place_health"] = self.place_health.view()
         st["places"] = self.places.view()
+        st["cycle_stats"] = getattr(self, "cycle_stats", None) or st.get("cycle_stats")
         return st
 
     def _family_switch_state(self, key: str) -> dict:
@@ -3874,7 +3890,8 @@ class Monitor:
                   "saved_at", "build", "boot_ts", "errors", "audit",
                   "master_switch", "flatten", "flat_stats", "summaries",
                   "silver", "silver_log", "grades", "paid_total", "ws",
-                  "alerts_log", "rewards_last", "floor", "place_health", "places")
+                  "alerts_log", "rewards_last", "floor", "place_health", "places",
+                  "cycle_stats")
 
     def build_phone_payload(self) -> dict:
         st = self.public_state()
@@ -4109,6 +4126,15 @@ class Monitor:
         return merged
 
     def _cycle_body(self, now: float) -> dict:
+        # where a cycle's minutes go (2026-09-07: cycles of 2-4 minutes,
+        # taps answered late): a lap per stage, kept in the state
+        laps: dict = {}
+        t_lap = [time.time()]
+
+        def lap(name: str) -> None:
+            t = time.time()
+            laps[name] = round(t - t_lap[0], 1)
+            t_lap[0] = t
         self._stage("checking the floor and switches", 5)
         self.flatten = flatten_active()
         self.floor.write_want(self.master.on or self.flatten)
@@ -4156,6 +4182,7 @@ class Monitor:
                 self.places.check(now, why="hourly" if self._first_cycle_done else "boot")
             except Exception as e:  # noqa: BLE001 — a lookup never breaks the loop
                 self._note(f"places: {e}")
+        lap("read board")
         # the payout watcher (ported from 2.0, owner-approved): every five
         # minutes, diff the exchange's posted rewards and push the phone
         # the moment something new lands
@@ -4171,15 +4198,15 @@ class Monitor:
                         "Rewards posted",
                         f"{res['new_count']} new rows at the exchange; "
                         f"latest day totals: {line}")
-                    # write the file the MOMENT postings land (owner,
-                    # 2026-08-26) — while 1.0 runs, it owns the file
-                    # and gets the kick instead
+                    # the file was written the MOMENT postings landed
+                    # (owner, 2026-08-26) by refresh_rewards itself, behind
+                    # the answer — while 1.0 runs, it owns the file and
+                    # gets the kick instead
                     if os.environ.get("V1_ENABLED", "0") != "0":
                         self._kick_tracker()
-                    else:
-                        self.publish_rewards_csv()
             except Exception as e:  # noqa: BLE001 — watching never breaks
                 self._note(f"rewards watch: {e}")
+        lap("rewards watch")
         # boot has to be cheap enough to FINISH (owner, 2026-08-31). The
         # hourly housekeeping — a 2,500-row trade-history pull and five
         # GitHub file round-trips — is ~30 seconds of the heaviest work
@@ -4198,6 +4225,7 @@ class Monitor:
                     fam.recent_paid = recent
             if day_totals:
                 self.actuals_by_day = day_totals
+        lap("publish files")
         summaries = {}
         fam_pct = {"politics": 25, "cfb": 78, "nfl": 88, "nba": 92,
                    "gameday": 95}
@@ -4240,6 +4268,7 @@ class Monitor:
             except ApiError as e:
                 self._note(f"{key}: {e}")
                 summaries[key] = {"name": fam.cfg.name, "error": str(e)[:120]}
+        lap("families")
         if any(getattr(fam, "last_discover", 0.0) == now
                for fam in self.families.values()):
             self._note(f"memory: {rss_mb():.0f} MB resident after discovery")
@@ -4250,6 +4279,7 @@ class Monitor:
             self.bonds.cycle(now, positions, on_b)
         except Exception as e:  # noqa: BLE001 — never breaks the cycle
             self._note(f"bonds: {type(e).__name__}: {e}")
+        lap("bonds")
         try:
             self._run_due_cancels(now)
         except Exception as e:  # noqa: BLE001 — never breaks the cycle
@@ -4262,12 +4292,20 @@ class Monitor:
                 self.survey_step(now)
             except Exception as e:  # noqa: BLE001 — research never breaks it
                 self._note(f"survey step: {type(e).__name__}: {e}")
+        lap("survey")
         self._stage("first save", 98)
         st = self._state(now, summaries)
         self.last_state = st
         self.freeze_payload()
-        self.store.save_local(st)
-        self.store.maybe_save_remote(st)
+        lap("state+payload")
+        # the disk write and the GitHub upload run behind the cycle, on
+        # the store's worker; the upload goes when it is due
+        self.store.save_soon(st)
+        laps["total"] = round(time.time() - now, 1)
+        self.cycle_stats = {"at": round(now, 1), "laps": laps,
+                            "save_s": getattr(self.store, "last_save_s", 0.0),
+                            "save_behind": getattr(self.store, "behind", 0)}
+        st["cycle_stats"] = self.cycle_stats
         if not self._first_cycle_done:
             self._first_cycle_done = True
             self.boot_stage = {"stage": "running", "pct": 100,
