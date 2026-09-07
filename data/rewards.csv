@@ -8264,6 +8264,7 @@ date,market,program_type,reward_usd,status
 2026-09-05,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.61,PENDING
 2026-09-05,ussewc-usse-ky-2026-11-03-dem,liquidityProgram,1.49,PENDING
 2026-09-05,ussewc-usse-ky-2026-11-03-rep,liquidityProgram,0.43,PENDING
+2026-09-05,ussewc-usse-ma-2026-11-03-dem,liquidityProgram,0.25,PENDING
 2026-09-05,ussewc-usse-ma-2026-11-03-rep,liquidityProgram,0.03,PENDING
 2026-09-05,ussewc-usse-ms-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-05,ussewc-usse-nm-2026-11-03-dem,liquidityProgram,0.82,PENDING
