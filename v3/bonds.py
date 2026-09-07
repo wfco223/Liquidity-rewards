@@ -89,6 +89,9 @@ MONEY_MIN_USD = 5.0         # money below this waits
 PING_EVERY_USD = 100.0      # a phone ping per this much bought
 KEEP_FRACTION = 0.8         # the resting slot keeps this much of the best reward
                             # (owner, 2026-09-06: 80%, up from 60%)
+MARKET_SHARE = 0.20         # no one market holds more than this share of the budget
+                            # (owner, 2026-09-07: "max 20% of the budget is going to
+                            # any one market")
 BEHIND_MAX_TICKS = 8
 # The split (owner, 2026-09-05): the placement with the least exposure
 # that still reaches the threshold — KEEP_FRACTION of the best reward for
@@ -2331,7 +2334,7 @@ class Bonds:
                                              "buying here, bait included"}
             return {"ok": False, "note": "not on the bond list"}
         side = meta["side"]
-        why_not = self._can_spend(1.0, now)          # a share costs under a dollar
+        why_not = self._can_spend(1.0, now, slug)    # a share costs under a dollar
         if why_not:
             return {"ok": False, "note": f"{why_not} — bait is a buy"}
         if self._bait_orders(slug):
@@ -2749,15 +2752,54 @@ class Bonds:
         anywhere shrinks the room everywhere and the next pass resizes."""
         return round(self.budget_total() - self.invested(), 4)
 
-    def _can_spend(self, usd: float, now: float) -> str | None:
-        """Why a buy of `usd` may not go on now — over the room, or more
-        than the exchange will fund — or None when it may. The exchange's
-        free money is a sizing fact, never a gate on its own."""
-        room = self.budget_room()
+    def invested_in(self, slug: str) -> float:
+        """What one market holds as bonds, at cost with fees."""
+        l = self.lots.get(slug) or {}
+        return round(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0), 4)
+
+    def market_cap(self) -> float:
+        """The most any one market may hold at cost (owner, 2026-09-07:
+        "we don't want too much of the budget going to any one market.
+        Set it so that max 20% of the budget is going to any one
+        market")."""
+        return round(MARKET_SHARE * self.budget_total(), 4)
+
+    def market_room(self, slug: str) -> float:
+        """What THIS market's buy orders may total: the budget room, and
+        no more than its share of the budget less what it already
+        holds. Both rules hold at once."""
+        return round(min(self.budget_room(), self.market_cap() - self.invested_in(slug)), 4)
+
+    def _share_full(self, slug: str) -> str:
+        return (f"at its {MARKET_SHARE:.0%} share of the budget: ${self.invested_in(slug):,.2f} "
+                f"held here against ${self.market_cap():,.2f}")
+
+    def _room_note(self, slug: str) -> str | None:
+        """Why nothing new may be bought in this market — the budget is
+        full, or the market is at its share — or None while it may."""
+        if self.budget_room() < 1.0:
+            return (f"budget full: ${self.invested():,.2f} in bonds against a "
+                    f"${self.budget_total():,.2f} budget")
+        if self.market_room(slug) < 1.0:
+            return self._share_full(slug)
+        return None
+
+    def _can_spend(self, usd: float, now: float, slug: str | None = None) -> str | None:
+        """Why a buy of `usd` may not go on now — over the room, over the
+        market's share, or more than the exchange will fund — or None
+        when it may. The exchange's free money is a sizing fact, never a
+        gate on its own."""
+        room = self.market_room(slug) if slug else self.budget_room()
         if usd > room + 1e-9:
+            if slug and self._room_note(slug):
+                return self._room_note(slug)
             if room < 1.0:
                 return (f"budget full: ${self.invested():,.2f} in bonds against a "
                         f"${self.budget_total():,.2f} budget")
+            if slug and room < self.budget_room() - 1e-9:
+                return (f"over this market's {MARKET_SHARE:.0%} share (${room:,.2f} left for "
+                        f"its buys: ${self.invested_in(slug):,.2f} held against "
+                        f"${self.market_cap():,.2f})")
             return f"over the budget room (${room:,.2f} left for this market's buys)"
         bp = self._buying_power(now)
         if bp is not None and usd > bp + 1e-9:
@@ -2834,11 +2876,11 @@ class Bonds:
                                 else "buy-more amount is zero")
             return None
         # the budget rule (owner, 2026-09-06): this market's buy orders
-        # may total the room — the budget less everything held at cost
-        room = self.budget_room()
-        if room < 1.0:
-            note = (f"budget full: ${self.invested():,.2f} in bonds against a "
-                    f"${self.budget_total():,.2f} budget")
+        # may total the room — the budget less everything held at cost —
+        # and (2026-09-07) no more than its 20% share less what it holds
+        room = self.market_room(slug)
+        note = self._room_note(slug)
+        if note:
             if cur:
                 self._pull_more(slug, note)
             if self._more_note.get(slug) != note:
@@ -3346,7 +3388,16 @@ class Bonds:
               positions: dict, now: float) -> dict | None:
         """Take the minnow's shares at its price: they join the bond."""
         cost = px if side == "YES" else round(1.0 - px, 4)
-        money = self._money()
+        # the take is a buy: it fits this market's room — the budget, and
+        # the market's 20% share — and says so when there is none
+        why_not = self._room_note(slug)
+        if why_not:
+            if self._more_note.get(slug + "|take") != why_not:
+                self._more_note[slug + "|take"] = why_not
+                self._log(event="take_skipped", market=slug, side=side, price=px,
+                          qty=self._hundredths(size), note=why_not)
+            return None
+        money = min(self._money(), self.market_room(slug))
         qty = min(self._hundredths(money / cost) if cost > 0 else 0.0,
                   self._hundredths(size))
         if qty < 0.01:
@@ -3378,7 +3429,7 @@ class Bonds:
                 return None
         # the take is a buy: within this market's budget room, and no
         # more than the exchange will fund (owner, 2026-09-06)
-        why_not = self._can_spend(qty * (px if side == "YES" else round(1.0 - px, 4)), now)
+        why_not = self._can_spend(qty * (px if side == "YES" else round(1.0 - px, 4)), now, slug)
         if why_not:
             if self._more_note.get(slug + "|take") != why_not:
                 self._more_note[slug + "|take"] = why_not
@@ -3658,6 +3709,8 @@ class Bonds:
         if self._money() < MONEY_MIN_USD:
             return {"ok": False, "note": "no money to buy with — set the deploy "
                                          "budget first"}
+        if self.market_room(slug) < MONEY_MIN_USD:
+            return {"ok": False, "note": f"nothing was bought — {self._room_note(slug) or 'no room here'}"}
         bought = usd = 0.0
         lots = 0
         last = None
@@ -3691,7 +3744,7 @@ class Bonds:
             bought += r["qty"]
             usd += r["usd"]
             lots += 1
-            if self._money() < MONEY_MIN_USD:
+            if min(self._money(), self.market_room(slug)) < MONEY_MIN_USD:
                 break
         if bought <= 0.005:
             if getattr(self, "_block_note", ""):
@@ -3859,11 +3912,9 @@ class Bonds:
                "by": cap.get("by", "default"), "order": None, "slot": None,
                "cap_px": (round(px0 if side == "YES" else 1.0 - px0, 4) if px0 > 0 else None),
                "paused": ("the odds left the band: no new buying here"
-                          if slug not in self.approved else
-                          f"budget full: ${self.invested():,.2f} in bonds against a "
-                          f"${self.budget_total():,.2f} budget"
-                          if self.budget_room() < 1.0 else None),
-               "room": round(max(self.budget_room(), 0.0), 2),
+                          if slug not in self.approved else self._room_note(slug)),
+               "room": round(max(self.market_room(slug), 0.0), 2),
+               "held_usd": round(self.invested_in(slug), 2),
                "retry_at": (self._more_retry.get(slug)
                             if self._more_retry.get(slug, 0.0) > self._clock() else None),
                "note": self._more_note.get(slug)}
@@ -3942,6 +3993,7 @@ class Bonds:
                 "budget_total": round(self.budget_total(), 2),
                 "invested": round(self.invested(), 2),
                 "room": round(self.budget_room(), 2),
+                "market_cap": round(self.market_cap(), 2), "market_share": MARKET_SHARE,
                 "earning_now": round(sum(o.live_est or 0.0 for o in list(self.fam.orders.values())
                                          if o.purpose == "bond"), 2),
                 "board_note": self._board_note(rows),

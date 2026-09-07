@@ -1099,7 +1099,7 @@ function bList(d){
  var tx=b.tax||{};var tax=b.budget_mode==='tax';var e=b.earned||{};
  out+='<div class="card"><b>Money</b>';
  out+='<div class="sub"><b>'+usd(b.money||0)+'</b> to deploy = budget '+usd(b.budget||0)+' + proceeds '+usd(b.cash||0)+' · held at cost '+usd(b.held_cost||0)+'</div>';
- if(b.budget_total!=null)out+='<div class="sub"><b>Budget '+usd(b.budget_total)+'</b> · '+usd(b.invested||0)+' in bonds at cost · <b>'+usd(Math.max(b.room||0,0))+' of room</b> for buy orders in any one market'+((b.room||0)<1?' — <span class="warn">budget full: nothing new is bought</span>':'')+'. Across markets the orders may add up to more; a fill anywhere shrinks the room everywhere.</div>';
+ if(b.budget_total!=null)out+='<div class="sub"><b>Budget '+usd(b.budget_total)+'</b> · '+usd(b.invested||0)+' in bonds at cost · <b>'+usd(Math.max(b.room||0,0))+' of room</b> for buy orders'+((b.room||0)<1?' — <span class="warn">budget full: nothing new is bought</span>':'')+'. No one market holds more than '+Math.round((b.market_share||0.2)*100)+'% of the budget, '+usd(b.market_cap||0)+', so a market\'s buy orders fit that less what it holds. Across markets the orders may add up to more; a fill anywhere shrinks the room everywhere.</div>';
  if(b.wall_held>0)out+='<div class="sub">Your qualifying walls hold '+usd(b.wall_held)+' on the exchange. Parked, not spent: it does not count against money to deploy.</div>';
  if(b.money_out){var mo=b.money_out;out+='<div class="sub warn"><b>Politics and cfb buy nothing new</b> since '+when(mo.since)+': the exchange showed '+usd(mo.bp||0)+' free'+(mo.walls>0?' plus '+usd(mo.walls)+' the walls hold':'')+', and '+usd(mo.reserve||0)+' of that is reserved for the bonds. They resume once '+usd(b.money_back_usd||50)+' is free beyond the reserve. Bond bids are not held by this: they rest within the budget room and size to what the exchange can fund.</div>';}
  out+='<div class="sub">Earned <b>'+usd(e.total||0)+'</b> = '+usd(e.sales||0)+' on sales + '+usd(e.rewards||0)+' rewards'+(e.today?' ('+usd(e.today)+' today)':'')+'</div>';
@@ -1205,7 +1205,7 @@ function render(d){
  var out='<div class="bstats">'
   +'<div><div class="v">'+(pct==null?'—':pct+'<small>%</small>')+'</div><div class="l">of budget invested<br>'+usd(b.invested||0)+' of '+usd(b.budget_total||0)+'</div></div>'
   +'<div><div class="v">'+usd(b.earning_now||0)+'</div><div class="l">earning now, a day<br>'+(held.length?(live?'<span class="ok">● live</span>':'<span class="muted">live line opening…</span>'):'nothing held')+'</div></div>'
-  +'<div><div class="v">'+usd(Math.max(b.room||0,0))+'</div><div class="l">room for buys, per market'+((b.room||0)<1?'<br><span class="warn">budget full</span>':'')+'</div></div>'
+  +'<div><div class="v">'+usd(Math.max(b.room||0,0))+'</div><div class="l">room for buys · '+usd(b.market_cap||0)+' max a market'+((b.room||0)<1?'<br><span class="warn">budget full</span>':'')+'</div></div>'
   +'</div>';
  out+='<div id="bmsg">'+(window._bNote||'')+'</div>';
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
