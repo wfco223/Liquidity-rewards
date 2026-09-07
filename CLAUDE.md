@@ -48,7 +48,12 @@ long and accreted, so search it rather than reading it through.
   "Don't let it cancel orders I set by hand"): the engine never cancels,
   moves, or reprices them — any resting order the engine did not place
   itself is treated as the owner's. It sizes its own exits and dumps
-  around them so shares are never offered twice.
+  around them so shares are never offered twice. One carve-out (owner,
+  2026-09-07 "If I try to sell something and there is an order in the
+  way, ask me if I want to cancel the order and if I say yes, cancel
+  the order and then sell"): a sale by his tap that his own order
+  blocks comes back as a question naming the order; his yes cancels
+  that one order and runs the sale. Never without the yes.
 - FROZEN ground — the engine does NOTHING there (owner, 2026-08-24
   "Don't sell my gop governor count race orders. In fact don't touch
   those"): places nothing, rests no exits, reprices nothing, cancels

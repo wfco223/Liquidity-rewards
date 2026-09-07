@@ -1388,7 +1388,8 @@ class Bonds:
         return n
 
     def sell_into(self, slug: str, price, qty, now: float,
-                  positions: dict | None = None, under_cost: bool = False) -> dict:
+                  positions: dict | None = None, under_cost: bool = False,
+                  cancel_ids=()) -> dict:
         """His sale into the bids (owner, 2026-09-04: "I want the ability
         to sell my mass gov rep shares to the orders resting at 98
         cents"): the buyers resting on the exit side are taken from the
@@ -1401,7 +1402,15 @@ class Bonds:
         sold a few below cost to free up money to use in cheaper
         markets. I need a way of doing that with a button"): the cost
         floor is lifted for that one sale, the loss is booked as such,
-        and the proceeds are cash at once. Never set by the engine."""
+        and the proceeds are cash at once. Never set by the engine.
+
+        A hand order of his in the sale's way stops it and comes back
+        as a question (owner, 2026-09-07: "If I try to sell something
+        and there is an order in the way, ask me if I want to cancel
+        the order and if I say yes, cancel the order and then sell"):
+        the reply names the order under `in_way` and carries `retry`,
+        the same sale with its id in `cancel_ids`; posted back, that
+        order is cancelled first and the sale runs."""
         if slug not in self._working():
             return {"ok": False, "note": "not on the bond list"}
         side = self._side_of(slug)
@@ -1436,6 +1445,7 @@ class Bonds:
         lots = 0
         last = None
         stop = ""
+        hand: list[dict] = []                        # his orders in the way, for the question
         for _ in range(ENTER_MAX_LEVELS):
             if want - sold < 0.01:
                 break
@@ -1464,9 +1474,10 @@ class Bonds:
             take = round(min(self._hundredths(q), want - sold), 2)
             if take < 0.01:
                 break
-            blocked, cleared = self._clear_way(slug, far, p, now)
+            blocked, cleared = self._clear_way(slug, far, p, now, cancel_ids)
             if blocked:
                 stop = blocked
+                hand = self._hand_in_way(slug, far, p, cancel_ids)
                 break
             if cleared:
                 last = None                          # the book changed under us: price it again
@@ -1514,14 +1525,32 @@ class Bonds:
             prev = self._await_drop.get(slug)
             self._await_drop[slug] = (round(sold + (float(prev[0]) if prev else 0.0), 4),
                                       round(now, 1))
+        def ask(out: dict) -> dict:
+            # the question the page asks, and the sale to run on his yes:
+            # the rest of it, with the order's id as his word to cancel
+            if not hand or want - sold < 0.01:
+                return out
+            h = hand[0]
+            more = self._hundredths(want - sold)
+            out["in_way"] = hand
+            out["ask"] = (f"Your own order — {h['qty']:g} shares at {h['price'] * 100:g}c"
+                          + (f" ({h['why']})" if h["why"] else "") + " — is in the way of "
+                          f"this sale; the exchange would match you against yourself. "
+                          f"Cancel it and sell {more:g}"
+                          + (" more" if sold >= 0.5 else "") + "?")
+            out["retry"] = {"px": round(bp * 100, 1), "qty": more, "under_cost": bool(under_cost),
+                            "cancel_ids": sorted({*(str(i) for i in (cancel_ids or ())),
+                                                  *(x["id"] for x in hand)})}
+            return out
         if sold < 0.5:
-            return {"ok": False, "note": f"nothing sold — {stop or 'no bids at or above that price'}"}
+            return ask({"ok": False,
+                        "note": f"nothing sold — {stop or 'no bids at or above that price'}"})
         left = self.held(slug, side)
-        return {"ok": True,
-                "note": f"sold {sold:g} {side} in {lots} lot{'s' if lots != 1 else ''} for "
-                        f"${usd:,.2f} ({usd / sold * 100:.1f}c a share, ${fees:,.2f} "
-                        f"commission); {left:g} left, ${self.cash:,.2f} of proceeds waiting"
-                        + (f" — stopped: {stop}" if (stop and left >= 1.0 and sold < want) else "")}
+        return ask({"ok": True,
+                    "note": f"sold {sold:g} {side} in {lots} lot{'s' if lots != 1 else ''} for "
+                            f"${usd:,.2f} ({usd / sold * 100:.1f}c a share, ${fees:,.2f} "
+                            f"commission); {left:g} left, ${self.cash:,.2f} of proceeds waiting"
+                            + (f" — stopped: {stop}" if (stop and left >= 1.0 and sold < want) else "")})
 
     def set_budget(self, amount) -> dict:
         try:
@@ -3502,7 +3531,24 @@ class Bonds:
         return shares, (round(usd / shares, 4) if shares > 0 and usd > 0 else 0.0), \
             "no running total in the record; executions summed"
 
-    def _clear_way(self, slug: str, far: str, px: float, now: float) -> str | None:
+    def _in_way(self, slug: str, far: str, px: float) -> list:
+        """Our own orders a take at `px` on side `far` would hit first."""
+        def better(p):
+            return p <= px + 1e-9 if far == "SELL" else p >= px - 1e-9
+        return [o for o in list(self.fam.orders.values())
+                if o.market == slug and o.side == far and better(o.price)]
+
+    def _hand_in_way(self, slug: str, far: str, px: float, cancel_ids=()) -> list[dict]:
+        """His own hand orders in a take's way, as the page shows them —
+        less the ones he has already said to cancel."""
+        spare = {str(i) for i in (cancel_ids or ())}
+        return [{"id": o.id, "qty": round(o.qty, 2), "price": o.price,
+                 "why": (o.why or "")[:80]}
+                for o in self._in_way(slug, far, px)
+                if o.purpose == "manual" and o.id not in spare]
+
+    def _clear_way(self, slug: str, far: str, px: float, now: float,
+                   cancel_ids=()) -> str | None:
         """Before a take: our own orders on the side it hits, at or
         better than its price, would be matched first — the exchange
         will not fill us against ourselves, and the take sits (the
@@ -3510,21 +3556,22 @@ class Bonds:
         was in the way of a 7c sell). The engine's and the bond's own
         orders there are pulled and the engine is held off the market
         for HOLD_ENGINE_S; a hand order in the way is never touched —
-        the take is refused and says which order. Returns the refusal
+        the take is refused and says which order — unless its id is in
+        `cancel_ids`, his answer to the page's question (owner,
+        2026-09-07: "If I try to sell something and there is an order
+        in the way, ask me if I want to cancel the order and if I say
+        yes, cancel the order and then sell"). Returns the refusal
         note and whether anything was cleared: (note, cleared)."""
-        def better(p):
-            return p <= px + 1e-9 if far == "SELL" else p >= px - 1e-9
-        in_way = [o for o in list(self.fam.orders.values())
-                  if o.market == slug and o.side == far and better(o.price)]
-        hand = [o for o in in_way if o.purpose == "manual"]
+        in_way = self._in_way(slug, far, px)
+        hand = self._hand_in_way(slug, far, px, cancel_ids)
         if hand:
             h = hand[0]
-            return (f"your own order {h.id} ({h.qty:g} @ {h.price * 100:g}c) rests "
+            return (f"your own order {h['id']} ({h['qty']:g} @ {h['price'] * 100:g}c) rests "
                     f"in the way — the exchange would match you against "
                     f"yourself; move it first"), False
         if not in_way:
             return None, False
-        engine = [o for o in in_way if o.purpose != "bond"]
+        engine = [o for o in in_way if o.purpose not in ("bond", "manual")]
         if engine:
             self.fam.hold_until[slug] = now + HOLD_ENGINE_S
         gone = []
@@ -3533,6 +3580,10 @@ class Bonds:
             if r.ok:
                 self.fam.orders.pop(o.id, None)
                 gone.append(o.id)
+                if o.purpose == "manual":
+                    self._log(event="hand_cleared", market=slug, side=far, price=o.price,
+                              qty=round(o.qty, 2), order=o.id,
+                              note="his own order in the sale's way — he said cancel it")
             else:
                 return f"could not clear our {o.purpose} order {o.id}: {r.note[:80]}", True
         # wait for the exchange to show them gone before the take

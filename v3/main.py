@@ -3005,9 +3005,12 @@ class Monitor:
             r = self.bonds.pull_buy(market, str(value or "") or None)
         elif op == "bonds_sell_into":
             v = value if isinstance(value, dict) else {}
+            ids = v.get("cancel_ids") or []
             r = self.bonds.sell_into(market, v.get("px"), v.get("qty"), now,
                                      getattr(self, "_bond_positions", None),
-                                     under_cost=bool(v.get("under_cost")))
+                                     under_cost=bool(v.get("under_cost")),
+                                     cancel_ids=[str(i) for i in ids if str(i)]
+                                     if isinstance(ids, list) else [])
         elif op == "bonds_bait":
             r = self.bonds.place_bait(market, now, getattr(self, "_bond_positions", None))
         elif op == "bonds_pull_bait":
