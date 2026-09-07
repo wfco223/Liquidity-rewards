@@ -3716,3 +3716,54 @@ class TestTheRecordExplainsASale(Base):
         self.assertEqual(b2._booked_out[AL], 20.0)                    # survives a restart
         self.b._book_lot(AL, "YES", 5.0, 4.85, ref="T2")              # a new booking resets it
         self.assertNotIn(AL, self.b._booked_out)
+
+
+class TestTheBoard(Base):
+    """Owner, 2026-09-06/07: the bonds page as a board. Each held bond is
+    a square sized by what it earned this week, today counting most, and
+    coloured by the earning index — the whole lot at the touch, times how
+    safe the touch is — less what the exit earns now."""
+
+    def test_earnings_accrue_by_day_and_market_and_size_the_square(self):
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        exits = self.orders(AL, "SELL", decoy=False)
+        self.assertTrue(exits)
+        for o in exits:
+            o.live_est = 2.0 / len(exits)                          # $2 a day, measured
+        for k in range(1, 7):
+            self.b._accrue(self.now + 600 * k)                       # an hour of it, ten minutes a step
+        day = self.b._day(self.now + 3600)
+        self.assertAlmostEqual(self.b.accrued_day_mkt[day][AL], 2.0 / 24, places=4)
+        row = self.b.live_rows(self.now + 3600, self.positions())[AL]
+        bd = row["board"]
+        self.assertAlmostEqual(bd["weight"], 2.0 / 24, places=4)     # today at full weight
+        self.assertAlmostEqual(bd["actual_exit"], 2.0, places=4)
+        self.assertIsNotNone(bd["index"])
+        self.assertGreaterEqual(bd["left"], 0.0)
+        self.assertEqual(bd["spread_ticks"], 1)                      # yes_book: 98c bid, 99c ask
+        self.assertAlmostEqual(bd["fair"], 0.994, places=4)          # Silver's odds, in bond terms
+        self.assertTrue(0.1 <= bd["safety"] <= 1.0)
+        v = self.b.view(self.now + 3600, self.positions())
+        self.assertAlmostEqual(v["earning_now"], 2.0, places=4)
+        # a week on, today's figure has faded to an eighth
+        self.assertAlmostEqual(self.b._board_weight(AL, self.now + 3600 + 6 * 86400),
+                               2.0 / 24 * 0.5 ** 3, places=4)
+        # the day figures survive a restart
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
+        b2.restore(self.b.to_dict())
+        self.assertEqual(b2.accrued_day_mkt, self.b.accrued_day_mkt)
+
+    def test_before_a_week_of_days_the_market_total_stands_in(self):
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.accrued_mkt[AL] = 7.5                                 # earned before the board existed
+        self.assertAlmostEqual(self.b._board_weight(AL, self.now), 7.5, places=4)
+        row = self.b.live_rows(self.now, self.positions())[AL]
+        self.assertAlmostEqual(row["board"]["weight"], 7.5, places=4)
+
+    def test_an_unheld_market_has_no_square(self):
+        self.b.approve(TN, self.now)
+        rows = {r["market"]: r for r in self.b.view(self.now, self.positions())["rows"]}
+        self.assertIsNone(rows[TN]["board"])
