@@ -8187,8 +8187,9 @@ date,market,program_type,reward_usd,status
 2026-09-05,enwc-uspres-nom-dem-2028-andbes,liquidityProgram,0.74,PENDING
 2026-09-05,enwc-uspres-nom-rep-2028-ranpau,liquidityProgram,0.04,PENDING
 2026-09-05,enwc-uspres-nom-rep-2028-tedcru,liquidityProgram,0.05,PENDING
-2026-09-05,enwc-ussep-nh-2026-09-08-dem-karman,liquidityProgram,0.01,PENDING
+2026-09-05,enwc-ussep-nh-2026-09-08-dem-karman,liquidityProgram,0.54,PENDING
 2026-09-05,ewc-usgub-ia-2026-11-03-dem,liquidityProgram,0.01,PENDING
+2026-09-05,ewc-usgub-ia-2026-11-03-rep,liquidityProgram,0.06,PENDING
 2026-09-05,ewc-usgub-ks-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-05,ewc-usgub-mi-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-05,ewc-usgub-mi-2026-11-03-mikdug,liquidityProgram,0.01,PENDING
@@ -8198,6 +8199,7 @@ date,market,program_type,reward_usd,status
 2026-09-05,ewc-usse-ak-2026-11-03-rep,liquidityProgram,0.3,PENDING
 2026-09-05,ewc-usse-me-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-05,ewc-usse-ne-2026-11-03-danosb,liquidityProgram,0.14,PENDING
+2026-09-05,ewc-usse-tx-2026-11-03-dem,liquidityProgram,0.07,PENDING
 2026-09-05,paccc-usho-midterms-2026-11-03-rep,liquidityProgram,1.97,PENDING
 2026-09-05,paccc-usse-midterms-2026-11-03-dem,liquidityProgram,0.11,PENDING
 2026-09-05,paccc-usse-midterms-2026-11-03-rep,liquidityProgram,0.01,PENDING
