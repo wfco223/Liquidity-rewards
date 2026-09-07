@@ -32,6 +32,7 @@ from . import basketball, football, gameday, politics
 from .alerts import Alerts
 from .api import ApiError, Client, GATEWAY
 from .books import BookCache
+from .box import GcClock, box_stats, freeze_heap
 from .family import Family
 from .floor import Floor
 from .names import Names
@@ -1054,6 +1055,14 @@ class Monitor:
                               self.client.key_id, self.client.secret_key)
                        if pol is not None else None)
         self._restore()
+        # the restored heap leaves the garbage collector's scans (2026-09-07)
+        try:
+            self._frozen_objects = freeze_heap()
+        except Exception:  # noqa: BLE001
+            self._frozen_objects = 0
+        self._gc_clock = GcClock()
+        self._gc_clock.hook()
+        self._box_prev: dict = {}
         self.boots = [b for b in self.boots if time.time() - b < 86400]
         self.boots.append(time.time())
         # A deploy replaces the container and its floor files with it. If the
@@ -4035,6 +4044,21 @@ class Monitor:
         with self._lock:
             return self._cycle_locked(now)
 
+    def _box_delta(self) -> dict:
+        """The container's counters, with the throttled CPU time as a
+        delta since the last cycle."""
+        try:
+            b = box_stats()
+        except Exception:  # noqa: BLE001
+            return {}
+        prev = getattr(self, "_box_prev", {}) or {}
+        tot = b.get("throttled_s_total")
+        if tot is not None and prev.get("throttled_s_total") is not None:
+            b["throttled_s"] = round(max(tot - prev["throttled_s_total"], 0.0), 1)
+        self._box_prev = dict(b)
+        b["frozen_objects"] = getattr(self, "_frozen_objects", 0)
+        return b
+
     def _stage(self, stage: str, pct: int) -> None:
         if not self._first_cycle_done:
             self.boot_stage = {"stage": stage, "pct": pct,
@@ -4296,15 +4320,20 @@ class Monitor:
         self._stage("first save", 98)
         st = self._state(now, summaries)
         self.last_state = st
+        lap("state")
         self.freeze_payload()
-        lap("state+payload")
+        lap("payload")
         # the disk write and the GitHub upload run behind the cycle, on
         # the store's worker; the upload goes when it is due
         self.store.save_soon(st)
+        lap("snapshot")
         laps["total"] = round(time.time() - now, 1)
         self.cycle_stats = {"at": round(now, 1), "laps": laps,
                             "save_s": getattr(self.store, "last_save_s", 0.0),
-                            "save_behind": getattr(self.store, "behind", 0)}
+                            "save_behind": getattr(self.store, "behind", 0),
+                            "rss_mb": round(rss_mb(), 1),
+                            "gc": self._gc_clock.take() if hasattr(self, "_gc_clock") else None,
+                            "box": self._box_delta()}
         st["cycle_stats"] = self.cycle_stats
         if not self._first_cycle_done:
             self._first_cycle_done = True
