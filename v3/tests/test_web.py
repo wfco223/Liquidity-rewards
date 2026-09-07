@@ -258,6 +258,8 @@ class TestRedesign(unittest.TestCase):
                   "room for buys, per market", "left on the table", "class=\"btile\""):
             self.assertIn(s, web.BONDS_JS, s)
         self.assertIn(".btile{", web._CSS)
+        # a NO bond's buy-more prices read in NO terms like the rest of its card
+        self.assertIn("buying more '+mos.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}", web.BONDS_JS)
 
     def test_orders_page_has_no_hand_place_form(self):
         from v3 import web
