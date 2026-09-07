@@ -1110,7 +1110,7 @@ function bLayout(){
   h+='<button class="btile" role="listitem" id="bt-'+esc(r.market)+'" style="left:'+x.toFixed(1)+'px;top:'+y.toFixed(1)+'px;width:'+w.toFixed(1)+'px;height:'+hh.toFixed(1)+'px;background:'+bColor(bd)+'" onclick="bTap(event,\''+esc(r.market)+'\')" aria-label="'+esc(L[r.market]||r.market)+'">'
    +(noexit?'<span class="dot" title="no exit resting"></span>':'')
    +'<div class="in"><div class="n">'+esc(bShort(r,L))+'</div><div class="d">'+usd(bd.actual||0)+'/day</div>'
-   +'<div class="g">'+(bd.index==null?'no fresh book':(bd.left||0)>0.05?usd(bd.left)+' a day left on the table':'earning what the book offers')+'</div>'
+   +'<div class="g">'+(bd.index==null?'no fresh book':(bd.left||0)>0.05?usd(bd.left)+' a day left on the table'+(((bd.left_exit||0)>0.05&&(bd.left_buy||0)>0.05)?' (exit '+usd(bd.left_exit)+', buys '+usd(bd.left_buy)+')':(bd.left_buy||0)>0.05?' on the buy side':''):'earning what the book offers')+'</div>'
    +'<div class="more">details ›</div></div></button>';});
  el.innerHTML=h;el.classList.remove('dim');
  if(window._bFocus&&window._bBox[window._bFocus])bFocus(window._bFocus);else window._bFocus=null;
@@ -1145,6 +1145,7 @@ function render(d){
   +'</div>';
  out+='<div id="bmsg">'+(window._bNote||'')+'</div>';
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
+ if(b.board_note)out+='<div class="sub warn" style="margin:6px 0 0">'+esc(b.board_note)+'</div>';
  if(held.length){out+='<div class="bmapwrap"><div class="bmap" id="bmap" role="list" aria-label="Bond markets"></div></div>';
   out+='<div class="blegend"><span>size = this week’s earnings</span><span>earning it <span class="bar" style="display:inline-block;vertical-align:middle;width:72px;margin:0 6px"></span> left on the table</span></div>';}
  else out+='<div class="muted" style="padding:20px 0">No bonds held yet. Open the list and tap Enter on a market.</div>';

@@ -3074,10 +3074,31 @@ class Bonds:
         actual_exit = round(sum(o.live_est or 0.0 for o in exits), 4)
         actual_more = round(sum(o.live_est or 0.0 for o in self._more_orders(slug)), 4)
         actual = round(actual_exit + actual_more + sum(o.live_est or 0.0 for o in decoys), 4)
+        # the buy side counts too (owner, 2026-09-07: "the square is green
+        # even though nothing is earning from the bid side"): what the
+        # buy-more would earn at his cap, resting or not — when money or
+        # the budget keeps it off, that is money left on the table, and
+        # the header says why when it is the same reason everywhere
+        more = self._more_view(slug, side, book, held) if book is not None else None
+        index_buy = 0.0
+        buy_idle = None
+        if more:
+            if more.get("order"):
+                # resting: the buy side is earning what it can; its measured
+                # $/day is the same figure the card shows for the order
+                index_buy = float(more["order"].get("est") or 0.0)
+                actual_more = round(max(actual_more, index_buy), 4)
+                actual = round(actual_exit + actual_more
+                               + sum(o.live_est or 0.0 for o in decoys), 4)
+            elif more.get("slot"):
+                index_buy = float(more["slot"].get("est") or 0.0)
+                buy_idle = more.get("paused") or more.get("note") or "nothing resting"
+        left_buy = round(max(index_buy - actual_more, 0.0), 4) if buy_idle else 0.0
         out = {"weight": self._board_weight(slug, now), "actual": actual,
                "actual_exit": actual_exit, "actual_more": actual_more,
-               "touch_est": None, "safety": None, "index": None, "left": None,
-               "spread_ticks": None, "fair": None}
+               "touch_est": None, "safety": None, "index_exit": None, "left_exit": None,
+               "index_buy": round(index_buy, 4), "left_buy": left_buy, "buy_idle": buy_idle,
+               "index": None, "left": None, "spread_ticks": None, "fair": None}
         calc = self._calc(slug, side, book, held) if book is not None else None
         touch = (calc or {}).get("touch")
         if not touch or not book.bids or not book.asks:
@@ -3091,11 +3112,41 @@ class Bonds:
         cushion_mult = min(max(1.0 - cushion / 0.05, 0.3), 1.5)
         risk = BOARD_TOUCH_RISK * min(1.0, 1.0 / spread) * cushion_mult
         safety = round(1.0 - min(risk, 0.9), 3)
-        index = round(float(touch["est"] or 0.0) * safety, 4)
+        index_exit = round(float(touch["est"] or 0.0) * safety, 4)
+        left_exit = round(max(index_exit - actual_exit, 0.0), 4)
         out.update({"touch_est": round(float(touch["est"] or 0.0), 4), "safety": safety,
-                    "index": index, "left": round(max(index - actual_exit, 0.0), 4),
+                    "index_exit": index_exit, "left_exit": left_exit,
+                    "index": round(index_exit + index_buy, 4),
+                    "left": round(left_exit + left_buy, 4),
                     "spread_ticks": spread, "fair": fair})
         return out
+
+    def _board_note(self, rows: list) -> str | None:
+        """One line for the header when the buy side is idle across the
+        board for the same reason — the budget full, or the exchange
+        short of free money — so the red on the squares is read as that
+        and not as a market's failing (owner, 2026-09-07: "If there is
+        an across the board increase in earning potential because there
+        is nothing in the budget, you can say something")."""
+        idle = [r for r in rows if r.get("qty", 0) > 0.005 and (r.get("board") or {}).get("buy_idle")
+                and ((r.get("board") or {}).get("left_buy") or 0) > 0.05]
+        if len(idle) < 2:
+            return None
+        usd = round(sum((r["board"].get("left_buy") or 0.0) for r in idle), 2)
+        room = self.budget_room()
+        if room < 1.0:
+            return (f"Buy orders are off in {len(idle)} markets: the budget is full "
+                    f"(${self.invested():,.2f} in bonds against ${self.budget_total():,.2f}). "
+                    f"They would earn about ${usd:,.2f} a day; that is in the red on the board.")
+        why = [str(r["board"]["buy_idle"]) for r in idle]
+        if sum(1 for w in why if "buying power" in w) >= max(2, len(idle) // 2):
+            bp = self._buying_power(self._clock())
+            return (f"Buy orders can't be funded in {len(idle)} markets: the exchange shows "
+                    f"${bp:,.2f} free. They would earn about ${usd:,.2f} a day; that is in the "
+                    f"red on the board." if bp is not None else
+                    f"Buy orders can't be funded in {len(idle)} markets — no free money on the "
+                    f"exchange. They would earn about ${usd:,.2f} a day; that is in the red on the board.")
+        return None
 
     def _work_minnows(self, slug: str, side: str, positions: dict,
                       now: float) -> dict | None:
@@ -3839,6 +3890,7 @@ class Bonds:
                 "room": round(self.budget_room(), 2),
                 "earning_now": round(sum(o.live_est or 0.0 for o in list(self.fam.orders.values())
                                          if o.purpose == "bond"), 2),
+                "board_note": self._board_note(rows),
                 "wall_held": round(self._wall_held(), 2),
                 "no_money_usd": NO_MONEY_USD, "money_back_usd": MONEY_BACK_USD,
                 "earned": self._earned(),
