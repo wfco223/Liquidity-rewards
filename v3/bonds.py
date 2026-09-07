@@ -368,6 +368,13 @@ class Bonds:
         return cb if side == "YES" else round(1.0 - cb, 4)
 
     @staticmethod
+    def _hundredths(x: float) -> float:
+        """Shares to the hundredth, rounded down — the exchange fills in
+        fractions and so may he (owner, 2026-09-07: "I need to be able
+        to buy fractions of shares")."""
+        return math.floor(float(x) * 100.0 + 1e-9) / 100.0
+
+    @staticmethod
     def _snap_up(px: float, tick: float) -> float:
         return round(math.ceil(px / tick - 1e-9) * tick, 4)
 
@@ -1280,9 +1287,9 @@ class Bonds:
             bp = bp / 100.0                          # typed in cents
         if not (0.001 <= bp <= 0.999):
             return {"ok": False, "note": "price must be 0.1c to 99.9c"}
-        q = float(math.floor(q))
-        if q < 1.0:
-            return {"ok": False, "note": "at least one share"}
+        q = self._hundredths(q)
+        if q < 0.01:
+            return {"ok": False, "note": "at least a hundredth of a share"}
         book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
         if book is None:
             return {"ok": False, "note": "no fresh book — try again in a moment"}
@@ -1303,8 +1310,8 @@ class Bonds:
         free = self._buying_power(now)
         trimmed = ""
         if free is not None:
-            afford = float(math.floor(free / bp)) if bp > 0 else 0.0
-            if afford < 1.0:
+            afford = self._hundredths(free / bp) if bp > 0 else 0.0
+            if afford < 0.01:
                 return {"ok": False, "note": f"no buying power for it (${free:,.2f} free)"}
             if afford < q:
                 trimmed = f"sized to the buying power: {afford:g} of {q:g}"
@@ -1396,13 +1403,13 @@ class Bonds:
         if not (0.001 <= bp <= 0.999):
             return {"ok": False, "note": "price must be 0.1c to 99.9c"}
         try:
-            want = (float(math.floor(float(qty))) if qty not in (None, "")
-                    else float(math.floor(held0)))
+            want = (self._hundredths(float(qty)) if qty not in (None, "")
+                    else self._hundredths(held0))
         except (TypeError, ValueError):
             return {"ok": False, "note": "how many shares?"}
-        want = min(want, float(math.floor(held0)))
-        if want < 1.0:
-            return {"ok": False, "note": "at least one share"}
+        want = min(want, self._hundredths(held0))
+        if want < 0.01:
+            return {"ok": False, "note": "at least a hundredth of a share"}
         cb = self.cost_basis(slug, side)
         if cb > 0 and bp <= cb + 1e-9 and not under_cost:
             return {"ok": False, "note": f"{bp * 100:.1f}c is not above your cost "
@@ -1416,7 +1423,7 @@ class Bonds:
         last = None
         stop = ""
         for _ in range(ENTER_MAX_LEVELS):
-            if want - sold < 1.0:
+            if want - sold < 0.01:
                 break
             try:
                 book = self.client.book(slug, fetched_at=now)
@@ -1440,8 +1447,8 @@ class Bonds:
                 stop = "the book did not move"
                 break
             last = (p, q)
-            take = float(min(math.floor(q), want - sold))
-            if take < 1.0:
+            take = round(min(self._hundredths(q), want - sold), 2)
+            if take < 0.01:
                 break
             blocked, cleared = self._clear_way(slug, far, p, now)
             if blocked:
@@ -3154,9 +3161,9 @@ class Bonds:
         """Take the minnow's shares at its price: they join the bond."""
         cost = px if side == "YES" else round(1.0 - px, 4)
         money = self._money()
-        qty = float(min(math.floor(money / cost) if cost > 0 else 0,
-                        math.floor(size)))
-        if qty < 1.0:
+        qty = min(self._hundredths(money / cost) if cost > 0 else 0.0,
+                  self._hundredths(size))
+        if qty < 0.01:
             return None
         bs, intent = self.entry(side)
         pos = float((positions.get(slug) or (0.0, 0.0))[0])
@@ -3178,10 +3185,10 @@ class Bonds:
                           note=f"could not re-read the book after clearing: {str(e)[:80]}")
                 return None
             px2, _c2, size2 = self._take_price(side, book, slug)
-            if px2 is None or abs(px2 - px) > 1e-9 or size2 < 1.0:
+            if px2 is None or abs(px2 - px) > 1e-9 or size2 < 0.01:
                 return {"retry": True, "qty": 0.0, "usd": 0.0}   # the level moved: price it again
-            qty = float(min(qty, math.floor(size2)))
-            if qty < 1.0:
+            qty = min(qty, self._hundredths(size2))
+            if qty < 0.01:
                 return None
         # the take is a buy: within this market's budget room, and no
         # more than the exchange will fund (owner, 2026-09-06)
@@ -3456,7 +3463,7 @@ class Bonds:
                 break
             self.fam.cache.put(slug, book)
             px, cost, size = self._take_price(side, book, slug)
-            if px is None or size < 1.0:
+            if px is None or size < 0.01:
                 break
             past = ((side == "YES" and px > limit_px + 1e-9)
                     or (side == "NO" and px < limit_px - 1e-9))
