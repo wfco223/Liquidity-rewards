@@ -5,6 +5,7 @@ import gzip
 import json
 import os
 import tempfile
+import time
 import unittest
 
 from v3.alerts import Alerts
@@ -166,6 +167,54 @@ class TestStateRemote(unittest.TestCase):
             self.assertEqual(st.load_best()["src"], "remote")
             st.save_local({"saved_at": 300, "src": "local"})
             self.assertEqual(st.load_best()["src"], "local")
+
+    def test_a_tap_s_save_returns_at_once_and_the_newest_snapshot_wins(self):
+        # 2026-09-07: a tap's save of the whole state ran inside the web
+        # request — long enough for the phone to read "unreachable" while
+        # the sale had gone through. Now the snapshot is taken at once and
+        # uploaded behind; two taps before the upload finishes: the newest
+        # snapshot goes up, the older is dropped.
+        import threading
+
+        class GatedGh(FakeGh):
+            def __init__(self):
+                super().__init__()
+                self.gate = threading.Event()
+                self.blobs = 0
+
+            def request(self, method, url, json=None, headers=None, timeout=None):
+                if "/git/blobs" in url:
+                    self.blobs += 1
+                    if self.blobs == 1:
+                        self.gate.wait(5.0)          # the first upload is slow
+                return super().request(method, url, json=json, headers=headers, timeout=timeout)
+
+        with tempfile.TemporaryDirectory() as d:
+            gh = GatedGh()
+            st = StateStore(os.path.join(d, "s.json"), repo="o/r", token="tok",
+                            session=gh)
+            t0 = time.time()
+            self.assertTrue(st.save_remote_soon({"saved_at": 1}))
+            self.assertLess(time.time() - t0, 1.0)                # back before the upload
+            for _ in range(100):                                   # the worker is inside the slow call
+                if gh.blobs == 1:
+                    break
+                time.sleep(0.01)
+            self.assertEqual(gh.blobs, 1)
+            st.save_remote_soon({"saved_at": 2})
+            st.save_remote_soon({"saved_at": 3})
+            gh.gate.set()
+            self.assertTrue(st.wait_remote(5.0))
+            self.assertEqual(gh.blobs, 2)                          # 1, then the newest: 3
+            self.assertEqual(json.loads(gzip.decompress(gh.stored))["saved_at"], 3)
+            self.assertEqual(st.dropped, 1)
+            self.assertEqual(st.last_error, "")
+
+    def test_a_tap_s_save_without_a_token_says_so(self):
+        with tempfile.TemporaryDirectory() as d:
+            st = StateStore(os.path.join(d, "s.json"), token="")
+            self.assertFalse(st.save_remote_soon({"saved_at": 1}))
+            self.assertIn("GITHUB_TOKEN", st.last_error)
 
     def test_remote_save_throttles(self):
         with tempfile.TemporaryDirectory() as d:
