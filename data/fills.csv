@@ -1738,3 +1738,33 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788749065.7,cfb,aachc-cfb-wins-2026-11-28-washst-4pt5wins,BUY,0.29,0.73,backfill,,5.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB5QDPVPRQ3T
 1788749065.7,cfb,aachc-cfb-wins-2026-11-28-byu-8pt5wins,BUY,0.01,0.68,backfill,,0.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9FFK4HTQ45
 1788749065.7,cfb,aachc-cfb-wins-2026-11-28-cah-4pt5wins,BUY,0.01,0.68,backfill,,7.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB3MMNCYYQ3T
+1788749125.7,politics,ussewc-usse-id-2026-11-03-rep,BUY,10,0.97,earn,6.2066,2.77,0.999125,97,99,0.14,0.95,0.98,-0.0291,10,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CB7T2SXY2Q3H
+1788749304.3,cfb,aachc-cfb-wins-ou-2026-11-28-ala,SELL,0.11,0.6,backfill,,0.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9BPB324Q3Z
+1788749305.7,cfb,aachc-cfb-wins-2026-11-28-gtech-4pt5wins,SELL,0.17,0.73,sell,0,4.9,,62,71,0.61,0.72,0.73,-0.06,0.83,selling filled stock — it earns while it waits,CB5ZCBQ90Q46
+1788749365.7,cfb,aachc-cfb-wins-ou-2026-11-28-hou,BUY,0.01,0.44,earn,0.0377,0.21,,34,47,0,0.44,0.45,0.03,0.01,joins the touch — the book has been quiet,CBA14WYK2Q3H
+1788749467.9,cfb,aachc-cfb-wins-2026-11-28-nw-4pt5wins,SELL,0.11,0.78,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9Q541BAQ48
+1788749485.7,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,1,0.03,bond,0,0,0.002625,4,10,0.442,0.02,0.03,0.0274,0,bond: sold 1 NO into the bids at 97c by you,CBA97RTNTQ3N
+1788749485.7,cfb,aachc-cfb-wins-2026-11-28-tenn-8pt5wins,BUY,0.01,0.41,earn,0.0327,0.65,,43,80,0.004,0.41,0.43,-0.21,0.01,9 ticks in front of the touch — we would hold 8% of the bid side,CB9P0K64AQ3T
+1788749545.7,politics,enwc-uspres-nom-dem-2028-micoba,SELL,3,0.02,sell,0,0,,1,5,0.051,0.02,0.03,0.01,20,taker dump — sold into the bid (the carved exception),CBAA2THTMQ45
+1788749678.7,cfb,aachc-cfb-wins-2026-11-28-miss-7pt5wins,SELL,0.11,0.84,backfill,,0.69,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9Q6K8KYQ3R
+1788749814.3,cfb,aachc-cfb-wins-2026-11-28-txam-9pt5wins,BUY,0.02,0.32,backfill,,0.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9VG4606Q45
+1788749826.3,politics,usgubewc-usgub-pa-2026-11-03-rep,BUY,6.3,0.05,bond,0,0.03,0.0016,2,6,0.672,0.04,0.05,0.0484,-35.7,bond: sold 6.3 NO into the bids at 95c by you,CBAAV76QYQ3Y
+1788749826.3,politics,ussewc-usse-tn-2026-11-03-rep,SELL,23,0.95,bond,0,0.01,0.999375,94,98,0.396,0.95,0.96,0.0494,0,bond: sold 23 YES into the bids at 95c by you,CBABK7XDCQ3H
+1788749826.3,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,20,0.09,bond,0,0.02,0.010375,15,19,0.911,0.09,0.1,-0.0796,-532,bond: took 20 NO at 9c — it was in the way of our resting order,CBABXEQEMQ3R
+1788749834.2,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,0.5,0.9,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBAC9J7P6Q45
+1788749886.3,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,52,0.9,bond,0,0.01,0.989625,86,91,0.411,0.9,0.91,0.0896,169,bond: sold 52.5 YES into the bids at 90c by you,CBAC9J7P6Q45
+1788749886.3,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,20,0.09,bond,0,0.02,0.010375,15,19,0.912,0.08,0.09,-0.0796,-552,bond: took 20 NO at 9c — it was in the way of our resting order,CBAC99AK4Q3Z
+1788749954.1,politics,ussewc-usse-ky-2026-11-03-rep,SELL,6.17,0.94,bond,0,0.02,0.9971,91,95,0.687,0.83,0.95,0.0571,172.83,bond: sold 6.17 YES into the bids at 94c by you,CBABVW3GPQ3T
+1788750059.1,cfb,aachc-cfb-wins-2026-11-28-rutger-4pt5wins,BUY,0.01,0.14,backfill,,9.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB2CK3X8PQ45
+1788750074.2,cfb,aachc-cfb-wins-2026-11-28-tx-11pt5wins,SELL,1,0.02,sell,7.5,0.1,,26,31,0.421,0.01,0.02,0.26,0,selling filled stock — it earns while it waits,CBAB3S6MEQ3N
+1788750195.5,cfb,aachc-cfb-wins-ou-2026-11-28-ncst,BUY,0.1,0.47,backfill,,2.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB86655FJQ3R
+1788750280.3,politics,usgubewc-usgub-ny-2026-11-03-dem,SELL,0.5,0.9,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBAC9J7P6Q45
+1788750280.3,cfb,aachc-cfb-wins-2026-11-28-byu-8pt5wins,BUY,-0.01,0.68,fix,0.0034,0.79,,68,82,0.402,0.65,0.69,-0.06,0.01,size trimmed by 0.01 to the exchange's count (order CB9FFK4HTQ45),CB9FFK4HTQ45
+1788750280.3,cfb,aachc-cfb-wins-2026-11-28-cah-4pt5wins,BUY,-0.01,0.68,fix,0,7.7,,67,81,0.416,0.68,0.69,-0.06,0.01,size trimmed by 0.01 to the exchange's count (order CB3MMNCYYQ3T),CB3MMNCYYQ3T
+1788750280.3,cfb,aachc-cfb-wins-2026-11-28-tenn-8pt5wins,BUY,0.19,0.45,hand,,7.89,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,C5AKF7Q2AKDK
+1788750280.3,cfb,aachc-cfb-wins-ou-2026-11-28-ala,SELL,0.11,0.6,backfill,,0.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9BPB324Q3Z
+1788750280.3,cfb,aachc-cfb-wins-2026-11-28-nw-4pt5wins,SELL,0.11,0.78,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9Q541BAQ48
+1788750280.3,cfb,aachc-cfb-wins-2026-11-28-miss-7pt5wins,SELL,0.11,0.84,backfill,,0.69,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9Q6K8KYQ3R
+1788750280.3,cfb,aachc-cfb-wins-2026-11-28-txam-9pt5wins,BUY,0.02,0.32,backfill,,0.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB9VG4606Q45
+1788750280.3,cfb,aachc-cfb-wins-2026-11-28-rutger-4pt5wins,BUY,0.01,0.14,backfill,,9.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB2CK3X8PQ45
+1788750280.3,cfb,aachc-cfb-wins-ou-2026-11-28-ncst,BUY,0.1,0.47,backfill,,2.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB86655FJQ3R
