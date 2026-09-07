@@ -247,6 +247,18 @@ class TestRedesign(unittest.TestCase):
         # and the unconfirmed banner books a sale on the owner's word
         self.assertIn("bonds_book_sale", web.BONDS_JS)
 
+    def test_the_bonds_page_is_the_board(self):
+        # owner, 2026-09-06/07: three numbers, a square per bond sized by
+        # the week's earnings and coloured by what is left on the table;
+        # a tap grows a square, a second tap opens the card; the rest of
+        # the page sits behind More
+        from v3 import web
+        for s in ("function bSquarify", "function bLayout", "function bTap", "function bOpenSheet",
+                  "function bList", "bOpenList", "of budget invested", "earning now, a day",
+                  "room for buys, per market", "left on the table", "class=\"btile\""):
+            self.assertIn(s, web.BONDS_JS, s)
+        self.assertIn(".btile{", web._CSS)
+
     def test_orders_page_has_no_hand_place_form(self):
         from v3 import web
         self.assertNotIn("op:'place'", web.ORDERS_JS)

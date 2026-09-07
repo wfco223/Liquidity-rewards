@@ -118,6 +118,14 @@ BAIT_QTY = 1.0              # the bait: one share a tick inside their best on th
 BAIT_WAIT_S = 2 * 3600.0    # nobody followed in this long: the bait comes off
 BOOK_SHOW = 6               # levels per side the page shows
 ACCRUE_KEEP_DAYS = 120
+# The board (owner, 2026-09-06): a square per bond, sized by what it
+# earned over the last week with today counting most — the weight halves
+# every BOARD_HALF_LIFE_D days back — and colored by what the book leaves
+# on the table: the earning index (the whole lot at the touch, times how
+# safe the touch is) less what the exit earns now.
+BOARD_DAYS = 7
+BOARD_HALF_LIFE_D = 2.0
+BOARD_TOUCH_RISK = 0.30     # the fill model's odds at the touch, a day
 FILL_WAIT_S = 8.0           # how long a take's fill is awaited in the trade record
 TRIM_GRACE_S = 300.0        # a fresh lot gets this long for the position feed to show it
 HOLD_ENGINE_S = 600.0       # after clearing our orders out of a take's way, the engine waits this long
@@ -225,6 +233,7 @@ class Bonds:
         self.money_in: float = 0.0
         self.accrued: dict[str, float] = {}   # day -> usd the bond orders earned
         self.accrued_mkt: dict[str, float] = {}
+        self.accrued_day_mkt: dict[str, dict[str, float]] = {}   # day -> slug -> usd (the board's sizes)
         self._accrued_at: float = 0.0
         # the exchange is the source of truth for holdings (owner,
         # 2026-09-03: "nothing should be making up holdings or
@@ -1011,8 +1020,12 @@ class Bonds:
             usd = o.live_est * dt / 86400.0
             self.accrued[day] = round(self.accrued.get(day, 0.0) + usd, 6)
             self.accrued_mkt[o.market] = round(self.accrued_mkt.get(o.market, 0.0) + usd, 6)
+            dm = self.accrued_day_mkt.setdefault(day, {})
+            dm[o.market] = round(dm.get(o.market, 0.0) + usd, 6)
         for d in sorted(self.accrued)[:-ACCRUE_KEEP_DAYS]:
             del self.accrued[d]
+        for d in sorted(self.accrued_day_mkt)[:-BOARD_DAYS - 1]:
+            del self.accrued_day_mkt[d]
 
     def _earned(self) -> dict:
         """The headline (owner, 2026-09-03: "the amount invested and the
@@ -2994,6 +3007,58 @@ class Bonds:
                 "wall_usd": round(wall_collateral(ebs, wpx, gap), 2),
                 "orders": orders, "touch": touch}
 
+    def _board_weight(self, slug: str, now: float) -> float:
+        """The square's size: the last BOARD_DAYS days' earnings here,
+        today at full weight, halving every BOARD_HALF_LIFE_D days back.
+        Before a week of per-day figures exists, the market's earnings
+        to date stand in."""
+        w = 0.0
+        any_day = any(self.accrued_day_mkt.values())
+        if not any_day:
+            return round(self.accrued_mkt.get(slug, 0.0), 4)
+        for i in range(BOARD_DAYS):
+            day = self._day(now - 86400.0 * i)
+            w += self.accrued_day_mkt.get(day, {}).get(slug, 0.0) * 0.5 ** (i / BOARD_HALF_LIFE_D)
+        return round(w, 4)
+
+    def _board(self, slug: str, side: str, book, held: float, now: float) -> dict | None:
+        """The square's colour: the earning index — what the whole lot
+        would earn at the touch on its side, times how safe sitting
+        there is — less what the exit earns now, in dollars a day. Safety
+        starts from the fill model's odds at the touch and falls with a
+        one-tick spread or a touch under Silver's price, rises with a
+        wide spread or a touch above it."""
+        if held < 0.005:
+            return None
+        ebs, _ = self.earn(side)
+        exits = self._orders(slug, ebs, decoy=False)
+        decoys = self._orders(slug, ebs, decoy=True)
+        actual_exit = round(sum(o.live_est or 0.0 for o in exits), 4)
+        actual_more = round(sum(o.live_est or 0.0 for o in self._more_orders(slug)), 4)
+        actual = round(actual_exit + actual_more + sum(o.live_est or 0.0 for o in decoys), 4)
+        out = {"weight": self._board_weight(slug, now), "actual": actual,
+               "actual_exit": actual_exit, "actual_more": actual_more,
+               "touch_est": None, "safety": None, "index": None, "left": None,
+               "spread_ticks": None, "fair": None}
+        calc = self._calc(slug, side, book, held) if book is not None else None
+        touch = (calc or {}).get("touch")
+        if not touch or not book.bids or not book.asks:
+            return out
+        tick = book.tick or 0.01
+        spread = max(int(round((book.asks[0][0] - book.bids[0][0]) / tick)), 1)
+        p = self.fair(slug)
+        fair = None if p is None else (float(p) if side == "YES" else round(1.0 - float(p), 4))
+        touch_px = touch["price"] if side == "YES" else round(1.0 - touch["price"], 4)
+        cushion = (touch_px - fair) if fair is not None else 0.0
+        cushion_mult = min(max(1.0 - cushion / 0.05, 0.3), 1.5)
+        risk = BOARD_TOUCH_RISK * min(1.0, 1.0 / spread) * cushion_mult
+        safety = round(1.0 - min(risk, 0.9), 3)
+        index = round(float(touch["est"] or 0.0) * safety, 4)
+        out.update({"touch_est": round(float(touch["est"] or 0.0), 4), "safety": safety,
+                    "index": index, "left": round(max(index - actual_exit, 0.0), 4),
+                    "spread_ticks": spread, "fair": fair})
+        return out
+
     def _work_minnows(self, slug: str, side: str, positions: dict,
                       now: float) -> dict | None:
         """The dance (owner, 2026-09-02): a decoy JOINS the minnow in
@@ -3577,6 +3642,7 @@ class Bonds:
             "hold_until": (self.fam.hold_until.get(slug)
                            if self.fam.hold_until.get(slug, 0.0) > now else None),
             "more": self._more_view(slug, side, book, held),
+            "board": self._board(slug, side, book, held, now),
             "floor": self._floor_view(slug, side, book),
             "book": self._book_view(slug, side, book),
             "bait": self._bait_view(slug),
@@ -3733,6 +3799,8 @@ class Bonds:
                 "budget_total": round(self.budget_total(), 2),
                 "invested": round(self.invested(), 2),
                 "room": round(self.budget_room(), 2),
+                "earning_now": round(sum(o.live_est or 0.0 for o in list(self.fam.orders.values())
+                                         if o.purpose == "bond"), 2),
                 "wall_held": round(self._wall_held(), 2),
                 "no_money_usd": NO_MONEY_USD, "money_back_usd": MONEY_BACK_USD,
                 "earned": self._earned(),
@@ -3791,6 +3859,7 @@ class Bonds:
                 "realized": round(self.realized, 4), "sold_usd": round(self.sold_usd, 4),
                 "money_in": round(self.money_in, 4), "money_in_v": 3,
                 "accrued": self.accrued, "accrued_mkt": self.accrued_mkt,
+                "accrued_day_mkt": self.accrued_day_mkt,
                 "accrued_at": round(self._accrued_at, 1),
                 "lot_ts": self.lot_ts, "exch_max": self.exch_max,
                 "fill_book": self.fill_book,
@@ -3877,6 +3946,8 @@ class Bonds:
             self.money_in = ident
         self.accrued = {str(k): float(v) for k, v in (d.get("accrued") or {}).items()}
         self.accrued_mkt = {str(k): float(v) for k, v in (d.get("accrued_mkt") or {}).items()}
+        self.accrued_day_mkt = {str(k): {str(m): float(x) for m, x in (v or {}).items()}
+                                for k, v in (d.get("accrued_day_mkt") or {}).items()}
         self._accrued_at = float(d.get("accrued_at") or 0.0)
         self.lot_ts = {str(k): float(v) for k, v in (d.get("lot_ts") or {}).items()}
         self.exch_max = {str(k): float(v) for k, v in (d.get("exch_max") or {}).items()}
