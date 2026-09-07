@@ -195,7 +195,7 @@ function post(body,cb){
    // the sale went through, the phone read "unreachable"): refresh,
    // and say what to check before tapping again
    window._force=true;load();
-   alert('No answer from the server yet. If this was an order or a sale it may still have gone through \u2014 the page is refreshing; check it before tapping again.');
+   alert('No answer from the server in time. The tap may still have gone through \u2014 the page is refreshing; check it before tapping again.');
   });
 }
 function bootCard(d){
@@ -2229,10 +2229,17 @@ class WebServer:
                 except Exception:  # noqa: BLE001
                     self._send(400, "application/json", b'{"ok":false,"note":"bad request"}')
                     return
+                t0 = time.time()
                 try:
                     out = server.handle_op(body)
                 except Exception as e:  # noqa: BLE001
                     out = {"ok": False, "note": f"{type(e).__name__}: {e}"}
+                dt = time.time() - t0
+                if dt > 3.0:
+                    try:
+                        server.monitor._note(f"slow tap {body.get('op')}: {dt:.1f}s to answer")
+                    except Exception:  # noqa: BLE001
+                        pass
                 self._send(200, "application/json", json.dumps(out).encode())
 
         self._httpd = ThreadingHTTPServer((self.bind, self.port), Handler)
