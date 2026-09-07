@@ -244,6 +244,19 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("Sell under cost", web.BONDS_JS)
         self.assertIn("under_cost:true", web.BONDS_JS)
 
+    def test_no_answer_to_a_tap_refreshes_and_says_it_may_have_gone_through(self):
+        # owner, 2026-09-07: "When I sell something, the sale will go
+        # through, but my app won't recognize it. And I get the pop up
+        # that says unreachable" — the page refreshes after a tap either
+        # way, even into an open card, and never calls it unreachable
+        from v3 import web
+        js = web._PLUMBING
+        self.assertNotIn("alert('unreachable')", js)
+        self.assertIn("it may still have gone through", js)
+        self.assertEqual(js.count("window._force=true;load();"), 2)
+        self.assertIn("if(!window._force){window._held=true;return;}", js)
+        self.assertIn("sh.innerHTML=bSheetHtml(d);sh.scrollTop=st;", js)
+
     def test_the_switch_page_lists_the_places(self):
         # owner, 2026-09-07: "which places Polymarket thinks are vpn and
         # which are okay" — the addresses this server has run from

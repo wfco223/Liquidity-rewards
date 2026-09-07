@@ -23,6 +23,7 @@ import base64
 import gzip
 import json
 import os
+import threading
 import time
 
 import requests
@@ -43,6 +44,16 @@ class StateStore:
         self.save_interval = save_interval
         self._last_remote_save = 0.0
         self.last_error = ""
+        # the background save (2026-09-07: a tap's save of a 12 MB state
+        # — gzip, then four GitHub calls — ran inside the web request,
+        # long enough for the phone to give up and read "unreachable"
+        # while the sale had gone through). One uploader at a time; a
+        # tap hands it the newest snapshot and returns at once.
+        self._up_lock = threading.Lock()
+        self._pend_lock = threading.Lock()
+        self._pending: bytes | None = None
+        self._worker: threading.Thread | None = None
+        self.behind = 0                      # snapshots handed over, not yet uploaded
 
     # -- local ---------------------------------------------------------------
 
@@ -82,38 +93,83 @@ class StateStore:
         if not self.token:
             self.last_error = "no GITHUB_TOKEN — saves are local only"
             return False
-        try:
-            payload = gzip.compress(json.dumps(state, separators=(",", ":")).encode())
-            r = self._gh("POST", f"/repos/{self.repo}/git/blobs",
-                         {"content": base64.b64encode(payload).decode(),
-                          "encoding": "base64"})
-            if r.status_code >= 400:
-                raise RuntimeError(f"blob: HTTP {r.status_code}")
-            blob = r.json()["sha"]
-            r = self._gh("POST", f"/repos/{self.repo}/git/trees",
-                         {"tree": [{"path": "state.json", "mode": "100644",
-                                    "type": "blob", "sha": blob}]})
-            if r.status_code >= 400:
-                raise RuntimeError(f"tree: HTTP {r.status_code}")
-            tree = r.json()["sha"]
-            r = self._gh("POST", f"/repos/{self.repo}/git/commits",
-                         {"message": "v3 state save", "tree": tree})
-            if r.status_code >= 400:
-                raise RuntimeError(f"commit: HTTP {r.status_code}")
-            sha = r.json()["sha"]
-            r = self._gh("PATCH", f"/repos/{self.repo}/git/refs/heads/{self.branch}",
-                         {"sha": sha, "force": True})
-            if r.status_code == 404 or (r.status_code == 422 and "does not exist"
-                                        in (r.text or "").lower()):
-                r = self._gh("POST", f"/repos/{self.repo}/git/refs",
-                             {"ref": f"refs/heads/{self.branch}", "sha": sha})
-            if r.status_code >= 400:
-                raise RuntimeError(f"ref: HTTP {r.status_code}")
-            self.last_error = ""
-            return True
-        except Exception as e:  # noqa: BLE001 — never fatal
-            self.last_error = f"remote save: {e}"
+        return self._upload(json.dumps(state, separators=(",", ":")).encode())
+
+    def save_remote_soon(self, state: dict) -> bool:
+        """A tap's save: the snapshot is taken now (so what is uploaded
+        is what he saw), the upload runs on a background thread. Two
+        taps before the first upload finishes: the newest wins, the
+        older is dropped — a parentless force-commit carries the whole
+        state anyway. Returns whether anything was handed over."""
+        if not self.token:
+            self.last_error = "no GITHUB_TOKEN — saves are local only"
             return False
+        raw = json.dumps(state, separators=(",", ":")).encode()
+        with self._pend_lock:
+            self._pending = raw
+            self.behind += 1
+            if self._worker is None or not self._worker.is_alive():
+                self._worker = threading.Thread(target=self._drain, daemon=True,
+                                                name="state-save")
+                self._worker.start()
+        return True
+
+    def wait_remote(self, timeout: float = 10.0) -> bool:
+        """Block until the background uploads are done (tests, shutdown)."""
+        w = self._worker
+        if w is not None and w.is_alive():
+            w.join(timeout)
+        return not (self._worker is not None and self._worker.is_alive())
+
+    def _drain(self) -> None:
+        while True:
+            with self._pend_lock:
+                raw = self._pending
+                self._pending = None
+                n = self.behind
+                self.behind = 0
+                if raw is None:
+                    self._worker = None
+                    return
+            self._upload(raw)
+            if n > 1:
+                self.dropped = getattr(self, "dropped", 0) + (n - 1)
+
+    def _upload(self, raw: bytes) -> bool:
+        """The four GitHub calls, one uploader at a time."""
+        with self._up_lock:
+            try:
+                payload = gzip.compress(raw)
+                r = self._gh("POST", f"/repos/{self.repo}/git/blobs",
+                             {"content": base64.b64encode(payload).decode(),
+                              "encoding": "base64"})
+                if r.status_code >= 400:
+                    raise RuntimeError(f"blob: HTTP {r.status_code}")
+                blob = r.json()["sha"]
+                r = self._gh("POST", f"/repos/{self.repo}/git/trees",
+                             {"tree": [{"path": "state.json", "mode": "100644",
+                                        "type": "blob", "sha": blob}]})
+                if r.status_code >= 400:
+                    raise RuntimeError(f"tree: HTTP {r.status_code}")
+                tree = r.json()["sha"]
+                r = self._gh("POST", f"/repos/{self.repo}/git/commits",
+                             {"message": "v3 state save", "tree": tree})
+                if r.status_code >= 400:
+                    raise RuntimeError(f"commit: HTTP {r.status_code}")
+                sha = r.json()["sha"]
+                r = self._gh("PATCH", f"/repos/{self.repo}/git/refs/heads/{self.branch}",
+                             {"sha": sha, "force": True})
+                if r.status_code == 404 or (r.status_code == 422 and "does not exist"
+                                            in (r.text or "").lower()):
+                    r = self._gh("POST", f"/repos/{self.repo}/git/refs",
+                                 {"ref": f"refs/heads/{self.branch}", "sha": sha})
+                if r.status_code >= 400:
+                    raise RuntimeError(f"ref: HTTP {r.status_code}")
+                self.last_error = ""
+                return True
+            except Exception as e:  # noqa: BLE001 — never fatal
+                self.last_error = f"remote save: {e}"
+                return False
 
     def maybe_save_remote(self, state: dict) -> bool:
         """Throttled remote save — at most one per save_interval."""

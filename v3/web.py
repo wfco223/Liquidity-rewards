@@ -189,8 +189,14 @@ function fams(d){var out=[];for(var k in (d.summaries||{})){out.push([k,d.summar
 function post(body,cb){
  var h=hdrs();h.set('X-Reprice','1');h.set('Content-Type','application/json');
  fetch('/op',{method:'POST',headers:h,body:JSON.stringify(body)})
-  .then(function(r){return r.json();}).then(function(j){if(cb)cb(j);load();})
-  .catch(function(){alert('unreachable');});
+  .then(function(r){return r.json();}).then(function(j){if(cb)cb(j);window._force=true;load();})
+  .catch(function(){
+   // no answer in time is not "it did not happen" (owner, 2026-09-07:
+   // the sale went through, the phone read "unreachable"): refresh,
+   // and say what to check before tapping again
+   window._force=true;load();
+   alert('No answer from the server yet. If this was an order or a sale it may still have gone through \u2014 the page is refreshing; check it before tapping again.');
+  });
 }
 function bootCard(d){
  var b=(d.boot||{});
@@ -396,8 +402,14 @@ function load(){
   if(window._loaded&&window._liveOpen){window._held=true;return;}
   // the bonds board: an open card or a grown square is his to read —
   // the live line patches the card in place; the poll never redraws it
-  if(window._loaded&&(window._bSheet||window._bFocus)){window._held=true;return;}
-  if(window._loaded&&(window.scrollY||0)>120){
+  // ...except right after his own tap (window._force): then the open
+  // card is patched in place with the fresh data, scroll kept
+  if(window._loaded&&(window._bSheet||window._bFocus)){
+   if(!window._force){window._held=true;return;}
+   if(window._bSheet&&typeof bSheetHtml==='function'){window._force=false;var sh=document.getElementById('bsheet');
+    if(sh){var st=sh.scrollTop;sh.innerHTML=bSheetHtml(d);sh.scrollTop=st;window._bSheetDrewAt=Date.now();}return;}
+  }
+  if(window._loaded&&(window.scrollY||0)>120&&!window._force){
    window._held=true;
    var hb=document.getElementById('heldnote');
    if(!hb){hb=document.createElement('div');hb.id='heldnote';
@@ -407,7 +419,7 @@ function load(){
    return;
   }
   var hb2=document.getElementById('heldnote');if(hb2)hb2.remove();
-  window._held=false;
+  window._held=false;window._force=false;
   var y=window.scrollY||0;
   document.getElementById('view').innerHTML=render(d);
   if(y>0)window.scrollTo(0,y);
