@@ -142,6 +142,35 @@ _CSS = """
  .lvrow{padding:6px;border-radius:6px}
  .lvrow.sel{background:#2c3d20;outline:1px solid #4c7a2f}
  .lvdot{color:#9ec49a;font-weight:700}
+
+/* the bonds board (owner, 2026-09-06): squares, a tap grows one, a second tap opens the card */
+.bstats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:6px 0 4px;padding-bottom:10px;border-bottom:1px solid #2c3527}
+.bstats .v{font-size:22px;font-weight:600;line-height:1.1;white-space:nowrap;font-variant-numeric:tabular-nums}
+.bstats .v small{font-size:12px;color:#93a08a;margin-left:1px}
+.bstats .l{color:#93a08a;font-size:11.5px;margin-top:3px;line-height:1.25}
+.bstats .l span{font-size:inherit}
+.bmapwrap{display:flex;justify-content:center;padding:14px 0 6px}
+.bmap{position:relative;width:100%;max-width:520px;height:min(58vh,440px)}
+.btile{position:absolute;border:0;padding:0;margin:0;border-radius:0;color:#f2f5ec;cursor:pointer;text-align:left;font:inherit;overflow:hidden;
+ transition:left .18s ease,top .18s ease,width .18s ease,height .18s ease,opacity .18s;-webkit-tap-highlight-color:transparent}
+.btile:focus-visible{outline:2px solid #b9d98f;outline-offset:2px}
+.btile .in{display:none;padding:10px 12px;height:100%}
+.btile .n{font-weight:700;font-size:15px;line-height:1.1}
+.btile .d{font-size:14px;margin-top:4px;white-space:nowrap}
+.btile .g{font-size:12.5px;margin-top:2px;opacity:.85;white-space:nowrap}
+.btile .more{position:absolute;right:10px;bottom:8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
+.btile .dot{position:absolute;right:5px;top:5px;width:6px;height:6px;border-radius:50%;background:#ffd06b;box-shadow:0 0 0 1.5px rgba(0,0,0,.3)}
+.bmap.dim .btile{opacity:.35}
+.bmap.dim .btile.focus{opacity:1;z-index:3;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.btile.focus .in{display:block}
+.blegend{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:4px 8px;color:#93a08a;font-size:11px;padding:4px 8px;text-align:center}
+.blegend span{white-space:nowrap}
+.blegend .bar{flex:0 0 96px;height:6px;background:linear-gradient(90deg,#2f7d4a,#5c6356,#b2412e)}
+.bbar{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:13px}
+.bsheet{position:fixed;left:0;right:0;bottom:0;background:#1a2215;border-top:1px solid #2c3527;border-radius:14px 14px 0 0;padding:12px 14px 24px;max-height:86dvh;overflow:auto;z-index:50;box-shadow:0 -8px 30px rgba(0,0,0,.45)}
+.bscrim{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:49}
+.bsheet .close{position:sticky;top:0;float:right;background:#1f2818;color:#e8ecdf;border:1px solid #2c3527;border-radius:8px;font-size:14px;padding:6px 10px;margin:0 0 6px 8px;z-index:2}
+@media (prefers-reduced-motion:reduce){.btile{transition:none}}
 """
 
 _PLUMBING = """
@@ -866,6 +895,11 @@ function bLiveApply(){
  var rows=d.bonds.rows||[];
  rows.forEach(function(r,i){var l=window._bLive[r.market];if(l)rows[i]=l;});
  if((window.scrollY||0)>120||window._liveOpen)return;
+ // a grown square is his to read: hold the redraw. Otherwise the board
+ // redraws every few seconds, the open card every tick.
+ if(window._bFocus&&!window._bSheet)return;
+ var now=Date.now();if(!window._bSheet&&window._bDrewAt&&now-window._bDrewAt<5000)return;
+ window._bDrewAt=now;
  document.getElementById('view').innerHTML=render(d);
 }
 // which markets you have opened for details, kept across redraws
@@ -992,14 +1026,12 @@ function bRow(r,d,b,sw,held){
  h+='</div>';
  return h+'</details></div>';
 }
-function render(d){
- if(d.starting)return bootCard(d);
+function bList(d){
  var b=d.bonds||{};var sw=((d.switch_view||{}).bonds)||{};var L=d.labels||{};
  var out='';
  var rows=b.rows||[];
  var held=rows.filter(function(r){return r.qty>0.005;});
  var rest=rows.filter(function(r){return !(r.qty>0.005);});
- if(held.length)bLiveOpen();else bLiveShut();
  var live=window._bLiveAt&&(Date.now()-window._bLiveAt)<15000;
  var eh=b.earned||{};
  out+='<div class="card"><div class="hero">'+usd(eh.invested||0)+'<span class="u"> in bonds</span></div>'
@@ -1007,7 +1039,7 @@ function render(d){
  var nb=held.filter(function(r){return r.mark&&r.mark.black;}).length;
  out+='<div class="card"><b>Your bonds</b> '+(held.length?(live?'<span class="ok" style="font-size:12px">● LIVE</span>':'<span class="muted" style="font-size:12px">live line opening…</span>'):'')+' <span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>'+(held.length?' <span class="muted">'+nb+' of '+held.length+' in the black</span>':'');
  if(!held.length)out+='<div class="muted">None yet. Open a market below and tap Enter.</div>';
- held.forEach(function(r){out+=bRow(r,d,b,sw,true);});
+ if(held.length)out+='<div class="muted">'+held.length+' held — on the board above; tap a square.</div>';
  out+='</div>';
  var tx=b.tax||{};var tax=b.budget_mode==='tax';var e=b.earned||{};
  out+='<div class="card"><b>Money</b>';
@@ -1039,6 +1071,91 @@ function render(d){
  if(ig.length){out+='<details class="how"><summary>ignored ('+ig.length+')</summary>';ig.forEach(function(m){out+='<div class="muted"><code>'+esc(m)+'</code> <button onclick="bOp(\'bonds_unignore\',\''+esc(m)+'\')">un-ignore</button></div>';});out+='</details>';}
  var lg=b.log||[];
  if(lg.length){out+='<details class="how"><summary>recent bond actions</summary>';lg.slice().reverse().forEach(function(r){out+='<div class="muted">'+when(r.ts)+' — '+esc(r.event)+(r.market?' '+esc(r.market):'')+(r.price!=null?' @ '+pc(r.price):'')+(r.qty!=null?' x'+r.qty:'')+(r.note?' — '+esc(r.note):'')+'</div>';});out+='</details>';}
+ return out;
+}
+
+// ---- the board (owner, 2026-09-06): three numbers, then a square per bond ----
+var BG0='#2f7d4a',BG1='#5c6356',BG2='#b2412e',BGAP=9,BSCALE=2.0;
+function bMix(a,b,t){var A=parseInt(a.slice(1),16),B=parseInt(b.slice(1),16);var r=[(A>>16)&255,(A>>8)&255,A&255],s=[(B>>16)&255,(B>>8)&255,B&255];
+ return '#'+r.map(function(v,i){return ('0'+Math.round(v+(s[i]-v)*t).toString(16)).slice(-2);}).join('');}
+function bRamp(x){return 1-Math.exp(-Math.max(x||0,0)/BSCALE);}
+function bColor(bd){if(!bd||bd.index==null)return BG1;if((bd.left||0)>0.05)return bMix(BG1,BG2,bRamp(bd.left));return bMix(BG1,BG0,bRamp(bd.actual));}
+function bShort(r,L){var mm=/^(usgubewc-usgub|ussewc-usse)-([a-z]{2})-\d{4}-\d\d-\d\d-(dem|rep)$/.exec(r.market);
+ if(mm)return mm[2].toUpperCase()+' '+(mm[1].indexOf('usgub')>=0?'Gov':'Sen')+' '+(mm[3]==='dem'?'D':'R');
+ var l=L[r.market]||r.market;return l.length>18?l.slice(0,17)+'…':l;}
+function bSquarify(items,x,y,w,h){
+ var out=[];var total=items.reduce(function(s,i){return s+i.v;},0);if(!total||w<=0||h<=0)return out;
+ var scale=w*h/total;var list=items.map(function(i){return {it:i,a:i.v*scale};});
+ var rx=x,ry=y,rw=w,rh=h;var row=[];
+ function worst(row,len){var s=0,mn=Infinity,mx=0;row.forEach(function(r){s+=r.a;mn=Math.min(mn,r.a);mx=Math.max(mx,r.a);});var ss=s*s;return Math.max(len*len*mx/ss,ss/(len*len*mn));}
+ function layout(row){var s=row.reduce(function(a,r){return a+r.a;},0);var horiz=rw>=rh;var len=horiz?rh:rw;var thick=s/len;var off=0;
+  row.forEach(function(r){var l=r.a/thick;if(horiz){out.push({it:r.it,x:rx,y:ry+off,w:thick,h:l});}else{out.push({it:r.it,x:rx+off,y:ry,w:l,h:thick});}off+=l;});
+  if(horiz){rx+=thick;rw-=thick;}else{ry+=thick;rh-=thick;}}
+ list.forEach(function(r){var len=Math.min(rw,rh);
+  if(row.length&&worst(row.concat([r]),len)>worst(row,len)){layout(row);row=[r];}else row.push(r);});
+ if(row.length)layout(row);
+ return out;
+}
+window._bBox=window._bBox||{};
+function bLayout(){
+ var el=document.getElementById('bmap');var d=window._d;if(!el||!d||!d.bonds)return;
+ var L=d.labels||{};var W=el.clientWidth,H=el.clientHeight;
+ var held=(d.bonds.rows||[]).filter(function(r){return r.qty>0.005;});
+ held.sort(function(a,b){return ((b.board||{}).weight||0)-((a.board||{}).weight||0);});
+ var items=held.map(function(r){return {r:r,v:Math.max((r.board||{}).weight||0,0.5)};});
+ var boxes=bSquarify(items,0,0,W,H);var h='';window._bBox={};
+ boxes.forEach(function(b){var r=b.it.r;var bd=r.board||{};var g=BGAP/2;var x=b.x+g,y=b.y+g,w=Math.max(b.w-BGAP,6),hh=Math.max(b.h-BGAP,6);
+  window._bBox[r.market]={x:x,y:y,w:w,h:hh};
+  var noexit=!(r.earn_order&&r.earn_order.length);
+  h+='<button class="btile" role="listitem" id="bt-'+esc(r.market)+'" style="left:'+x.toFixed(1)+'px;top:'+y.toFixed(1)+'px;width:'+w.toFixed(1)+'px;height:'+hh.toFixed(1)+'px;background:'+bColor(bd)+'" onclick="bTap(event,\''+esc(r.market)+'\')" aria-label="'+esc(L[r.market]||r.market)+'">'
+   +(noexit?'<span class="dot" title="no exit resting"></span>':'')
+   +'<div class="in"><div class="n">'+esc(bShort(r,L))+'</div><div class="d">'+usd(bd.actual||0)+'/day</div>'
+   +'<div class="g">'+(bd.index==null?'no fresh book':(bd.left||0)>0.05?usd(bd.left)+' a day left on the table':'earning what the book offers')+'</div>'
+   +'<div class="more">details ›</div></div></button>';});
+ el.innerHTML=h;el.classList.remove('dim');
+ if(window._bFocus&&window._bBox[window._bFocus])bFocus(window._bFocus);else window._bFocus=null;
+}
+function bTap(ev,m){ev.stopPropagation();if(window._bFocus===m){bOpenSheet(m);return;}bFocus(m);}
+function bFocus(m){
+ var el=document.getElementById('bmap');if(!el)return;var W=el.clientWidth,H=el.clientHeight;
+ if(window._bFocus&&window._bFocus!==m){var p=document.getElementById('bt-'+window._bFocus);var b0=window._bBox[window._bFocus];if(p&&b0){p.classList.remove('focus');p.style.left=b0.x+'px';p.style.top=b0.y+'px';p.style.width=b0.w+'px';p.style.height=b0.h+'px';}}
+ var t=document.getElementById('bt-'+m);var b=window._bBox[m];if(!t||!b)return;
+ var w=Math.min(Math.max(210,b.w),W),h=Math.max(108,b.h);
+ var cx=b.x+b.w/2,cy=b.y+b.h/2;var x=Math.min(Math.max(cx-w/2,0),W-w),y=Math.min(Math.max(cy-h/2,0),H-h);
+ t.classList.add('focus');t.style.left=x+'px';t.style.top=y+'px';t.style.width=w+'px';t.style.height=h+'px';
+ el.classList.add('dim');window._bFocus=m;
+}
+function bUnfocus(){var m=window._bFocus;if(!m)return;var p=document.getElementById('bt-'+m);var b0=window._bBox[m];if(p&&b0){p.classList.remove('focus');p.style.left=b0.x+'px';p.style.top=b0.y+'px';p.style.width=b0.w+'px';p.style.height=b0.h+'px';}var el=document.getElementById('bmap');if(el)el.classList.remove('dim');window._bFocus=null;}
+function bOpenSheet(m){window._bSheet=m;window._bOpen[m]=true;window._liveOpen=false;if(window._d)document.getElementById('view').innerHTML=render(window._d);}
+function bOpenList(){window._bSheet='-list';if(window._d)document.getElementById('view').innerHTML=render(window._d);}
+function bCloseSheet(){window._bSheet=null;if(window._d)document.getElementById('view').innerHTML=render(window._d);}
+if(typeof document.addEventListener==='function')document.addEventListener('click',function(ev){if(!ev.target.closest('.btile')&&!ev.target.closest('.bsheet'))bUnfocus();});
+if(typeof window.addEventListener==='function')window.addEventListener('resize',function(){clearTimeout(window._bLt);window._bLt=setTimeout(bLayout,80);});
+function render(d){
+ if(d.starting)return bootCard(d);
+ var b=d.bonds||{};var sw=((d.switch_view||{}).bonds)||{};var L=d.labels||{};
+ var rows=b.rows||[];var held=rows.filter(function(r){return r.qty>0.005;});
+ if(held.length)bLiveOpen();else bLiveShut();
+ var live=window._bLiveAt&&(Date.now()-window._bLiveAt)<15000;
+ var pct=(b.budget_total>0)?Math.round((b.invested||0)/b.budget_total*100):null;
+ var out='<div class="bstats">'
+  +'<div><div class="v">'+(pct==null?'—':pct+'<small>%</small>')+'</div><div class="l">of budget invested<br>'+usd(b.invested||0)+' of '+usd(b.budget_total||0)+'</div></div>'
+  +'<div><div class="v">'+usd(b.earning_now||0)+'</div><div class="l">earning now, a day<br>'+(held.length?(live?'<span class="ok">● live</span>':'<span class="muted">live line opening…</span>'):'nothing held')+'</div></div>'
+  +'<div><div class="v">'+usd(Math.max(b.room||0,0))+'</div><div class="l">room for buys, per market'+((b.room||0)<1?'<br><span class="warn">budget full</span>':'')+'</div></div>'
+  +'</div>';
+ out+='<div id="bmsg">'+(window._bNote||'')+'</div>';
+ if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
+ if(held.length){out+='<div class="bmapwrap"><div class="bmap" id="bmap" role="list" aria-label="Bond markets"></div></div>';
+  out+='<div class="blegend"><span>size = this week’s earnings</span><span>earning it <span class="bar" style="display:inline-block;vertical-align:middle;width:72px;margin:0 6px"></span> left on the table</span></div>';}
+ else out+='<div class="muted" style="padding:20px 0">No bonds held yet. Open the list and tap Enter on a market.</div>';
+ out+='<div class="bbar"><span><span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>'+(b.money_out?' <span class="warn">politics and cfb held</span>':'')+'</span>'
+  +bBtn('More ›','bOpenList()','small')+'</div>';
+ if(window._bSheet){
+  out+='<div class="bscrim" onclick="bCloseSheet()"></div><div class="bsheet">'+bBtn('Close','bCloseSheet()','small')+'<div style="clear:both"></div>';
+  if(window._bSheet==='-list')out+=bList(d);
+  else{var r=rows.filter(function(x){return x.market===window._bSheet;})[0];out+=r?bRow(r,d,b,sw,r.qty>0.005):'<div class="muted">gone from the list</div>';}
+  out+='</div>';}
+ setTimeout(bLayout,0);
  return out;
 }
 """
