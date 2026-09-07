@@ -8182,6 +8182,7 @@ date,market,program_type,reward_usd,status
 2026-09-05,enwc-uspres-nom-dem-2028-andbes,liquidityProgram,0.74,PENDING
 2026-09-05,enwc-uspres-nom-rep-2028-tedcru,liquidityProgram,0.05,PENDING
 2026-09-05,ewc-usgub-ia-2026-11-03-dem,liquidityProgram,0.01,PENDING
+2026-09-05,ewc-usgub-ks-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-05,ewc-usgub-mi-2026-11-03-mikdug,liquidityProgram,0.01,PENDING
 2026-09-05,ewc-usp-2028-11-07-andbes,liquidityProgram,0.01,PENDING
 2026-09-05,ewc-usse-ak-2026-11-03-dem,liquidityProgram,0.11,PENDING
