@@ -1726,3 +1726,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788747555.9,politics,ussewc-usse-ms-2026-11-03-rep,BUY,10,0.94,earn,0.3775,1.24,0.979025,96,99,0.62,0.93,0.98,-0.039,12,1 tick behind the touch — we would hold 7% of the bid side,CB8NSZ0HEQ3X
 1788747728.3,politics,ussewc-usse-ri-2026-11-03-dem,BUY,10,0.97,backfill,,2.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB7T20Q8GQ3Z
 1788747807.2,politics,ussewc-usse-ri-2026-11-03-dem,BUY,10,0.97,backfill,,2.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB7T20Q8GQ3Z
+1788747827.1,politics,ussewc-usse-ri-2026-11-03-dem,BUY,10,0.97,earn,0.2679,2.43,0.999175,,,0.033,,,-0.0292,10,1 tick in front of the touch — we would hold 81% of the bid side,CB7T20Q8GQ3Z
+1788747827.1,politics,scc-senate-gop-2026-11-03-lte45,SELL,10,0.08,earn,1.5502,1.53,0.05765,,,0,,,-0.0224,-10,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CB8H8CJ3YQ3H
