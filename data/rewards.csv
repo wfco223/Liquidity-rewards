@@ -8185,11 +8185,15 @@ date,market,program_type,reward_usd,status
 2026-09-05,usgubewc-usgub-mn-2026-11-03-dem,liquidityProgram,0.24,PENDING
 2026-09-05,usgubewc-usgub-ne-2026-11-03-dem,liquidityProgram,0.17,PENDING
 2026-09-05,usgubewc-usgub-nh-2026-11-03-dem,liquidityProgram,0.17,PENDING
+2026-09-05,usgubewc-usgub-nh-2026-11-03-rep,liquidityProgram,0.13,PENDING
+2026-09-05,usgubewc-usgub-ok-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-05,usgubewc-usgub-or-2026-11-03-dem,liquidityProgram,0.09,PENDING
 2026-09-05,usgubewc-usgub-ri-2026-11-03-dem,liquidityProgram,1.29,PENDING
+2026-09-05,usgubewc-usgub-ri-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-05,usgubewc-usgub-sd-2026-11-03-dem,liquidityProgram,0.08,PENDING
 2026-09-05,usgubewc-usgub-vt-2026-11-03-dem,liquidityProgram,0.15,PENDING
 2026-09-05,ussewc-usse-fl-2026-11-03-rep,liquidityProgram,0.27,PENDING
 2026-09-05,ussewc-usse-il-2026-11-03-rep,liquidityProgram,0.01,PENDING
+2026-09-05,ussewc-usse-ky-2026-11-03-rep,liquidityProgram,0.43,PENDING
 2026-09-05,ussewc-usse-nm-2026-11-03-rep,liquidityProgram,0.38,PENDING
 2026-09-05,ussewc-usse-wv-2026-11-03-rep,liquidityProgram,0.33,PENDING
