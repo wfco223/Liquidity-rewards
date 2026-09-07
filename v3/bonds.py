@@ -11,7 +11,8 @@ And the corrections, same day, in order:
 - Checked once a night, silently; proposals up top for him to add; a
   market that leaves the band drops off by itself; both ends count —
   99%+ for YES is a YES bond, 1% or under is a NO bond (buy NO: a short
-  of YES at 1-2c).
+  of YES at 1-2c). Widened 2026-09-07 to 98.5% / 1.5% ("so that it
+  includes races where the front runner is 99% chance").
 - The engine keeps quoting bond markets; it only never touches a bond
   order, and never rests its own exits on the BOND shares.
 - The resting order sits behind the touch where its size still earns:
@@ -79,8 +80,10 @@ import time
 from .family import QUALIFY_WALL_WHY, FamilyOrder, slug_days_out
 from .intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 
-HIGH_ODDS = 0.99            # YES bond: Silver's odds for YES at or above
-LOW_ODDS = 0.01             # NO bond: Silver's odds for YES at or below
+HIGH_ODDS = 0.985           # YES bond: Silver's odds for YES at or above (owner,
+                            # 2026-09-07: "> 98.5 so that it includes races where
+                            # the front runner is 99%"; was 0.99)
+LOW_ODDS = 0.015            # NO bond: Silver's odds for YES at or below
 PRICE_CAP = 0.995           # never pay more than this per dollar of bond
 MONEY_MIN_USD = 5.0         # money below this waits
 PING_EVERY_USD = 100.0      # a phone ping per this much bought

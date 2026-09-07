@@ -126,7 +126,12 @@ class TestTheBand(unittest.TestCase):
         self.assertEqual(side_for(HIGH_ODDS), "YES")
         self.assertEqual(side_for(0.006), "NO")
         self.assertEqual(side_for(LOW_ODDS), "NO")
-        self.assertIsNone(side_for(0.985))
+        # owner, 2026-09-07: "> 98.5. So that it includes races where the
+        # front runner is 99% chance" — a 98.5% front runner is a bond
+        self.assertEqual(side_for(0.985), "YES")
+        self.assertEqual(side_for(0.015), "NO")
+        self.assertIsNone(side_for(0.98))
+        self.assertIsNone(side_for(0.02))
         self.assertIsNone(side_for(None))
 
     def test_the_check_is_nightly(self):

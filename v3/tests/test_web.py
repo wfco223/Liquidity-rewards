@@ -244,6 +244,14 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("Sell under cost", web.BONDS_JS)
         self.assertIn("under_cost:true", web.BONDS_JS)
 
+    def test_the_band_is_printed_to_the_half_point(self):
+        # owner, 2026-09-07: the band is 98.5% / 1.5%; "99%" would misstate it
+        from v3 import web
+        self.assertIn("function bBand(x)", web.BONDS_JS)
+        self.assertIn("bBand(b.high||0.985)", web.BONDS_JS)
+        self.assertIn("bBand(b.low||0.015)", web.BONDS_JS)
+        self.assertNotIn("99% band", web.BONDS_JS)
+
     def test_an_order_in_the_way_is_a_question_the_page_asks(self):
         # owner, 2026-09-07: "ask me if I want to cancel the order and if
         # I say yes, cancel the order and then sell" — the reply's `ask`

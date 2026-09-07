@@ -864,6 +864,7 @@ function gradOp(k,m,ok){if(ok&&!confirm('Graduate '+m+'? Its orders leave the '+
 
 BONDS_JS = r"""
 function bPct(x){return x==null?'—':(x*100).toFixed(x>=0.1?0:1)+'%';}
+function bBand(x){return x==null?'—':(x*100).toFixed(1).replace(/\.0$/,'')+'%';}   // the band's edge, to the half point
 function bOdds(r){return r.bond==='NO'?'NO '+bPct(1-(r.odds||0)):'YES '+bPct(r.odds);}
 function bPill(s){return '<span class="pill">'+s+' bond</span>';}
 // an order's YES price in the bond's own terms (a NO bond's exit is a YES bid: 100 − it)
@@ -939,7 +940,7 @@ function bTop(r,L,held){
  var mk=r.mark;var black=!!(mk&&mk.black);
  var h='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+(black?' <span class="pill on">in the black</span>':'')+(r.odds_changed?' <span class="pill" style="border-color:#c9a227;color:#e8c547">odds changed · Silver '+bOdds(r)+'</span>':'')+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
  if(held){
-  if(r.odds_changed)h+='<div class="sub warn">No longer in the 99% band: the exit keeps working, nothing new is bought here. It leaves the page once you are out, and comes back if the odds return.</div>';
+  if(r.odds_changed)h+='<div class="sub warn">No longer in the '+bBand((window._d&&window._d.bonds&&window._d.bonds.high)||0.985)+' band: the exit keeps working, nothing new is bought here. It leaves the page once you are out, and comes back if the odds return.</div>';
   if(r.unconfirmed)h+='<div class="sub warn">The exchange shows '+r.unconfirmed.exch+' of '+r.unconfirmed.ledger+' here but the transaction record shows no sale (it puts you at '+r.unconfirmed.record+'). Kept until the record explains it, or until you say you sold them: '+bBtn('Sold by hand — book it','if(confirm(\'Book the '+(r.unconfirmed.ledger-r.unconfirmed.exch)+' shares the exchange no longer shows as a bond sale? Priced from the record where it has the sale, else at your cost. The proceeds join the cash at once.\'))bOp(\'bonds_book_sale\',\''+esc(r.market)+'\')','off')+'</div>';
   if(mk)h+='<div class="sub">bid <b class="'+(black?'ok':'warn')+'">'+pc(mk.bid)+'</b> vs your cost '+pc(mk.cost)+' ('+(mk.edge>=0?'+':'−')+(Math.abs(mk.edge)*100).toFixed(1)+'¢ a share)'+(r.cost_src&&r.cost_src!=='record'?' <span class="muted">· cost from the '+(r.cost_src==='exchange'?'exchange’s own figure':r.cost_src==='record+exchange'?'record and the exchange’s figure':'ledger')+'</span>':'')+'</div>';
   var ex=bExit(r);
@@ -1082,7 +1083,7 @@ function bList(d){
  out+='<details ontoggle="bTog(this,\'-money\')"'+(window._bOpen['-money']?' open':'')+'><summary style="font-size:16px;padding:8px 0;cursor:pointer">Details</summary>';
  out+='<div class="sub">Budget '+(tax?'= taxes owed '+usd(tx.owed||0)+' ('+Math.round((tx.rate||0.22)*100)+'% of '+usd(tx.gross||0)+' paid)':'fixed by you')+(b.spent?' − '+usd(b.spent)+' spent':'')+' · Silver checked '+(b.scan_day?esc(b.scan_day):'never')+'</div>';
  out+='<div>'+bField('bbud',bKeep('bbud'),'7em')+' '+bBtn('Set budget','bBudget()')+(tax?'':bBtn('Follow taxes owed','bOp(\'bonds_budget_tax\',\'-\')'))+bBtn('Check Silver now','bOp(\'bonds_scan\',\'-\')')+'</div>';
- out+='<div class="muted" style="margin-top:6px">A YES bond: Silver has YES at '+bPct(b.high||0.99)+'+. A NO bond: YES at '+bPct(b.low||0.01)+' or under, bought as NO. You buy in with Enter; the exit rests where it keeps '+Math.round((b.keep||0.8)*100)+'% of the best reward with only the shares that need to be out, never under what you paid; a second order buys more up to an amount you set, never over your first price; the sniper leads a small order in front of the exit down and buys it; bait pulls the other side\'s offers up. From your first purchase until you hold nothing, the engine stays out of the market. Rewards shown are what the bond orders measured while resting.</div>';
+ out+='<div class="muted" style="margin-top:6px">A YES bond: Silver has YES at '+bBand(b.high||0.985)+'+. A NO bond: YES at '+bBand(b.low||0.015)+' or under, bought as NO. You buy in with Enter; the exit rests where it keeps '+Math.round((b.keep||0.8)*100)+'% of the best reward with only the shares that need to be out, never under what you paid; a second order buys more up to an amount you set, never over your first price; the sniper leads a small order in front of the exit down and buys it; bait pulls the other side\'s offers up. From your first purchase until you hold nothing, the engine stays out of the market. Rewards shown are what the bond orders measured while resting.</div>';
  out+='</details></div>';
  var pr=b.proposed||[];
  if(pr.length){out+='<div class="card"><b>New from Silver</b>';
