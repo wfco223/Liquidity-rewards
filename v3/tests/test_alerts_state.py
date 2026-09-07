@@ -210,6 +210,30 @@ class TestStateRemote(unittest.TestCase):
             self.assertEqual(st.dropped, 1)
             self.assertEqual(st.last_error, "")
 
+    def test_the_cycle_s_save_writes_the_disk_behind_and_uploads_when_due(self):
+        # 2026-09-07: the disk write and the GitHub upload both leave the
+        # cycle's and the tap's thread; the upload keeps its throttle,
+        # a tap forces it
+        with tempfile.TemporaryDirectory() as d:
+            gh = FakeGh()
+            clock = FakeClock()
+            st = StateStore(os.path.join(d, "s.json"), repo="o/r", token="tok",
+                            session=gh, clock=clock)
+            self.assertTrue(st.save_soon({"saved_at": 1}))            # first: due
+            self.assertTrue(st.wait_remote(5.0))
+            self.assertEqual(st.load_local()["saved_at"], 1)
+            self.assertEqual(len([u for _, u in gh.calls if "/git/blobs" in u]), 1)
+            clock.t += 30
+            self.assertTrue(st.save_soon({"saved_at": 2}))            # disk only: not due
+            self.assertTrue(st.wait_remote(5.0))
+            self.assertEqual(st.load_local()["saved_at"], 2)
+            self.assertEqual(len([u for _, u in gh.calls if "/git/blobs" in u]), 1)
+            self.assertTrue(st.save_soon({"saved_at": 3}, force_remote=True))   # a tap
+            self.assertTrue(st.wait_remote(5.0))
+            self.assertEqual(json.loads(gzip.decompress(gh.stored))["saved_at"], 3)
+            self.assertEqual(st.load_local()["saved_at"], 3)
+            self.assertGreaterEqual(st.last_save_s, 0.0)
+
     def test_a_tap_s_save_without_a_token_says_so(self):
         with tempfile.TemporaryDirectory() as d:
             st = StateStore(os.path.join(d, "s.json"), token="")

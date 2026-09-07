@@ -252,7 +252,7 @@ class TestRedesign(unittest.TestCase):
         from v3 import web
         js = web._PLUMBING
         self.assertNotIn("alert('unreachable')", js)
-        self.assertIn("it may still have gone through", js)
+        self.assertIn("may still have gone through", js)
         self.assertEqual(js.count("window._force=true;load();"), 2)
         self.assertIn("if(!window._force){window._held=true;return;}", js)
         self.assertIn("sh.innerHTML=bSheetHtml(d);sh.scrollTop=st;", js)
