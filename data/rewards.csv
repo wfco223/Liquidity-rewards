@@ -8217,6 +8217,7 @@ date,market,program_type,reward_usd,status
 2026-09-05,usgubewc-usgub-ok-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-05,usgubewc-usgub-or-2026-11-03-dem,liquidityProgram,0.09,PENDING
 2026-09-05,usgubewc-usgub-or-2026-11-03-rep,liquidityProgram,0.07,PENDING
+2026-09-05,usgubewc-usgub-pa-2026-11-03-dem,liquidityProgram,0.21,PENDING
 2026-09-05,usgubewc-usgub-pa-2026-11-03-rep,liquidityProgram,1.11,PENDING
 2026-09-05,usgubewc-usgub-ri-2026-11-03-dem,liquidityProgram,1.29,PENDING
 2026-09-05,usgubewc-usgub-ri-2026-11-03-rep,liquidityProgram,0.01,PENDING
