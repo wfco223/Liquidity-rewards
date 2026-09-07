@@ -160,6 +160,9 @@ _CSS = """
 .btile .g{font-size:12.5px;margin-top:2px;opacity:.85;white-space:nowrap}
 .btile .more{position:absolute;right:10px;bottom:8px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.8}
 .btile .dot{position:absolute;right:5px;top:5px;width:6px;height:6px;border-radius:50%;background:#ffd06b;box-shadow:0 0 0 1.5px rgba(0,0,0,.3)}
+.btile .cash{position:absolute;left:5px;top:2px;font-size:12px;font-weight:700;color:#f2f5ec;text-shadow:0 0 2px rgba(0,0,0,.6)}
+.btile.focus .cash{left:auto;right:10px;top:auto;bottom:8px;font-size:14px}
+.btile .cashtag{display:block;font-size:11px;font-weight:600;opacity:.9;margin-top:2px}
 .bmap.dim .btile{opacity:.35}
 .bmap.dim .btile.focus{opacity:1;z-index:3;box-shadow:0 10px 30px rgba(0,0,0,.5)}
 .btile.focus .in{display:block}
@@ -391,6 +394,9 @@ function load(){
   // a live card holds the page still the same way scrolling does —
   // redrawing the list would tear down its open stream mid-look
   if(window._loaded&&window._liveOpen){window._held=true;return;}
+  // the bonds board: an open card or a grown square is his to read —
+  // the live line patches the card in place; the poll never redraws it
+  if(window._loaded&&(window._bSheet||window._bFocus)){window._held=true;return;}
   if(window._loaded&&(window.scrollY||0)>120){
    window._held=true;
    var hb=document.getElementById('heldnote');
@@ -894,13 +900,33 @@ function bLiveApply(){
  var d=window._d;if(!d||!d.bonds||!window._bLive)return;
  var rows=d.bonds.rows||[];
  rows.forEach(function(r,i){var l=window._bLive[r.market];if(l)rows[i]=l;});
- if((window.scrollY||0)>120||window._liveOpen)return;
+ if(window._liveOpen)return;
+ var now=Date.now();
+ if(window._bSheet){
+  // an open card is patched in place, its scroll kept — and not at all
+  // for ten seconds after he scrolled or touched it (owner, 2026-09-07:
+  // "I can't scroll down because the page keeps updating")
+  if(window._bSheetTouch&&now-window._bSheetTouch<10000)return;
+  if(window._bSheetDrewAt&&now-window._bSheetDrewAt<3000)return;
+  var sh=document.getElementById('bsheet');if(!sh)return;
+  var st=sh.scrollTop;sh.innerHTML=bSheetHtml(d);sh.scrollTop=st;window._bSheetDrewAt=now;
+  return;
+ }
+ if((window.scrollY||0)>120)return;
  // a grown square is his to read: hold the redraw. Otherwise the board
- // redraws every few seconds, the open card every tick.
- if(window._bFocus&&!window._bSheet)return;
- var now=Date.now();if(!window._bSheet&&window._bDrewAt&&now-window._bDrewAt<5000)return;
+ // redraws every few seconds.
+ if(window._bFocus)return;
+ if(window._bDrewAt&&now-window._bDrewAt<5000)return;
  window._bDrewAt=now;
  document.getElementById('view').innerHTML=render(d);
+}
+function bSheetTouched(){window._bSheetTouch=Date.now();}
+function bSheetHtml(d){
+ var b=d.bonds||{};var sw=((d.switch_view||{}).bonds)||{};var rows=b.rows||[];
+ var out=bBtn('Close','bCloseSheet()','small')+'<div style="clear:both"></div>';
+ if(window._bSheet==='-list')out+=bList(d);
+ else{var r=rows.filter(function(x){return x.market===window._bSheet;})[0];out+=r?bRow(r,d,b,sw,r.qty>0.005):'<div class="muted">gone from the list</div>';}
+ return out;
 }
 // which markets you have opened for details, kept across redraws
 window._bOpen=window._bOpen||{};
@@ -1104,12 +1130,21 @@ function bLayout(){
  held.sort(function(a,b){return ((b.board||{}).weight||0)-((a.board||{}).weight||0);});
  var items=held.map(function(r){return {r:r,v:Math.max((r.board||{}).weight||0,0.5)};});
  var boxes=bSquarify(items,0,0,W,H);var h='';window._bBox={};
+ // the bond that fetches the most per share if he must sell for cash
+ // (owner, 2026-09-07): the highest bid in the bond's own terms, the
+ // smallest loss against cost breaking a tie
+ var cashM=null,cashBid=-1,cashEdge=-9;
+ held.forEach(function(r){var mk=r.mark;if(!mk||mk.bid==null)return;var e=mk.edge==null?-9:mk.edge;
+  if(mk.bid>cashBid+1e-9||(Math.abs(mk.bid-cashBid)<1e-9&&e>cashEdge)){cashM=r.market;cashBid=mk.bid;cashEdge=e;}});
+ window._bCash=cashM;
  boxes.forEach(function(b){var r=b.it.r;var bd=r.board||{};var g=BGAP/2;var x=b.x+g,y=b.y+g,w=Math.max(b.w-BGAP,6),hh=Math.max(b.h-BGAP,6);
   window._bBox[r.market]={x:x,y:y,w:w,h:hh};
   var noexit=!(r.earn_order&&r.earn_order.length);
+  var cash=(r.market===cashM);
   h+='<button class="btile" role="listitem" id="bt-'+esc(r.market)+'" style="left:'+x.toFixed(1)+'px;top:'+y.toFixed(1)+'px;width:'+w.toFixed(1)+'px;height:'+hh.toFixed(1)+'px;background:'+bColor(bd)+'" onclick="bTap(event,\''+esc(r.market)+'\')" aria-label="'+esc(L[r.market]||r.market)+'">'
    +(noexit?'<span class="dot" title="no exit resting"></span>':'')
-   +'<div class="in"><div class="n">'+esc(bShort(r,L))+'</div><div class="d">'+usd(bd.actual||0)+'/day</div>'
+   +(cash?'<span class="cash" title="highest bid if you must sell">$</span>':'')
+   +'<div class="in"><div class="n">'+esc(bShort(r,L))+(cash?' <span class="cashtag">best to sell · bid '+pc(r.mark.bid)+(r.mark.cost!=null?' vs cost '+pc(r.mark.cost):'')+'</span>':'')+'</div><div class="d">'+usd(bd.actual||0)+'/day</div>'
    +'<div class="g">'+(bd.index==null?'no fresh book':(bd.left||0)>0.05?usd(bd.left)+' a day left on the table'+(((bd.left_exit||0)>0.05&&(bd.left_buy||0)>0.05)?' (exit '+usd(bd.left_exit)+', buys '+usd(bd.left_buy)+')':(bd.left_buy||0)>0.05?' on the buy side':''):'earning what the book offers')+'</div>'
    +'<div class="more">details ›</div></div></button>';});
  el.innerHTML=h;el.classList.remove('dim');
@@ -1147,15 +1182,12 @@ function render(d){
  if(b.error)out+='<div class="bad">'+esc(b.error)+'</div>';
  if(b.board_note)out+='<div class="sub warn" style="margin:6px 0 0">'+esc(b.board_note)+'</div>';
  if(held.length){out+='<div class="bmapwrap"><div class="bmap" id="bmap" role="list" aria-label="Bond markets"></div></div>';
-  out+='<div class="blegend"><span>size = this week’s earnings</span><span>earning it <span class="bar" style="display:inline-block;vertical-align:middle;width:72px;margin:0 6px"></span> left on the table</span></div>';}
+  out+='<div class="blegend"><span>size = this week’s earnings</span><span>earning it <span class="bar" style="display:inline-block;vertical-align:middle;width:72px;margin:0 6px"></span> left on the table</span><span>$ = highest bid if you must sell</span></div>';}
  else out+='<div class="muted" style="padding:20px 0">No bonds held yet. Open the list and tap Enter on a market.</div>';
  out+='<div class="bbar"><span><span class="pill'+(sw.on?' on':'')+'">'+(sw.on?'switch ON':(sw.armed?'armed':'switch off'))+'</span>'+(b.money_out?' <span class="warn">politics and cfb held</span>':'')+'</span>'
   +bBtn('More ›','bOpenList()','small')+'</div>';
  if(window._bSheet){
-  out+='<div class="bscrim" onclick="bCloseSheet()"></div><div class="bsheet">'+bBtn('Close','bCloseSheet()','small')+'<div style="clear:both"></div>';
-  if(window._bSheet==='-list')out+=bList(d);
-  else{var r=rows.filter(function(x){return x.market===window._bSheet;})[0];out+=r?bRow(r,d,b,sw,r.qty>0.005):'<div class="muted">gone from the list</div>';}
-  out+='</div>';}
+  out+='<div class="bscrim" onclick="bCloseSheet()"></div><div class="bsheet" id="bsheet" onscroll="bSheetTouched()" ontouchstart="bSheetTouched()" onpointerdown="bSheetTouched()">'+bSheetHtml(d)+'</div>';}
  setTimeout(bLayout,0);
  return out;
 }
