@@ -1721,3 +1721,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788746778.6,politics,enwc-uspres-nom-rep-2028-jdvan,SELL,3.19,0.5,hand,,3.17,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAMSCBXF8PQ1
 1788746778.6,politics,ussewc-usse-ms-2026-11-03-dem,SELL,0.01,0.07,backfill,,3.62,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CANYQJZ62PPT
 1788746778.6,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.63,backfill,,0.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB8M7NM38Q3Z
+1788746906.0,cfb,aachc-cfb-wins-2026-11-28-syra-4pt5wins,SELL,0.01,0.54,earn,0.2184,0.42,,50,56,0.61,0.53,0.85,-0.01,-1.01,7 ticks in front of the touch — we would hold 3% of the ask side,CB97BZ0E2Q3R
+1788747495.9,politics,ewc-usp-2028-11-07-jdvan,SELL,11,0.23,sell,0.002,2.15,,23,27,0.596,0.22,0.23,0.02,0,selling filled stock — it earns while it waits,CB7Y6QR3MQ3Y
+1788747555.9,politics,ussewc-usse-ms-2026-11-03-rep,BUY,10,0.94,earn,0.3775,1.24,0.979025,96,99,0.62,0.93,0.98,-0.039,12,1 tick behind the touch — we would hold 7% of the bid side,CB8NSZ0HEQ3X
+1788747728.3,politics,ussewc-usse-ri-2026-11-03-dem,BUY,10,0.97,backfill,,2.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB7T20Q8GQ3Z
+1788747807.2,politics,ussewc-usse-ri-2026-11-03-dem,BUY,10,0.97,backfill,,2.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB7T20Q8GQ3Z
+1788747827.1,politics,ussewc-usse-ri-2026-11-03-dem,BUY,10,0.97,earn,0.2679,2.43,0.999175,,,0.033,,,-0.0292,10,1 tick in front of the touch — we would hold 81% of the bid side,CB7T20Q8GQ3Z
+1788747827.1,politics,scc-senate-gop-2026-11-03-lte45,SELL,10,0.08,earn,1.5502,1.53,0.05765,,,0,,,-0.0224,-10,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CB8H8CJ3YQ3H
