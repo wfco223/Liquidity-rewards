@@ -1790,3 +1790,20 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788753894.7,politics,ewc-usp-2028-11-07-dontru,SELL,0.53,0.08,backfill,,0.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBAFKTN2CQ3Y
 1788753894.7,politics,enwc-uspres-nom-rep-2028-dontrujr,BUY,1.98,0.04,backfill,,1.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBA2F8NAMQ3Y
 1788753894.7,cfb,aachc-cfb-wins-2026-11-28-sc-8pt5wins,BUY,1,0.38,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBASNY4CTQ3N
+1788754030.4,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,0.02,0.94,backfill,,0.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBB805J3TQ45
+1788754062.7,politics,ussewc-usse-la-2026-11-03-rep,BUY,0.7,0.93,earn,0.2945,0.36,0.9643,90,94,0.619,0.93,0.95,-0.0343,0.7,1 tick behind the touch — we would hold 34% of the bid side,CBAZQQFR0Q3R
+1788754062.7,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,1,0.94,bond,2.4851,0.06,0.9951,92,97,0.436,0.94,0.95,-0.0551,132,bond more: split — 2 at 94c carry the share; never dearer than his first price,CBB805J3TQ45
+1788754302.7,politics,scc-hrep-rep-2026-11-03-gte180,BUY,10,0.9,earn,0,0.21,0.9453,88,93,0,0.81,0.91,-0.0453,10,3 ticks in front of the touch — we would hold 99% of the bid side,CBB599JZTQ46
+1788754321.0,politics,enwc-uspres-nom-rep-2028-dontrujr,BUY,0.01,0.04,backfill,,1.52,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBA2F8NAMQ3Y
+1788754422.7,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,0.78,0.25,earn,1.3951,0.97,0.138525,20,24,0.754,0.24,0.25,-0.1115,-30.78,1 tick behind the touch — we would hold 8% of the ask side,CBAKJQR34Q45
+1788754542.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,10,0.181,earn,25.2932,0.75,0.1732,17,20,0.73,0.18,0.181,-0.0078,-10,joins the touch — the book has been quiet,CBAST2S4TQ3Z
+1788754542.7,cfb,aachc-cfb-wins-2026-11-28-wake-3pt5wins,SELL,0.01,0.74,earn,0.0375,1.07,,74,83,0,0.73,0.74,0.04,-0.01,joins the touch — the book has been quiet,CBAJ4QZDRQ46
+1788755820.9,politics,ussewc-usse-ar-2026-11-03-rep,BUY,0.22,0.92,backfill,,3.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB8BFMWSMQ3N
+1788755865.3,politics,ussewc-usse-ar-2026-11-03-rep,BUY,4,0.92,earn,0.2056,4,0.983925,93,98,0.455,0.92,0.93,-0.0639,4,at the touch — a fill here is 5 ticks inside value (Silver + evidence),CB8BFMWSMQ3N
+1788757485.1,politics,ewc-usp-2028-11-07-dontru,SELL,0.53,0.03,backfill,,0.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBB84BP5MQ3T
+1788757533.3,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,-0.3,0.02,fix,,4.36,,,,,,,,,size trimmed by 0.3 to the exchange's count (order CAXS64VAJQ3R),CAXS64VAJQ3R
+1788757533.3,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,-2.1,0.02,fix,,1.8,,,,,,,,,size trimmed by 2.1 to the exchange's count (order CAXS64VAJQ3R),CAXS64VAJQ3R
+1788757533.3,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,0.02,0.94,backfill,,0.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBB805J3TQ45
+1788757533.3,politics,enwc-uspres-nom-rep-2028-dontrujr,BUY,0.01,0.04,backfill,,1.52,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBA2F8NAMQ3Y
+1788757533.3,politics,ussewc-usse-ar-2026-11-03-rep,BUY,0.22,0.92,backfill,,3.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CB8BFMWSMQ3N
+1788757533.3,politics,ewc-usp-2028-11-07-dontru,SELL,0.53,0.03,backfill,,0.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBB84BP5MQ3T
