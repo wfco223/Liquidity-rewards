@@ -1975,6 +1975,28 @@ class Family:
 
     # ---------------------------------------------------------------- adoption
 
+    def _back_from_limbo(self, open_orders: list[dict], now: float) -> None:
+        """An order the open-order list left out for one read went into
+        limbo and lost its record; when the list shows it again it is
+        the SAME order of ours, not one the owner placed (RI Senate rep,
+        2026-09-06: the bond's own exit came back as "the owner's own
+        order" and the bond sized around it — "no exit resting"). Its
+        record comes back with it, at the size the exchange shows."""
+        for o in open_orders:
+            gp = self.gone_pending.get(o["id"])
+            if gp is None or o["id"] in self.orders:
+                continue
+            rec = gp["rec"]
+            rec.qty = float(o.get("size") or rec.qty)
+            if o.get("price"):
+                rec.price = float(o["price"])
+            self.orders[o["id"]] = rec
+            del self.gone_pending[o["id"]]
+            self._log(event="order_back", market=rec.market, side=rec.side,
+                      price=rec.price, qty=rec.qty, id=o["id"],
+                      note="the open-order list left it out for a read and shows it "
+                           "again — the same order, its record restored")
+
     def adoptable(self, open_orders: list[dict], foreign_ids=()) -> list[dict]:
         """Every resting account order this family does not already
         track, in its universe.
@@ -2086,6 +2108,7 @@ class Family:
         refreshed = self._refresh_books(client, now)
         self._read_live(now)
         self._accrue(now)
+        self._back_from_limbo(open_orders, now)
         pending = (self.adoptable(open_orders, foreign_ids)
                    if self.cfg.adopt else [])
         summary = {"mode": "on" if switch_on else "observing",
