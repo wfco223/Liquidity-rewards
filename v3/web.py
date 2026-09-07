@@ -845,7 +845,7 @@ function bSay(h){window._bNote=h;var el=document.getElementById('bmsg');if(el)el
 function bBudget(){var x=parseFloat(bKeep('bbud'));if(!(x>=0)){bSay('<div class="bad">type the budget in dollars first</div>');return;}var f=document.getElementById('bbud');if(f)f.value='';bOp('bonds_budget','-',x);}
 function bMoreSet(m){var x=parseFloat(bKeep('bmore-'+m));if(!(x>=0)){bSay('<div class="bad">dollars, please</div>');return;}bOp('bonds_more_cap',m,x);}
 function bExitSet(m){var x=parseFloat(bKeep('bexit-'+m));if(!(x>0)){bSay('<div class="bad">type the exit price in cents first</div>');return;}bOp('bonds_exit_at',m,x);}
-function bBuy(m){var q=parseFloat(bKeep('bbq-'+m));var p=parseFloat(bKeep('bbp-'+m));if(!(q>=1)||!(p>0)){bSay('<div class="bad">how many shares, and the price in cents?</div>');return;}if(confirm('Rest a buy for '+q+' shares at '+p+'¢?'))bOp('bonds_buy',m,{qty:q,px:p});}
+function bBuy(m){var q=parseFloat(bKeep('bbq-'+m));var p=parseFloat(bKeep('bbp-'+m));if(!(q>=0.01)||!(p>0)){bSay('<div class="bad">how many shares (fractions are fine), and the price in cents?</div>');return;}if(confirm('Rest a buy for '+q+' shares at '+p+'¢?'))bOp('bonds_buy',m,{qty:q,px:p});}
 function bSellInto(m,px,qty,pr){if(confirm('Sell '+qty+' shares into the bids out to '+pc(px)+' for about '+usd(pr)+'? The commission comes off the proceeds. Our own exit comes off first.'))bOp('bonds_sell_into',m,{px:px,qty:qty});}
 function bQualify(m,side,gap,px,col){if(confirm('Build the '+side+' wall to 125% of Target Size? '+gap.toLocaleString()+' shares to go at '+pc(px)+' (~'+usd(col)+' of buying power held). It rests at the far edge of the book, behind your exit, which keeps its size. Placed in the background in as many orders as it takes — tap again for progress.'))bOp('bonds_qualify',m);}
 function bSellUnder(m,px,qty,pr,loss){if(confirm('Sell '+qty+' shares into the bids out to '+pc(px)+' for about '+usd(pr)+'? That is about '+usd(loss)+' UNDER what you paid. The loss is booked, the proceeds join the cash at once, and our own exit comes off first.'))bOp('bonds_sell_into',m,{px:px,qty:qty,under_cost:true});}
@@ -960,7 +960,7 @@ function bSellLadder(r){
  var bids=bk.bids||[];if(!bids.length)return '';
  var m=esc(r.market);var cost=r.cost_px||0;var cum=0;var rows=0;
  var h='<div class="sub"><b>Sell into the bids</b> — take the buyers resting there, best first, out to a price (our exit comes off first):</div><table><tr><th class="r">bid</th><th class="r">avail</th><th class="r">you sell</th><th class="r">proceeds</th><th class="r">vs cost</th><th></th></tr>';
- bids.forEach(function(b){var px=b[0],q=b[1]-(b[2]||0);if(q<=0)return;cum+=q;var sell=Math.min(Math.floor(cum),Math.floor(r.qty));if(sell<1)return;var pr=sell*px;var pnl=(px-cost)*sell;var ok=px>cost+1e-9;rows++;
+ bids.forEach(function(b){var px=b[0],q=b[1]-(b[2]||0);if(q<=0)return;cum+=q;var sell=Math.min(Math.floor(cum*100)/100,Math.floor(r.qty*100)/100);if(sell<0.01)return;var pr=sell*px;var pnl=(px-cost)*sell;var ok=px>cost+1e-9;rows++;
   h+='<tr><td class="r">'+pc(px)+'</td><td class="r">'+q.toFixed(1)+'</td><td class="r">'+sell+'</td><td class="r">'+usd(pr)+'</td><td class="r '+(pnl>=0?'ok':'warn')+'">'+(pnl>=0?'+':'−')+usd(Math.abs(pnl))+'</td><td>'+(ok?bBtn('Sell','bSellInto(\''+m+'\','+px+','+sell+','+pr.toFixed(2)+')'):bBtn('Sell under cost','bSellUnder(\''+m+'\','+px+','+sell+','+pr.toFixed(2)+','+Math.abs(pnl).toFixed(2)+')','off'))+'</td></tr>';});
  return rows?h+'</table>':'';
 }
