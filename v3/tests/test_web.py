@@ -243,6 +243,14 @@ class TestRedesign(unittest.TestCase):
         from v3 import web
         self.assertIn("Sell under cost", web.BONDS_JS)
         self.assertIn("under_cost:true", web.BONDS_JS)
+
+    def test_an_order_in_the_way_is_a_question_the_page_asks(self):
+        # owner, 2026-09-07: "ask me if I want to cancel the order and if
+        # I say yes, cancel the order and then sell" — the reply's `ask`
+        # is confirmed and its `retry` (the sale with the order's id in
+        # cancel_ids) posted back through the same op
+        from v3 import web
+        self.assertIn("if(j.ask&&j.retry&&confirm(j.ask))bOp(op,m,j.retry);", web.BONDS_JS)
         self.assertIn("UNDER what you paid", web.BONDS_JS)
         # and the unconfirmed banner books a sale on the owner's word
         self.assertIn("bonds_book_sale", web.BONDS_JS)

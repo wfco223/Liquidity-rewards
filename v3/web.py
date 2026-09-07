@@ -870,7 +870,10 @@ function bPill(s){return '<span class="pill">'+s+' bond</span>';}
 function bTerms(r,px){return r.bond==='NO'?Math.round((1-px)*10000)/10000:px;}
 function bBtn(label,onclick,cls){return '<button class="'+(cls||'')+'" style="padding:10px 16px;font-size:16px;margin:4px 8px 4px 0" onclick="'+onclick+'">'+label+'</button>';}
 function bOp(op,m,v){var body={op:op,market:m};if(v!=null)body.value=v;window._bNote='';post(body,function(j){
- bSay('<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>');});}
+ bSay('<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>');
+ // an order of his in the way (owner, 2026-09-07: "ask me if I want to
+ // cancel the order and if I say yes, cancel the order and then sell")
+ if(j.ask&&j.retry&&confirm(j.ask))bOp(op,m,j.retry);});}
 // typed fields instead of prompt() (owner, 2026-09-03: "Clicking set
 // budget does nothing"). A field keeps its text across a redraw, and
 // holds the redraw while it has focus (the live-card hold in load()).
