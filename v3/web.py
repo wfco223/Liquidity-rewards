@@ -820,6 +820,7 @@ function render(d){
  var sv=(d.switch_view||{});var out='';
  var ph=d.place_health||{};
  if(ph.blocked){var t=new Date((ph.since||0)*1000);out+='<div class="card"><div class="warn"><b>The exchange is refusing this server\\'s orders</b> \\u2014 "your connection looks like a VPN", since '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+', '+(ph.refused||0)+' refused.</div><div class="muted">Nothing is cancelled that could not come back: moves, step-ups and re-prices are paused; one placement a minute probes for recovery. Cancels that only reduce risk still run. The fix is a new outbound address: tap Deploy on DigitalOcean.</div></div>';}
+ out+=placesCard(d.places||{});
  var order=['master'];for(var k in sv){if(k!=='master')order.push(k);}
  order.forEach(function(k){
   var s=sv[k]||{};var label=(k==='master'?'Master switch \\u2014 all of 3.0':k+' switch');
@@ -855,6 +856,30 @@ function render(d){
   out+='</div>';
  });
  return out;
+}
+// Places (owner, 2026-09-07: "which places Polymarket thinks are vpn
+// and which are okay"): the outbound addresses this server has run from,
+// each with the exchange's last word on it.
+function whenD(t){if(!t)return '\\u2013';var d=new Date(t*1000);return (d.getMonth()+1)+'/'+d.getDate()+' '+when(t);}
+function placeMark(v){return v==='okay'?'<span class="ok">\\u2705 okay</span>':(v==='vpn'?'<span class="bad">\\u274c VPN</span>':'<span class="muted">\\u2013 no verdict yet</span>');}
+function placesCard(pl){
+ var rows=pl.rows||[];if(!pl.current&&!rows.length&&!pl.check_note)return '';
+ var out='<div class="card"><b>Places</b> <span class="muted">\\u2014 the outbound addresses this server has run from, and what the exchange made of each. A Deploy moves the server to another address.</span>';
+ if(pl.current){var v=pl.verdict;
+  out+='<div class="sub">Now on <b>'+esc(pl.current)+'</b> \\u2014 '+placeMark(v)+(pl.checked_at?' <span class="muted">(checked '+when(pl.checked_at)+')</span>':'')+'</div>';
+  if(v==='vpn')out+='<div class="warn">The exchange refused orders from this address as a VPN before. Tap Deploy on DigitalOcean for another address.</div>';
+  else if(v==='okay')out+='<div class="muted">The exchange has accepted orders from this address.</div>';
+  else out+='<div class="muted">No order has been placed from this address yet; the first one is the verdict.</div>';}
+ if(pl.check_note)out+='<div class="warn">Could not learn the address: '+esc(pl.check_note)+'</div>';
+ if(rows.length){out+='<div class="muted" style="margin-top:6px">'+(pl.okay_n||0)+' okay, '+(pl.vpn_n||0)+' VPN, '+rows.length+' seen.</div>';
+  out+='<div style="overflow-x:auto"><table style="font-size:14px"><tr><th>address</th><th>verdict</th><th>first seen</th><th>last seen</th><th>orders ok</th><th>refused</th><th>deploys</th></tr>';
+  rows.forEach(function(r){out+='<tr'+(r.current?' style="font-weight:bold"':'')+'><td>'+esc(r.ip)+(r.current?' (now)':'')+'</td><td>'+placeMark(r.verdict)+'</td><td>'+whenD(r.first)+'</td><td>'+whenD(r.last)+'</td><td>'+(r.accepted||0)+'</td><td>'+(r.refused||0)+'</td><td>'+(r.boots||0)+'</td></tr>';});
+  out+='</table></div>';}
+ var ev=pl.events||[];
+ if(ev.length){out+='<details class="how"><summary>what happened</summary>';
+  ev.slice().reverse().forEach(function(e){out+='<div class="muted">'+whenD(e.ts)+' \\u2014 '+esc(e.event)+(e.ip?' '+esc(e.ip):'')+(e.note?': '+esc(e.note):'')+'</div>';});
+  out+='</details>';}
+ return out+'</div>';
 }
 function tap(op,which){post({op:'switch_'+op,which:which});}
 function auSet(k){var e=document.getElementById('au-'+k);var v=e?e.value:'';if(!v){alert('pick a time first');return;}var d=document.getElementById('aud-'+k);if(d&&d.value)v+=' '+d.value;post({op:'family_active_until',which:k,value:v});}
