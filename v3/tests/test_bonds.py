@@ -2687,6 +2687,87 @@ class TestSellingIntoTheBids(Base):
         self.assertEqual([e for e in self.b.log if e["event"] == "sold"], [])
         self.assertEqual(self.b.held(AL, "YES"), 40.0)
 
+    def hand_order(self, oid, side, px, qty):
+        """An order he placed by hand: purpose manual, untouchable."""
+        self.r.fam.orders[oid] = FamilyOrder(
+            id=oid, market=AL, side=side, price=px, qty=qty,
+            intent=BUY_LONG if side == "BUY" else SELL_LONG, placed_ts=self.now,
+            purpose="manual", why="the owner's own order — the engine leaves it alone")
+        self.r.exchange.live[oid] = {"id": oid, "market": AL, "side": side,
+                                     "price": px, "size": qty, "intent": ""}
+
+    def test_his_order_in_the_way_is_a_question_and_his_yes_cancels_it_then_sells(self):
+        # owner, 2026-09-07: "If I try to sell something and there is an
+        # order in the way, ask me if I want to cancel the order and if
+        # I say yes, cancel the order and then sell"
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.book(AL, ((0.98, 60.0), (0.50, 20000.0)), ((0.99, 300.0), (0.999, 20000.0)))
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.hand_order("H1", "BUY", 0.98, 5.0)                    # his own bid at the level
+        r = self.b.sell_into(AL, 98, 60, self.now)
+        self.assertFalse(r["ok"])
+        self.assertIn("your own order H1 (5 @ 98c) rests in the way", r["note"])
+        self.assertEqual([h["id"] for h in r["in_way"]], ["H1"])
+        self.assertIn("5 shares at 98c", r["ask"])
+        self.assertIn("Cancel it and sell 60?", r["ask"])
+        self.assertEqual(r["retry"], {"px": 98.0, "qty": 60.0, "under_cost": False,
+                                      "cancel_ids": ["H1"]})
+        # without his word nothing is touched and nothing sold
+        self.assertIn("H1", self.r.fam.orders)
+        self.assertIn("H1", self.r.exchange.live)
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)
+        self.assertEqual([e for e in self.b.log if e["event"] == "sold_into"], [])
+        # his yes: the page posts the sale back with the order's id
+        rt = r["retry"]
+        r2 = self.b.sell_into(AL, rt["px"], rt["qty"], self.now, under_cost=rt["under_cost"],
+                              cancel_ids=rt["cancel_ids"])
+        self.assertTrue(r2["ok"], r2["note"])
+        self.assertNotIn("ask", r2)
+        self.assertNotIn("H1", self.r.fam.orders)
+        self.assertNotIn("H1", self.r.exchange.live)
+        self.assertEqual(self.b.held(AL, "YES"), 40.0)
+        self.assertAlmostEqual(self.b.cash, 60 * 0.98, places=2)
+        ev = [e for e in self.b.log if e["event"] == "hand_cleared"]
+        self.assertEqual((ev[0]["order"], ev[0]["qty"]), ("H1", 5.0))
+        self.assertFalse(self.r.fam.hold_until.get(AL))            # his order is not the engine's
+
+    def test_his_word_covers_only_the_order_named(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.book(AL, ((0.98, 60.0), (0.50, 20000.0)), ((0.99, 300.0), (0.999, 20000.0)))
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.hand_order("H1", "BUY", 0.98, 5.0)
+        self.hand_order("H2", "BUY", 0.985, 2.0)
+        r = self.b.sell_into(AL, 98, 60, self.now, cancel_ids=["H1"])
+        self.assertFalse(r["ok"])
+        self.assertIn("H1", self.r.fam.orders)                     # nothing cancelled while another blocks
+        self.assertEqual([h["id"] for h in r["in_way"]], ["H2"])
+        self.assertEqual(r["retry"]["cancel_ids"], ["H1", "H2"])    # his yes adds the second
+        self.assertEqual(self.b.held(AL, "YES"), 100.0)
+
+    def test_a_sale_stopped_midway_by_his_order_asks_to_finish_the_rest(self):
+        self.bond(AL, "YES", 100.0, 0.90)
+        first = Book(bids=((0.99, 60.0), (0.98, 40.0), (0.50, 20000.0)),
+                     asks=((0.999, 20000.0),), tick=0.01, fetched_at=self.now)
+        then = Book(bids=((0.98, 40.0), (0.50, 20000.0)),
+                    asks=((0.999, 20000.0),), tick=0.01, fetched_at=self.now)
+        self.r.exchange.books[AL] = first
+        self.r.cache.put(AL, first)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.hand_order("H1", "BUY", 0.98, 5.0)
+        reads = []
+        def book(slug, fetched_at=None):                            # the level taken is gone next read
+            reads.append(slug)
+            return first if len(reads) == 1 else then
+        self.r.exchange.book = book
+        r = self.b.sell_into(AL, 98, 80, self.now)
+        self.assertTrue(r["ok"], r["note"])
+        self.assertIn("sold 60", r["note"])
+        self.assertIn("stopped: your own order H1", r["note"])
+        self.assertIn("Cancel it and sell 20 more?", r["ask"])
+        self.assertEqual(r["retry"], {"px": 98.0, "qty": 20.0, "under_cost": False,
+                                      "cancel_ids": ["H1"]})
+        self.assertEqual(self.b.held(AL, "YES"), 40.0)
+
     def test_a_lagging_feed_does_not_hand_the_sold_shares_back(self):
         self.bond(AL, "YES", 100.0, 0.90)
         self.book(AL, ((0.98, 60.0), (0.50, 20000.0)), ((0.99, 300.0), (0.999, 20000.0)))
