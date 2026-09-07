@@ -279,7 +279,7 @@ class TestRedesign(unittest.TestCase):
         from v3 import web
         for s in ("function bSquarify", "function bLayout", "function bTap", "function bOpenSheet",
                   "function bList", "bOpenList", "of budget invested", "earning now, a day",
-                  "room for buys, per market", "left on the table", "class=\"btile\""):
+                  "room for buys", "max a market", "left on the table", "class=\"btile\""):
             self.assertIn(s, web.BONDS_JS, s)
         self.assertIn(".btile{", web._CSS)
         # an open card is patched in place and left alone while he scrolls

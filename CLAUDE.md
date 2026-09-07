@@ -80,7 +80,10 @@ long and accreted, so search it rather than reading it through.
 - Bond money (owner, 2026-09-06): the bonds buy within the budget
   market by market — in any one market, what is held at cost plus that
   market's buy orders stays under the budget; across markets the orders
-  may add up to more. The exchange's free money only sizes an order,
+  may add up to more. And no one market holds more than 20% of the
+  budget (owner, 2026-09-07 "max 20% of the budget is going to any one
+  market"): a market's buy orders, his Enter and the sniper's take all
+  fit that share less what the market already holds. The exchange's free money only sizes an order,
   never gates one. Politics and cfb may buy only with free money beyond
   what the bonds may still spend (their room). No engine pulls a
   resting bid to "free money".
