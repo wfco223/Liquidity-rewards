@@ -2192,3 +2192,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788806434.0,politics,enwc-uspres-nom-dem-2028-gavnew,BUY,0.33,0.15,backfill,,0.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBPTN1CZ4Q3Y
 1788806434.0,politics,scc-hrep-rep-2026-11-03-gte225,SELL,0.06,0.11,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBQC22XX0Q46
 1788806434.0,cfb,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,BUY,1,0.26,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBQ8QTNJRQ3R
+1788807397.3,politics,ussewc-usse-la-2026-11-03-dem,SELL,1,0.11,earn,1.0405,1.62,0.0357,4,8,0.591,0.06,0.11,-0.0743,-1,1 tick behind the touch — we would hold 3% of the ask side,CBPQ7XWREQ3R
+1788807397.3,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,SELL,1,0.17,sell,0,0,,39,44,0.842,0.17,0.18,0.25,0,taker dump — sold into the bid (the carved exception),CBR37AK2EQ46
+1788807610.6,politics,usgubewc-usgub-ar-2026-11-03-rep,SELL,7.71,0.96,manual,0.4862,2.4,0.98235,94,98,0.235,0.95,0.99,0.0223,0.29,moved by the owner,CBP1WBXSMQ3R
+1788808117.2,politics,usgubewc-usgub-ar-2026-11-03-dem,BUY,170.53,0.04,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBR7XN1XRQ46
+1788809090.8,politics,ussewc-usse-fl-2026-11-03-rep,SELL,4,0.92,void,1.2352,0.03,0.9083,90,93,0.762,0.9,0.92,-0.0117,-4,voided: the exchange has no trade for order CBQWV0860Q3Z — the row of 09-07 18:4,CBQWV0860Q3Z
+1788809090.8,politics,enwc-uspres-nom-dem-2028-andbes,SELL,4,0.06,hand,,11.41,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CA19F632JMVF
+1788809090.8,politics,usgubewc-usgub-ar-2026-11-03-dem,BUY,170.53,0.04,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBR7XN1XRQ46
+1788809301.7,politics,ussewc-usse-fl-2026-11-03-rep,SELL,4,0.92,void,1.2352,0.03,0.9083,90,93,0.762,0.9,0.92,-0.0117,-4,voided: the exchange has no trade for order CBQWV0860Q3Z — the row of 09-07 18:4,CBQWV0860Q3Z
+1788809301.7,politics,enwc-uspres-nom-dem-2028-andbes,SELL,4,0.06,hand,,11.41,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CA19F632JMVF
+1788809301.7,politics,usgubewc-usgub-ar-2026-11-03-dem,BUY,170.53,0.04,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBR7XN1XRQ46

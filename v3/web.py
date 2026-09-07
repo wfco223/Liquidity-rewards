@@ -469,6 +469,24 @@ def _shell(title: str, here: str, render_js: str, sub: str = "") -> str:
 
 STATUS_JS = """
 function bar(pct,col){return '<div class="mtrack"><div class="mfill" style="width:'+Math.min(100,Math.max(0,pct))+'%'+(col?';background:'+col:'')+'"></div></div>';}
+// the last pass, in plain words (2026-09-07: "there is like a 5 minute
+// delay when I do anything"): how long, where the time went, and what
+// the box says about memory and CPU
+function cycleLine(d){
+ var cs=d.cycle_stats;if(!cs||!cs.laps)return '';
+ var L=cs.laps,parts=[];
+ ['read board','rewards watch','publish files','families','bonds','survey','state','payload','snapshot'].forEach(function(k){if(L[k]!=null&&L[k]>=0.5)parts.push(k+' '+L[k]+'s');});
+ var bx=cs.box||{},gc=cs.gc||{};
+ var mem=(cs.rss_mb!=null?Math.round(cs.rss_mb)+' MB':'')+(bx.mem_max_mb?' of '+Math.round(bx.mem_max_mb)+' MB':'');
+ var h='<div class="sub'+((L.total||0)>90?' warn':' muted')+'">last pass '+(L.total||0)+'s'+(parts.length?' \u2014 '+parts.join(', '):'');
+ if(gc.s>=1)h+=' \u00b7 garbage collection '+gc.s+'s';
+ if(mem)h+=' \u00b7 memory '+mem;
+ if(bx.throttled_s>=1)h+=' \u00b7 CPU held back '+bx.throttled_s+'s';
+ if(bx.cpu_quota)h+=' \u00b7 '+bx.cpu_quota+' CPU';
+ if(bx.oom_kills)h+=' \u00b7 <span class="bad">killed for memory '+bx.oom_kills+'\u00d7</span>';
+ if(bx.load1!=null)h+=' \u00b7 load '+bx.load1;
+ return h+'</div>';
+}
 function render(d){
  if(d.starting)return bootCard(d);
  var out='';
@@ -480,6 +498,7 @@ function render(d){
   out+='<div class="card">'+(age<180
    ?'<span class="ok">\u2705 fresh</span> <span class="muted">'+age+'s</span>'
    :'<span class="bad">\u274C stale</span> <span class="muted">'+Math.round(age/60)+' min</span>');
+  out+=cycleLine(d);
   var sv=(d.switch_view||{});var m=(sv.master||{});
   out+='<div style="margin-top:6px"><span class="pill'+(m.on?' on':'')+'">master '+(m.on?'ON':'off')+'</span>';
   for(var k in sv){if(k==='master')continue;
