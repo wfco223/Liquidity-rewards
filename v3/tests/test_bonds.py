@@ -679,7 +679,7 @@ class TestTheOwnersEntry(Base):
         self.b.set_budget(40.0)
         r = self.b.enter(AL, 0.98, self.now, self.positions())
         self.assertTrue(r["ok"], r["note"])
-        self.assertEqual(self.b.held(AL, "YES"), 20.0 + 21.0)   # 20 @ 95c, then 21 @ 96c
+        self.assertAlmostEqual(self.b.held(AL, "YES"), 20.0 + 21.87, places=2)   # 20 @ 95c, then $21 buys 21.87 @ 96c
         self.assertLess(self.b.budget, 5.0)
 
     def test_nothing_inside_the_price_means_nothing_bought(self):
@@ -2609,11 +2609,24 @@ class TestHisOwnBuy(Base):
         self.r.exchange.buying_power = lambda: 10.0
         r = self.b.place_buy(AL, 96, 50, self.now)
         self.assertTrue(r["ok"], r["note"])
-        self.assertEqual(self.buys()[0].qty, 10.0)                  # floor(10 / 0.96)
+        self.assertEqual(self.buys()[0].qty, 10.41)                 # 10 / 0.96, to the hundredth
         self.assertIn("sized to the buying power", r["note"])
         self.assertTrue(self.b.pull_buy(AL)["ok"])
         self.assertEqual(self.buys(), [])
         self.assertFalse(self.b.pull_buy(AL)["ok"])
+
+    def test_he_may_buy_a_fraction_of_a_share(self):
+        # owner, 2026-09-07: "I need to be able to buy fractions of
+        # shares right now it only lets me buy whole shares"
+        self.bond(AL, "YES", 100.0, 0.95)
+        r = self.b.place_buy(AL, 96, 2.5, self.now)
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.buys()[0].qty, 2.5)
+        self.assertTrue(self.b.pull_buy(AL)["ok"])
+        r = self.b.place_buy(AL, 96, 0.375, self.now)               # to the hundredth, down
+        self.assertTrue(r["ok"], r["note"])
+        self.assertEqual(self.buys()[0].qty, 0.37)
+        self.assertFalse(self.b.place_buy(AL, 96, 0.004, self.now)["ok"])
 
     def test_a_no_bond_buy_is_an_ask_in_yes_terms(self):
         self.bond(ALD, "NO", 50.0, 0.02)
@@ -2686,6 +2699,24 @@ class TestSellingIntoTheBids(Base):
         self.b.cycle(self.now + 90, self.positions(), on=True)
         self.assertEqual(self.b.held(AL, "YES"), 40.0)
         self.assertNotIn(AL, self.b._await_drop)
+
+    def test_he_may_sell_a_fraction_and_enter_for_one(self):
+        # owner, 2026-09-07: fractions of shares, selling and entering too
+        self.bond(AL, "YES", 100.69, 0.90)
+        self.book(AL, ((0.98, 60.0), (0.50, 20000.0)), ((0.99, 0.4), (0.999, 20000.0)))
+        r = self.b.sell_into(AL, 98, 2.25, self.now)
+        self.assertTrue(r["ok"], r["note"])
+        self.assertAlmostEqual(self.b.held(AL, "YES"), 98.44, places=2)
+        self.assertAlmostEqual(self.b.cash, 2.25 * 0.98, places=2)
+        # the whole lot, tail included: the fake book still shows 60 at 98c
+        r = self.b.sell_into(AL, 98, None, self.now + 1)
+        self.assertTrue(r["ok"], r["note"])
+        self.assertAlmostEqual(self.b.held(AL, "YES"), 98.44 - 60.0, places=2)
+        # Enter takes a 0.4-share level
+        held0 = self.b.held(AL, "YES")
+        r = self.b.enter(AL, 0.99, self.now + 2, self.positions())
+        self.assertTrue(r["ok"], r["note"])
+        self.assertAlmostEqual(self.b.held(AL, "YES"), held0 + 0.4, places=2)
 
     def test_under_cost_and_off_the_bids_are_refused(self):
         self.bond(AL, "YES", 100.0, 0.95)
