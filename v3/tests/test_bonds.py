@@ -3633,7 +3633,8 @@ class TestQualifyTheSide(Base):
             bonds=self.b, last_state=None, _audit=lambda d: calls.append(("audit", d)),
             freeze_payload=lambda: None,
             store=types.SimpleNamespace(save_local=lambda st: None,
-                                        save_remote=lambda st: None),
+                                        save_remote=lambda st: None,
+                                        save_remote_soon=lambda st: None),
             qualify_bond=lambda market: (calls.append(("qualify", market))
                                          or {"ok": True, "note": "building"}))
         m.bonds_op = types.MethodType(Monitor.bonds_op, m)

@@ -1432,7 +1432,7 @@ class Monitor:
         self.last_state = st
         self.freeze_payload()      # a switch flip shows immediately
         self.store.save_local(st)
-        self.store.save_remote(st)
+        self.store.save_remote_soon(st)
         return s
 
     @staticmethod
@@ -1522,7 +1522,7 @@ class Monitor:
         self.last_state = st
         self.freeze_payload()
         self.store.save_local(st)
-        self.store.save_remote(st)
+        self.store.save_remote_soon(st)
         return {"ok": True, "note": note, "active_until": fam.active_until}
 
     @staticmethod
@@ -1588,7 +1588,7 @@ class Monitor:
         self.last_state = st
         self.freeze_payload()
         self.store.save_local(st)
-        self.store.save_remote(st)
+        self.store.save_remote_soon(st)
         return {"ok": True, "note": note, "graduated": sorted(fam.graduated)}
 
     def _fair_for(self, slug: str) -> float | None:
@@ -1631,7 +1631,7 @@ class Monitor:
         self.last_state = st
         self.freeze_payload()
         self.store.save_local(st)
-        self.store.save_remote(st)
+        self.store.save_remote_soon(st)
         return {"ok": True, "note": note}
 
     def owner_place(self, market: str, side: str, price: float,
@@ -3081,7 +3081,7 @@ class Monitor:
             self.last_state = st
             self.freeze_payload()
             self.store.save_local(st)
-            self.store.save_remote(st)
+            self.store.save_remote_soon(st)      # behind the request, never in it
         return r
 
     def publish_ladders(self, now: float) -> None:
