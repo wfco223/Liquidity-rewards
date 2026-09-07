@@ -3832,3 +3832,71 @@ class TestExitsClaimedBack(Base):
         self.assertIn("100 @ 97c", note)
         row = self.b.live_rows(self.now, self.positions())[AL]
         self.assertIn("your own order", row["exit_note"])
+
+
+class TestTheBoardCountsBothSides(Base):
+    """Owner, 2026-09-07 (KY Senate dem): "the square is green even though
+    nothing is earning from the bid side. The earning index count of
+    both sides. If there is an across the board increase in earning
+    potential because there is nothing in the budget, you can say
+    something." """
+
+    def setUp(self):
+        super().setUp()
+        for s in (AL, TN):
+            self.b.approve(s, self.now)
+            self.r.exchange.books[s] = minnow_book(self.now, minnows=5.0)
+            self.r.cache.put(s, minnow_book(self.now, minnows=5.0))
+        from unittest import mock
+        p = mock.patch.object(bonds_mod, "SPLIT_MARGIN", 9.0)
+        p.start()
+        self.addCleanup(p.stop)
+        self.b.set_budget(1000.0)
+        for s in (AL, TN):
+            self.bond(s, "YES", 100.0, 0.89)
+            self.b.set_more_cap(s, 70.0)
+
+    def cyc(self, t):
+        for s in (AL, TN):
+            self.r.cache.put(s, minnow_book(t, minnows=5.0))
+        return self.b.cycle(t, self.positions(), on=True)
+
+    def rows(self, t):
+        return {r["market"]: r for r in self.b.view(t, self.positions())["rows"]}
+
+    def test_an_unfunded_buy_side_is_left_on_the_table_and_said_once(self):
+        self.r.exchange.buying_power = lambda: 0.4                  # nothing can be funded
+        self.cyc(self.now)
+        v = self.b.view(self.now + 1, self.positions())
+        rows = {r["market"]: r for r in v["rows"]}
+        for s in (AL, TN):
+            bd = rows[s]["board"]
+            self.assertEqual(self.b._more_orders(s), [])
+            self.assertGreater(bd["index_buy"], 0.0)                # the buy-more would earn
+            self.assertGreater(bd["left_buy"], 0.05)                # and it is not
+            self.assertIn("buying power", bd["buy_idle"])
+            self.assertGreaterEqual(bd["left"], bd["left_buy"])     # both sides in the total
+        self.assertIsNotNone(v["board_note"])
+        self.assertIn("2 markets", v["board_note"])
+        self.assertIn("$0.40 free", v["board_note"])
+        # money arrives: the bids rest, the buy side is earning, the note goes
+        self.r.exchange.buying_power = lambda: 500.0
+        self.cyc(self.now + 700)
+        v = self.b.view(self.now + 701, self.positions())
+        rows = {r["market"]: r for r in v["rows"]}
+        for s in (AL, TN):
+            self.assertTrue(self.b._more_orders(s))
+            self.assertLess(rows[s]["board"]["left_buy"], 0.05)
+            self.assertIsNone(rows[s]["board"]["buy_idle"])
+        self.assertIsNone(v["board_note"])
+
+    def test_a_full_budget_is_said_as_the_reason(self):
+        self.r.exchange.buying_power = lambda: 10000.0
+        self.b.set_budget(150.0)                                     # $178 held against $150
+        self.cyc(self.now)
+        v = self.b.view(self.now + 1, self.positions())
+        self.assertIsNotNone(v["board_note"])
+        self.assertIn("budget is full", v["board_note"])
+        rows = {r["market"]: r for r in v["rows"]}
+        self.assertIn("budget full", rows[AL]["board"]["buy_idle"])
+        self.assertGreater(rows[AL]["board"]["left_buy"], 0.05)
