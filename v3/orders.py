@@ -104,9 +104,11 @@ class PlaceHealth:
     """Is the exchange accepting our placements? Shared by every desk in
     the process — the address is the same for all of them."""
 
-    def __init__(self, clock=None, on_change=None):
+    def __init__(self, clock=None, on_change=None, on_verdict=None):
         self._clock = clock if clock is not None else time.time
         self.on_change = on_change          # callable(blocked: bool, note)
+        self.on_verdict = on_verdict        # callable(kind, now): every refused /
+                                            # accepted / recovered, for the places ledger
         self.blocked_since: float | None = None
         self.last_refused: float = 0.0
         self.refused_n: int = 0
@@ -130,17 +132,28 @@ class PlaceHealth:
         self.note = note[:160]
         if first and self.on_change is not None:
             self.on_change(True, self.note)
+        self._verdict("refused", now)
 
     def accepted(self, now: float | None = None) -> None:
         now = self._clock() if now is None else now
         self.ok_at = now
-        if self.blocked_since is not None:
+        was_blocked = self.blocked_since is not None
+        if was_blocked:
             since, n = self.blocked_since, self.refused_n
             self.blocked_since = None
             self.refused_n = 0
             if self.on_change is not None:
                 self.on_change(False, f"accepted again after {n} refusals "
                                       f"over {(now - since) / 60:.0f} min")
+        self._verdict("recovered" if was_blocked else "accepted", now)
+
+    def _verdict(self, kind: str, now: float) -> None:
+        if self.on_verdict is None:
+            return
+        try:
+            self.on_verdict(kind, now)
+        except Exception:  # noqa: BLE001 — the ledger never breaks a placement
+            pass
 
     def view(self) -> dict:
         return {"blocked": self.blocked(), "since": self.blocked_since or 0.0,
