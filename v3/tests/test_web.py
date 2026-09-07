@@ -258,6 +258,15 @@ class TestRedesign(unittest.TestCase):
                   "room for buys, per market", "left on the table", "class=\"btile\""):
             self.assertIn(s, web.BONDS_JS, s)
         self.assertIn(".btile{", web._CSS)
+        # an open card is patched in place and left alone while he scrolls
+        # (owner, 2026-09-07: "I can't scroll down because the page keeps updating")
+        self.assertIn("function bSheetHtml", web.BONDS_JS)
+        self.assertIn("sh.scrollTop=st", web.BONDS_JS)
+        self.assertIn("bSheetTouched", web.BONDS_JS)
+        self.assertIn("window._bSheet||window._bFocus", web.COMMON_JS if hasattr(web, "COMMON_JS") else web._shell("t", "/bonds", ""))
+        # the bond that fetches the most per share if he must sell wears a $
+        self.assertIn('class="cash"', web.BONDS_JS)
+        self.assertIn("highest bid if you must sell", web.BONDS_JS)
         # a NO bond's buy-more prices read in NO terms like the rest of its card
         self.assertIn("buying more '+mos.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}", web.BONDS_JS)
 
