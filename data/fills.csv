@@ -2601,3 +2601,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788866546.8,cfb,aachc-cfb-wins-2026-11-28-utah-6pt5wins,SELL,1,0.66,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CC61PQN0AR47
 1788866851.8,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,5,0.93,bond,2.0833,0.35,0.99675,92,97,0,0.88,0.99,-0.0667,218,bond more: split — 5 at 93c carry the share; never dearer than his first price,CC619PNVGR46
 1788867835.0,politics,ewc-usse-mi-2026-11-03-rep,BUY,-18,0.31,fix,0,0.41,0.319175,35,41,0.128,0.28,0.38,-0.0092,0,size trimmed by 18 to the exchange's count (order CC5S9S6E4R3X),CC5S9S6E4R3X
+1788867942.1,politics,usgubewc-usgub-me-2026-11-03-rep,SELL,6,0.1,bond,0,0.03,0.00995,1,6,0,0.05,0.11,-0.0901,-12,bond: took 6 NO at 10c — it was in the way of our resting order,CC6GSSC4AR40
+1788868002.1,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,SELL,2,0.02,sell,2.1216,1.67,,34,40,0.821,0.01,0.51,0.35,0,selling filled stock — it earns while it waits,CC4ARZMVMR3X
+1788868122.1,politics,ussewc-usse-sd-2026-11-03-rep,BUY,5,0.91,bond,0.5113,0.22,0.99245,86,93,0.423,0.86,0.94,-0.0825,34,bond more: split — 9 at 91c carry the share; never dearer than his first price,CC6CF8ERYR42
+1788868122.1,politics,ussewc-usse-sd-2026-11-03-rep,BUY,5.01,0.86,bond,0,0.02,0.99245,86,93,0.423,0.86,0.94,-0.1325,39.01,bond: took 5.01 YES at 86c — it was in the way of our resting order,CC6HXP002R42
+1788868302.2,politics,ussewc-usse-sd-2026-11-03-rep,BUY,1.07,0.88,bond,0,0.02,0.99245,85,90,0.61,0.87,0.91,-0.1125,35.07,bond: took 1.07 YES at 88c — it was in the way of our resting order,CC6M3X4F2R40
+1788868589.8,cfb,aachc-cfb-wins-2026-11-28-cin-6pt5wins,SELL,1,0.02,sell,2.4194,1.94,,22,33,0.579,0.01,0.48,0.25,0,selling filled stock — it earns while it waits,CC40QGAS6R46
+1788868649.8,politics,ewc-usgub-ca-2026-11-03-stehil,BUY,10,0.08,sell,5.9618,0.4,0.00075,5,8,0.779,0.04,0.08,0.0793,10,buying back the short at or under what it sold for — the bid earns while it wait,CC6BV4RTAR3Z
+1788868769.8,politics,ewc-usgub-ks-2026-11-03-dem,BUY,1,0.23,earn,0,0.78,0.51815,31,40,0.308,0.23,0.28,-0.2882,41,5 ticks in front of the touch — we would hold 100% of the bid side,CC63YBYAJR47
+1788868829.9,politics,ewc-usgub-ks-2026-11-03-dem,BUY,4,0.23,earn,5.9794,0.79,0.51815,28,38,0.561,0.19,0.42,-0.2882,45,5 ticks in front of the touch — we would hold 100% of the bid side,CC63YBYAJR47
+1788869012.7,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,10,0.93,earn,0,0.78,0.99925,92,96,0.596,0.91,0.94,-0.0692,20,1 tick behind the touch — we would hold 0% of the bid side,CC65H8SCYR47
+1788869012.7,politics,usgubewc-usgub-me-2026-11-03-rep,SELL,10,0.06,bond,0,0.02,0.00995,6,11,0.453,0.03,0.07,-0.05,-22,bond: took 10 NO at 6c — it was in the way of our resting order,CC6SB2MBPR3W
+1788869252.7,cfb,aachc-cfb-wins-2026-11-28-washst-7pt5wins,BUY,1,0.39,earn,0.5233,1.42,,38,44,0.689,0.4,0.41,-0.02,3,1 tick behind the touch — we would hold 13% of the bid side,CC5N0XX4AR42
+1788869312.7,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,12.29,0.07,bond,0,0.02,0.010375,9,12,0.773,0.06,0.12,0.0596,-610.71,bond: sold 12.29 NO into the bids at 93c by you,CC6TQ9ZGPR3Y
+1788869432.7,politics,ewc-usp-2028-11-07-thomas,SELL,1,0.02,manual,2.849,0.85,,1,8,0.398,0.01,0.09,0.02,0,the owner's own order — the engine leaves it alone,CC660V6K8R3Y
+1788869432.7,politics,ussewc-usse-nm-2026-11-03-rep,SELL,1,0.02,sell,0.3289,0.1,0.0047,1,5,0.432,0.01,0.02,-0.0153,0,selling filled stock — it earns while it waits,CC6SQYM1RR40
+1788869756.8,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,10,0.97,void,0,0,0.999825,94,97,0.447,0.97,0.99,0.0298,88,voided: the exchange has no trade for order CC6575H78R3W — the row of 09-08 11:1,CC6575H78R3W
