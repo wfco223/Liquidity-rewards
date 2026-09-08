@@ -2555,3 +2555,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788845702.2,politics,ussewc-usse-tn-2026-11-03-dem,BUY,2.4,0.03,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC0R9SDF8Q3H
 1788845702.2,cfb,aachc-cfb-wins-2026-11-28-cin-7pt5wins,BUY,-0.19,0.2,fix,1.7359,1.04,,,,0.617,,,,0.19,size trimmed by 0.19 to the exchange's count (order CBZTEBBNGQ3R),CBZTEBBNGQ3R
 1788845702.2,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,BUY,0.46,0.25,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC0JFK9GRQ45
+1788845762.2,politics,ussewc-usse-ar-2026-11-03-dem,SELL,4,0.06,earn,4.9998,0.68,0.016075,3,6,0.677,0.05,0.07,-0.0439,-10,1 tick behind the touch — we would hold 47% of the ask side,CC0GZWY32Q3X
+1788846041.3,politics,scc-senate-gop-2026-11-03-49,SELL,0.03,0.16,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC0YJ7DYCQ3R
+1788846122.2,politics,ewc-usp-party-2028-11-07-dem,BUY,10,0.58,manual,2.9161,13.43,,58,63,0.049,0.57,0.59,-0.02,10,the owner's own order — the engine leaves it alone,CBNRJEBY6Q3Y
+1788846122.2,cfb,aachc-cfb-wins-2026-11-28-lsu-10pt5wins,BUY,1.54,0.25,earn,1.3525,0.75,,38,42,0.812,0.25,0.26,-0.15,1.54,1 tick behind the touch — we would hold 57% of the bid side,CC0JFK9GRQ45
+1788846363.0,cfb,aachc-cfb-wins-2026-11-28-bayl-7pt5wins,SELL,0.1,0.32,sell,0,0,,31,35,0.733,0.01,0.33,0.01,3.9,taker dump — sold into the bid (the carved exception),CC17A1HATQ3T
+1788848204.5,politics,ussewc-usse-ar-2026-11-03-dem,SELL,1,0.08,earn,5.6681,0.36,0.016075,3,7,0.743,0.07,0.08,-0.0639,-11,1 tick behind the touch — we would hold 50% of the ask side,CC1C15Q14Q3Z
+1788848324.5,cfb,aachc-cfb-wins-2026-11-28-tx-11pt5wins,BUY,0.01,0.19,earn,7.4713,0.19,,23,27,0.635,0.19,0.3,-0.06,1.01,15 ticks in front of the touch — we would hold 99% of the bid side,CC1K7SEYYQ3N
+1788849326.2,politics,scc-senate-gop-2026-11-03-49,SELL,0.03,0.16,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC0YJ7DYCQ3R
+1788849326.2,cfb,aachc-cfb-wins-2026-11-28-washst-7pt5wins,SELL,0.04,0.69,void,0,0,,45,71,0.433,0.69,0.7,-0.13,0.96,voided: the exchange has no trade for order CC0WTT7CRQ3N — the row of 09-08 05:2,CC0WTT7CRQ3N
