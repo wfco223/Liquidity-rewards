@@ -2564,3 +2564,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788848324.5,cfb,aachc-cfb-wins-2026-11-28-tx-11pt5wins,BUY,0.01,0.19,earn,7.4713,0.19,,23,27,0.635,0.19,0.3,-0.06,1.01,15 ticks in front of the touch — we would hold 99% of the bid side,CC1K7SEYYQ3N
 1788849326.2,politics,scc-senate-gop-2026-11-03-49,SELL,0.03,0.16,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC0YJ7DYCQ3R
 1788849326.2,cfb,aachc-cfb-wins-2026-11-28-washst-7pt5wins,SELL,0.04,0.69,void,0,0,,45,71,0.433,0.69,0.7,-0.13,0.96,voided: the exchange has no trade for order CC0WTT7CRQ3N — the row of 09-08 05:2,CC0WTT7CRQ3N
+1788861410.4,politics,ussewc-usse-ri-2026-11-03-rep,BUY,-2,0.04,fix,0,0.03,0.000825,4,8,0.744,0.02,0.05,0.0392,-53.8,size trimmed by 2 to the exchange's count (order CBSE9S3REQ46),CBSE9S3REQ46
