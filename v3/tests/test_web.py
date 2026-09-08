@@ -257,6 +257,12 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("if(!window._force){window._held=true;return;}", js)
         self.assertIn("sh.innerHTML=bSheetHtml(d);sh.scrollTop=st;", js)
 
+    def test_bond_positions_are_hidden_from_the_positions_tab(self):
+        # owner, 2026-09-08: "Hide bond positions on the orders/positions tab"
+        from v3 import web
+        self.assertIn("if(p.bond){bonds++;return;}", web.ORDERS_JS)
+        self.assertIn("not listed here", web.ORDERS_JS)
+
     def test_the_switch_page_lists_the_places(self):
         # owner, 2026-09-07: "which places Polymarket thinks are vpn and
         # which are okay" — the addresses this server has run from

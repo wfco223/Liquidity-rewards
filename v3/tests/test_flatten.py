@@ -6023,6 +6023,13 @@ class TestPositionsLedger(unittest.TestCase):
         self.assertEqual(pos[B]["earn"], 0.0)         # idle money
         self.assertEqual(pos[B]["covers"], [])
         self.assertGreater(pos[A]["per_dollar"], pos[B]["per_dollar"])
+        # a bond market's row says so, for the positions tab to hide it
+        # (owner, 2026-09-08: "Hide bond positions on the orders/positions tab")
+        self.assertFalse(pos[A]["bond"])
+        r.fam.bond_markets = {B}
+        pos = {p["market"]: p for p in r.cycle()["positions"]}
+        self.assertTrue(pos[B]["bond"])
+        self.assertFalse(pos[A]["bond"])
 
     def test_a_short_values_at_what_closing_recovers(self):
         from v3.tests.test_family import Rig, A
