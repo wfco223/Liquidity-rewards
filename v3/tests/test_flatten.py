@@ -3,6 +3,7 @@ under the small ceiling with history guiding the ranking."""
 
 import os
 import tempfile
+import time
 import unittest
 
 from v3 import floor
@@ -33,6 +34,52 @@ class TestExitClassification(unittest.TestCase):
         for intent, pos, want in cases:
             self.assertEqual(is_exit_order(O("x", "m", intent), pos), want,
                              (intent, pos))
+
+
+class TestHowTheLastRunEnded(unittest.TestCase):
+    """2026-09-08: the app restarted every 12-35 minutes with nobody
+    deploying. The launcher writes how a child ended; the next boot
+    reads it, keeps it, and says it. A memory reading a cycle rides in
+    the state; the survey frame's clock survives a restart."""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        p = self.dir.name
+        os.environ["V3_STATE_PATH"] = os.path.join(p, "state.json")
+        os.environ["V3_FLOOR_PATH"] = os.path.join(p, "floor.json")
+        os.environ["V1_ACK_PATH"] = os.path.join(p, "a1.json")
+        os.environ["V2_ACK_PATH"] = os.path.join(p, "a2.json")
+        os.environ["V3_EXIT_PATH"] = os.path.join(p, "exit.json")
+        os.environ["GITHUB_TOKEN"] = ""
+
+    def tearDown(self):
+        for k in ("V3_STATE_PATH", "V3_FLOOR_PATH", "V1_ACK_PATH", "V2_ACK_PATH",
+                  "V3_EXIT_PATH", "V3_FLATTEN"):
+            os.environ.pop(k, None)
+        self.dir.cleanup()
+
+    def test_the_launchers_note_is_read_kept_and_said(self):
+        import json as _j
+        with open(os.environ["V3_EXIT_PATH"], "w") as f:
+            _j.dump({"name": "3.0", "returncode": -9, "at": 1000.0, "uptime_s": 1500.0}, f)
+        m = Monitor()
+        self.assertFalse(os.path.exists(os.environ["V3_EXIT_PATH"]))     # read once
+        self.assertEqual(m.deaths[-1]["code"], -9)
+        self.assertEqual(m.deaths[-1]["uptime_min"], 25.0)
+        self.assertTrue(any("killed by the platform" in e and "up 25 min" in e for e in m.errors))
+        st = m._state(time.time(), {})
+        self.assertEqual(st["deaths"][-1]["code"], -9)
+
+    def test_the_memory_trail_and_the_frame_clock_survive_a_restart(self):
+        m = Monitor()
+        m._survey_frame_at = 12345.0
+        m.mem_trail = [[999.0, 250.0, 8.0]]
+        st = m._state(time.time(), {})
+        m.store.save_local(st)
+        m2 = Monitor()
+        self.assertEqual(m2._survey_frame_at, 12345.0)
+        self.assertEqual(m2.mem_trail, [[999.0, 250.0, 8.0]])
+        self.assertEqual(m2.deaths, [])
 
 
 class TestFlattenPass(unittest.TestCase):
@@ -6279,6 +6326,34 @@ class TestOwnerLiquidation(unittest.TestCase):
         self.assertIn("H", r.fam.orders)        # untouchable
         # only the 2 uncovered shares were sold
         self.assertAlmostEqual(r.fam.inventory[A]["qty"], 8.0)
+
+
+    def test_a_qualifying_wall_is_not_cover_for_the_stock(self):
+        # owner, 2026-09-08: "These are qualifying orders which should
+        # not count when determining whether to offer shares for sale"
+        from v3.family import FamilyOrder, is_wall
+        from v3.intents import SELL_LONG, BUY_LONG
+        r, A = self._rig(qty=10.0, cost=1.2, bid=(0.05, 40.0))
+        wall = FamilyOrder(id="W", market=A, side="SELL", price=0.999, qty=5000.0,
+                           intent=SELL_LONG, placed_ts=r.now, purpose="manual",
+                           why="the owner's own order — the engine leaves it alone")
+        self.assertTrue(is_wall(wall, 10.0))                 # far edge, more than the stock
+        self.assertTrue(is_wall(wall))                       # or a wall's scale, stock unknown
+        self.assertTrue(is_wall(FamilyOrder(id="W2", market=A, side="BUY", price=0.001, qty=5000.0,
+                                            intent=BUY_LONG, placed_ts=r.now, purpose="manual"), 10.0))
+        # a cover bid at 1c sized to a cheap short is not a wall
+        self.assertFalse(is_wall(FamilyOrder(id="C", market=A, side="BUY", price=0.01, qty=10.0,
+                                             intent=BUY_LONG, placed_ts=r.now, purpose="manual"), 10.0))
+        self.assertFalse(is_wall(FamilyOrder(id="H", market=A, side="SELL", price=0.2, qty=8.0,
+                                             intent=SELL_LONG, placed_ts=r.now, purpose="manual"), 10.0))
+        r.exchange.live["W"] = {"id": "W", "market": A, "side": "SELL", "price": 0.999,
+                                "size": 5000.0, "intent": SELL_LONG}
+        r.fam.orders["W"] = wall
+        r.fam.last_action.clear()
+        r.cycle(advance=120.0)
+        self.assertIn("W", r.fam.orders)                     # untouchable, as ever
+        # the wall covered nothing: all ten shares were offered and sold
+        self.assertLess(r.fam.inventory.get(A, {}).get("qty", 0.0), 0.01)
 
 
 class TestCfbOpeningWeekWindow(unittest.TestCase):

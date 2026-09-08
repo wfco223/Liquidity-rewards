@@ -354,6 +354,34 @@ class FamilyConfig:
 # over Target Size, resting where it will never trade. Everything that
 # sizes around his hand orders looks for this string.
 QUALIFY_WALL_WHY = "the owner's qualify-ask wall"
+WALL_EDGE = 0.99            # an order at or past this price (or 1 - it) is a wall
+
+
+WALL_MIN_QTY = 200.0        # a wall's scale when the stock it stands beside is unknown
+
+
+def is_wall(o, held: float | None = None) -> bool:
+    """A qualifying wall: his order at the far edge of the book, there
+    only to carry the side over Target Size (owner, 2026-09-06). Known
+    by the why the qualify button writes, or by its shape — at the far
+    edge AND bigger than the stock it stands beside (an exit never
+    offers more than is held; a wall is sized to 125% of Target Size).
+    A wall he built by hand, or one re-adopted after a restart, carries
+    no why. Owner, 2026-09-08: "These are qualifying orders which
+    should not count when determining whether to offer shares for
+    sale." A cover bid at 1c on a cheap short, sized to the short, is
+    not a wall."""
+    if getattr(o, "why", "") == QUALIFY_WALL_WHY:
+        return True
+    px = float(getattr(o, "price", 0.0) or 0.0)
+    edge = ((o.side == "SELL" and px >= WALL_EDGE - 1e-9)
+            or (o.side == "BUY" and px <= 1.0 - WALL_EDGE + 1e-9))
+    if not edge:
+        return False
+    qty = float(getattr(o, "qty", 0.0) or 0.0)
+    if held is not None:
+        return qty > abs(held) + 0.5
+    return qty >= WALL_MIN_QTY
 
 
 @dataclass
@@ -3791,7 +3819,7 @@ class Family:
                 bid_l, bidsz_l = book.bids[0]
                 manual_l = sum(o.qty for o in list(self.orders.values())
                                if o.market == slug and o.side == "SELL"
-                               and o.purpose in ("manual", "bond"))
+                               and o.purpose in ("manual", "bond") and not is_wall(o, qty))
                 dq_l = round(min(qty - manual_l, bidsz_l), 2)
                 if dq_l < 0.01:
                     continue
@@ -3836,11 +3864,12 @@ class Family:
                 self._maybe_move_exit(slug, "SELL", mine, book, inv, now)
                 # the owner's own resting SELLs of this stock count as
                 # cover too — the engine sizes around them and never
-                # offers the same shares twice (owner, 2026-08-22)
+                # offers the same shares twice (owner, 2026-08-22) — but
+                # not his qualifying walls at the far edge (2026-09-08)
                 manual_cover = sum(
                     o.qty for o in list(self.orders.values())
                     if o.market == slug and o.purpose in ("manual", "bond")
-                    and o.side == "SELL")
+                    and o.side == "SELL" and not is_wall(o, qty))
                 covered = manual_cover + sum(
                     o.qty for o in list(self.orders.values())
                     if o.market == slug and o.purpose == "sell"
@@ -4054,7 +4083,7 @@ class Family:
                 covered = sum(
                     o.qty for o in list(self.orders.values())
                     if o.market == slug and o.side == "BUY"
-                    and o.purpose in ("sell", "manual", "bond"))
+                    and o.purpose in ("sell", "manual", "bond") and not is_wall(o, -qty))
                 rest = -qty - covered
                 if covered > -qty + 0.01:
                     self._prune_excess_exits(slug, "BUY", covered + qty, now)
