@@ -2507,3 +2507,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788840837.8,politics,ussewc-usse-de-2026-11-03-dem,SELL,27,0.94,bond,3.0668,1.39,0.998525,93,95,0.872,0.93,0.98,0.0585,1,bond: back to one level; 1 tick behind — the split no longer paid,CBYSW511PQ3Z
 1788841096.6,politics,usgubewc-usgub-mn-2026-11-03-rep,SELL,10,0.08,earn,1.4668,17.51,0.0049,,,0.632,,,-0.0751,-10,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CBH0A9RXEQ3Z
 1788841096.6,politics,ussewc-usse-la-2026-11-03-rep,BUY,7,0.95,earn,3.8944,1.26,0.9643,,,0.744,,,-0.0143,17,2 ticks behind the touch — we would hold 3% of the bid side,CBZ0G4P30Q46
+1788841284.9,politics,vmc-ussep-mov-ma-dem-2026-09-01-mou0-5,SELL,50,0.01,sell,0,0,,1,4,0,0.01,0.02,0.01,16,closed out by the owner from the live card — sold into the bid,CC03GF2ATQ46
+1788841368.3,politics,vmc-ussep-mov-ma-dem-2026-09-01-margte40,SELL,25,0.01,sell,0,0,,2,12,0,0.01,0.09,0.05,886,closed out by the owner from the live card — sold into the bid,CC03Q0E3MQ3Z

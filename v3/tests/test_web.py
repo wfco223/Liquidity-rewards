@@ -274,6 +274,7 @@ class TestRedesign(unittest.TestCase):
         # to be awaiting settlement when the event is past
         self.assertIn("awaiting settlement", web.ORDERS_JS)
         self.assertIn("pos=live.concat(stuck);", web.ORDERS_JS)
+        self.assertIn("book not read since the restart", web.ORDERS_JS)
 
     def test_bond_positions_are_hidden_from_the_positions_tab(self):
         # owner, 2026-09-08: "Hide bond positions on the orders/positions tab"
