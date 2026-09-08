@@ -2617,3 +2617,20 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788869432.7,politics,ewc-usp-2028-11-07-thomas,SELL,1,0.02,manual,2.849,0.85,,1,8,0.398,0.01,0.09,0.02,0,the owner's own order — the engine leaves it alone,CC660V6K8R3Y
 1788869432.7,politics,ussewc-usse-nm-2026-11-03-rep,SELL,1,0.02,sell,0.3289,0.1,0.0047,1,5,0.432,0.01,0.02,-0.0153,0,selling filled stock — it earns while it waits,CC6SQYM1RR40
 1788869756.8,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,10,0.97,void,0,0,0.999825,94,97,0.447,0.97,0.99,0.0298,88,voided: the exchange has no trade for order CC6575H78R3W — the row of 09-08 11:1,CC6575H78R3W
+1788869824.9,politics,usgubewc-usgub-ok-2026-11-03-dem,BUY,8,0.11,sell,6.25,0.14,0.05765,3,8,0.413,0.02,0.12,0.0524,0,buying back the short at or under what it sold for — the bid earns while it wait,CC6VA0E40R40
+1788869824.9,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,24,0.98,sell,0,0,0.999825,94,97,0.442,0.98,0.99,0.0198,74,taker dump — sold into the bid (the carved exception),CC6YM7Z3MR40
+1788869824.9,politics,usgubewc-usgub-sc-2026-11-03-rep,SELL,10,0.98,sell,0,0,0.978475,95,99,0.486,0.98,0.99,-0.0015,0,taker dump — sold into the bid (the carved exception),CC6YNCC2CR42
+1788869884.9,politics,usgubewc-usgub-mn-2026-11-03-rep,BUY,10,0.12,sell,2.5,0.16,0.0049,6,9,0.743,0.08,0.15,0.1151,-2,buying back the short at or under what it sold for — the bid earns while it wait,CC6VA0E6JR40
+1788870244.9,politics,ussewc-usse-co-2026-11-03-dem,BUY,10,0.95,earn,3.7269,0.14,0.995125,96,99,0.665,0.93,0.96,-0.0451,10,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CC6YJYTEAR3Y
+1788870244.9,cfb,aachc-cfb-wins-2026-11-28-vand-7pt5wins,SELL,0.99,0.02,manual,0,1.07,,33,40,0.405,0.01,0.02,0.35,0.01,the owner's own order — the engine leaves it alone,CC66724ZCR45
+1788870305.7,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,12,0.05,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC6P84B5WR40
+1788870312.1,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,3,0.04,bond,0,0.02,0.00015,1,5,0,0.02,0.05,-0.0399,-251,bond: took 3 NO at 4c — it was in the way of our resting order,CC7285J6YR42
+1788870395.3,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,0.75,0.95,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC6J107P0R40
+1788870432.1,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,3,0.95,earn,6.2482,0.66,0.999525,94,97,0.706,0.95,0.97,-0.0495,6,1 tick behind the touch — we would hold 21% of the bid side,CC6J107P0R40
+1788870744.7,politics,ussewc-usse-tn-2026-11-03-rep,BUY,0.14,0.93,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC75EA8F2R3W
+1788870792.2,politics,ussewc-usse-tn-2026-11-03-rep,BUY,11,0.93,bond,0,0.02,0.999375,91,94,0.723,0.72,0.94,-0.0694,25,bond: took 11.14 YES at 93c — it was in the way of our resting order,CC75EA8F2R3W
+1788870912.2,politics,usgubewc-usgub-hi-2026-11-03-dem,SELL,1,0.98,sell,0,0,0.999875,95,98,0.655,0.98,0.99,0.0199,21,taker dump — sold into the bid (the carved exception),CC7732WJRR42
+1788871098.5,politics,ussewc-usse-sd-2026-11-03-rep,BUY,5,0.91,void,0.5113,0.22,0.99245,86,93,0.423,0.86,0.94,-0.0825,34,voided: the exchange has no trade for order CC6CF8ERYR42 — the row of 09-08 11:4,CC6CF8ERYR42
+1788871098.5,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,12,0.05,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC6P84B5WR40
+1788871098.5,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,0.75,0.95,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC6J107P0R40
+1788871098.5,politics,ussewc-usse-tn-2026-11-03-rep,BUY,0.14,0.93,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC75EA8F2R3W
