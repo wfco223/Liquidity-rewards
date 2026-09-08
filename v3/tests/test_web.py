@@ -264,6 +264,13 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("the meter counts for days not posted yet", web.BONDS_JS)
         self.assertIn("Meter vs posted, by day", web.BONDS_JS)
 
+    def test_if_closed_now_walks_the_book_and_counts_what_nobody_takes(self):
+        # owner, 2026-09-08: "there are no orders to sell into"
+        from v3 import web
+        self.assertIn("into the books as they are", web.ORDERS_JS)
+        self.assertIn("no order to take them", web.ORDERS_JS)
+        self.assertIn("with shares no order would take", web.ORDERS_JS)
+
     def test_bond_positions_are_hidden_from_the_positions_tab(self):
         # owner, 2026-09-08: "Hide bond positions on the orders/positions tab"
         from v3 import web

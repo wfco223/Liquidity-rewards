@@ -752,6 +752,36 @@ class Family:
         to #1" — bond orders charge no engine ceiling."""
         return o.purpose in ("manual", "bond")
 
+    def close_value(self, slug: str, qty: float, book) -> tuple[float, float]:
+        """What closing this position into the book RIGHT NOW would
+        actually pay (owner, 2026-09-08: "the top market cannot be
+        closed because there are no orders to sell into"): the levels
+        are walked best first, each taken for no more than it shows
+        and never our own resting orders there, until the position is
+        gone. Returns (dollars, shares no order would take). A long
+        sells into the bids; a short buys back into the asks and
+        recovers one dollar less the price a share."""
+        want = abs(float(qty))
+        if want < 0.005 or book is None:
+            return 0.0, round(want, 2)
+        far = "BUY" if qty > 0 else "SELL"
+        ours: dict[float, float] = {}
+        for o in list(self.orders.values()):
+            if o.market == slug and o.side == far:
+                ours[round(o.price, 4)] = ours.get(round(o.price, 4), 0.0) + o.qty
+        usd = 0.0
+        left = want
+        for px, size in book.side(far):
+            if left < 0.005:
+                break
+            avail = max(float(size) - ours.get(round(px, 4), 0.0), 0.0)
+            take = min(avail, left)
+            if take <= 0.0:
+                continue
+            usd += take * (px if qty > 0 else 1.0 - px)
+            left -= take
+        return round(usd, 4), round(max(left, 0.0), 2)
+
     def holdings_value(self) -> float:
         """What the stock would fetch if liquidated NOW: longs at the
         best bid, shorts at what closing them recovers (owner,
@@ -4669,16 +4699,12 @@ class Family:
             if abs(qty) < 0.005:
                 continue
             book = self.cache.any_age(slug)
-            if qty > 0:
-                liq = (qty * book.bids[0][0]
-                       if book is not None and book.bids
-                       else max(inv.get("cost", 0.0), 0.0))
-                cover_side = "SELL"
-            else:
-                liq = (-qty * (1.0 - book.asks[0][0])
-                       if book is not None and book.asks
-                       else max(-inv.get("cost", 0.0), 0.0))
-                cover_side = "BUY"
+            # what closing into the book right now would pay, walking
+            # the levels for what they show and never our own orders
+            # (owner, 2026-09-08); shares no order would take are
+            # counted, not priced
+            liq, unsold = self.close_value(slug, qty, book)
+            cover_side = "SELL" if qty > 0 else "BUY"
             covers = [o for o in list(self.orders.values())
                       if o.market == slug and o.side == cover_side]
             earn = sum(o.live_est or 0.0 for o in covers)
@@ -4688,7 +4714,9 @@ class Family:
                 # "Hide bond positions on the orders/positions tab")
                 "bond": slug in self.bond_markets,
                 "cost": round(inv.get("cost", 0.0), 2),
-                "liq": round(liq, 2), "earn": round(earn, 4),
+                "liq": round(liq, 2), "unsold": unsold,
+                "no_book": book is None,
+                "earn": round(earn, 4),
                 "per_dollar": (round(earn / liq, 4)
                                if liq > 0.01 else 0.0),
                 "covers": [{"side": o.side, "price": o.price,
