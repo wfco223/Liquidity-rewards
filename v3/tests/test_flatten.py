@@ -6049,6 +6049,18 @@ class TestPositionsLedger(unittest.TestCase):
         self.assertAlmostEqual(p["liq"], 4 * 0.10 + 3 * 0.08, places=4)   # two levels, all they show
         self.assertAlmostEqual(p["unsold"], 3.0)                          # three shares nobody bids for
         self.assertFalse(p["no_book"])
+        self.assertFalse(p["no_takers"])
+        self.assertFalse(p["event_over"])                                 # a 2026-11-03 market
+        # an event past its date with nobody bidding: waiting for settlement
+        # (the rig's clock sits in January 1970; the slug's date is before it)
+        old_slug = "vmc-ussep-mov-ma-dem-1970-01-01-mar10-15"
+        r.add_market(old_slug, book=Book(bids=(), asks=((0.09, 276.0),),
+                                         tick=0.01, fetched_at=r.now))
+        r.positions[old_slug] = (163.0, 33.75)
+        r.fam.inventory[old_slug] = {"qty": 163.0, "cost": 33.75}
+        p2 = {x["market"]: x for x in r.cycle()["positions"]}[old_slug]
+        self.assertEqual((p2["liq"], p2["unsold"], p2["no_takers"], p2["event_over"]),
+                         (0.0, 163.0, True, True))
         # our own bid at the touch is not a buyer of our stock
         r.fam.orders["M"] = FamilyOrder(id="M", market=A, side="BUY", price=0.10,
                                         qty=3.0, intent=BUY_LONG, placed_ts=r.now,

@@ -269,7 +269,11 @@ class TestRedesign(unittest.TestCase):
         from v3 import web
         self.assertIn("into the books as they are", web.ORDERS_JS)
         self.assertIn("no order to take them", web.ORDERS_JS)
-        self.assertIn("with shares no order would take", web.ORDERS_JS)
+        self.assertIn("nobody to sell into", web.ORDERS_JS)
+        # nobody on the side a close would hit: at the bottom, and said
+        # to be awaiting settlement when the event is past
+        self.assertIn("awaiting settlement", web.ORDERS_JS)
+        self.assertIn("pos=live.concat(stuck);", web.ORDERS_JS)
 
     def test_bond_positions_are_hidden_from_the_positions_tab(self):
         # owner, 2026-09-08: "Hide bond positions on the orders/positions tab"
