@@ -4044,6 +4044,55 @@ class Monitor:
         with self._lock:
             return self._cycle_locked(now)
 
+    HEAP_CENSUS_S = 300.0
+
+    def _heap_census(self, now: float) -> dict | None:
+        """Every five minutes: what is big in this process — every list,
+        dict or set of 500+ entries hanging off the monitor or a family,
+        and the object counts by type — so a heap that climbs 150 MB an
+        hour (2026-09-07) names what climbs."""
+        if now - getattr(self, "_heap_at", 0.0) < self.HEAP_CENSUS_S:
+            return getattr(self, "_heap_last", None)
+        self._heap_at = now
+        out: dict = {"big": {}, "types": {}}
+        try:
+            import gc as _gc
+            from collections import Counter
+
+            def walk(prefix: str, obj) -> None:
+                for k, v in list(vars(obj).items()):
+                    if isinstance(v, (list, dict, set, tuple)):
+                        try:
+                            n = len(v)
+                        except TypeError:
+                            continue
+                        if n >= 500:
+                            out["big"][f"{prefix}{k}"] = n
+                    elif hasattr(v, "__dict__") and not k.startswith("__") \
+                            and k in ("cache", "evidence", "stream", "silver", "names",
+                                      "fillmodel", "client", "desk", "store"):
+                        for k2, v2 in list(vars(v).items()):
+                            if isinstance(v2, (list, dict, set)):
+                                try:
+                                    n = len(v2)
+                                except TypeError:
+                                    continue
+                                if n >= 500:
+                                    out["big"][f"{prefix}{k}.{k2}"] = n
+            walk("", self)
+            for key, fam in self.families.items():
+                walk(f"{key}.", fam)
+            if hasattr(self, "bonds"):
+                walk("bonds.", self.bonds)
+            objs = _gc.get_objects()
+            out["objects"] = len(objs)
+            out["types"] = dict(Counter(type(o).__name__ for o in objs).most_common(12))
+            del objs
+        except Exception as e:  # noqa: BLE001 — a census never breaks the cycle
+            out["error"] = str(e)[:120]
+        self._heap_last = out
+        return out
+
     def _box_delta(self) -> dict:
         """The container's counters, with the throttled CPU time as a
         delta since the last cycle."""
@@ -4323,18 +4372,21 @@ class Monitor:
         lap("state")
         self.freeze_payload()
         lap("payload")
-        # the disk write and the GitHub upload run behind the cycle, on
-        # the store's worker; the upload goes when it is due
-        self.store.save_soon(st)
-        lap("snapshot")
+        laps["snapshot"] = getattr(self, "_snapshot_s", 0.0)   # the last cycle's
         laps["total"] = round(time.time() - now, 1)
         self.cycle_stats = {"at": round(now, 1), "laps": laps,
                             "save_s": getattr(self.store, "last_save_s", 0.0),
                             "save_behind": getattr(self.store, "behind", 0),
                             "rss_mb": round(rss_mb(), 1),
                             "gc": self._gc_clock.take() if hasattr(self, "_gc_clock") else None,
-                            "box": self._box_delta()}
-        st["cycle_stats"] = self.cycle_stats
+                            "box": self._box_delta(),
+                            "heap": self._heap_census(now)}
+        st["cycle_stats"] = self.cycle_stats           # before the snapshot, so it is in it
+        # the disk write and the GitHub upload run behind the cycle, on
+        # the store's worker; the upload goes when it is due
+        t_snap = time.time()
+        self.store.save_soon(st)
+        self._snapshot_s = round(time.time() - t_snap, 1)
         if not self._first_cycle_done:
             self._first_cycle_done = True
             self.boot_stage = {"stage": "running", "pct": 100,
