@@ -16,7 +16,7 @@ import unittest
 
 from v3 import bonds as bonds_mod
 from v3.api import ApiError
-from v3.bonds import (DANCE_MAX_MOVES, DANCE_WAIT_S, DECOY_QTY, HIGH_ODDS,
+from v3.bonds import (ACCRUE_KEEP_DAYS, DANCE_MAX_MOVES, DANCE_WAIT_S, DECOY_QTY, HIGH_ODDS,
                       KEEP_FRACTION, LOW_ODDS, MINNOW_MAX, MOVE_COOLDOWN_S,
                       PING_EVERY_USD, Bonds, scan_due, side_for)
 from v3.family import FamilyConfig, FamilyOrder
@@ -3852,6 +3852,89 @@ class TestTheRecordExplainsASale(Base):
         self.assertEqual(b2._booked_out[AL], 20.0)                    # survives a restart
         self.b._book_lot(AL, "YES", 5.0, 4.85, ref="T2")              # a new booking resets it
         self.assertNotIn(AL, self.b._booked_out)
+
+
+class TestTheMeterIsGraded(Base):
+    """Owner, 2026-09-08: "Is this number on the bonds page validated
+    against actual earnings posted by Polymarket?" — then "Sure go
+    ahead": each day the meter counted is graded against the exchange's
+    posting once it lands; the headline carries the posted figure where
+    it exists and the meter's count where it does not; an estimate
+    restored from a save counts again only once its book is read."""
+
+    def setUp(self):
+        super().setUp()
+        self.posted = {}
+        self.b.postings = lambda day: self.posted.get(day)
+        self.b.approve(AL, self.now)
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.exits = self.orders(AL, "SELL", decoy=False)
+        for o in self.exits:
+            o.live_est = 24.0 / len(self.exits)                    # $24 a day: $1 an hour
+
+    def hour(self, t0):
+        for k in range(1, 7):
+            self.b._accrue(t0 + 600 * k)
+
+    def test_a_posted_day_grades_the_meter_and_the_headline_uses_it(self):
+        day1 = self.b._day(self.now)
+        self.hour(self.now)                                          # $1 on day 1
+        day2_t = self.now + 86400
+        self.r.now = day2_t
+        self.b._accrued_at = day2_t
+        self.hour(day2_t)                                            # $1 on day 2 (today)
+        day2 = self.b._day(day2_t)
+        self.assertNotEqual(day1, day2)
+        e = self.b._earned()
+        self.assertEqual(e["graded_days"], 0)                        # nothing posted yet
+        self.assertAlmostEqual(e["rewards"], 2.0, places=2)          # the meter, both days
+        self.posted[day1] = {AL: 0.6, "some-other-market": 5.0}      # the exchange posts day 1
+        e = self.b._earned()
+        self.assertEqual(e["graded_days"], 1)
+        self.assertAlmostEqual(e["posted"], 0.6, places=2)           # only the market the bonds worked
+        self.assertAlmostEqual(e["meter_graded"], 1.0, places=2)
+        self.assertAlmostEqual(e["ratio"], 0.6, places=2)
+        self.assertAlmostEqual(e["meter_open"], 1.0, places=2)       # today: not posted
+        self.assertAlmostEqual(e["rewards"], 1.6, places=2)          # posted + the meter's open day
+        self.assertAlmostEqual(e["meter"], 2.0, places=2)
+        g = e["grades"][0]
+        self.assertEqual((g["day"], g["meter"], g["posted"], g["ratio"], g["markets"]),
+                         (day1, 1.0, 0.6, 0.6, 1))
+        self.assertEqual(self.b.view(day2_t, self.positions())["earned"]["graded_days"], 1)
+
+    def test_the_day_figures_are_kept_long_enough_to_grade(self):
+        t = self.now
+        for d in range(130):
+            self.r.now = t
+            self.b._accrued_at = t
+            self.b._accrue(t + 600)
+            t += 86400
+        self.assertEqual(len(self.b.accrued_day_mkt), ACCRUE_KEEP_DAYS)
+        self.assertEqual(len(self.b.accrued), ACCRUE_KEEP_DAYS)
+
+    def test_a_restored_estimate_counts_again_only_once_its_book_is_read(self):
+        self.hour(self.now)
+        before = sum(self.b.accrued.values())
+        self.assertAlmostEqual(before, 1.0, places=2)
+        # a restart: the family restores its orders (read_ts back to 0),
+        # the bonds restore their ledger
+        fam_state = self.r.fam.to_dict()
+        self.r.fam.restore(fam_state)
+        for o in self.r.fam.orders.values():
+            self.assertEqual(o.read_ts, 0.0)
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
+                   clock=lambda: self.r.now)
+        b2.restore(self.b.to_dict())
+        self.assertTrue(b2._unread)
+        b2._accrued_at = self.now + 3600
+        b2._accrue(self.now + 4200)                                  # ten minutes on the old estimate
+        self.assertAlmostEqual(sum(b2.accrued.values()), before, places=4)   # nothing counted
+        for o in self.r.fam.orders.values():
+            o.read_ts = self.now + 4200                              # the family reads the book
+        b2._accrue(self.now + 4800)
+        self.assertGreater(sum(b2.accrued.values()), before + 0.1)  # counting again
+        self.assertFalse(b2._unread)
 
 
 class TestTheBoard(Base):

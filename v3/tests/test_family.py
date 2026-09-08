@@ -317,6 +317,21 @@ class TestMoney(unittest.TestCase):
         r.cycle()
         self.assertLessEqual(r.fam.family_spent(), 0.5 + 1e-9)
 
+    def test_a_live_read_stamps_the_order_and_a_restore_clears_the_stamp(self):
+        # owner, 2026-09-08: an estimate restored from a save is unread
+        # until the book has been read in this process
+        r = Rig()
+        r.add_market(A)
+        r.cycle()                       # places
+        r.cycle()                       # reads what rests
+        rec = next(iter(r.fam.orders.values()))
+        self.assertGreater(rec.read_ts, 0.0)
+        r.fam.restore(r.fam.to_dict())
+        rec = next(iter(r.fam.orders.values()))
+        self.assertEqual(rec.read_ts, 0.0)
+        r.fam._read_live(r.now)
+        self.assertEqual(rec.read_ts, r.now)
+
     def test_no_estimate_without_the_divisor(self):
         r = Rig()
         r.add_market(A)

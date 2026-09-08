@@ -972,6 +972,7 @@ class Monitor:
         # verification (owner approved 2026-08-27: "build the
         # verification using the posted rewards number")
         self.paid_seen: dict[str, float] = {}
+        self._paid_by_day: dict[str, dict[str, float]] = {}
         self.mkt_claim_day: dict[str, float] = {}
         # the cycling market survey: a seeded sampler and the running
         # per-prefix evidence. The seed is recorded so a run can be
@@ -1046,7 +1047,8 @@ class Monitor:
                                               scope="Bonds")
         self.bonds = Bonds(self.families["politics"], self.client,
                            self.silver.model_fair, alert=self.alerts.notify,
-                           tax_owed=self._tax_owed, parse=parse_activities)
+                           tax_owed=self._tax_owed, parse=parse_activities,
+                           postings=self._postings)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
@@ -1209,6 +1211,23 @@ class Monitor:
         else:
             self._note(f"outbound address {ip} ({'new' if prior == 'new' else prior + ' before'})")
 
+    def _rebuild_paid_by_day(self) -> None:
+        """paid_seen ("date|market" -> usd) folded by day, for the bond
+        meter's grading (owner, 2026-09-08)."""
+        out: dict = {}
+        for key, usd in self.paid_seen.items():
+            if "|" in key:
+                d, m = key.split("|", 1)
+                out.setdefault(d, {})[m] = float(usd or 0.0)
+        self._paid_by_day = out
+
+    def _postings(self, day: str) -> dict | None:
+        """What the exchange posted for each market on a day, or None
+        while nothing for that day has posted."""
+        if not hasattr(self, "_paid_by_day"):
+            self._rebuild_paid_by_day()
+        return self._paid_by_day.get(day) or None
+
     def _note(self, msg: str) -> None:
         self.errors.append(f"{time.strftime('%m-%d %H:%M:%S')} {msg}")
         del self.errors[:-40]
@@ -1243,6 +1262,7 @@ class Monitor:
                                or {"cancelled": 0, "failed": 0})
         self.rewards_seen = dict(saved.get("rewards_seen") or {})
         self.paid_seen = dict(saved.get("paid_seen") or {})
+        self._rebuild_paid_by_day()
         self.mkt_claim_day = dict(saved.get("mkt_claim_day") or {})
         from . import survey as _sv2
         for pref, row in (saved.get("survey_stats") or {}).items():
@@ -3527,6 +3547,7 @@ class Monitor:
                 fresh.append(a)
             seen[key] = round(a["usd"], 2)
             self.paid_seen[key] = round(a["paid"], 2)
+            self._paid_by_day.setdefault(a["date"], {})[a["market"]] = round(a["paid"], 2)
         if len(seen) > 12000:
             for k in sorted(seen)[:len(seen) - 12000]:
                 del seen[k]
