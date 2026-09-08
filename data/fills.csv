@@ -2502,3 +2502,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788840477.8,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,3,0.05,backfill,,10.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBPG17938Q3H
 1788840477.8,politics,usgubewc-usgub-ma-2026-11-03-dem,BUY,3,0.95,backfill,,3.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBX10BKKTQ3T
 1788840477.8,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,15,0.05,backfill,,10.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBPXV75AYQ3R
+1788840657.8,politics,ussewc-usse-wv-2026-11-03-rep,SELL,5,0.99,manual,0,0.09,0.999875,95,98,0.712,0.92,0.96,0.0099,0,the owner's own order — the engine leaves it alone,CBZVJSK94Q48
+1788840657.8,politics,ussewc-usse-id-2026-11-03-todach,BUY,50,0.04,manual,4.2691,39.01,,4,9,0.036,0.04,0.05,-0.03,77,the owner's own order — the engine leaves it alone,CAYGY3Y34Q3H
+1788840837.8,politics,ussewc-usse-de-2026-11-03-dem,SELL,27,0.94,bond,3.0668,1.39,0.998525,93,95,0.872,0.93,0.98,0.0585,1,bond: back to one level; 1 tick behind — the split no longer paid,CBYSW511PQ3Z
+1788841096.6,politics,usgubewc-usgub-mn-2026-11-03-rep,SELL,10,0.08,earn,1.4668,17.51,0.0049,,,0.632,,,-0.0751,-10,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CBH0A9RXEQ3Z
+1788841096.6,politics,ussewc-usse-la-2026-11-03-rep,BUY,7,0.95,earn,3.8944,1.26,0.9643,,,0.744,,,-0.0143,17,2 ticks behind the touch — we would hold 3% of the bid side,CBZ0G4P30Q46

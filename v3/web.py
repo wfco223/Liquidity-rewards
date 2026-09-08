@@ -721,16 +721,21 @@ function posTab(d){
  var pos=[],bonds=0;fams(d).forEach(function(kv){(kv[1].positions||[]).forEach(function(p){if(p.bond){bonds++;return;}p.fam=kv[0];pos.push(p);});});
  var bnote=bonds?'<div class="card muted">'+bonds+' bond position'+(bonds===1?'':'s')+' not listed here \u2014 see the <a href="bonds">bonds page</a>.</div>':'';
  if(!pos.length)return bnote+'<div class="card muted">No positions.</div>';
- pos.sort(function(a,b){return (a.per_dollar-b.per_dollar)||(b.liq-a.liq);});
- var idle=pos.filter(function(p){return p.earn<0.005;}).length;
  // "if closed now" is what the books would pay this minute, walking
- // the levels for what they show and never our own orders; shares no
- // order would take are counted beside it (owner, 2026-09-08)
- var stuck=pos.filter(function(p){return (p.unsold||0)>0.005;}).length;
+ // the levels for what they show and never our own orders; a position
+ // with nobody to sell into sits at the bottom and says so, and one
+ // whose event is past is waiting for settlement (owner, 2026-09-08)
+ var live=pos.filter(function(p){return p.liq>0.005||!(p.unsold>0.005);});
+ var stuck=pos.filter(function(p){return !(p.liq>0.005)&&p.unsold>0.005;});
+ live.sort(function(a,b){return (a.per_dollar-b.per_dollar)||(b.liq-a.liq);});
+ stuck.sort(function(a,b){return (b.event_over?1:0)-(a.event_over?1:0)||Math.abs(b.qty)-Math.abs(a.qty);});
+ pos=live.concat(stuck);
+ var idle=pos.filter(function(p){return p.earn<0.005;}).length;
+ var settling=stuck.filter(function(p){return p.event_over;}).length;
  var out='<div class="card"><div class="kpi">'
   +'<div><div class="v">'+pos.length+'</div><div class="l">positions</div></div>'
   +'<div><div class="v">'+usd(pos.reduce(function(a,p){return a+p.liq;},0))+'</div><div class="l">if closed now<br>into the books as they are</div></div>'
-  +(stuck?'<div><div class="v warn">'+stuck+'</div><div class="l">with shares no order would take</div></div>':'')
+  +(stuck.length?'<div><div class="v warn">'+stuck.length+'</div><div class="l">nobody to sell into'+(settling?'<br>'+settling+' awaiting settlement':'')+'</div></div>':'')
   +'<div><div class="v'+(idle?' warn':'')+'">'+idle+'</div><div class="l">earning nothing</div></div>'
   +'</div></div>';
  pos.forEach(function(p,i){
@@ -739,7 +744,7 @@ function posTab(d){
    +'<div style="display:flex;gap:16px;align-items:baseline;margin:3px 0">'
    +'<span class="px">'+(p.qty>0?p.qty+' sh':(-p.qty)+' short')+'</span>'
    +'<span class="rt">'+usd(p.liq)+'</span>'
-   +((p.unsold||0)>0.005?'<span class="warn">'+p.unsold+' sh '+(p.no_book?'no book read':'no order to take them')+'</span>':'')
+   +((p.unsold||0)>0.005?'<span class="warn">'+(p.no_book?'no book read yet':p.no_takers?(p.event_over?'no bids \u2014 event over, awaiting settlement (pays '+usd(Math.abs(p.qty))+' if it resolves your way)':'no bids in the book'):p.unsold+' sh no order to take them')+'</span>':'')
    +'<span class="'+(p.earn<0.005?'warn':'muted')+'">'+(p.earn<0.005?'idle':usd(p.earn)+'/d')+'</span></div></div>';
  });
  return out+bnote;
