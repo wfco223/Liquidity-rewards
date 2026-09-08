@@ -30,6 +30,18 @@ class TestTheBox(unittest.TestCase):
         finally:
             gc.callbacks.remove(c._cb)
 
+    def test_deep_mb_weighs_a_container_and_shares_what_it_has_seen(self):
+        from v3.box import deep_mb
+        big = {i: [str(i)] * 3 for i in range(2000)}
+        mb = deep_mb(big)
+        self.assertGreater(mb, 0.1)
+        seen = set()
+        first = deep_mb(big, seen=seen)
+        again = deep_mb(big, seen=seen)          # already counted: weighs nothing new
+        self.assertGreater(first, 0.1)
+        self.assertLess(again, 0.01)
+        self.assertLess(deep_mb(big, budget=10), first)   # the budget bounds the walk
+
     def test_trimming_the_heap_reports_before_and_after_or_nothing(self):
         from v3.box import trim_heap
         t = trim_heap()

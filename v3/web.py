@@ -1565,11 +1565,14 @@ function mWin(sec){window._meterWin=sec;
 function render(d){
  window._meterD=d;
  if(d.starting)return bootCard(d);
- var w=window._meterWin||0;
- var b=function(sec,label){return '<button class="'+((window._meterWin||0)===sec?'on':'')+'" onclick="mWin('+sec+')">'+label+'</button>';};
+ // the last six hours by default (owner, 2026-09-08: "the graph looks
+ // like it's getting squeezed ... just show the data from the last 6 hours")
+ if(window._meterWin==null)window._meterWin=21600;
+ var w=window._meterWin;
+ var b=function(sec,label){return '<button class="'+(window._meterWin===sec?'on':'')+'" onclick="mWin('+sec+')">'+label+'</button>';};
  var earned=0;
  fams(d).forEach(function(kv){earned+=(kv[1].earned_today||0);});
- var out='<div class="tabs">'+b(900,'15 min')+b(0,'today')+'</div>';
+ var out='<div class="tabs">'+b(900,'15 min')+b(21600,'6 hours')+'</div>';
  out+=stacked(d,w);
  out+='<div class="card"><div class="kpi">'
   +'<div><div class="v">'+usd(earned)+'</div><div class="l">earned today</div></div>';

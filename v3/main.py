@@ -32,7 +32,7 @@ from . import basketball, football, gameday, politics
 from .alerts import Alerts
 from .api import ApiError, Client, GATEWAY
 from .books import BookCache
-from .box import GcClock, box_stats, freeze_heap, trim_heap
+from .box import GcClock, box_stats, deep_mb, freeze_heap, trim_heap
 from .family import Family
 from .floor import Floor
 from .names import Names
@@ -4149,6 +4149,46 @@ class Monitor:
             out["objects"] = len(objs)
             out["types"] = dict(Counter(type(o).__name__ for o in objs).most_common(12))
             del objs
+            # what the biggest containers weigh, in MB (2026-09-08: memory
+            # climbed with the object count flat — weight, not count)
+            seen: set = set()
+            mb: dict = {}
+            weigh = [("last_state", getattr(self, "last_state", None)),
+                     ("payload_json", getattr(self, "payload_json", None)),
+                     ("survey_meta", getattr(self, "survey_meta", None)),
+                     ("survey_stats", getattr(self, "survey_stats", None)),
+                     ("names.known", getattr(getattr(self, "names", None), "known", None)),
+                     ("rewards_seen", self.rewards_seen), ("paid_seen", self.paid_seen),
+                     ("mkt_claim_day", getattr(self, "mkt_claim_day", None)),
+                     ("bonds.fill_book", getattr(getattr(self, "bonds", None), "fill_book", None)),
+                     ("store.pending", getattr(getattr(self, "store", None), "_pending", None))]
+            for key, fam in self.families.items():
+                cache = getattr(fam, "cache", None)
+                weigh += [(f"{key}.cache.books", getattr(cache, "_books", None)),
+                          (f"{key}.cache.trade_seen", getattr(cache, "trade_seen", None)),
+                          (f"{key}.evidence.events", getattr(getattr(fam, "evidence", None), "events", None)),
+                          (f"{key}.orders", fam.orders), (f"{key}.universe", getattr(fam, "universe", None)),
+                          (f"{key}.scoreboard", getattr(fam, "scoreboard", None)),
+                          (f"{key}.fills", getattr(fam, "fills", None)),
+                          (f"{key}.placed_at", getattr(fam, "placed_at", None)),
+                          (f"{key}.fillmodel", getattr(fam, "fillmodel", None))]
+            stream = getattr(self, "stream", None)
+            if stream is not None:
+                weigh += [("stream.declared", getattr(stream, "declared", None)),
+                          ("stream.frame_shapes", getattr(stream, "frame_shapes", None))]
+            for name, obj in weigh:
+                if obj is None:
+                    continue
+                budget = 600_000 - len(seen)          # the whole walk stays under ~40 MB
+                if budget <= 0:
+                    break
+                try:
+                    mb[name] = deep_mb(obj, budget=min(budget, 250_000), seen=seen)
+                except Exception:  # noqa: BLE001
+                    continue
+            out["mb"] = dict(sorted(mb.items(), key=lambda kv: -kv[1])[:20])
+            out["mb_walked"] = len(seen)
+            del seen
         except Exception as e:  # noqa: BLE001 — a census never breaks the cycle
             out["error"] = str(e)[:120]
         self._heap_last = out
@@ -4441,6 +4481,7 @@ class Monitor:
                             "rss_mb": round(rss_mb(), 1),
                             "gc": self._gc_clock.take() if hasattr(self, "_gc_clock") else None,
                             "box": self._box_delta(),
+                            "trim": getattr(self, "_last_trim", None),
                             "heap": self._heap_census(now)}
         if not hasattr(self, "mem_trail"):
             self.mem_trail = []
@@ -4463,7 +4504,7 @@ class Monitor:
         except Exception:  # noqa: BLE001
             tr = None
         if tr:
-            self.cycle_stats["trim"] = tr
+            self._last_trim = tr
             self.mem_trail[-1][1] = tr["after"]
         if not self._first_cycle_done:
             self._first_cycle_done = True
