@@ -2359,3 +2359,20 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788828403.0,politics,usgubewc-usgub-id-2026-11-03-rep,BUY,5.28,0.93,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBX231TQ2Q3Y
 1788828403.0,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,4.28,0.94,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBWPDQ5N0Q3H
 1788828403.0,cfb,aachc-cfb-wins-2026-11-28-oregst-4pt5wins,SELL,1,0.59,backfill,,0.78,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBWBA4H6RQ48
+1788828463.0,cfb,aachc-cfb-wins-2026-11-28-washst-4pt5wins,SELL,2,0.78,earn,0.2522,0.22,,72,78,0.388,0.75,0.76,-0.03,-2,2 ticks behind the touch — we would hold 12% of the ask side,CBWWP1YHPQ3H
+1788828523.0,cfb,aachc-cfb-wins-2026-11-28-bayl-7pt5wins,BUY,1,0.32,earn,0.1931,4.25,,32,36,0.686,0.3,0.34,-0.02,4,1 tick behind the touch — we would hold 41% of the bid side,CBSDW8XX0Q3X
+1788828643.0,cfb,aachc-cfb-wins-2026-11-28-syra-3pt5wins,SELL,1,0.71,earn,0.4687,15.06,,65,72,0.356,0.69,0.7,-0.02,-1.01,1 tick behind the touch — we would hold 37% of the ask side,CBG60CB80Q3Z
+1788828643.0,cfb,aachc-cfb-wins-ou-2026-11-28-flst,BUY,1,0.35,earn,0.4486,0.98,,45,55,0,0.35,0.36,-0.15,1,joins the touch — the book has been quiet,CBW7DWF5GQ3T
+1788828777.9,cfb,aachc-cfb-wins-2026-11-28-aubrn-8pt5wins,SELL,0.01,0.43,sell,0,0.29,,40,61,0.441,0.4,0.84,0.06,-0.01,selling filled stock — it earns while it waits,CBWWVD5HMQ48
+1788828897.9,cfb,aachc-cfb-wins-2026-11-28-ore-10pt5wins,BUY,1,0.58,sell,0.001,10.52,,55,67,0.247,0.64,0.65,-0.03,0,an exit — its fill reduces the position it sits on,CBM5J2JPRQ3H
+1788829077.9,cfb,aachc-cfb-wins-2026-11-28-colst-2pt5wins,BUY,1,0.74,sell,0,6.07,,66,74,0.567,0.74,0.75,0.03,1,buying back the short at or under what it sold for — the bid earns while it wait,CBR1ZBYCRQ3Y
+1788829197.9,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,1,0.1,bond,0.1116,0.07,0.00015,14,21,0.453,0.08,0.09,-0.0999,-248,bond more: split — 1 at 10c carry the share; never dearer than his first price,CBX6M83SPQ3X
+1788829322.3,cfb,aachc-cfb-wins-2026-11-28-txst-7pt5wins,SELL,0.5,0.09,earn,0,0.75,,3,12,0,0.07,0.08,-0.01,-0.5,1 tick behind the touch — we would hold 10% of the ask side,CBWM8F02YQ3X
+1788829382.3,politics,ussewc-usse-co-2026-11-03-rep,SELL,7,0.05,earn,0.5728,3.68,0.004875,3,6,0.763,0.04,0.05,-0.0451,-18,1 tick behind the touch — we would hold 4% of the ask side,CBT478HNTQ3Z
+1788829502.3,politics,usgubewc-usgub-il-2026-11-03-dem,SELL,2,0.98,sell,0,0,0.996275,96,99,0.491,0.98,0.99,0.0163,8,taker dump — sold into the bid (the carved exception),CBXAGERHAQ3R
+1788829562.3,politics,usgubewc-usgub-hi-2026-11-03-dem,BUY,1.73,0.93,earn,0.4014,3.43,0.999875,96,99,0.605,0.93,0.95,-0.0699,21.73,1 tick behind the touch — we would hold 19% of the bid side,CBTADAED4Q3X
+1788829562.3,cfb,aachc-cfb-wins-2026-11-28-hou-10pt5wins,BUY,1,0.22,sell,1.0885,1.08,,1,8,0,0.22,0.23,0.18,0,buying back the short at or under what it sold for — the bid earns while it wait,CBWCXS9XCQ3N
+1788830066.8,politics,usgubewc-usgub-id-2026-11-03-rep,BUY,-1,0.93,fix,0,0.02,0.999025,90,94,0.434,0.92,0.94,-0.069,28,size trimmed by 1 to the exchange's count (order CBX231TQ2Q3Y),CBX231TQ2Q3Y
+1788830066.8,politics,enwc-uspres-nom-rep-2028-jdvan,SELL,1.81,0.5,hand,,3.17,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAMSCBXF8PQ1
+1788830066.8,politics,usgubewc-usgub-id-2026-11-03-dem,BUY,1,0.07,backfill,,2.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBEERC8VRQ3Z
+1788830066.8,cfb,aachc-cfb-wins-2026-11-28-oregst-4pt5wins,SELL,-1,0.59,fix,0.7233,0.79,,43,50,0.443,0.57,0.58,-0.12,-2,size trimmed by 1 to the exchange's count (order CBWBA4H6RQ48),CBWBA4H6RQ48
