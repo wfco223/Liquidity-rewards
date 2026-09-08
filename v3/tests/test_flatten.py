@@ -2347,6 +2347,75 @@ class TestWindDownLedger(unittest.TestCase):
         self.assertTrue(f2.wind_down[0]["flat"])
 
 
+class TestTheBuyBackStandsOnTheGrid(unittest.TestCase):
+    """Owner yes, 2026-09-08: a buy-back priced under one tick on a
+    whole-cent book snapped down to zero and the desk refused it every
+    cycle (117 refusals in three minutes). It bids one tick instead."""
+
+    def _rig(self):
+        from v3.tests.test_family import Rig, A
+        from v3.scoring import Book
+        r = Rig()
+        # short 20 that sold for a quarter of a cent a share on a
+        # whole-cent book with NO bids: break-even and the touch both
+        # sit under the grid's lowest price (the 2026-09-08 shape —
+        # dead Senate markets bid nothing)
+        book = Book(bids=(), asks=((0.02, 800.0),),
+                    tick=0.01, fetched_at=r.now)
+        r.add_market(A, book=book)
+        r.fam.inventory[A] = {"qty": -20.0, "cost": -0.05}
+        r.positions[A] = (-20.0, -0.05)
+        return r, A
+
+    def test_the_cover_bids_one_tick_not_zero(self):
+        r, A = self._rig()
+        r.cycle()
+        failed = [e for e in r.fam.log if e.get("event") == "exit_place_failed"]
+        self.assertEqual(failed, [])
+        live = [o for o in r.exchange.live.values()
+                if o["market"] == A and o["side"] == "BUY"]
+        self.assertTrue(live)
+        self.assertTrue(all(abs(o["price"] - 0.01) < 1e-9 for o in live),
+                        [o["price"] for o in live])
+
+    def test_the_one_tick_cover_is_not_pulled_as_a_stray(self):
+        r, A = self._rig()
+        r.cycle()
+        r.fam.last_action.clear()
+        r.cycle()
+        r.fam.last_action.clear()
+        r.cycle()
+        pulled = [e for e in r.fam.log
+                  if e.get("event") in ("exit_retreated", "stranded_exit_repriced")]
+        self.assertEqual(pulled, [])
+        live = [o for o in r.exchange.live.values()
+                if o["market"] == A and o["side"] == "BUY"]
+        self.assertEqual(len(live), 1, live)
+
+    def test_the_exchange_grid_wins_over_the_book_grid(self):
+        # the book cache read a tenth-cent grid, the exchange's own
+        # figure says whole cents: the desk snaps to the exchange's, so
+        # the floor must be the exchange's too (a 0.5c bid on it is 0c)
+        from v3.tests.test_family import Rig, A
+        from v3.scoring import Book
+        r = Rig()
+        fine = Book(bids=((0.005, 5.0),), asks=((0.02, 5.0),), tick=0.001, fetched_at=r.now)
+        r.fam.desk.tick_for = lambda slug: 0.01
+        self.assertAlmostEqual(r.fam._grid_floor(A, fine), 0.01)
+        r.fam.desk.tick_for = lambda slug: None
+        self.assertAlmostEqual(r.fam._grid_floor(A, fine), 0.001)
+
+    def test_the_grid_floor_is_one_tick_or_a_tenth_of_a_cent(self):
+        from v3.tests.test_family import Rig, A
+        from v3.scoring import Book
+        r = Rig()
+        fine = Book(bids=((0.005, 5.0),), asks=((0.02, 5.0),), tick=0.001, fetched_at=r.now)
+        coarse = Book(bids=((0.01, 5.0),), asks=((0.02, 5.0),), tick=0.01, fetched_at=r.now)
+        self.assertAlmostEqual(r.fam._grid_floor(A, fine), 0.001)
+        self.assertAlmostEqual(r.fam._grid_floor(A, coarse), 0.01)
+        self.assertAlmostEqual(r.fam._grid_floor(A, None), 0.001)
+
+
 class TestDeadShortStepUp(unittest.TestCase):
     """Owner, 2026-08-29 ("we should find a way to get the resting
     positions down"): a short's break-even buy-back on a book trading
