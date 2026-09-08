@@ -4708,6 +4708,8 @@ class Family:
             covers = [o for o in list(self.orders.values())
                       if o.market == slug and o.side == cover_side]
             earn = sum(o.live_est or 0.0 for o in covers)
+            far = book.side("BUY" if qty > 0 else "SELL") if book is not None else ()
+            days = slug_days_out(slug, now)
             positions.append({
                 "market": slug, "qty": round(qty, 2),
                 # a bond lives on the bonds page (owner, 2026-09-08:
@@ -4716,6 +4718,11 @@ class Family:
                 "cost": round(inv.get("cost", 0.0), 2),
                 "liq": round(liq, 2), "unsold": unsold,
                 "no_book": book is None,
+                # nobody on the side a close would hit, and the event
+                # is past: the shares wait for settlement, they are not
+                # for sale (owner, 2026-09-08: the MA primary brackets)
+                "no_takers": book is not None and not far,
+                "event_over": days is not None and days < 0,
                 "earn": round(earn, 4),
                 "per_dollar": (round(earn / liq, 4)
                                if liq > 0.01 else 0.0),
