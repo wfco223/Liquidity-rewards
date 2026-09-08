@@ -682,17 +682,18 @@ class TestTheOwnersEntry(Base):
 
     def test_the_markets_share_of_the_budget_is_the_limit(self):
         # owner, 2026-09-07: "max 20% of the budget is going to any one
-        # market" — $200 of budget puts at most $40 into this market
-        self.b.set_budget(200.0)
+        # market"; 2026-09-08: 50% — $80 of budget puts at most $40 into
+        # this market
+        self.b.set_budget(80.0)
         r = self.b.enter(AL, 0.98, self.now, self.positions())
         self.assertTrue(r["ok"], r["note"])
         self.assertAlmostEqual(self.b.held(AL, "YES"), 20.0 + 21.87, places=2)   # 20 @ 95c, then $21 buys 21.87 @ 96c
         self.assertLess(self.b.market_room(AL), 5.0)
-        self.assertGreater(self.b.budget, 155.0)                    # the rest of the budget is untouched
+        self.assertGreater(self.b.budget, 35.0)                     # the rest of the budget is untouched
         # and the next Enter here says why it buys nothing
         r2 = self.b.enter(AL, 0.98, self.now + 1, self.positions())
         self.assertFalse(r2["ok"])
-        self.assertIn("20% share", r2["note"])
+        self.assertIn("50% share", r2["note"])
 
     def test_nothing_inside_the_price_means_nothing_bought(self):
         r = self.b.enter(AL, 0.94, self.now, self.positions())
@@ -3285,24 +3286,25 @@ class TestTheBudgetRoom(Base):
         return sum(o.qty * o.price for o in self.b._more_orders(slug))
 
     def test_each_markets_buy_orders_fit_its_room(self):
-        self.b.set_budget(1500.0)                               # a fifth is $300
+        self.b.set_budget(600.0)                                # half is $300
         self.bond(AL, "YES", 100.0, 0.89)                       # $89 held
-        self.bond(TN, "YES", 100.0, 0.89)                       # $89 held: room 1322
+        self.bond(TN, "YES", 100.0, 0.89)                       # $89 held: room 422
         self.b.set_more_cap(AL, 500.0)                          # he would buy $500 more
         self.b.set_more_cap(TN, 500.0)
         self.cyc(self.now)
-        self.assertAlmostEqual(self.b.budget_room(), 1322.0, places=2)
+        self.assertAlmostEqual(self.b.budget_room(), 422.0, places=2)
         self.assertAlmostEqual(self.b.market_room(AL), 211.0, places=2)   # its share less what it holds
         for s in (AL, TN):
             self.assertTrue(self.b._more_orders(s))
             self.assertLessEqual(self.more_usd(s), 211.0 + 1.0)   # each market fits its own room
             self.assertGreater(self.more_usd(s), 150.0)
 
-    def test_no_market_gets_more_than_a_fifth_of_the_budget(self):
+    def test_no_market_gets_more_than_half_of_the_budget(self):
         # owner, 2026-09-07: "we don't want too much of the budget going
         # to any one market. Set it so that max 20% of the budget is
-        # going to any one market"
-        self.b.set_budget(1000.0)                               # a fifth is $200
+        # going to any one market"; 2026-09-08: "Set the per market cap
+        # on bonds to 50% of the total budget"
+        self.b.set_budget(400.0)                                # half is $200
         self.bond(AL, "YES", 100.0, 0.89)                       # $89 held here
         self.bond(TN, "YES", 10.0, 0.89)                        # $8.90 held there
         self.b.set_more_cap(AL, 500.0)
@@ -3315,7 +3317,7 @@ class TestTheBudgetRoom(Base):
         self.assertLessEqual(self.more_usd(TN), 192.1)
         self.assertGreater(self.more_usd(TN), self.more_usd(AL))
         self.assertIsNone(self.b._can_spend(100.0, self.now, AL))
-        self.assertIn("20% share", self.b._can_spend(120.0, self.now, AL))
+        self.assertIn("50% share", self.b._can_spend(120.0, self.now, AL))
         v = self.b.view(self.now, self.positions())
         self.assertEqual(v["market_cap"], 200.0)
         row = next(r for r in v["rows"] if r["market"] == AL)
@@ -3328,24 +3330,24 @@ class TestTheBudgetRoom(Base):
         self.assertGreater(self.b.invested_in(TN), 195.0)
 
     def test_a_market_at_its_share_buys_nothing_more(self):
-        self.b.set_budget(1000.0)
+        self.b.set_budget(400.0)                                # half is $200
         self.bond(AL, "YES", 250.0, 0.89)                       # $222.50 held against a $200 share
         self.b.set_more_cap(AL, 500.0)
         self.cyc(self.now)
         self.assertEqual(self.b._more_orders(AL), [])
         self.assertLess(self.b.market_room(AL), 0.0)
-        self.assertGreater(self.b.budget_room(), 700.0)           # the budget itself has room
+        self.assertGreater(self.b.budget_room(), 170.0)           # the budget itself has room
         v = self.b.view(self.now, self.positions())
         row = next(r for r in v["rows"] if r["market"] == AL)
-        self.assertIn("20% share", row["more"]["paused"])
-        self.assertIn("20% share", self.b.enter(AL, 0.99, self.now, self.positions())["note"])
-        self.assertIn("20% share", self.b.place_bait(AL, self.now, self.positions())["note"])
-        # another market still buys
+        self.assertIn("50% share", row["more"]["paused"])
+        self.assertIn("50% share", self.b.enter(AL, 0.99, self.now, self.positions())["note"])
+        self.assertIn("50% share", self.b.place_bait(AL, self.now, self.positions())["note"])
+        # another market still buys, within the budget's own room
         self.bond(TN, "YES", 10.0, 0.89)
         self.b.set_more_cap(TN, 500.0)
         self.cyc(self.now + 61)
         self.assertTrue(self.b._more_orders(TN))
-        self.assertLessEqual(self.more_usd(TN), 192.1)
+        self.assertLessEqual(self.more_usd(TN), self.b.budget_room() + 1.0)
 
     def test_a_fill_anywhere_shrinks_the_room_everywhere(self):
         self.b.set_budget(1000.0)
@@ -3366,8 +3368,8 @@ class TestTheBudgetRoom(Base):
         self.assertLess(self.more_usd(TN), before)
 
     def test_a_full_budget_pulls_the_bids_and_stops_the_buys(self):
-        self.b.set_budget(500.0)                                # a fifth is $100
-        self.bond(AL, "YES", 100.0, 0.89)                       # $89 held: $11 of room here
+        self.b.set_budget(500.0)                                # half is $250
+        self.bond(AL, "YES", 100.0, 0.89)                       # $89 held: $161 of room here
         self.b.set_more_cap(AL, 500.0)
         self.cyc(self.now)
         self.assertTrue(self.b._more_orders(AL))
