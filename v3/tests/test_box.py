@@ -30,6 +30,13 @@ class TestTheBox(unittest.TestCase):
         finally:
             gc.callbacks.remove(c._cb)
 
+    def test_trimming_the_heap_reports_before_and_after_or_nothing(self):
+        from v3.box import trim_heap
+        t = trim_heap()
+        if t is not None:
+            self.assertGreaterEqual(t["before"], 0.0)
+            self.assertGreaterEqual(t["after"], 0.0)
+
     def test_freezing_the_heap_reports_what_froze(self):
         n = freeze_heap()
         self.assertGreater(n, 0)
