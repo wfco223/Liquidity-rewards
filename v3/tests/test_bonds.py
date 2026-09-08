@@ -2931,6 +2931,18 @@ class TestNeverOfferedTwice(Base):
         self.assertTrue(bond)
         self.assertEqual(sum(o.qty for o in bond), 1000.0)        # sized around his 500
 
+    def test_his_wall_by_hand_does_not_shrink_the_bond_exit(self):
+        # owner, 2026-09-08: a qualifying wall at the far edge, however
+        # it got there, is not an offer of the lot
+        self.b.approve(AL, self.now)
+        self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))
+        self.bond(AL, "YES", 1500.0, 0.89)
+        self.hand_sell(AL, 5000.0, 0.999)                     # a wall, with no why to say so
+        self.b.cycle(self.now, self.positions(), on=True)
+        bond = [o for o in self.orders(AL, "SELL") if o.purpose == "bond"]
+        self.assertEqual(sum(o.qty for o in bond), 1500.0)        # the whole lot, on top of the wall
+        self.assertNotIn(AL, self.b.exit_note)
+
     def test_his_ask_for_the_whole_lot_pulls_the_bond_exit(self):
         self.b.approve(AL, self.now)
         self.r.cache.put(AL, minnow_book(self.now, minnows=30.0))

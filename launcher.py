@@ -88,6 +88,18 @@ def main() -> int:
                 continue
             print(f"launcher: {name} exited with {p.returncode}; "
                   f"restarting in {backoff[name]:.0f}s", flush=True)
+            # how it ended, for the next boot to report (2026-09-08: the
+            # app restarted every 12-35 minutes with nobody deploying;
+            # -9 is the platform's kill, -15 a stop, 1 a crash)
+            try:
+                import json
+                with open(os.environ.get("V3_EXIT_PATH",
+                                         os.path.join(HERE, "v3_last_exit.json")), "w") as f:
+                    json.dump({"name": name, "returncode": p.returncode,
+                               "at": time.time(),
+                               "uptime_s": round(time.time() - started[name], 1)}, f)
+            except OSError:
+                pass
             time.sleep(backoff[name])
             backoff[name] = min(backoff[name] * 2, BACKOFF_MAX_S)
             if not stopping:

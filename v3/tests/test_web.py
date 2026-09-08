@@ -282,6 +282,11 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("if(p.bond){bonds++;return;}", web.ORDERS_JS)
         self.assertIn("not listed here", web.ORDERS_JS)
 
+    def test_the_status_page_says_how_the_last_run_ended(self):
+        from v3 import web
+        self.assertIn("previous run ended", web.STATUS_JS)
+        self.assertIn("killed by the platform for memory", web.STATUS_JS)
+
     def test_the_switch_page_lists_the_places(self):
         # owner, 2026-09-07: "which places Polymarket thinks are vpn and
         # which are okay" — the addresses this server has run from

@@ -77,7 +77,7 @@ from __future__ import annotations
 import math
 import time
 
-from .family import QUALIFY_WALL_WHY, FamilyOrder, slug_days_out
+from .family import QUALIFY_WALL_WHY, FamilyOrder, is_wall, slug_days_out
 from .intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT
 
 HIGH_ODDS = 0.985           # YES bond: Silver's odds for YES at or above (owner,
@@ -2136,9 +2136,10 @@ class Bonds:
         a button on every bond that is not qualified): it sits at the far
         edge of the book only to carry the side over Target Size, a short
         beside the lot, and the exit keeps its full size in front of it."""
+        held = self.held(slug, self._side_of(slug))
         return sum(o.qty for o in list(self.fam.orders.values())
                    if o.market == slug and o.side == bs and o.purpose != "bond"
-                   and o.why != QUALIFY_WALL_WHY)
+                   and not is_wall(o, held))
 
     def _two_orders(self, slug: str, old_id: str, r) -> None:
         """A move whose cancel failed: the original still rests beside
@@ -2246,7 +2247,7 @@ class Bonds:
                                               f"lot ({elsewhere:g} of {held:g} shares)")
             his_all = his + [o for o in list(self.fam.orders.values())
                              if o.market == slug and o.side == bs and o.purpose != "bond"
-                             and o.why != QUALIFY_WALL_WHY]
+                             and not is_wall(o, held)]
             what = " + ".join(f"{o.qty:g} @ {(o.price if side == 'YES' else 1.0 - o.price) * 100:g}c"
                               for o in his_all[:3])
             self.exit_note[slug] = (f"your own order{'s' if len(his_all) != 1 else ''} "
@@ -2775,7 +2776,7 @@ class Bonds:
         from .survey import wall_collateral
         return sum(wall_collateral(o.side, o.price, o.qty)
                    for o in list(self.fam.orders.values())
-                   if o.why == QUALIFY_WALL_WHY)
+                   if is_wall(o) and o.purpose != "bond")
 
     # -- the budget rule (owner, 2026-09-06) --------------------------------
     def budget_total(self) -> float:
