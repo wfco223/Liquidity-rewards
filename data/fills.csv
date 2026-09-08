@@ -2565,3 +2565,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788849326.2,politics,scc-senate-gop-2026-11-03-49,SELL,0.03,0.16,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC0YJ7DYCQ3R
 1788849326.2,cfb,aachc-cfb-wins-2026-11-28-washst-7pt5wins,SELL,0.04,0.69,void,0,0,,45,71,0.433,0.69,0.7,-0.13,0.96,voided: the exchange has no trade for order CC0WTT7CRQ3N — the row of 09-08 05:2,CC0WTT7CRQ3N
 1788861410.4,politics,ussewc-usse-ri-2026-11-03-rep,BUY,-2,0.04,fix,0,0.03,0.000825,4,8,0.744,0.02,0.05,0.0392,-53.8,size trimmed by 2 to the exchange's count (order CBSE9S3REQ46),CBSE9S3REQ46
+1788861798.3,politics,ussewc-usse-mt-2026-11-03-rep,BUY,13,0.91,bond,0,0.02,0.985075,89,92,0.798,0.9,0.91,-0.0751,26,bond: took 13 YES at 91c — it was in the way of our resting order,CC4465TN2R42
+1788862453.5,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,1,0.12,bond,0,0.03,0.0121,11,14,0.813,0.11,0.13,-0.1079,-59,bond: took 1 NO at 12c — it was in the way of our resting order,CC50EA32CR40
+1788862453.5,cfb,aachc-cfb-wins-2026-11-28-aubrn-8pt5wins,SELL,1,0.02,sell,0.9375,0.23,,35,43,0.679,0.01,0.02,0.37,0,selling filled stock — it earns while it waits,CC3YWM3PER40
+1788862563.2,politics,usgubewc-usgub-mn-2026-11-03-rep,SELL,2,0.09,earn,6.2499,0.16,0.0049,4,8,0.685,0.07,0.09,-0.0851,-12,1 tick behind the touch — we would hold 6% of the ask side,CC4BCBNRWR45
+1788863379.7,politics,ussewc-usse-tn-2026-11-03-dem,BUY,-2.4,0.03,fix,0.1014,4.77,0.000625,3,6,0.663,0.03,0.05,0.0294,-12.6,size trimmed by 2.4 to the exchange's count (order CC0R9SDF8Q3H),CC0R9SDF8Q3H
+1788863379.7,politics,ussewc-usse-ar-2026-11-03-dem,SELL,-1,0.08,fix,5.6101,4.03,0.016075,5,8,0.776,0.07,0.08,-0.0639,-12,size trimmed by 1 to the exchange's count (order CC1C15Q14Q3Z),CC1C15Q14Q3Z
+1788863379.7,politics,ussewc-usse-ri-2026-11-03-rep,BUY,2,0.04,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBSE9S3REQ46
+1788863379.7,cfb,aachc-cfb-wins-2026-11-28-ucf-5pt5wins,SELL,1,0.62,void,0.0425,3.82,,59,63,0.696,0.56,0.57,-0.01,-1,voided: the exchange has no trade for order CC1JX6XDYQ3H — the row of 09-08 09:5,CC1JX6XDYQ3H
