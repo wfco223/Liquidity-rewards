@@ -6031,6 +6031,41 @@ class TestPositionsLedger(unittest.TestCase):
         self.assertTrue(pos[B]["bond"])
         self.assertFalse(pos[A]["bond"])
 
+    def test_closing_pays_what_the_book_shows_never_our_own_orders(self):
+        # owner, 2026-09-08: "the top market cannot be closed because
+        # there are no orders to sell into" — the levels are walked for
+        # what they show; what nobody would take is counted, not priced
+        from v3.tests.test_family import Rig, A
+        from v3.scoring import Book
+        from v3.family import FamilyOrder
+        r = Rig(switch=False)
+        r.add_market(A, book=Book(bids=((0.10, 4.0), (0.08, 3.0)),
+                                  asks=((0.20, 100.0),),
+                                  tick=0.01, fetched_at=r.now))
+        r.positions[A] = (10.0, 0.5)
+        r.fam.inventory[A] = {"qty": 10.0, "cost": 0.5}
+        s = r.cycle()
+        p = {x["market"]: x for x in s["positions"]}[A]
+        self.assertAlmostEqual(p["liq"], 4 * 0.10 + 3 * 0.08, places=4)   # two levels, all they show
+        self.assertAlmostEqual(p["unsold"], 3.0)                          # three shares nobody bids for
+        self.assertFalse(p["no_book"])
+        # our own bid at the touch is not a buyer of our stock
+        r.fam.orders["M"] = FamilyOrder(id="M", market=A, side="BUY", price=0.10,
+                                        qty=3.0, intent=BUY_LONG, placed_ts=r.now,
+                                        purpose="earn")
+        r.exchange.live["M"] = {"id": "M", "market": A, "side": "BUY", "price": 0.10,
+                                "size": 3.0, "intent": BUY_LONG}
+        liq, unsold = r.fam.close_value(A, 10.0, r.cache.any_age(A))
+        self.assertAlmostEqual(liq, 1 * 0.10 + 3 * 0.08, places=4)
+        self.assertAlmostEqual(unsold, 6.0)
+        # no book read: nothing priced, everything counted
+        self.assertEqual(r.fam.close_value("nowhere", 7.0, None), (0.0, 7.0))
+        # a short buys back into the asks and recovers a dollar less the price
+        liq, unsold = r.fam.close_value(A, -10.0, Book(bids=(), asks=((0.20, 4.0),),
+                                                        tick=0.01, fetched_at=r.now))
+        self.assertAlmostEqual(liq, 4 * 0.80, places=4)
+        self.assertAlmostEqual(unsold, 6.0)
+
     def test_a_short_values_at_what_closing_recovers(self):
         from v3.tests.test_family import Rig, A
         from v3.scoring import Book
