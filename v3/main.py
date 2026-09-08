@@ -1067,6 +1067,7 @@ class Monitor:
         self._box_prev: dict = {}
         self.boots = [b for b in self.boots if time.time() - b < 86400]
         self.boots.append(time.time())
+        self._read_last_exit()
         # A deploy replaces the container and its floor files with it. If the
         # master came back ON, the request must be back on disk before 1.0's
         # first automation pass, not a poll later.
@@ -1211,6 +1212,39 @@ class Monitor:
         else:
             self._note(f"outbound address {ip} ({'new' if prior == 'new' else prior + ' before'})")
 
+    def _read_last_exit(self) -> None:
+        """How the previous run ended, from the launcher's note: the
+        exit code, when, how long it had been up, and the last memory
+        the trail recorded. Kept in the state (deaths) and said in the
+        notes. -9 is the platform's kill (memory), -15 a stop, 1 a
+        crash with a traceback in the container log."""
+        path = os.environ.get("V3_EXIT_PATH", "v3_last_exit.json")
+        try:
+            with open(path) as f:
+                d = json.load(f)
+            os.remove(path)
+        except (OSError, ValueError):
+            return
+        if not isinstance(d, dict):
+            return
+        code = d.get("returncode")
+        trail = getattr(self, "mem_trail", []) or []
+        last_mem = trail[-1] if trail else None
+        rec = {"at": round(float(d.get("at") or 0.0), 1), "code": code,
+               "uptime_min": round(float(d.get("uptime_s") or 0.0) / 60.0, 1),
+               "last_rss_mb": (last_mem[1] if last_mem else None),
+               "last_seen": (last_mem[0] if last_mem else None)}
+        if not hasattr(self, "deaths"):
+            self.deaths = []
+        self.deaths.append(rec)
+        del self.deaths[:-30]
+        meaning = {-9: "killed by the platform (memory)", 137: "killed by the platform (memory)",
+                   -15: "stopped (a deploy or a platform stop)", 143: "stopped (a deploy or a platform stop)",
+                   0: "exited on its own", 1: "crashed — traceback in the container log"}
+        self._note(f"previous run ended: code {code} — {meaning.get(code, 'unknown reason')}; "
+                   f"up {rec['uptime_min']:.0f} min"
+                   + (f", last memory reading {last_mem[1]:.0f} MB" if last_mem else ""))
+
     def _rebuild_paid_by_day(self) -> None:
         """paid_seen ("date|market" -> usd) folded by day, for the bond
         meter's grading (owner, 2026-09-08)."""
@@ -1256,6 +1290,9 @@ class Monitor:
                 fam.evidence.restore(saved[f"evi_{key}"])
         self.errors = list(saved.get("errors") or [])
         self.boots = list(saved.get("boots") or [])
+        self.deaths = list(saved.get("deaths") or [])[-30:]
+        self.mem_trail = list(saved.get("mem_trail") or [])[-360:]
+        self._survey_frame_at = float(saved.get("survey_frame_at") or 0.0)
         self.audit = list(saved.get("audit") or [])
         self.flatten_done = bool(saved.get("flatten_done"))
         self.flat_stats = dict(saved.get("flat_stats")
@@ -1371,6 +1408,9 @@ class Monitor:
         st = {
             "saved_at": now, "build": self.build, "boot_ts": self.boot_ts,
             "boots": self.boots[-20:], "errors": self.errors,
+            "deaths": getattr(self, "deaths", [])[-30:],
+            "mem_trail": getattr(self, "mem_trail", [])[-360:],
+            "survey_frame_at": getattr(self, "_survey_frame_at", 0.0),
             "audit": self.audit[-60:],
             "master_switch": self.master.to_dict(),
             "flatten_done": self.flatten_done,
@@ -3921,7 +3961,7 @@ class Monitor:
                   "master_switch", "flatten", "flat_stats", "summaries",
                   "silver", "silver_log", "grades", "paid_total", "ws",
                   "alerts_log", "rewards_last", "floor", "place_health", "places",
-                  "cycle_stats")
+                  "cycle_stats", "deaths", "mem_trail")
 
     def build_phone_payload(self) -> dict:
         st = self.public_state()
@@ -4402,6 +4442,11 @@ class Monitor:
                             "gc": self._gc_clock.take() if hasattr(self, "_gc_clock") else None,
                             "box": self._box_delta(),
                             "heap": self._heap_census(now)}
+        if not hasattr(self, "mem_trail"):
+            self.mem_trail = []
+        self.mem_trail.append([round(now, 1), round(rss_mb(), 1), laps.get("total", 0.0)])
+        del self.mem_trail[:-360]                      # six hours at a minute a cycle
+        st["mem_trail"] = self.mem_trail
         st["cycle_stats"] = self.cycle_stats           # before the snapshot, so it is in it
         # the disk write and the GitHub upload run behind the cycle, on
         # the store's worker; the upload goes when it is due

@@ -485,7 +485,12 @@ function cycleLine(d){
  if(bx.cpu_quota)h+=' \u00b7 '+bx.cpu_quota+' CPU';
  if(bx.oom_kills)h+=' \u00b7 <span class="bad">killed for memory '+bx.oom_kills+'\u00d7</span>';
  if(bx.load1!=null)h+=' \u00b7 load '+bx.load1;
- return h+'</div>';
+ h+='</div>';
+ // how the last run ended, from the launcher's note (2026-09-08)
+ var dd=d.deaths||[];if(dd.length){var x=dd[dd.length-1];if(Date.now()/1000-(x.at||0)<86400){
+  var why=(x.code===-9||x.code===137)?'killed by the platform for memory':(x.code===-15||x.code===143)?'stopped by a deploy or the platform':x.code===0?'exited on its own':x.code===1?'crashed':'code '+x.code;
+  h+='<div class="sub'+((x.code===-9||x.code===137||x.code===1)?' warn':' muted')+'">previous run ended '+when(x.at)+': '+why+' after '+Math.round(x.uptime_min||0)+' min'+(x.last_rss_mb?', last memory reading '+Math.round(x.last_rss_mb)+' MB':'')+'</div>';}}
+ return h;
 }
 function render(d){
  if(d.starting)return bootCard(d);
