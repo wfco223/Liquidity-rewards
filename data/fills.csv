@@ -2731,3 +2731,20 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788882043.5,politics,scc-hrep-rep-2026-11-03-gte205,BUY,6.43,0.47,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC973ZM38R3Y
 1788882043.5,politics,ussewc-usse-co-2026-11-03-rep,BUY,0.5,0.06,backfill,,2.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC7750WNTR3Z
 1788882043.5,cfb,aachc-cfb-wins-2026-11-28-mich-9pt5wins,BUY,0.01,0.17,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC9Q93ZPJR3Y
+1788882358.3,politics,enwc-uspres-nom-rep-2028-marrub,BUY,5,0.27,earn,7.084,0.02,0.35,24,29,0.446,0.26,0.28,-0.08,5,4 ticks in front of the touch — we would hold 99% of the bid side,CC9X4PEFGR3Z
+1788882538.3,politics,paccc-usho-midterms-2026-11-03-dem,SELL,50,0.828,earn,0.2443,4.08,0.8268,81,84,0.735,0.834,0.839,-0.0012,-50,2 ticks behind the touch — we would hold 0% of the ask side,CC6GC2H38R3Y
+1788882658.3,politics,paccc-usho-midterms-2026-11-03-dem,BUY,50,0.835,sell,0,0.03,0.8268,81,84,0.782,0.836,0.839,0.0082,0,buying back the short at or under what it sold for — the bid earns while it wait,CC9Z4WPCGR3Y
+1788882658.3,politics,paccc-usho-midterms-2026-11-03-dem,BUY,50,0.836,sell,0,0.02,0.8268,81,84,0.782,0.836,0.839,0.0092,50,buying back the short at or under what it sold for — the bid earns while it wait,CC9ZW97XWR3X
+1788882963.7,politics,ussewc-usse-la-2026-11-03-rep,BUY,5,0.92,earn,1.1473,0.24,0.9643,92,95,0.749,0.92,0.93,-0.0443,22,1 tick behind the touch — we would hold 8% of the bid side,CC9VQF0DWR47
+1788883323.7,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,10,0.18,earn,0.6374,0.27,0.138525,19,22,0.745,0.17,0.18,-0.0415,-46,1 tick in front of the touch — we would hold 65% of the ask side,CC9XWKZDER3X
+1788883708.0,cfb,aachc-cfb-wins-2026-11-28-tx-11pt5wins,SELL,1,0.02,manual,0.8224,4.81,,15,21,0.68,0.01,0.02,0.16,0,the owner's own order — the engine leaves it alone,CC66AVAQ6R46
+1788884199.9,politics,ewc-usp-2028-11-07-jdvan,SELL,20,0.23,sell,0.0847,3.23,,22,27,0.637,0.2,0.21,0.01,0,selling filled stock — it earns while it waits,CC7JW09XGR42
+1788884199.9,politics,ussewc-usse-wv-2026-11-03-dem,SELL,3.99,0.03,earn,0.819,1.98,0.000125,2,5,0.616,0.01,0.03,-0.0299,-3.99,1 tick behind the touch — we would hold 13% of the ask side,CC8MDGBXJR3Y
+1788884259.9,politics,ussewc-usse-id-2026-11-03-todach,SELL,2,0.02,sell,0,0,,3,7,0.408,0.02,0.03,0.03,75,taker dump — sold into the bid (the carved exception),CCAE7PQSTR3X
+1788884499.9,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,10,0.92,earn,0.1494,2.05,0.99925,91,95,0.68,0.92,0.95,-0.0792,30,1 tick behind the touch — we would hold 1% of the bid side,CC8N5EMG2R3V
+1788884499.9,politics,ussewc-usse-wv-2026-11-03-rep,BUY,6,0.94,earn,0.8314,1.49,0.999875,96,99,0.723,0.94,0.96,-0.0599,6,1 tick behind the touch — we would hold 53% of the bid side,CC959S0E4R3X
+1788884559.9,politics,ussewc-usse-wv-2026-11-03-dem,BUY,3.99,0.06,sell,0.7536,0.1,0.000125,3,6,0.709,0.06,0.08,0.0599,0,buying back the short at or under what it sold for — the bid earns while it wait,CCADG1MRMR46
+1788884697.4,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,10,0.92,earn,0.1247,0.05,0.99925,91,94,0.747,0.92,0.95,-0.0792,40,1 tick behind the touch — we would hold 1% of the bid side,CCAFCT9CGR42
+1788884757.4,politics,ussewc-usse-sc-2026-11-03-rep,BUY,0.67,0.84,earn,0.2381,1.57,0.923725,88,93,0.498,0.84,0.85,-0.0837,9.67,1 tick behind the touch — we would hold 65% of the bid side,CC94NCHR2R3Z
+1788885057.4,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,10,0.83,earn,3.1096,1.48,0.861475,84,88,0.61,0.81,0.86,-0.0315,20,1 tick behind the touch — we would hold 31% of the bid side,CC99AD4BTR42
+1788885117.4,cfb,aachc-cfb-wins-2026-11-28-utahst-3pt5wins,SELL,0.01,0.68,earn,0.0824,0.58,,62,70,0.605,0.63,0.68,-0.02,-1.01,8 ticks in front of the touch — we would hold 98% of the ask side,CCA31SA3YR3Z
