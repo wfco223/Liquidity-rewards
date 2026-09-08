@@ -89,9 +89,10 @@ MONEY_MIN_USD = 5.0         # money below this waits
 PING_EVERY_USD = 100.0      # a phone ping per this much bought
 KEEP_FRACTION = 0.8         # the resting slot keeps this much of the best reward
                             # (owner, 2026-09-06: 80%, up from 60%)
-MARKET_SHARE = 0.20         # no one market holds more than this share of the budget
+MARKET_SHARE = 0.50         # no one market holds more than this share of the budget
                             # (owner, 2026-09-07: "max 20% of the budget is going to
-                            # any one market")
+                            # any one market"; 2026-09-08: "Set the per market cap on
+                            # bonds to 50% of the total budget")
 BEHIND_MAX_TICKS = 8
 # The split (owner, 2026-09-05): the placement with the least exposure
 # that still reaches the threshold — KEEP_FRACTION of the best reward for
@@ -2929,7 +2930,7 @@ class Bonds:
             return None
         # the budget rule (owner, 2026-09-06): this market's buy orders
         # may total the room — the budget less everything held at cost —
-        # and (2026-09-07) no more than its 20% share less what it holds
+        # and (2026-09-07) no more than its MARKET_SHARE less what it holds
         room = self.market_room(slug)
         note = self._room_note(slug)
         if note:
@@ -3441,7 +3442,7 @@ class Bonds:
         """Take the minnow's shares at its price: they join the bond."""
         cost = px if side == "YES" else round(1.0 - px, 4)
         # the take is a buy: it fits this market's room — the budget, and
-        # the market's 20% share — and says so when there is none
+        # the market's share — and says so when there is none
         why_not = self._room_note(slug)
         if why_not:
             if self._more_note.get(slug + "|take") != why_not:
