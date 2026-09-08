@@ -134,6 +134,38 @@ class GcClock:
         return out
 
 
+def trim_heap() -> dict | None:
+    """Hand the C allocator's freed memory back to the box (glibc's
+    malloc_trim). 2026-09-08: resident memory climbed 5 MB a minute
+    while the count of Python objects stayed flat, and the box killed
+    the process near 500 MB every 20-35 minutes — the 12 MB state
+    serialised every minute across several threads leaves holes the
+    allocator keeps. Returns {before, after} in MB, or None where there
+    is no glibc."""
+    try:
+        import ctypes
+        libc = ctypes.CDLL("libc.so.6")
+    except (OSError, AttributeError):
+        return None
+    before = _rss_mb()
+    try:
+        libc.malloc_trim(0)
+    except Exception:  # noqa: BLE001
+        return None
+    return {"before": before, "after": _rss_mb()}
+
+
+def _rss_mb() -> float:
+    try:
+        with open("/proc/self/status") as f:
+            for line in f:
+                if line.startswith("VmRSS:"):
+                    return round(float(line.split()[1]) / 1024.0, 1)
+    except (OSError, ValueError, IndexError):
+        pass
+    return 0.0
+
+
 def freeze_heap() -> int:
     """After a restore: the long-lived heap leaves the collector's
     scans (gc.freeze), so a full collection no longer walks hundreds
