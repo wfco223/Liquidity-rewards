@@ -134,6 +134,37 @@ class GcClock:
         return out
 
 
+def deep_mb(obj, budget: int = 300_000, seen: set | None = None) -> float:
+    """Roughly how many MB a container and everything hanging off it
+    hold, walking at most `budget` objects (a 300k walk keeps its
+    bookkeeping under ~20 MB on a small box). Shared `seen` keeps two
+    containers from counting the same objects twice."""
+    import sys
+    seen = set() if seen is None else seen
+    total = 0
+    stack = [obj]
+    n = 0
+    while stack and n < budget:
+        o = stack.pop()
+        i = id(o)
+        if i in seen:
+            continue
+        seen.add(i)
+        n += 1
+        try:
+            total += sys.getsizeof(o)
+        except Exception:  # noqa: BLE001
+            continue
+        if isinstance(o, dict):
+            stack.extend(o.keys())
+            stack.extend(o.values())
+        elif isinstance(o, (list, tuple, set, frozenset)):
+            stack.extend(o)
+        elif hasattr(o, "__dict__") and not isinstance(o, type):
+            stack.append(o.__dict__)
+    return round(total / 1048576, 2)
+
+
 def trim_heap() -> dict | None:
     """Hand the C allocator's freed memory back to the box (glibc's
     malloc_trim). 2026-09-08: resident memory climbed 5 MB a minute
