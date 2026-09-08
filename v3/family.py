@@ -4680,6 +4680,9 @@ class Family:
             earn = sum(o.live_est or 0.0 for o in covers)
             positions.append({
                 "market": slug, "qty": round(qty, 2),
+                # a bond lives on the bonds page (owner, 2026-09-08:
+                # "Hide bond positions on the orders/positions tab")
+                "bond": slug in self.bond_markets,
                 "cost": round(inv.get("cost", 0.0), 2),
                 "liq": round(liq, 2), "earn": round(earn, 4),
                 "per_dollar": (round(earn / liq, 4)

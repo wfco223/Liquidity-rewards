@@ -716,8 +716,11 @@ function wallsTab(d){
  return out;
 }
 function posTab(d){
- var pos=[];fams(d).forEach(function(kv){(kv[1].positions||[]).forEach(function(p){p.fam=kv[0];pos.push(p);});});
- if(!pos.length)return '<div class="card muted">No positions.</div>';
+ // the bonds live on their own page (owner, 2026-09-08: "Hide bond
+ // positions on the orders/positions tab"): counted here, listed there
+ var pos=[],bonds=0;fams(d).forEach(function(kv){(kv[1].positions||[]).forEach(function(p){if(p.bond){bonds++;return;}p.fam=kv[0];pos.push(p);});});
+ var bnote=bonds?'<div class="card muted">'+bonds+' bond position'+(bonds===1?'':'s')+' not listed here \u2014 see the <a href="bonds">bonds page</a>.</div>':'';
+ if(!pos.length)return bnote+'<div class="card muted">No positions.</div>';
  pos.sort(function(a,b){return (a.per_dollar-b.per_dollar)||(b.liq-a.liq);});
  var idle=pos.filter(function(p){return p.earn<0.005;}).length;
  var out='<div class="card"><div class="kpi">'
@@ -733,7 +736,7 @@ function posTab(d){
    +'<span class="rt">'+usd(p.liq)+'</span>'
    +'<span class="'+(p.earn<0.005?'warn':'muted')+'">'+(p.earn<0.005?'idle':usd(p.earn)+'/d')+'</span></div></div>';
  });
- return out;
+ return out+bnote;
 }
 function soldTab(d){
  var wd={day_n:0,day_usd:0,week_n:0,week_usd:0,flat_day:0,
