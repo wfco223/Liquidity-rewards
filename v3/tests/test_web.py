@@ -257,6 +257,13 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("if(!window._force){window._held=true;return;}", js)
         self.assertIn("sh.innerHTML=bSheetHtml(d);sh.scrollTop=st;", js)
 
+    def test_the_bond_rewards_line_says_what_is_posted_and_what_is_the_meter(self):
+        # owner, 2026-09-08: the rewards figure validated against the postings
+        from v3 import web
+        self.assertIn("posted by the exchange for", web.BONDS_JS)
+        self.assertIn("the meter counts for days not posted yet", web.BONDS_JS)
+        self.assertIn("Meter vs posted, by day", web.BONDS_JS)
+
     def test_bond_positions_are_hidden_from_the_positions_tab(self):
         # owner, 2026-09-08: "Hide bond positions on the orders/positions tab"
         from v3 import web

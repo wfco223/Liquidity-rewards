@@ -201,10 +201,12 @@ def scan_due(now: float, last_day: str, hour: int = SCAN_HOUR_UTC) -> str | None
 
 class Bonds:
     def __init__(self, fam, client, fair, clock=None, alert=None, tax_owed=None,
-                 sleep=None, parse=None):
+                 sleep=None, parse=None, postings=None):
         self.fam = fam                  # the politics family
         self.client = client
         self.parse = parse              # activity rows -> our executions (main's parser)
+        self.postings = postings        # day -> {market: usd posted} or None while unposted
+        self._unread: set[str] = set()  # bond orders restored with an estimate not read since
         self.fair = fair                # slug -> Silver's YES odds, or None
         self._clock = clock or time.time
         self._sleep = sleep or time.sleep
@@ -1024,6 +1026,12 @@ class Bonds:
         for o in list(self.fam.orders.values()):
             if o.purpose != "bond" or not o.live_est or o.live_est <= 0:
                 continue
+            if o.id in self._unread:
+                # restored from a save (owner, 2026-09-08 "go ahead"): the
+                # estimate counts again only once the book has been read
+                if float(getattr(o, "read_ts", 0.0) or 0.0) <= 0.0:
+                    continue
+                self._unread.discard(o.id)
             usd = o.live_est * dt / 86400.0
             self.accrued[day] = round(self.accrued.get(day, 0.0) + usd, 6)
             self.accrued_mkt[o.market] = round(self.accrued_mkt.get(o.market, 0.0) + usd, 6)
@@ -1031,8 +1039,40 @@ class Bonds:
             dm[o.market] = round(dm.get(o.market, 0.0) + usd, 6)
         for d in sorted(self.accrued)[:-ACCRUE_KEEP_DAYS]:
             del self.accrued[d]
-        for d in sorted(self.accrued_day_mkt)[:-BOARD_DAYS - 1]:
+        # kept as long as the day totals, so every day can be graded
+        # against the exchange's posting when it lands (owner, 2026-09-08)
+        for d in sorted(self.accrued_day_mkt)[:-ACCRUE_KEEP_DAYS]:
             del self.accrued_day_mkt[d]
+
+    def _grades(self) -> list[dict]:
+        """Each past day the meter counted, against what the exchange
+        posted for the markets the bond orders worked that day —
+        graded once the posting exists (a day posts about two days
+        later). Owner, 2026-08-23: "verifiable and testable"; 2026-09-08:
+        "Is this number validated against actual earnings posted by
+        Polymarket?" """
+        if self.postings is None:
+            return []
+        today = self._day(self._clock())
+        out = []
+        for day in sorted(self.accrued_day_mkt):
+            if day >= today:
+                continue
+            mk = self.accrued_day_mkt.get(day) or {}
+            meter = round(sum(mk.values()), 4)
+            if meter < 0.005:
+                continue
+            try:
+                posted = self.postings(day)
+            except Exception:  # noqa: BLE001 — a grade is a bonus
+                posted = None
+            if not posted:
+                continue
+            paid = round(sum(float(posted.get(m) or 0.0) for m in mk), 4)
+            out.append({"day": day, "meter": round(meter, 2), "posted": round(paid, 2),
+                        "ratio": (round(paid / meter, 3) if meter > 0.005 else None),
+                        "markets": len(mk)})
+        return out
 
     def _earned(self) -> dict:
         """The headline (owner, 2026-09-03: "the amount invested and the
@@ -1040,7 +1080,14 @@ class Bonds:
         everything earned — profit on sales plus the rewards the bond
         orders measured — over everything ever put in (what is held
         plus what the sold shares had cost)."""
-        rewards = sum(self.accrued.values())
+        grades = self._grades()
+        graded = {g["day"] for g in grades}
+        posted = round(sum(g["posted"] for g in grades), 4)
+        meter_graded = round(sum(g["meter"] for g in grades), 4)
+        meter_open = round(sum(v for d, v in self.accrued.items() if d not in graded), 4)
+        # the posted figure where the exchange has posted, the meter's
+        # count for the days it has not (owner, 2026-09-08 "go ahead")
+        rewards = posted + meter_open
         total = self.realized + rewards
         invested = sum(float(l.get("cost") or 0.0) + float(l.get("fees") or 0.0)
                        for l in self.lots.values())
@@ -1053,6 +1100,11 @@ class Bonds:
                 "sales": round(self.realized, 2),
                 "sold_usd": round(self.sold_usd, 2),
                 "rewards": round(rewards, 2),
+                "meter": round(sum(self.accrued.values()), 2),
+                "posted": round(posted, 2), "meter_graded": round(meter_graded, 2),
+                "meter_open": round(meter_open, 2), "graded_days": len(grades),
+                "ratio": (round(posted / meter_graded, 3) if meter_graded > 0.005 else None),
+                "grades": grades[-14:],
                 "today": round(self.accrued.get(self._day(self._clock()), 0.0), 2),
                 "invested": round(invested, 2),
                 "deployed": round(deployed, 2),
@@ -4145,6 +4197,8 @@ class Bonds:
         self.accrued_mkt = {str(k): float(v) for k, v in (d.get("accrued_mkt") or {}).items()}
         self.accrued_day_mkt = {str(k): {str(m): float(x) for m, x in (v or {}).items()}
                                 for k, v in (d.get("accrued_day_mkt") or {}).items()}
+        self._unread = {o.id for o in list(self.fam.orders.values())
+                        if o.purpose == "bond" and float(getattr(o, "read_ts", 0.0) or 0.0) <= 0.0}
         self._accrued_at = float(d.get("accrued_at") or 0.0)
         self.lot_ts = {str(k): float(v) for k, v in (d.get("lot_ts") or {}).items()}
         self.exch_max = {str(k): float(v) for k, v in (d.get("exch_max") or {}).items()}

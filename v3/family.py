@@ -382,6 +382,8 @@ class FamilyOrder:
     weak_since: float = 0.0   # measuring under the bar since (0 = fine)
     rest_noted: float = 0.0   # last time quiet resting was logged as evidence
     verdict: str = ""    # plain-English live state, refreshed each cycle
+    read_ts: float = 0.0  # when _read_live last set live_est in this process
+                          # (0 = restored from a save, not read since)
     # the 8-hour earning trail (owner, 2026-08-26: "keep track of the
     # percentage decrease in rewards from an 8 hour peak"): half-hour
     # buckets of the order's best measured $/day, oldest dropped past
@@ -2290,6 +2292,7 @@ class Family:
                 continue
             if prog is None:
                 rec.live_est, rec.live_share = 0.0, 0.0
+                rec.read_ts = now
                 self._track_est(rec, now)
                 rec.verdict = why
                 continue
@@ -2308,6 +2311,7 @@ class Family:
                 continue
             rec.live_est = round(j.share * side_pool
                                  if j.qualifies and j.in_window else 0.0, 4)
+            rec.read_ts = now
             # when did this order last earn anything? An exit that has
             # been dry for hours may price to FILL rather than hold out
             # for a price the book has left behind.
@@ -4859,6 +4863,7 @@ class Family:
         for oid, v in (d.get("orders") or {}).items():
             rec = FamilyOrder(**{k: x for k, x in v.items()
                                  if k in FamilyOrder.__dataclass_fields__})
+            rec.read_ts = 0.0          # a restored estimate is unread until the book is
             if rec.why == "adopted from the earlier versions":
                 # one-time migration (owner, 2026-08-22 "Don't let it
                 # cancel orders I set by hand", then "Still getting
