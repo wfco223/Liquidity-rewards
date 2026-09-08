@@ -424,6 +424,14 @@ class TestRedesign(unittest.TestCase):
         self.assertIn("worth the budget", web.STATUS_JS)
 
 
+class TestTheMeterGraph(unittest.TestCase):
+    def test_the_graph_shows_the_last_six_hours_by_default(self):
+        from v3 import web
+        self.assertIn("window._meterWin=21600", web.GRAPH_JS)
+        self.assertIn("b(21600,'6 hours')", web.GRAPH_JS)
+        self.assertNotIn("b(0,'today')", web.GRAPH_JS)
+
+
 class TestBootPayload(unittest.TestCase):
     """Owner, 2026-08-31: the app booted, served on :8080, and every
     page still read "unreachable" — the pre-first-cycle fallback
