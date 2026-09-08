@@ -32,7 +32,7 @@ from . import basketball, football, gameday, politics
 from .alerts import Alerts
 from .api import ApiError, Client, GATEWAY
 from .books import BookCache
-from .box import GcClock, box_stats, freeze_heap
+from .box import GcClock, box_stats, freeze_heap, trim_heap
 from .family import Family
 from .floor import Floor
 from .names import Names
@@ -4449,10 +4449,22 @@ class Monitor:
         st["mem_trail"] = self.mem_trail
         st["cycle_stats"] = self.cycle_stats           # before the snapshot, so it is in it
         # the disk write and the GitHub upload run behind the cycle, on
-        # the store's worker; the upload goes when it is due
+        # the store's worker; the upload goes when it is due. The 12 MB
+        # snapshot is taken at most once a minute (2026-09-08: it was
+        # every cycle, and cycles run 10-30 s) — a tap still forces one.
         t_snap = time.time()
-        self.store.save_soon(st)
+        if now - getattr(self, "_snapshot_at", 0.0) >= 60.0:
+            self._snapshot_at = now
+            self.store.save_soon(st)
         self._snapshot_s = round(time.time() - t_snap, 1)
+        # freed memory back to the box (see box.trim_heap)
+        try:
+            tr = trim_heap()
+        except Exception:  # noqa: BLE001
+            tr = None
+        if tr:
+            self.cycle_stats["trim"] = tr
+            self.mem_trail[-1][1] = tr["after"]
         if not self._first_cycle_done:
             self._first_cycle_done = True
             self.boot_stage = {"stage": "running", "pct": 100,
