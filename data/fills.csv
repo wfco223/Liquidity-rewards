@@ -2470,3 +2470,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788838047.7,politics,scc-senate-gop-2026-11-03-55,SELL,10,0.03,backfill,,4.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBVP3SEFCQ3X
 1788838191.4,politics,ewc-usp-2028-11-07-jdvan,SELL,0.01,0.24,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAZ8XD9X8Q3H
 1788838191.4,politics,scc-senate-gop-2026-11-03-55,SELL,10,0.03,backfill,,4.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CBVP3SEFCQ3X
+1788838267.1,politics,scc-hrep-rep-2026-11-03-gte210,SELL,10,0.43,earn,1.8369,0.85,0.3777,38,42,0.135,0.42,0.43,-0.0523,-20,at the touch — a fill here is 5 ticks inside value (Silver + evidence),CBYP2PAV8Q3Z
+1788838567.1,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,1,0.11,bond,0,0.02,0.0121,10,13,0.807,0.08,0.11,-0.0979,-58,bond: took 1 NO at 11c — it was in the way of our resting order,CBZFP7QMGQ45
+1788839077.6,politics,scc-senate-gop-2026-11-03-55,SELL,-10,0.03,fix,0.6888,4.29,0.0173,1,5,0.236,0.03,0.07,-0.0127,-10,size trimmed by 10 to the exchange's count (order CBVP3SEFCQ3X),CBVP3SEFCQ3X
+1788839077.6,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,0.3,0.02,hand,,4.36,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CAXS64VAJQ3R
