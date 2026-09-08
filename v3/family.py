@@ -3586,6 +3586,22 @@ class Family:
                     best = (give, px)
         return best[1] if best else None
 
+    def _grid_floor(self, slug: str, book=None) -> float:
+        """The lowest price this market's grid allows: one tick (the
+        exchange's own figure where the desk knows it, else the book's).
+        A bid under it snaps to zero and is refused."""
+        tick = None
+        desk = getattr(self, "desk", None)
+        tick_for = getattr(desk, "tick_for", None)
+        if tick_for:
+            try:
+                tick = tick_for(slug)
+            except Exception:  # noqa: BLE001
+                tick = None
+        if not tick and book is not None:
+            tick = getattr(book, "tick", None)
+        return max(0.001, float(tick or 0.0))
+
     def _exit_floor(self, slug: str, side: str, basis: float,
                     tick: float, book=None,
                     qty: float | None = None) -> tuple[float, float]:
@@ -4221,6 +4237,13 @@ class Family:
                 hi = min(cap_px,
                          (book.asks[0][0] - book.tick) if book.asks
                          else cap_px)
+                # the lowest bid a book takes is one tick: a half-cent
+                # buy-back on a whole-cent grid snapped DOWN to zero and
+                # the desk refused it every cycle (2026-09-08: 117
+                # refusals in three minutes, no exit resting). The cap
+                # and the bid both stand on the grid (owner yes, 2026-09-08)
+                grid_lo = self._grid_floor(slug, book)
+                hi = max(hi, grid_lo)
                 if gate_px is not None:
                     hi = max(hi, gate_px)
                 if dead_s and step_tgt is not None:
@@ -4280,7 +4303,7 @@ class Family:
                                           # promised this pass, for this
                                           # same size (a different size
                                           # is a different gate answer)
-                px = min(max(px, 0.001), 0.999)
+                px = min(max(px, grid_lo), 0.999)
                 side, intent, rest_qty = "BUY", SELL_SHORT, rest
                 why = ("buying back the short at or under what it sold "
                        "for — the bid earns while it waits")
