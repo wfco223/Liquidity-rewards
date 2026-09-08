@@ -537,6 +537,11 @@ class Family:
         # (the game-day family); kept past discovery so the kickoff
         # pull still knows a game that has left the universe
         self.event_start: dict[str, float] = {}
+        # the last value each position closed at, kept across a restart
+        # so the first pages after a boot do not read $0 (owner,
+        # 2026-09-08, Montana Senate: "no book read yet" on a book the
+        # live card had): slug -> [liq, unsold, ts]
+        self.pos_value: dict[str, list] = {}
         # the owner's bond shares per market, signed YES (owner,
         # 2026-09-02: "the engine does not need to ignore these
         # markets, only the orders I place"; "I only want to know for a
@@ -4704,6 +4709,13 @@ class Family:
             # (owner, 2026-09-08); shares no order would take are
             # counted, not priced
             liq, unsold = self.close_value(slug, qty, book)
+            stale = None
+            if book is not None:
+                self.pos_value[slug] = [round(liq, 4), unsold, round(now, 1)]
+            elif slug in self.pos_value:
+                # no book read since the restart: the last known value,
+                # said to be as of when it was read
+                liq, unsold, stale = self.pos_value[slug]
             cover_side = "SELL" if qty > 0 else "BUY"
             covers = [o for o in list(self.orders.values())
                       if o.market == slug and o.side == cover_side]
@@ -4717,7 +4729,8 @@ class Family:
                 "bond": slug in self.bond_markets,
                 "cost": round(inv.get("cost", 0.0), 2),
                 "liq": round(liq, 2), "unsold": unsold,
-                "no_book": book is None,
+                "no_book": book is None and stale is None,
+                "as_of": stale,
                 # nobody on the side a close would hit, and the event
                 # is past: the shares wait for settlement, they are not
                 # for sale (owner, 2026-09-08: the MA primary brackets)
@@ -4730,6 +4743,9 @@ class Family:
                             "qty": o.qty, "purpose": o.purpose}
                            for o in covers]})
         summary["positions"] = positions
+        held = {p["market"] for p in positions}
+        for slug in [s for s in self.pos_value if s not in held]:
+            self.pos_value.pop(slug, None)
         # the wind-down report: what the engine has actually retired,
         # so "where are we on selling off positions" has a number
         # instead of an inference from position counts
@@ -4862,6 +4878,7 @@ class Family:
             "placed_at": self.placed_at,
             "active_until": self.active_until,
             "event_start": self.event_start,
+            "pos_value": self.pos_value,
             "graduated": sorted(self.graduated),
             "grad_candidates": self.grad_candidates,
             "pos_moves": self.pos_moves[-500:],
@@ -4933,6 +4950,9 @@ class Family:
         self.wind_down = list(d.get("wind_down") or ())
         self.seen_pids = set(d.get("seen_pids") or ())
         self.inv_since = dict(d.get("inv_since") or {})
+        self.pos_value = {str(k): [float(v[0]), float(v[1]), float(v[2])]
+                          for k, v in (d.get("pos_value") or {}).items()
+                          if isinstance(v, (list, tuple)) and len(v) >= 3}
         if d.get("fillmodel"):
             self.fillmodel = FillModel.from_dict(d["fillmodel"])
         self.pending_marks = list(d.get("pending_marks") or [])

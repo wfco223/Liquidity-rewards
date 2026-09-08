@@ -744,6 +744,7 @@ function posTab(d){
    +'<div style="display:flex;gap:16px;align-items:baseline;margin:3px 0">'
    +'<span class="px">'+(p.qty>0?p.qty+' sh':(-p.qty)+' short')+'</span>'
    +'<span class="rt">'+usd(p.liq)+'</span>'
+   +(p.as_of?'<span class="muted">as of '+when(p.as_of)+' \\u2014 book not read since the restart</span>':'')
    +((p.unsold||0)>0.005?'<span class="warn">'+(p.no_book?'no book read yet':p.no_takers?(p.event_over?'no bids \u2014 event over, awaiting settlement (pays '+usd(Math.abs(p.qty))+' if it resolves your way)':'no bids in the book'):p.unsold+' sh no order to take them')+'</span>':'')
    +'<span class="'+(p.earn<0.005?'warn':'muted')+'">'+(p.earn<0.005?'idle':usd(p.earn)+'/d')+'</span></div></div>';
  });

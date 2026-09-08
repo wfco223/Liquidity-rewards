@@ -6061,6 +6061,21 @@ class TestPositionsLedger(unittest.TestCase):
         p2 = {x["market"]: x for x in r.cycle()["positions"]}[old_slug]
         self.assertEqual((p2["liq"], p2["unsold"], p2["no_takers"], p2["event_over"]),
                          (0.0, 163.0, True, True))
+        # a restart before any book is read: the last known value stands,
+        # said to be as of when it was read (owner, 2026-09-08, Montana)
+        saved = r.fam.to_dict()
+        self.assertIn(A, saved["pos_value"])
+        r2 = Rig(switch=False)
+        r2.fam.restore(saved)
+        r2.positions[A] = (10.0, 0.5)
+        r2.fam.inventory[A] = {"qty": 10.0, "cost": 0.5}
+        r2.cache._books.clear()
+        r2.exchange.books.clear()
+        p3 = {x["market"]: x for x in r2.fam._finish({}, r2.now)["positions"]}[A]
+        self.assertAlmostEqual(p3["liq"], 4 * 0.10 + 3 * 0.08, places=4)
+        self.assertEqual(p3["unsold"], 3.0)
+        self.assertFalse(p3["no_book"])
+        self.assertIsNotNone(p3["as_of"])
         # our own bid at the touch is not a buyer of our stock
         r.fam.orders["M"] = FamilyOrder(id="M", market=A, side="BUY", price=0.10,
                                         qty=3.0, intent=BUY_LONG, placed_ts=r.now,
