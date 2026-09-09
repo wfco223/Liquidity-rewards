@@ -411,7 +411,8 @@ def is_wall(o, held: float | None = None) -> bool:
     should not count when determining whether to offer shares for
     sale." A cover bid at 1c on a cheap short, sized to the short, is
     not a wall."""
-    if getattr(o, "why", "") == QUALIFY_WALL_WHY:
+    why = getattr(o, "why", "") or ""
+    if why == QUALIFY_WALL_WHY or why.startswith("bond amplifier"):
         return True
     px = float(getattr(o, "price", 0.0) or 0.0)
     edge = ((o.side == "SELL" and px >= WALL_EDGE - 1e-9)

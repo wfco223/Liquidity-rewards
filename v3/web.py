@@ -1035,7 +1035,13 @@ function bSheetHtml(d){
 // which markets you have opened for details, kept across redraws
 window._bOpen=window._bOpen||{};
 function bTog(el,m){window._bOpen[m]=!!el.open;}
-function bExit(r){return (r.calc&&r.calc.orders||[]).filter(function(o){return !o.decoy;});}
+function bExit(r){return (r.calc&&r.calc.orders||[]).filter(function(o){return !o.decoy&&!(o.why&&String(o.why).indexOf('bond amplifier')===0);});}
+function bAmp(r){
+ // owner, 2026-09-09: the amplifier — a buy of the underdog at the far edge, behind the exit, that carries the side over Target Size
+ var a=r.amp;if(!a)return '';
+ if(a.qty!=null)return ' · <span class="pill on">amplifier</span> '+a.qty+' @ '+pc(bTerms(r,a.px))+' behind the exit, carrying the side over Target Size → unlocks ~'+usd(a.gain||0)+'/day, expected cost '+usd(a.exp_loss||0)+'/day';
+ return a.note?' · <span class="muted">no amplifier: '+esc(a.note)+'</span>':'';
+}
 function bTop(r,L,held){
  var mk=r.mark;var black=!!(mk&&mk.black);
  var h='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+(black?' <span class="pill on">in the black</span>':'')+(r.odds_changed?' <span class="pill" style="border-color:#c9a227;color:#e8c547">odds changed · Silver '+bOdds(r)+'</span>':'')+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
@@ -1047,7 +1053,7 @@ function bTop(r,L,held){
   var e=ex.length?('exit '+ex.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}).join(' + ')+(r.pin?' <span class="pill on">your price</span>':'')+' → <b>'+usd(ex.reduce(function(s,o){return s+(o.est||0);},0))+'/day</b>'):'<span class="warn">no exit resting'+(r.exit_note?' — '+esc(r.exit_note):'')+'</span>';
   var mos=(r.more&&r.more.orders&&r.more.orders.length)?r.more.orders:((r.more&&r.more.order)?[r.more.order]:[]);
   var mo=mos.length?(' · buying more '+mos.map(function(o){return o.qty+' @ '+pc(bTerms(r,o.price));}).join(' + ')):'';
-  h+='<div class="sub"><b>'+r.qty+' held @ '+pc(r.cost_px)+'</b> · '+e+mo+(r.rewards?' · earned '+usd(r.rewards):'')+'</div>';
+  h+='<div class="sub"><b>'+r.qty+' held @ '+pc(r.cost_px)+'</b> · '+e+mo+(r.rewards?' · earned '+usd(r.rewards):'')+bAmp(r)+'</div>';
  } else {
   h+='<div class="sub">Silver '+bOdds(r)+(r.cost!=null?' · take '+pc(r.cost)+', '+r.size+' avail'+(r.days!=null?' · '+bPct(r['yield'])+' in '+r.days+'d ≈ '+bPct(r.annual)+'/yr':''):' · nothing to take')+'</div>';
  }
@@ -1176,6 +1182,7 @@ function bList(d){
  out+='<div class="sub"><b>'+usd(b.money||0)+'</b> to deploy = budget '+usd(b.budget||0)+' + proceeds '+usd(b.cash||0)+' · held at cost '+usd(b.held_cost||0)+'</div>';
  if(b.budget_total!=null)out+='<div class="sub"><b>Budget '+usd(b.budget_total)+'</b> · '+usd(b.invested||0)+' in bonds at cost · <b>'+usd(Math.max(b.room||0,0))+' of room</b> for buy orders'+((b.room||0)<1?' — <span class="warn">budget full: nothing new is bought</span>':'')+'. No one market holds more than '+Math.round((b.market_share||0.5)*100)+'% of the budget, '+usd(b.market_cap||0)+', so a market\'s buy orders fit that less what it holds. Across markets the orders may add up to more; a fill anywhere shrinks the room everywhere.</div>';
  if(b.wall_held>0)out+='<div class="sub">Your qualifying walls hold '+usd(b.wall_held)+' on the exchange. Parked, not spent: it does not count against money to deploy.</div>';
+ if(b.amp_budget!=null)out+='<div class="sub">Amplifiers: where an exit\u2019s side falls short of Target Size, a buy of the underdog at the far edge carries it over so the exit pays. Budget '+usd(b.amp_budget)+'/day of expected loss ('+Math.round((b.amp_fraction||0.5)*100)+'% of the bonds\u2019 '+usd(b.amp_avg_earn||0)+'/day average over the last few days); '+usd(b.amp_in_play||0)+'/day in play, unlocking ~'+usd(b.amp_unlocks||0)+'/day. An exit fill pulls them for two hours.</div>';
  if(b.money_out){var mo=b.money_out;out+='<div class="sub warn"><b>Politics and cfb buy nothing new</b> since '+when(mo.since)+': the exchange showed '+usd(mo.bp||0)+' free'+(mo.walls>0?' plus '+usd(mo.walls)+' the walls hold':'')+', and '+usd(mo.reserve||0)+' of that is reserved for the bonds. They resume once '+usd(b.money_back_usd||50)+' is free beyond the reserve. Bond bids are not held by this: they rest within the budget room and size to what the exchange can fund.</div>';}
  out+='<div class="sub">Earned <b>'+usd(e.total||0)+'</b> = '+usd(e.sales||0)+' on sales + '+usd(e.rewards||0)+' rewards'+(e.today?' ('+usd(e.today)+' today)':'')+'</div>';
  // the rewards figure is validated (owner, 2026-09-08): what the exchange
