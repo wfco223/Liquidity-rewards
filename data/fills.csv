@@ -2970,3 +2970,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788914362.5,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,20,0.93,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCHGRCSR2R3X
 1788914362.5,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,20,0.93,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCHHA68Q2R3X
 1788914362.5,cfb,aachc-cfb-wins-2026-11-28-sdst-8pt5wins,SELL,0.01,0.36,backfill,,13.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC663A9VWR40
+1788915457.8,politics,ewc-usp-party-2028-11-07-rep,BUY,1,0.44,sell,0.2166,0.68,,44,47,0.714,0.47,0.48,-0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CCH9D16G0R3W
+1788915650.6,politics,ewc-usp-party-2028-11-07-rep,BUY,1,0.47,sell,2.1385,0.07,,43,46,0.769,0.44,0.48,0.03,2,buying back the short at or under what it sold for — the bid earns while it wait,CCHVDAZK2R40
+1788915650.6,cfb,aachc-cfb-wins-2026-11-28-washst-7pt5wins,SELL,2,0.35,sell,0.0269,0.49,,34,38,0.797,0.33,0.34,0.01,0,selling filled stock — it earns while it waits,CCHFPH0EWR3W
+1788915995.4,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,-20,0.93,fix,0,0.08,0.99935,90,92,0.93,0.92,0.94,-0.0694,40,size trimmed by 20 to the exchange's count (order CCHGRCSR2R3X),CCHGRCSR2R3X
+1788915995.4,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,36,0.94,hand,,0.15,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBJ1A0DQGQ48
