@@ -2951,3 +2951,22 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788912338.3,politics,enwc-ussep-de-2026-09-15-rep-johshu,BUY,0.44,0.08,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCGQF0YGMR46
 1788912338.3,cfb,aachc-cfb-wins-2026-11-28-wash-8pt5wins,BUY,-0.62,0.44,fix,0.3082,0.4,,34,48,0.001,0.47,0.48,0.01,0.63,size trimmed by 0.62 to the exchange's count (order CCFVRM3AAR42),CCFVRM3AAR42
 1788912338.3,cfb,aachc-cfb-wins-2026-11-28-colst-3pt5wins,SELL,1,0.82,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCG8D5K4TR42
+1788912878.3,politics,ewc-usp-2028-11-07-markel,SELL,1,0.04,sell,0.0431,0.92,,2,9,0.444,0.03,0.18,0.01,0,selling filled stock — it earns while it waits,CCGEKM93GR3Y
+1788912961.5,politics,ussewc-usse-nm-2026-11-03-rep,BUY,1,0.07,sell,3.1131,0.44,0.005,3,6,0.784,0.01,0.08,0.065,2,buying back the short at or under what it sold for — the bid earns while it wait,CCGX3PNMER45
+1788913016.4,politics,ewc-usp-party-2028-11-07-rep,SELL,0.05,0.45,backfill,,0.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCGHNFHC6R3Z
+1788913021.5,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,5,0.21,earn,0.5734,5.35,0.137725,19,22,0.762,0.19,0.21,-0.0723,-51,1 tick behind the touch — we would hold 3% of the ask side,CCCN6ZJMCR3Y
+1788913021.5,politics,ewc-usp-party-2028-11-07-rep,SELL,1,0.45,earn,0.3043,0.86,,43,46,0.629,0.42,0.45,-0.01,-1,2 ticks behind the touch — we would hold 1% of the ask side,CCGHNFHC6R3Z
+1788913319.5,cfb,aachc-cfb-wins-2026-11-28-sdst-8pt5wins,SELL,0.01,0.36,backfill,,13.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC663A9VWR40
+1788913321.5,politics,scc-hrep-rep-2026-11-03-gte205,BUY,6,0.52,sell,0.3125,7.39,0.52785,49,54,0.001,0.52,0.53,-0.0079,0,buying back the short at or under what it sold for — the bid earns while it wait,CCAYC7WDTR42
+1788913381.5,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,5,0.21,earn,0.2802,5.45,0.137725,19,22,0.801,0.19,0.21,-0.0723,-56,1 tick behind the touch — we would hold 3% of the ask side,CCCN6ZJMCR3Y
+1788913441.5,politics,ussewc-usse-ms-2026-11-03-dem,BUY,4,0.1,sell,2.5,0.12,0.020675,7,10,0.789,0.05,0.11,0.0793,-2,buying back the short at or under what it sold for — the bid earns while it wait,CCH8YMFP4R46
+1788913760.3,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,10,0.92,earn,0.5877,0.05,0.99935,89,92,0.922,0.92,0.94,-0.0794,20,1 tick behind the touch — we would hold 1% of the bid side,CCHDE0NA2R3W
+1788914060.4,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,20,0.94,manual,0,0.03,0.99935,89,91,0.926,0.91,0.94,0.0594,0,moved by the owner,CCHG6K7CYR3Z
+1788914060.4,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,20,0.92,sell,0,0.02,0.99935,89,91,0.926,0.91,0.94,0.0794,-20,selling filled stock — it earns while it waits,CCHGGX184R40
+1788914090.1,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,20,0.93,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCHGRCSR2R3X
+1788914136.0,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,20,0.93,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCHHA68Q2R3X
+1788914362.5,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,2,0.02,backfill,,13.52,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC4F9HGW8R45
+1788914362.5,politics,ewc-usp-party-2028-11-07-rep,SELL,0.05,0.45,backfill,,0.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCGHNFHC6R3Z
+1788914362.5,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,20,0.93,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCHGRCSR2R3X
+1788914362.5,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,20,0.93,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCHHA68Q2R3X
+1788914362.5,cfb,aachc-cfb-wins-2026-11-28-sdst-8pt5wins,SELL,0.01,0.36,backfill,,13.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC663A9VWR40
