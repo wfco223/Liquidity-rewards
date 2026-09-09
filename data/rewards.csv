@@ -8620,6 +8620,7 @@ date,market,program_type,reward_usd,status
 2026-09-06,ussewc-usse-wv-2026-11-03-rep,liquidityProgram,0.71,PAID
 2026-09-06,ussewc-usse-wy-2026-11-03-dem,liquidityProgram,0.05,PAID
 2026-09-06,ussewc-usse-wy-2026-11-03-rep,liquidityProgram,0.41,PAID
+2026-09-07,aachc-cfb-wins-2026-11-28-boise-9pt5wins,liquidityProgram,0.45,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-byu-8pt5wins,liquidityProgram,0.01,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-duke-6pt5wins,liquidityProgram,0.06,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-frest-4pt5wins,liquidityProgram,0.06,PENDING
