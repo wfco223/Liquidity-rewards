@@ -141,10 +141,13 @@ long and accreted, so search it rather than reading it through.
   don't place orders in these races before I get the chance to look
   at them"): discovery alerts him by ntfy and the status page lists
   the week's new markets. State races (attorneys general, lieutenant
-  governors, secretaries of state, state supreme courts) are HELD
-  ground for politics: scanned, scored and shown, but no order rests
-  there until he taps Open for orders on that market. Mayors and
-  territories are not on the ground at all.
+  governors, secretaries of state, state supreme courts) and the
+  House popular vote markets (winner and margin buckets; owner,
+  2026-09-09 "Those should be included but again, don't place any
+  orders until I say the word") are HELD ground for politics:
+  scanned, scored and shown, but no order rests there until he taps
+  Open for orders on that market. Mayors and territories are not on
+  the ground at all.
 - Secrets (POLYMARKET_KEY_ID, POLYMARKET_SECRET_KEY, DASH_PASSWORD,
   GITHUB_TOKEN, NTFY_TOPIC) exist only as encrypted Actions/env secrets.
   Never in code, commits, or output files.
