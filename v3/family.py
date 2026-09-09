@@ -2734,12 +2734,18 @@ class Family:
                                           now)
                 if book_g is not None and book_g.tick:
                     px_g = snap_price(rec.price, book_g.tick, rec.side)
-                    if not (0.001 - 1e-12 <= px_g <= 0.999 + 1e-12):
+                    if (not (0.001 - 1e-12 <= px_g <= 0.999 + 1e-12)
+                            or (rec.side == "SELL"
+                                and px_g < rec.price - 1e-9)):
                         # no legal slot on this book's grid (the 99.9c
                         # ask whose snap-up is 100c) — leave it be
                         # instead of retrying a doomed reprice forever
                         # (owner approved 2026-08-26; 13 audit refusals
-                        # in 6h before this)
+                        # in 6h before this). The sweep only ever moves
+                        # an ask UP: the top-of-grid rule (2026-09-09)
+                        # rounds a NEW ask down, but an ask the exchange
+                        # already holds above the grid's top step stays
+                        # where it is
                         pass
                     elif abs(px_g - rec.price) > 1e-9:
                         r_g = self.desk.reprice(
