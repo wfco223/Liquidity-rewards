@@ -75,6 +75,16 @@ def snap_price(price: float, tick: float, side: str) -> float:
     steps = price / tick
     snapped = (math.floor(steps + 1e-9) if side == "BUY"
                else math.ceil(steps - 1e-9)) * tick
+    if (side == "SELL" and snapped > PRICE_MAX + 1e-9
+            and price <= PRICE_MAX + 1e-9):
+        # the top of the grid (owner, 2026-09-09, "round down at the
+        # top"): an ask within the exchange's range whose grid step up
+        # is 100c — a 99.25c break-even on a whole-cent book — was
+        # refused every cycle and the shares sat uncovered. It snaps
+        # DOWN to the highest step the grid allows instead. A price
+        # already past 99.9c is not rounded: the rail refuses it as
+        # before, nobody chose 99c for it.
+        snapped = math.floor(PRICE_MAX / tick + 1e-9) * tick
     return round(snapped, 3)
 
 
