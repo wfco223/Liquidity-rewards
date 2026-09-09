@@ -222,8 +222,11 @@ def config() -> FamilyConfig:
         # get the chance to look at them"): attorneys general,
         # lieutenant governors, secretaries of state, state supreme
         # courts — scanned, scored and shown; no order until he opens
-        # the market from the status page
-        hold_tokens=("usag", "usltgov", "ussos", "ussupct"),
+        # the market from the status page. The House popular vote
+        # (winner, and the margin buckets) joined the same way (owner,
+        # 2026-09-09 evening: "Those should be included but again,
+        # don't place any orders until I say the word")
+        hold_tokens=("usag", "usltgov", "ussos", "ussupct", "housepop"),
         rest_from=None, rest_until=None,      # politics rests every day
         min_days_out=3,
         # owner, 2026-08-30 ("make actions up to our limit"), after his
