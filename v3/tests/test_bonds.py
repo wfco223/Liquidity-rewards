@@ -4287,6 +4287,42 @@ class TestTheAmplifier(Base):
         at_level = sum(q for p, q in levels if abs(p - 0.99) < 1e-9)
         self.assertAlmostEqual(at_level, 2000.0)             # only the crowd competes
 
+    def test_a_pull_for_want_of_pay_rests_nothing_new_for_half_an_hour(self):
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertEqual(len(self.amps()), 1)
+        self.b.fam._side_pool = lambda slug, prog: 0.05        # the pay vanishes
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.amps(), [])
+        del self.b.fam._side_pool                              # and comes back
+        self.b.cycle(self.now + 120, self.positions(), on=True)
+        self.assertEqual(self.amps(), [])                      # the cooldown holds
+        self.b.cycle(self.now + 60 + bonds_mod.AMP_COOLDOWN_S + 60, self.positions(), on=True)
+        self.assertEqual(len(self.amps()), 1)
+
+    def test_a_neighbouring_size_does_not_move_a_resting_amplifier(self):
+        self.b.cycle(self.now, self.positions(), on=True)
+        amp = self.amps()[0]
+        q0 = amp.qty
+        # the crowd grows a little: the plan's best size drifts a notch
+        self.seed(AL, self.crowded_book(self.now + 60, crowd=2400.0 + 100.0 + q0))
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.amps()[0].id, amp.id)
+        self.assertFalse(any(e["event"] == "amp_resized" for e in self.b.log))
+
+    def test_the_book_read_before_the_order_is_not_netted_of_it(self):
+        book = self.crowded_book(self.now)
+        self.b.cycle(self.now, self.positions(), on=True)     # exit + amplifier rest AFTER this read
+        levels = self.b._levels_net(AL, "SELL", book)
+        at_level = sum(q for p, q in levels if abs(p - 0.99) < 1e-9)
+        self.assertAlmostEqual(at_level, 2000.0)              # the crowd is not stripped
+
+    def test_the_size_fits_the_market_room(self):
+        self.b.set_budget(120.0)       # $90 held here: about $30 of room at the 50% share
+        self.b.cycle(self.now, self.positions(), on=True)
+        from v3.survey import wall_collateral
+        for a in self.amps():
+            self.assertLessEqual(wall_collateral(a.side, a.price, a.qty), 60.0 + 1e-9)
+
     def test_the_view_carries_it(self):
         self.b.cycle(self.now, self.positions(), on=True)
         v = self.b.view(self.now, self.positions())
