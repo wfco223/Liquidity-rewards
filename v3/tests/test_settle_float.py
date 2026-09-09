@@ -178,6 +178,42 @@ class TestTheExitFloat(unittest.TestCase):
         r.fam._side_pool = lambda slug, prog: 0.05
         self.assertFalse(r.fam._float_wants_more(A, "SELL", book, 0.44, 0.43, 10.0, 0.60))
 
+    def test_no_cancel_churn_once_the_exit_sits_at_the_float_level(self):
+        # 2026-09-09 04:00Z: three exits were cancelled and re-rested
+        # twenty times each — the cancel fired on the level, the re-rest
+        # landed elsewhere. A cancel now needs a re-rest that lands
+        # somewhere better.
+        r = self._rig()
+        self._go_dry(r); r.cycle()                 # step + cancel
+        self._go_dry(r); r.cycle()                 # re-rested at the level
+        for _ in range(5):
+            self._go_dry(r); r.cycle(advance=60.0)
+        moves = [e for e in r.fam.log if e.get("event") == "exit_float_move"]
+        self.assertEqual(len(moves), 1, moves)
+        ex = self._exits(r)
+        self.assertEqual(len(ex), 1, ex)
+        self.assertAlmostEqual(ex[0].price, 0.60, places=3)
+
+    def test_a_qualifying_wall_is_not_an_exit_to_float(self):
+        from v3.family import FamilyOrder, QUALIFY_WALL_WHY
+        r = self._rig()
+        # the wall rests on the exchange (adopted as an exit, as the
+        # 2026-09-08 Nebraska bids were)
+        w = r.desk.place_resting(A, "SELL", 0.99, 500.0, net_position=10.0,
+                                 initiator="owner")
+        self.assertTrue(w.ok, w.note)
+        wall = FamilyOrder(id=w.order_id, market=A, side="SELL", price=0.99, qty=500.0,
+                           intent=w.intent or "ORDER_INTENT_SELL_LONG", placed_ts=r.now,
+                           purpose="sell", why=QUALIFY_WALL_WHY, live_est=0.0,
+                           dry_since=r.now - 8 * 3600.0)
+        r.fam.orders[wall.id] = wall
+        self._go_dry(r); r.cycle()
+        self._go_dry(r); r.cycle()
+        self.assertIn(wall.id, r.fam.orders)      # never cancelled
+        self.assertAlmostEqual(r.fam.orders[wall.id].price, 0.99)
+        # and its 500 shares never counted in the concession
+        self.assertLess(r.fam.float_day["usd"], 0.5)
+
     def test_the_day_budget_stops_the_float(self):
         r = self._rig(exit_float_usd_day=0.15)     # one step of 10c fits, two do not
         self._go_dry(r); r.cycle()
