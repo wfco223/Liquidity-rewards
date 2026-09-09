@@ -144,6 +144,8 @@ AMP_DAYS = 3
 AMP_AFTER_FILL_S = 2 * 3600.0
 AMP_WHY = "bond amplifier"
 AMP_QTYS = (5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000)
+AMP_COOLDOWN_S = 1800.0     # after a pull for want of pay, room or budget: nothing new here this long
+AMP_RESIZE_FRAC = 0.50      # a resting amplifier is resized only when the plan differs by this much
 BAIT_QTY = 1.0              # the bait: one share a tick inside their best on the buy side
 BAIT_WAIT_S = 2 * 3600.0    # nobody followed in this long: the bait comes off
 BOOK_SHOW = 6               # levels per side the page shows
@@ -1796,9 +1798,17 @@ class Bonds:
         return j.share * pool if (j.qualifies and j.in_window) else 0.0
 
     def _levels_net(self, slug: str, bs: str, book) -> list:
+        """The side without our own bond orders. An order placed AFTER the
+        book was read is not in it yet, so it is not subtracted — netting
+        it out would take someone else's size off the level (2026-09-09:
+        the amplifier read its own level as empty and pulled itself)."""
         tick = book.tick or 0.01
         raw = list(book.side(bs))
-        for o in self._orders(slug, bs) + [a for a in self._amp_orders(slug) if a.side == bs]:
+        read_at = float(getattr(book, "fetched_at", 0.0) or 0.0)
+        ours = [o for o in self._orders(slug, bs)
+                + [a for a in self._amp_orders(slug) if a.side == bs]
+                if not read_at or float(getattr(o, "placed_ts", 0.0) or 0.0) < read_at - 1e-6]
+        for o in ours:
             raw = [(p, (q - o.qty) if abs(p - o.price) < tick / 2 else q)
                    for p, q in raw]
         return [(p, q) for p, q in raw if q > 1e-9]
@@ -2465,8 +2475,14 @@ class Bonds:
         loss_ps = max(loss_ps, 0.0005)
         lots = [(o.price, o.qty) for o in exits]
         _sh0, est0 = self._share_lots(slug, bs, book, lots)
+        # sizes the bond money rules allow here (the resting amplifier's
+        # own collateral counts as room, since it would be replaced)
+        room = self.market_room(slug) + sum(
+            wall_collateral(a.side, a.price, a.qty) for a in self._amp_orders(slug))
         best = None
         for q in AMP_QTYS:
+            if wall_collateral(bs, px, float(q)) > room + 1e-9:
+                break
             _sh, est = self._share_lots(slug, bs, book, lots + [(px, float(q))])
             gain = est - est0
             exp_loss = pf * loss_ps * q
@@ -2483,8 +2499,9 @@ class Bonds:
                         "pf": round(pf, 4), "loss_ps": round(loss_ps, 5),
                         "est0": round(est0, 4), "est": round(est, 4)}
         if best is None:
-            self.amp_note[slug] = (f"nothing pays here: at {px * 100:g}c no size adds earnings "
-                                   f"worth {1 / AMP_FRACTION:.0f}x its expected loss "
+            self.amp_note[slug] = (f"nothing pays here: at {px * 100:g}c no size within the "
+                                   f"room (${room:,.2f}) adds earnings worth "
+                                   f"{1 / AMP_FRACTION:.0f}x its expected loss "
                                    f"(fill odds {pf:.0%}/day, {loss_ps * 100:.2f}c a share)")
             return None
         return best
@@ -2569,6 +2586,7 @@ class Bonds:
             if plan is None:
                 if amps:
                     self._amp_pull(slug, self.amp_note.get(slug, "no longer needed"))
+                    self.amp_hold[slug] = now + AMP_COOLDOWN_S
                 continue
             plans.append((plan["ratio"], slug, side, bs, plan, amps))
         plans.sort(key=lambda t: -t[0])
@@ -2581,13 +2599,14 @@ class Bonds:
                                        f"${self._avg_earn_day():.2f}/day average)")
                 if amps:
                     self._amp_pull(slug, "over the day's expected-loss budget")
+                    self.amp_hold[slug] = now + AMP_COOLDOWN_S
                 continue
-            why_not = self._can_spend(plan["collateral"], now, slug)
-            if why_not:
-                self.amp_note[slug] = f"{why_not} — the amplifier holds ${plan['collateral']:.2f}"
-                if amps:
-                    self._amp_pull(slug, why_not)
-                continue
+            if not amps:
+                why_not = self._can_spend(plan["collateral"], now, slug)
+                if why_not:
+                    self.amp_note[slug] = f"{why_not} — the amplifier holds ${plan['collateral']:.2f}"
+                    self.amp_hold[slug] = now + AMP_COOLDOWN_S
+                    continue
             spent += plan["exp_loss"]
             qty, px = plan["qty"], plan["px"]
             _bs, entry_intent = self.entry("NO" if side == "YES" else "YES")   # the underdog
@@ -2597,8 +2616,11 @@ class Bonds:
                    f"${plan['est']:.2f}/day)")
             if amps:
                 cur = amps[0]
+                # hysteresis: the size grid steps by a third to a half, so
+                # a plan that flickers between neighbours must not move
+                # the order every cycle
                 same = (abs(cur.price - px) < 1e-9
-                        and abs(cur.qty - qty) <= max(1.0, 0.2 * qty))
+                        and abs(cur.qty - qty) <= max(1.0, AMP_RESIZE_FRAC * cur.qty))
                 if same and len(amps) == 1:
                     self.amp[slug] = dict(self.amp.get(slug) or {}, qty=cur.qty, px=cur.price,
                                           exp_loss=plan["exp_loss"], gain=plan["gain"])
