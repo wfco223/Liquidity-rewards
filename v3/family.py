@@ -3245,13 +3245,48 @@ class Family:
         self._float_budget_left(now)
         self.float_day["usd"] = round(float(self.float_day.get("usd") or 0.0) + usd, 4)
 
+    def _float_wants_more(self, slug: str, side: str, book, level: float,
+                          nxt: float, qty: float, basis: float) -> bool:
+        """Owner, 2026-09-09: exits go to OPTIMALLY earning, "where there
+        is no marginal benefit to moving up any further all things
+        considered". Value of resting at a price = what it earns there
+        + fill odds x (the gain or LOSS against basis on a fill + the
+        freed money redeployed for the measured hold). One tick closer
+        is wanted only while that value rises."""
+        prog, _w = self._prog_row(slug)
+        if prog is None:
+            return False
+        side_pool = self._side_pool(slug, prog) or 0.0
+        tick = book.tick or 0.01
+        lv = self._levels_less(book.side(side), (level, qty))
+        touch = lv[0][0] if lv else level
+        r_eff = self._exit_opportunity_rate()
+        d_off = self.fillmodel.expected_offload_days(slug)
+
+        def value(px: float) -> float:
+            j = estimate_join(side, lv, tick, float(prog.df),
+                              float(prog.target), px, qty)
+            est = (j.share * side_pool
+                   if side_pool and j.qualifies and j.in_window else 0.0)
+            ticks = (max(round((px - touch) / tick), 0) if side == "SELL"
+                     else max(round((touch - px) / tick), 0))
+            pf = self.fillmodel.p_fill(slug, side, ticks,
+                                       target=float(prog.target))
+            gain = ((px - basis) if side == "SELL" else (basis - px)) * qty
+            freed = (px if side == "SELL" else (1.0 - px)) * qty
+            return est + pf * (gain + freed * r_eff * d_off)
+        return value(nxt) > value(level) + 1e-4
+
     def _float_level(self, slug: str, side: str, mine: list, base_px: float,
-                     book, now: float, qty: float) -> float | None:
+                     book, now: float, qty: float,
+                     basis: float | None = None) -> float | None:
         """The price this side's exits may rest at once they have measured
         $0 for exit_float_idle_s: one tick past the last level toward the
         touch every exit_float_step_s, never past the touch, each step's
-        concession drawn from the day's budget. An exit that measures
-        earning holds its level. None = no float for this side."""
+        concession drawn from the day's budget. While nothing earns the
+        steps continue; once something earns they continue only while a
+        tick closer is worth more all things considered
+        (_float_wants_more). None = no float for this side."""
         if not self.cfg.exit_float or qty <= 0.005 or book is None:
             return None
         key = f"{slug}|{side}"
@@ -3278,11 +3313,18 @@ class Family:
         level = float(st["px"]) if st else float(base_px)
         at_limit = (level <= limit + 1e-9) if side == "SELL" else (level >= limit - 1e-9)
         stepped = False
-        if (idle and not at_limit
-                and (st is None or now - float(st.get("since") or 0.0)
-                     >= self.cfg.exit_float_step_s)):
-            nxt = round(level - tick, 3) if side == "SELL" else round(level + tick, 3)
-            nxt = max(nxt, limit) if side == "SELL" else min(nxt, limit)
+        due = (st is None or now - float(st.get("since") or 0.0)
+               >= self.cfg.exit_float_step_s)
+        nxt = round(level - tick, 3) if side == "SELL" else round(level + tick, 3)
+        nxt = max(nxt, limit) if side == "SELL" else min(nxt, limit)
+        if st is None:
+            wanted = idle                      # the first step needs the idle hours
+        elif not earning:
+            wanted = True                      # still earning nothing: keep going
+        else:
+            wanted = self._float_wants_more(slug, side, book, level, nxt, qty,
+                                            basis if basis is not None else base_px)
+        if wanted and not at_limit and due:
             concession = abs(nxt - level) * qty
             if concession > 1e-9 and self._float_budget_left(now) >= concession - 1e-9:
                 self._float_spend(now, concession)
@@ -4352,7 +4394,8 @@ class Family:
                 # nothing step down toward the ask touch, a tick at a
                 # time, on the day's concession budget
                 fl = self._float_level(slug, "SELL", mine, floor_px, book, now,
-                                       covered if covered > 0.005 else rest)
+                                       covered if covered > 0.005 else rest,
+                                       basis=break_even)
                 if fl is not None:
                     lo = min(lo, max(fl, (book.bids[0][0] + book.tick)
                                      if book.bids else 0.002))
@@ -4601,7 +4644,8 @@ class Family:
                 # earned nothing step up toward the bid touch, a tick at
                 # a time, on the day's concession budget
                 fl = self._float_level(slug, "BUY", mine, cap_px, book, now,
-                                       covered if covered > 0.005 else rest)
+                                       covered if covered > 0.005 else rest,
+                                       basis=received)
                 if fl is not None:
                     hi = max(hi, min(fl, (book.asks[0][0] - book.tick)
                                      if book.asks else fl))
