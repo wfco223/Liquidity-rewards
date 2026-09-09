@@ -3304,12 +3304,18 @@ class Family:
         if st is None and not idle:
             return None
         tick = book.tick or 0.01
+        # never past the touch, and never where post-only cannot rest:
+        # an ask stays over the bid, a buy-back under the ask
         if side == "SELL":
             limit = (book.asks[0][0] if book.asks
                      else (book.bids[0][0] + tick) if book.bids else 0.002)
+            if book.bids:
+                limit = max(limit, round(book.bids[0][0] + tick, 3))
         else:
             limit = (book.bids[0][0] if book.bids
                      else (book.asks[0][0] - tick) if book.asks else 0.998)
+            if book.asks:
+                limit = min(limit, round(book.asks[0][0] - tick, 3))
         level = float(st["px"]) if st else float(base_px)
         at_limit = (level <= limit + 1e-9) if side == "SELL" else (level >= limit - 1e-9)
         stepped = False
@@ -4393,13 +4399,21 @@ class Family:
                 # the float (owner, 2026-09-09): asks that have earned
                 # nothing step down toward the ask touch, a tick at a
                 # time, on the day's concession budget
-                fl = self._float_level(slug, "SELL", mine, floor_px, book, now,
+                flt = [o for o in mine if not is_wall(o)]
+                fl = self._float_level(slug, "SELL", flt, floor_px, book, now,
                                        covered if covered > 0.005 else rest,
                                        basis=break_even)
+                fl_target = None
                 if fl is not None:
                     lo = min(lo, max(fl, (book.bids[0][0] + book.tick)
                                      if book.bids else 0.002))
-                    above = [o for o in mine if o.price > fl + book.tick / 2
+                    # where a re-rest lands: the same arithmetic as below.
+                    # Only an exit resting WORSE than that comes off — a
+                    # cancel that re-rests at the same price is churn
+                    # (2026-09-09 04:00Z: three exits cancelled and
+                    # re-rested twenty times each)
+                    fl_target = max(lo, min(ask_touch, 0.999))
+                    above = [o for o in flt if o.price > fl_target + book.tick / 2
                              and o.id in self.orders
                              and (o.live_est or 0.0) <= 0.005]
                     if above and self._can_replace():
@@ -4476,6 +4490,8 @@ class Family:
                         and abs(planned[2] - rest) < 0.01):
                     px = planned[0]       # what the mover promised, for
                                           # this same size
+                if fl_target is not None:
+                    px = min(px, fl_target)   # the float's level holds
                 px = min(max(px, 0.002), 0.999)
                 side, intent, rest_qty = "SELL", SELL_LONG, rest
                 why = "selling filled stock — it earns while it waits"
@@ -4643,13 +4659,22 @@ class Family:
                 # the float (owner, 2026-09-09): buy-backs that have
                 # earned nothing step up toward the bid touch, a tick at
                 # a time, on the day's concession budget
-                fl = self._float_level(slug, "BUY", mine, cap_px, book, now,
+                flt = [o for o in mine if not is_wall(o, -qty)]
+                fl = self._float_level(slug, "BUY", flt, cap_px, book, now,
                                        covered if covered > 0.005 else rest,
                                        basis=received)
+                fl_target = None
                 if fl is not None:
                     hi = max(hi, min(fl, (book.asks[0][0] - book.tick)
                                      if book.asks else fl))
-                    below = [o for o in mine if o.price < fl - book.tick / 2
+                    # where a re-rest lands (the slot optimiser's pick in
+                    # the widened range); only a buy-back resting worse
+                    # than that comes off
+                    fl_target = self._best_exit_px(
+                        slug, "BUY", book, min(bid_touch, hi), hi,
+                        max(rest, covered, 0.01), basis=score_basis)
+                    fl_target = min(max(fl_target, grid_lo), 0.999)
+                    below = [o for o in flt if o.price < fl_target - book.tick / 2
                              and o.id in self.orders
                              and (o.live_est or 0.0) <= 0.005]
                     if below and self._can_replace():
@@ -4720,6 +4745,8 @@ class Family:
                                           # promised this pass, for this
                                           # same size (a different size
                                           # is a different gate answer)
+                if fl_target is not None:
+                    px = max(px, fl_target)   # the float's level holds
                 px = min(max(px, grid_lo), 0.999)
                 side, intent, rest_qty = "BUY", SELL_SHORT, rest
                 why = ("buying back the short at or under what it sold "
