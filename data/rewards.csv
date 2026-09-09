@@ -8623,6 +8623,7 @@ date,market,program_type,reward_usd,status
 2026-09-07,aachc-cfb-wins-2026-11-28-ala-6pt5wins,liquidityProgram,0.66,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-ark-5pt5wins,liquidityProgram,0.06,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-arz-5pt5wins,liquidityProgram,0.24,PENDING
+2026-09-07,aachc-cfb-wins-2026-11-28-arz-6pt5wins,liquidityProgram,0.09,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-aubrn-6pt5wins,liquidityProgram,0.22,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-boise-9pt5wins,liquidityProgram,0.45,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-byu-8pt5wins,liquidityProgram,0.01,PENDING
@@ -8671,6 +8672,7 @@ date,market,program_type,reward_usd,status
 2026-09-07,aachc-cfb-wins-ou-2026-11-28-iowast,liquidityProgram,0.14,PENDING
 2026-09-07,aachc-cfb-wins-ou-2026-11-28-mspst,liquidityProgram,0.08,PENDING
 2026-09-07,aachc-cfb-wins-ou-2026-11-28-pur,liquidityProgram,0.01,PENDING
+2026-09-07,aachc-cfb-wins-ou-2026-11-28-smu,liquidityProgram,0.04,PENDING
 2026-09-07,aachc-cfb-wins-ou-2026-11-28-uk,liquidityProgram,0.08,PENDING
 2026-09-07,enwc-uspres-nom-rep-2028-dontrujr,liquidityProgram,0.15,PENDING
 2026-09-07,ewc-usgub-ca-2026-11-03-xavbec,liquidityProgram,0.02,PENDING
