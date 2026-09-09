@@ -3617,3 +3617,17 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788985932.4,nfl,tec-nfl-cbpoty-2027-02-11-w-micpar,BUY,-1,0.2,fix,0.2695,1.49,,,,0.67,,,,0,size trimmed by 1 to the exchange's count (order CD0HHDPXJT6S),CD0HHDPXJT6S
 1788985932.4,nfl,ftsc-nfl-kmostfp-w1-2026-09-14-kafai,SELL,0.01,0.02,backfill,,4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZ66VNHAT3P
 1788985932.4,nfl,tec-nfl-opoy-2027-02-11-w-jontay,SELL,0.01,0.21,backfill,,3.69,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZE186QPSJ1
+1788986358.8,politics,ussewc-usse-co-2026-11-03-dem,SELL,183,0.95,bond,0.27,1.41,0.9947,88,93,0.711,0.93,0.96,0.0447,0,bond: resting 1 tick behind the touch; keeping 100% of the best reward,CD1KB6VPWSK5
+1788986358.8,nfl,aqc-nfl-afc-2027-01-24-champq-den,BUY,0.01,0.31,sell,9.3739,5.85,,22,34,0.416,0.19,0.35,0.03,0,buying back the short at or under what it sold for — the bid earns while it wait,CCXPBMC1WSX4
+1788986358.8,nfl,ftsc-nfl-rbmostfp-w1-2026-09-14-chrmcc,SELL,0.01,0.14,earn,0.0007,3.12,,4,13,0.431,0.02,0.14,-0.06,-0.02,12 ticks in front of the touch — we would hold 99% of the ask side,CD03GQ7NPSJR
+1788988260.2,cfb,aachc-cfb-wins-2026-11-28-usc-9pt5wins,BUY,0.01,0.39,sell,0.0004,5.64,,35,41,0.205,0.28,0.37,0.01,0.01,buying back the short at or under what it sold for — the bid earns while it wait,CCYC1PS3RT6S
+1788988260.2,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,SELL,2,0.24,sell,0.0346,3.27,,21,25,0.79,0.23,0.24,-0.01,0,selling filled stock — it earns while it waits,CD0EXB58ESX0
+1788988260.2,nfl,tec-nfl-nfcnorth-2027-01-10-w-chi,BUY,1,0.22,sell,0.0007,2.67,,22,27,0.442,0.25,0.27,-0.03,0,buying back the short at or under what it sold for — the bid earns while it wait,CD0YZR9FPT3P
+1788988896.0,politics,ussewc-usse-va-2026-11-03-dem,BUY,2,0.97,backfill,,4.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZXAS7CPSK5
+1788989069.6,politics,scc-senate-gop-2026-11-03-49,SELL,11,0.16,backfill,,2.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCMQSCW6GR3V
+1788989069.6,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,3,0.96,backfill,,5.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJT9YXGYR47
+1788989069.6,politics,ussewc-usse-id-2026-11-03-todach,SELL,4,0.06,hand,,15.5,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCAE6S682R3Y
+1788989069.6,politics,ussewc-usse-va-2026-11-03-dem,BUY,2,0.97,backfill,,4.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZXAS7CPSK5
+1788989069.6,cfb,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,BUY,-0.36,0.23,fix,0.0044,12.28,,27,31,0.357,0.29,0.3,-0.06,0.98,size trimmed by 0.36 to the exchange's count (order C8S6YVBREMW0),C8S6YVBREMW0
+1788989069.6,nfl,ftsc-nfl-kmostfp-w1-2026-09-14-kafai,SELL,-0.01,0.02,fix,0.0152,4.07,,1,9,0,0.01,0.02,0.02,-0.01,size trimmed by 0.01 to the exchange's count (order CCZ66VNHAT3P),CCZ66VNHAT3P
+1788989069.6,nfl,tec-nfl-opoy-2027-02-11-w-jontay,SELL,-0.01,0.21,fix,0.0021,3.72,,10,19,0.437,0.2,0.21,-0.06,0,size trimmed by 0.01 to the exchange's count (order CCZE186QPSJ1),CCZE186QPSJ1
