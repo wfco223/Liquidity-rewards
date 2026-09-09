@@ -2957,10 +2957,15 @@ class Family:
         # and graduation — it just no longer double-counts into the
         # queue order. EV, not raw claim: the same number the placement
         # filter below judges by.
+        # exploring families rank and gate on EV plus the learning bonus
+        # (the number _plan_side chose by); everyone else on EV alone
+        def worth(p: dict) -> float:
+            if self.cfg.explore and "score" in p:
+                return p["score"]
+            return p.get("ev", p["est"])
         ranked = sorted(((s, sb) for s, sb in self.scoreboard.items()
                          if sb.get("plans")),
-                        key=lambda kv: -sum(p.get("ev", p["est"])
-                                            for p in kv[1]["plans"]))
+                        key=lambda kv: -sum(worth(p) for p in kv[1]["plans"]))
         for slug, sb in ranked:
             if actions <= 0:
                 break
@@ -2974,7 +2979,7 @@ class Family:
             for plan in sb["plans"]:
                 if actions <= 0:
                     break
-                if plan.get("ev", plan["est"]) < self.cfg.min_est_day:
+                if worth(plan) < self.cfg.min_est_day:
                     continue    # under the bar (old plans lack ev: use est)
                 if (slug, plan["side"]) in have:
                     continue
