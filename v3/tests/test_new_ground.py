@@ -134,8 +134,12 @@ class TestHeldGround(unittest.TestCase):
     def test_the_politics_config_holds_the_state_races(self):
         from v3 import politics
         c = politics.config()
-        for tok in ("usag", "usltgov", "ussos", "ussupct"):
+        for tok in ("usag", "usltgov", "ussos", "ussupct", "housepop"):
             self.assertIn(tok, c.hold_tokens)
+        # the House popular vote markets: the winner pair and the margin buckets
+        for slug in ("vmc-housepop-2026-11-03-dem0-2", "pvwc-housepopw-2026-11-03-dem"):
+            self.assertTrue(any(t in slug for t in c.hold_tokens))
+            self.assertFalse(any(t in slug for t in c.enter_tokens))
         for tok in ("usmayor", "usterr"):
             self.assertNotIn(tok, c.hold_tokens)
             self.assertNotIn(tok, c.enter_tokens)
