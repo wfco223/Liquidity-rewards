@@ -159,6 +159,20 @@ AMP_RESIZE_FRAC = 0.50      # a resting amplifier is resized only when the plan 
 AMP_SALES_DAYS = 7          # the exits' own sales over this many days set the fill odds
 AMP_P_FLOOR = 0.005         # never under half a percent a day
 AMP_GROW_S = 3600.0         # after the exchange trimmed one, no try to grow it for this long
+
+# a one-time ledger repair, applied once and remembered (owner's yes,
+# 2026-09-09): at 17:53Z three lots were booked "sold through the
+# amplifier" when a take had pulled the amplifier — nothing traded.
+# The lots come back at their real cost; the phantom proceeds and gain
+# come off the books.
+REPAIRS = {
+    "amp-phantom-2026-09-09": [
+        # slug, side, shares, cost, proceeds booked, gain booked
+        ("usgubewc-usgub-ny-2026-11-03-rep", "NO", 540.0, 493.0562, 503.68, 2.46),
+        ("usgubewc-usgub-mn-2026-11-03-dem", "YES", 104.0, 97.6573, 98.70, 0.07),
+        ("usgubewc-usgub-al-2026-11-03-dem", "NO", 83.97, 74.0171, 75.62, 0.48),
+    ],
+}
 BAIT_QTY = 1.0              # the bait: one share a tick inside their best on the buy side
 BAIT_WAIT_S = 2 * 3600.0    # nobody followed in this long: the bait comes off
 BOOK_SHOW = 6               # levels per side the page shows
@@ -351,6 +365,8 @@ class Bonds:
         self._amp_booked: dict[str, float] = {}   # slug -> booked_out seen by the amplifier pass
         self._amp_seen: dict[str, float] = {}     # slug -> amplifier shares last seen resting
         self._amp_sales_last: dict = {}           # the exits' sale record the last pass used
+        self._amp_ids: dict[str, list[str]] = {}  # slug -> the amplifier's order ids (fills carry them)
+        self.repairs_done: list[str] = []         # one-time ledger repairs already applied
         self.placed_ids: dict[str, list[str]] = {}   # slug -> ids of exits this bond placed
         # a sale by his hand the position feed has not shown yet: the
         # sync must not hand the sold shares back meanwhile
@@ -1702,6 +1718,7 @@ class Bonds:
         """Once a cycle, after the family has run: count sales, keep
         every held bond earning, work the minnows, enter new ground.
         Places nothing unless the bonds switch is on."""
+        self._apply_repairs()
         self.scan(now)
         self._follow_tax()
         self._mark_engine()
@@ -2567,6 +2584,48 @@ class Bonds:
                 "sale_days": sales.get("sale_days", 0),
                 "market_days": sales.get("market_days", 0)}
 
+    def _amp_traded(self, slug: str, since: float) -> float:
+        """Shares the amplifier's orders traded, by the exchange's own
+        record: the family's fills carry the order id. Live fills only,
+        never the backfilled copies of the same trades."""
+        ids = set(self._amp_ids.get(slug) or [])
+        if not ids:
+            return 0.0
+        total = 0.0
+        for e in list(getattr(self.fam, "fills", None) or []):
+            if not isinstance(e, dict) or e.get("purpose") == "backfill":
+                continue
+            if (str(e.get("oid") or "") in ids
+                    and float(e.get("ts") or 0.0) >= since - 1.0):
+                total += float(e.get("qty") or 0.0)
+        return round(total, 2)
+
+    def _apply_repairs(self) -> None:
+        """One-time ledger repairs (REPAIRS), each applied once and
+        remembered in the state."""
+        for key, rows in REPAIRS.items():
+            if key in self.repairs_done:
+                continue
+            for slug, side, qty, cost, proceeds, gain in rows:
+                self._book_lot(slug, side, qty, cost, ref=f"repair:{key}")
+                self.cash = round(self.cash - proceeds, 4)
+                self.realized = round(self.realized - gain, 4)
+                self.sold_usd = round(self.sold_usd - proceeds, 4)
+                self._amp_booked.pop(slug, None)
+                self._amp_seen.pop(slug, None)
+                bs, _ = self.earn(side)
+                for o in list(self.fam.orders.values()):
+                    if o.market == slug and o.side == bs and o.purpose == "sell":
+                        # the family's exit rested while the lot was gone:
+                        # it is the bond's exit again
+                        o.purpose = "bond"
+                        o.why = "bond: resting — the bond's exit, claimed back after the ledger repair"
+                self._log(event="repaired", market=slug, side=side, qty=qty, cost=round(cost, 2),
+                          proceeds=proceeds, gain=gain,
+                          note=(f"{key}: the lot is back at its real cost; ${proceeds:.2f} of "
+                                f"phantom proceeds and ${gain:.2f} of gain reversed"))
+            self.repairs_done.append(key)
+
     def _amp_pull(self, slug: str, why: str) -> int:
         n = 0
         for o in self._amp_orders(slug):
@@ -2577,6 +2636,7 @@ class Bonds:
                 self._log(event="amp_pulled", market=slug, price=o.price, qty=o.qty, note=why)
         self.amp.pop(slug, None)
         self._amp_seen.pop(slug, None)
+        self._amp_ids.pop(slug, None)
         return n
 
     def _amp_odds_note(self, plan: dict, qty: float, exp_loss: float) -> str:
@@ -2614,11 +2674,24 @@ class Bonds:
             amp_q = sum(o.qty for o in amps)
             seen_q = self._amp_seen.get(slug)
             if seen_q is not None and amp_q < seen_q - 0.5:
-                # the amplifier itself traded: the lot's shares went first
-                # (a bond sale at its price, booked), anything beyond is a
-                # short the family buys back; the rest comes off
-                filled = round(seen_q - amp_q, 2)
+                # amplifier shares left the book. Only the exchange's own
+                # trade record says they TRADED (2026-09-09: three lots
+                # were booked sold when a take had pulled the amplifier);
+                # otherwise it was pulled or cancelled and nothing is
+                # booked. What traded: the lot's shares went first (a
+                # bond sale at its price), anything beyond is a short the
+                # family buys back; the rest comes off
                 a = self.amp.get(slug) or {}
+                traded = self._amp_traded(slug, float(a.get("since") or 0.0))
+                filled = round(min(traded, seen_q - amp_q), 2)
+                if filled <= 0.5:
+                    self._log(event="amp_gone", market=slug, qty=round(seen_q - amp_q, 2),
+                              note="left the book without a trade on the exchange's "
+                                   "record — pulled or cancelled, nothing booked")
+                    self._amp_pull(slug, "gone from the book without a trade")
+                    self.amp_hold[slug] = now + AMP_COOLDOWN_S
+                    self.amp_note[slug] = "off: it left the book without trading — back after the cooldown"
+                    continue
                 px_a = float(a.get("px") or 0.0)
                 held = self.held(slug, side)
                 sold = min(filled, held)
@@ -2747,6 +2820,9 @@ class Bonds:
             self.fam.orders[r.order_id] = FamilyOrder(
                 id=r.order_id, market=slug, side=bs, price=px, qty=rested_q,
                 intent=use_intent, placed_ts=now, purpose="bond", why=why)
+            ids = self._amp_ids.setdefault(slug, [])
+            ids.append(r.order_id)
+            del ids[:-6]
             self.amp[slug] = {"qty": rested_q, "px": px, "since": round(now, 1),
                               "exp_loss": exp_loss, "gain": gain, "pf": plan["pf"],
                               "trimmed_at": (round(now, 1) if trimmed else 0.0)}
@@ -4077,10 +4153,21 @@ class Bonds:
                     f"yourself; move it first"), False
         if not in_way:
             return None, False
+        # the amplifier sits at the exit's price, so it is in a take's
+        # way there too; it comes off through its own pull, which keeps
+        # its books straight — a vanished amplifier is never read as a
+        # trade (2026-09-09: three lots were booked "sold through the
+        # amplifier" when this path had pulled it)
+        amps = [o for o in in_way if str(o.why or "").startswith(AMP_WHY)]
+        gone = []
+        if amps:
+            gone.extend(o.id for o in amps)
+            self._amp_pull(slug, "in the way of a take — pulled before it")
+            self.amp_hold[slug] = now + AMP_COOLDOWN_S
+            in_way = [o for o in in_way if o.id not in set(gone)]
         engine = [o for o in in_way if o.purpose not in ("bond", "manual")]
         if engine:
             self.fam.hold_until[slug] = now + HOLD_ENGINE_S
-        gone = []
         for o in in_way:
             r = self.fam.desk.cancel(o.id, slug, initiator="owner")
             if r.ok:
@@ -4533,6 +4620,7 @@ class Bonds:
                 "more_retry": self._more_retry,
                 "exit_px": self.exit_px,
                 "amp": self.amp, "amp_hold": self.amp_hold,
+                "amp_ids": self._amp_ids, "repairs_done": list(self.repairs_done),
                 "money_out": self.money_out,
                 "await_drop": {k: list(v) for k, v in self._await_drop.items()},
                 "log": self.log[-LOG_KEEP:]}
@@ -4663,6 +4751,8 @@ class Bonds:
         self.exit_px = {str(k): dict(v) for k, v in (d.get("exit_px") or {}).items()}
         self.amp = {str(k): dict(v) for k, v in (d.get("amp") or {}).items()}
         self.amp_hold = {str(k): float(v) for k, v in (d.get("amp_hold") or {}).items()}
+        self._amp_ids = {str(k): [str(x) for x in v] for k, v in (d.get("amp_ids") or {}).items()}
+        self.repairs_done = [str(x) for x in (d.get("repairs_done") or [])]
         self.money_out = dict(d["money_out"]) if d.get("money_out") else None
         self._await_drop = {str(k): (float(v[0]), float(v[1])) for k, v
                             in (d.get("await_drop") or {}).items()
