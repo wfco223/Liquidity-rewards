@@ -137,6 +137,13 @@ def nfl() -> FamilyConfig:
         capital_usd=50.0, per_market_usd=1.00,
         holdings_in_ceiling=True,
         dump_usd_day=10.0,
+        # owner, 2026-09-08: "intentionally small sized risks and
+        # intentionally aggressive to see what the markets are like.
+        # Then as we get information relax the aggression" — $1 of
+        # collateral per order, the closer depths favoured until each
+        # has 48 hours of our own resting time behind it
+        explore=True, explore_usd=1.0, explore_hours=48.0,
+        explore_bonus=0.30,
         rest_from=(1, 6), rest_until=(3, 17),
         season_start=(2026, 8, 20),
         books_per_cycle=20, scan_reserve=8,

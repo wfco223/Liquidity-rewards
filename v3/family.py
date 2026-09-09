@@ -257,6 +257,20 @@ class FamilyConfig:
     # The owner kept college's launch behavior ("I wouldn't change anything
     # for now"); every other family leaves this off.
     allow_improve: bool = False
+    # EXPLORATION (owner, 2026-09-08, NFL: "intentionally small sized
+    # risks and intentionally aggressive to see what the markets are
+    # like. Then as we get information relax the aggression to try and
+    # find the optimal amount"). While a depth (in front / at the touch
+    # / 1 back / 2 back) has fewer than explore_hours of OUR OWN resting
+    # time behind it in this market group, its plan gets a bonus that
+    # favours the closer depths; the bonus fades to nothing as the hours
+    # come in, and the choice reverts to the measured EV — what the
+    # depth earned against what its fills cost. Every exploring order
+    # is capped at explore_usd of collateral.
+    explore: bool = False
+    explore_usd: float = 1.0
+    explore_hours: float = 48.0
+    explore_bonus: float = 0.30       # $/day at full ignorance, closest depth
     # Take over resting orders already on the account in this family's
     # markets (the 1.0/2.0 handover). Owner-placed manual orders are never
     # claimed.
@@ -1034,6 +1048,53 @@ class Family:
 
     # ------------------------------------------------------------- planning
 
+    EXPLORE_DEPTH_W = {0: 1.0, 1: 0.5, 2: 0.25}    # 3+ back teaches nothing new
+
+    def _explore_bonus(self, slug: str, side: str, ticks_back: int,
+                       in_front: bool = False) -> float:
+        """$/day of learning value for resting at this depth: the full
+        bonus at the closest depth while this market group has no
+        resting hours there, fading linearly to zero at explore_hours
+        of our own time. Behind two ticks earns none — that is the
+        known-safe ground the aggression relaxes back to."""
+        if not self.cfg.explore or self.cfg.explore_bonus <= 0.0:
+            return 0.0
+        from .fillmodel import family_of
+        b = 0 if in_front else int(ticks_back)
+        w = self.EXPLORE_DEPTH_W.get(min(max(b, 0), 3), 0.0)
+        if w <= 0.0:
+            return 0.0
+        seen_s, _fills = self.fillmodel.own_cell(family_of(slug), side, b)
+        horizon = max(self.cfg.explore_hours, 0.01) * 3600.0
+        fade = max(0.0, 1.0 - seen_s / horizon)
+        return self.cfg.explore_bonus * w * fade
+
+    def _explore_report(self) -> list[dict]:
+        """What the exploration has learned so far, per market group,
+        side and depth: our resting hours, our fills, the fill rate that
+        implies, and the bonus still on offer. Phone-readable rows."""
+        from .fillmodel import family_of
+        groups = sorted({family_of(s) for s in self.universe} or {"other"})
+        rows: list[dict] = []
+        horizon = max(self.cfg.explore_hours, 0.01) * 3600.0
+        for g in groups:
+            for side in ("BUY", "SELL"):
+                for b in (0, 1, 2, 3):
+                    seen_s, fills = self.fillmodel.own_cell(g, side, b)
+                    if seen_s <= 0.0 and b > 0:
+                        continue
+                    w = self.EXPLORE_DEPTH_W.get(b, 0.0)
+                    bonus = (self.cfg.explore_bonus * w
+                             * max(0.0, 1.0 - seen_s / horizon))
+                    rows.append({"group": g, "side": side, "depth": b,
+                                 "hours": round(seen_s / 3600.0, 1),
+                                 "fills": int(fills),
+                                 "fills_day": (round(fills / seen_s * 86400.0, 2)
+                                               if seen_s > 0 else None),
+                                 "bonus": round(bonus, 3),
+                                 "learned": seen_s >= horizon})
+        return rows
+
     def _plan_side(self, slug: str, book, side: str, prog,
                    side_pool: float | None, budget: float,
                    own: FamilyOrder | None = None, bar: float | None = None,
@@ -1444,6 +1505,9 @@ class Family:
                         break
                 if qty * cost_ps > budget + 1e-9:
                     break
+                if (self.cfg.explore
+                        and qty * cost_ps > self.cfg.explore_usd + 1e-9):
+                    break     # exploring: small risks only
                 j = estimate_join(side, levels, tick, df, target, px, qty)
                 if not (j.qualifies and j.in_window):
                     break
@@ -1481,6 +1545,8 @@ class Family:
                     tie = (1.0 - px) * (qty - sells)
                 ev = ((est - cann) * sf - pf * fcost * qty
                       - tie * r_tie)
+                bonus = (self._explore_bonus(slug, side, k_px, in_front)
+                         if self.cfg.explore else 0.0)
                 k = k_px
                 kf = round(abs(px - touch) / tick)
                 row = {"side": side, "px": px, "qty": qty,
@@ -1488,7 +1554,10 @@ class Family:
                        "ev": round(ev, 4), "p_fill": round(pf, 4),
                        "fill_cost": round(fcost, 4),
                        "cost": round(qty * cost_ps, 2),
-                       "why": (f"at the touch — a fill here is "
+                       "bonus": round(bonus, 4),
+                       "score": round(ev + bonus, 4),
+                       "why": ((f"exploring (+${bonus:.2f}/day to learn "
+                                f"this depth) — " if bonus > 0.0 else "") + (f"at the touch — a fill here is "
                                f"{edge_ticks(px):.0f} ticks inside value "
                                f"({'Silver + evidence' if independence >= 1.0 else f'evidence band only, confidence {independence:.0%}'})"
                                if k == 0 and not in_front
@@ -1502,7 +1571,7 @@ class Family:
                                f"{k} tick{'s' if k != 1 else ''} behind the "
                                f"touch — we would hold "
                                f"{j.share * 100:.0f}% of the "
-                               f"{side_name} side")}
+                               f"{side_name} side"))}
                 if ladder is not None:
                     ladder.append(dict(row))
                 # No share cap (owner, 2026-08-21: "why would we cap the
@@ -1512,17 +1581,25 @@ class Family:
                 # else.
                 contenders.append(row)
         the_bar = self.cfg.min_est_day if bar is None else bar
-        live = [r for r in contenders if r["ev"] >= the_bar]
+        # exploring: the bar and the ranking run on EV plus the learning
+        # bonus — a depth we know nothing about is worth resting at for
+        # what it teaches, at explore size
+        key_ev = "score" if self.cfg.explore else "ev"
+        live = [r for r in contenders if r[key_ev] >= the_bar]
         if not live:
             return None
-        best_ev = max(r["ev"] for r in live)
+        best_ev = max(r[key_ev] for r in live)
         # Near-tied EVs resolve to the most CONSERVATIVE spot — lowest
         # fill odds (owner, 2026-08-21: "the model is not precise
         # enough to make a big fuss over 1 cent of ev" — never take a
-        # deeper price for the last penny).
+        # deeper price for the last penny). Exploring resolves the other
+        # way: the closer depth is the one with the most to teach.
         tol = max(0.01, 0.01 * best_ev)
-        close = [r for r in live if r["ev"] >= best_ev - tol]
-        pick = min(close, key=lambda r: (r["p_fill"], -r["ev"]))
+        close = [r for r in live if r[key_ev] >= best_ev - tol]
+        if self.cfg.explore:
+            pick = max(close, key=lambda r: (r["bonus"], r["p_fill"], r["ev"]))
+        else:
+            pick = min(close, key=lambda r: (r["p_fill"], -r["ev"]))
         if self.cfg.wall_size_up:
             # same price level, biggest size the budget allows: the
             # modeled fill cost that shrank it is an accepted cost here
@@ -4742,6 +4819,10 @@ class Family:
         summary["holdings_counted"] = bool(self.cfg.holdings_in_ceiling)
         summary["capital_usd"] = self.cfg.capital_usd
         summary["earned_today"] = round(self.earned_today, 2)
+        if self.cfg.explore:
+            summary["explore"] = {"usd": self.cfg.explore_usd,
+                                  "hours": self.cfg.explore_hours,
+                                  "rows": self._explore_report()}
         summary["inventory"] = {k: dict(v) for k, v in list(self.inventory.items())}
         # every held position by what it earns per dollar of
         # liquidation value (owner, 2026-08-26: "even the ones with no
