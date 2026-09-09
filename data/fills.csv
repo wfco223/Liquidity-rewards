@@ -3647,3 +3647,22 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788992521.6,politics,ussewc-usse-ri-2026-11-03-dem,BUY,0.02,0.98,backfill,,0.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD3JX6A5GSJZ
 1788992521.6,politics,ussewc-usse-ri-2026-11-03-dem,BUY,14.98,0.98,backfill,,7.98,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCXAMN3Y8SJH
 1788992521.6,nfl,ftsc-nfl-rbmostfp-w1-2026-09-14-kyrwil,SELL,0.04,0.07,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD3G9DFNGSK5
+1788992681.6,nfl,tec-nfl-opoy-2027-02-11-w-jahgib,SELL,2,0.16,sell,0.0021,0.73,,13,18,0.44,0.15,0.16,-0.01,0,selling filled stock — it earns while it waits,CD3MRDPXMSX4
+1788992833.2,politics,ussewc-usse-ky-2026-11-03-rep,BUY,1,0.93,bond,0,0.04,0.996425,90,94,0.751,0.92,0.94,-0.0664,59,bond: took 1 YES at 93c — it was in the way of our resting order,CD4AXBY2ESJH
+1788993310.1,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,25,0.09,bond,0,0.05,0.010975,10,15,0.75,0.08,0.09,-0.079,-572,bond: took 25 NO at 9c — it was in the way of our resting order,CD4EDYZC4SJH
+1788993395.7,politics,ussewc-usse-ky-2026-11-03-rep,BUY,22,0.93,backfill,,0.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD4C455VTSJH
+1788993581.9,nfl,tec-nfl-mvp-2027-02-11-w-joebur,SELL,1,0.12,sell,0.2556,0.21,,11,20,0.586,0.11,0.12,0.03,0,selling filled stock — it earns while it waits,CD4B8BJ70SK5
+1788993827.6,cfb,aachc-cfb-wins-2026-11-28-wake-7pt5wins,SELL,1,0.32,sell,0,0,,32,36,0.406,0.32,0.33,0.02,0,taker dump — sold into the bid (the carved exception),CD4JEEFW8SX4
+1788994135.5,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,1.84,0.94,bond,0,0.04,0.995325,89,95,0.431,0.93,0.95,-0.0553,106.84,bond: took 1.84 YES at 94c — it was in the way of our resting order,CD4MPZ9W0T75
+1788994702.7,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,12,0.95,bond,0,0.04,0.996525,91,96,0,0.94,0.98,-0.0465,258,bond: took 12 YES at 95c — it was in the way of our resting order,CD4RK6R2WSX0
+1788994847.1,politics,ussewc-usse-ky-2026-11-03-rep,BUY,12,0.95,bond,0,0.04,0.996425,90,94,0.792,0.94,0.95,-0.0464,93,bond: took 12 YES at 95c — it was in the way of our resting order,CD4SXKS16T75
+1788995206.5,politics,ussewc-usse-wy-2026-11-03-rep,SELL,10,0.99,sell,0.0156,11.46,1,97,99,0.552,0.01,0.96,0.01,0,selling filled stock — it earns while it waits,CCV0SGQXTSX0
+1788995369.9,cfb,aachc-cfb-wins-2026-11-28-kanst-9pt5wins,SELL,2,0.37,sell,0.0479,0.75,,38,43,0.473,0.36,0.37,0.03,0,selling filled stock — it earns while it waits,CD49S74MYSX4
+1788995771.2,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,0.01,0.95,backfill,,1.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD3ER4E9CSJZ
+1788995996.3,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,5,0.95,earn,0.9192,1.92,0.9907,96,99,0.447,0.95,0.96,-0.0407,5,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CD3ER4E9CSJZ
+1788996099.2,politics,ussewc-usse-ky-2026-11-03-rep,BUY,12,0.95,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD542BF6YT3P
+1788996248.3,politics,ussewc-usse-ri-2026-11-03-dem,BUY,-14.98,0.98,fix,6.2386,8,0.99925,96,99,0.735,0.95,0.99,-0.0192,-0.02,size trimmed by 14.98 to the exchange's count (order CCXAMN3Y8SJH),CCXAMN3Y8SJH
+1788996248.3,politics,ussewc-usse-ri-2026-11-03-dem,BUY,-0.02,0.98,fix,0.0083,0.79,0.99925,96,99,0.735,0.95,0.99,-0.0192,0,size trimmed by 0.02 to the exchange's count (order CD3JX6A5GSJZ),CD3JX6A5GSJZ
+1788996248.3,politics,ussewc-usse-ky-2026-11-03-rep,BUY,22,0.93,backfill,,0.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD4C455VTSJH
+1788996248.3,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,0.01,0.95,backfill,,1.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD3ER4E9CSJZ
+1788996248.3,politics,ussewc-usse-ky-2026-11-03-rep,BUY,12,0.95,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD542BF6YT3P
