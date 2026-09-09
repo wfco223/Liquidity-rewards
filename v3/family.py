@@ -3452,7 +3452,8 @@ class Family:
         worst-earning excess, never manual orders."""
         cands = sorted((o for o in list(self.orders.values())
                         if o.market == slug and o.purpose == "sell"
-                        and o.side == side and not o.pinned),
+                        and o.side == side and not o.pinned
+                        and not is_wall(o)),
                        key=lambda o: (o.live_est or 0.0))
         for rec in cands:
             if excess < 0.01:
@@ -4247,9 +4248,12 @@ class Family:
                 continue
             if qty >= 0.01:
                 # long stock: an ask at break-even or better
+                # a qualifying wall at the far edge is not an exit, however
+                # it was adopted: nothing here moves, prunes or floats it
                 mine = [o for o in list(self.orders.values())
                         if o.market == slug and o.purpose == "sell"
-                        and o.side == "SELL" and not o.pinned]
+                        and o.side == "SELL" and not o.pinned
+                        and not is_wall(o, qty)]
                 self._maybe_move_exit(slug, "SELL", mine, book, inv, now)
                 # the owner's own resting SELLs of this stock count as
                 # cover too — the engine sizes around them and never
@@ -4262,7 +4266,7 @@ class Family:
                 covered = manual_cover + sum(
                     o.qty for o in list(self.orders.values())
                     if o.market == slug and o.purpose == "sell"
-                    and o.side == "SELL")
+                    and o.side == "SELL" and not is_wall(o, qty))
                 rest = qty - covered
                 if covered > qty + 0.01:
                     self._prune_excess_exits(slug, "SELL", covered - qty, now)
@@ -4502,7 +4506,7 @@ class Family:
                 # positions in a way that earns liquidity reward")
                 mine = [o for o in list(self.orders.values())
                         if o.market == slug and o.purpose == "sell"
-                        and o.side == "BUY"]
+                        and o.side == "BUY" and not is_wall(o, -qty)]
                 self._maybe_move_exit(slug, "BUY", mine, book, inv, now)
                 covered = sum(
                     o.qty for o in list(self.orders.values())
