@@ -522,6 +522,23 @@ function render(d){
   if(settling)s+='<div class="l">'+settling+' new order'+(settling===1?'':'s')+' settling \u2014 re-planned 30s after resting</div>';
   return s;
  }
+ function openMarket(k,m){post({op:'family_open_market',which:k,market:m},function(j){alert(j.note||'');});}
+ function newMarketsLine(k,rows){
+  // owner, 2026-09-09: "Can you give me a report on any newly added
+  // markets?" ... "don't place orders in these races before I get the
+  // chance to look at them" — what discovery found this week, what the
+  // scan made of each, and a tap to open held ground for orders
+  if(!rows||!rows.length)return '';
+  var held=rows.filter(function(r){return r.held;}).length;
+  var s='<details style="margin-top:8px"><summary class="l">new this week: '+rows.length+' market'+(rows.length===1?'':'s')+(held?' \\u00b7 '+held+' waiting for your look':'')+'</summary>';
+  rows.forEach(function(r){
+   var st=r.held?'<span class="pill">held</span> ':(r.opened?'<span class="pill on">opened</span> ':'');
+   var what=r.orders?r.orders+' order'+(r.orders===1?'':'s')+' \\u00b7 '+usd(r.est)+'/d':(r.scanned?(r.est>0?usd(r.est)+'/d if entered':(r.why||'scanned, nothing to enter')):'not scanned yet');
+   s+='<div class="l" style="margin:4px 0">'+st+esc(r.name)+' <span class="muted">\\u00b7 '+when(r.since)+' \\u00b7 '+esc(what)+'</span>'
+    +(r.held?' <button onclick="openMarket(\\''+k+'\\',\\''+r.market+'\\')">Open for orders</button>':'')+'</div>';
+  });
+  return s+'</details>';
+ }
  function exploreLine(x){
   // owner, 2026-09-08: small aggressive orders first, relaxing as each
   // depth logs our own resting hours — the card says how far along it is
@@ -551,6 +568,7 @@ function render(d){
    +bar(cap?100*spent/cap:0)
    +exploreLine(s2.explore)
    +floatLine(s2.exit_float,s2.settling)
+   +newMarketsLine(k,s2.new_markets)
    +'<div class="l" style="margin-top:8px">worth the budget \u2014 '+(w.pct||0)+'% of '+(w.scored||0)+' scored'
    +(w.cycle_n?' \u00b7 this cycle '+(w.cycle_pct||0)+'% of '+w.cycle_n:'')+'</div>'
    +bar(w.pct||0,'#6fa8dc')
@@ -2149,6 +2167,9 @@ class WebServer:
             return self.monitor.graduate(str(body.get("which") or ""),
                                          str(body.get("market") or ""),
                                          op == "family_graduate")
+        if op == "family_open_market":
+            return self.monitor.open_market(str(body.get("which") or ""),
+                                            str(body.get("market") or ""))
         if op == "refresh_rewards":
             return self.monitor.refresh_rewards()
         if op == "schedule_cancel":
