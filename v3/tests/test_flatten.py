@@ -5867,6 +5867,29 @@ class TestPriceGrid(unittest.TestCase):
         self.assertAlmostEqual(snap_price(0.057, 0.001, "BUY"), 0.057)
         self.assertAlmostEqual(snap_price(0.44, 0.01, "BUY"), 0.44)
 
+    def test_an_ask_at_the_top_of_the_grid_rounds_down(self):
+        """Owner, 2026-09-09 ("round down at the top"): AR Senate Rep's
+        exit came out at 99.25c and CO Governor Dem's at 99.58c; on a
+        whole-cent book both snapped UP to 100c and the desk refused
+        them every cycle. The top of the grid rounds DOWN instead."""
+        from v3.orders import snap_price, PRICE_MAX
+        self.assertAlmostEqual(snap_price(0.9925, 0.01, "SELL"), 0.99)
+        self.assertAlmostEqual(snap_price(0.9958333, 0.01, "SELL"), 0.99)
+        self.assertAlmostEqual(snap_price(0.999, 0.001, "SELL"), 0.999)
+        self.assertAlmostEqual(snap_price(0.9985, 0.005, "SELL"), 0.995)
+        # below the top, asks still snap up
+        self.assertAlmostEqual(snap_price(0.9825, 0.01, "SELL"), 0.99)
+        self.assertAlmostEqual(snap_price(0.98, 0.01, "SELL"), 0.98)
+        # every ask within the exchange's range comes back within it
+        for px in (0.991, 0.995, 0.999):
+            for tick in (0.01, 0.005, 0.001):
+                self.assertLessEqual(snap_price(px, tick, "SELL"), PRICE_MAX + 1e-9)
+        # a price already past 99.9c is not rescued — the rail refuses it
+        self.assertGreater(snap_price(0.9995, 0.01, "SELL"), PRICE_MAX)
+        self.assertGreater(snap_price(1.0, 0.001, "SELL"), PRICE_MAX)
+        # bids are untouched by the rule
+        self.assertAlmostEqual(snap_price(0.9925, 0.01, "BUY"), 0.99)
+
     def test_the_desk_rests_on_grid_and_reports_the_real_price(self):
         from v3.tests.test_family import Rig, A
         from v3.scoring import Book
