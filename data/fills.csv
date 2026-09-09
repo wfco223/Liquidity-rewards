@@ -3306,3 +3306,66 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788956192.3,nfl,tec-nfl-droy-2027-02-11-w-jermcc,SELL,-0.01,0.06,fix,0.0719,0.16,,1,5,0.595,0.01,0.12,-0.03,-0.01,size trimmed by 0.01 to the exchange's count (order CCTQ2526PSJZ),CCTQ2526PSJZ
 1788956192.3,nfl,aqc-nfl-2027-01-10-playoffq-nyj,BUY,0.9,0.12,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCTQW9YWPT6S
 1788956192.3,nfl,fptc-nfl-rbfpou-2027-01-10-bucirv,SELL,1,0.21,backfill,,0.62,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCTZX9WERSX0
+1788956334.1,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,5,0.97,bond,0,0.04,0.9952,88,93,0.42,0.53,0.97,0.0252,104,bond: moved up to keep 80% of the best reward,CCVJTE396T3P
+1788956334.1,nfl,tec-nfl-oroy-2027-02-11-w-chrbel,BUY,0.01,0.18,earn,0.0043,0.59,,14,25,0,0.18,0.19,-0.01,0.01,joins the touch — the book has been quiet,CCV3W7D5MT75
+1788956367.3,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.03,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVKP8MW6SJZ
+1788956394.1,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,2,0.94,bond,0,0.02,0.999925,90,94,0.829,0.52,0.94,-0.0599,35,bond: took 2.03 YES at 94c — it was in the way of our resting order,CCVKP8MW6SJZ
+1788956425.4,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.03,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVKZTPGASJH
+1788956454.1,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,2,0.94,bond,0,0.02,0.999925,90,93,0.85,0.53,0.94,-0.0599,37,bond: took 2.03 YES at 94c — it was in the way of our resting order,CCVKZTPGASJH
+1788956465.9,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.03,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVMAM7WWT3P
+1788956514.1,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,2,0.94,bond,0,0.02,0.999925,90,93,0.861,0.53,0.94,-0.0599,39,bond: took 2.03 YES at 94c — it was in the way of our resting order,CCVMAM7WWT3P
+1788956588.2,politics,ussewc-usse-mt-2026-11-03-rep,BUY,1.8,0.9,bond,0,0.02,0.98485,80,88,0.713,0.89,0.9,-0.0848,34.8,bond: took 1.8 YES at 90c — it was in the way of our resting order,CCVMZHRNJT3P
+1788956648.2,politics,ussewc-usse-mt-2026-11-03-rep,BUY,1.8,0.9,bond,0,0.02,0.98485,79,87,0.768,0.89,0.9,-0.0848,36.8,bond: took 1.8 YES at 90c — it was in the way of our resting order,CCVNFMWB0T3P
+1788956786.3,cfb,aachc-cfb-wins-2026-11-28-wake-7pt5wins,BUY,0.99,0.32,probe,1.25,0.58,,34,39,0,0.32,0.36,-0.04,0.99,a scout — this market's pool could pay; but I don't know enough yet; what happen,CCV8AY2GGSX4
+1788956867.4,politics,scc-hrep-rep-2026-11-03-gte195,SELL,1,0.7,sell,0.9058,0.89,0.7755,69,75,0.305,0.69,0.7,0.0755,4,selling filled stock — it earns while it waits,CCTXFQ7Q6SJH
+1788956931.4,cfb,aachc-cfb-wins-2026-11-28-duke-7pt5wins,BUY,1,0.4,sell,0.2419,0.45,,30,37,0.291,0.24,0.28,0.06,0,an exit — its fill reduces the position it sits on,CCVB3MVNRT75
+1788957025.6,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.03,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVRXRGJJT6S
+1788957052.1,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,2,0.94,bond,0,0.02,0.999925,88,92,0.839,0.55,0.94,-0.0599,41,bond: took 2.03 YES at 94c — it was in the way of our resting order,CCVRXRGJJT6S
+1788957076.6,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.05,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVS698TAT6S
+1788957088.6,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,BUY,0.1,0.2,backfill,,0.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCV6XNZHET75
+1788957112.1,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,1,0.94,bond,0,0.02,0.999925,87,91,0.858,0.49,0.96,-0.0599,42,bond: took 1.05 YES at 94c — it was in the way of our resting order,CCVS698TAT6S
+1788957172.1,politics,ewc-usse-ak-2026-11-03-rep,SELL,5,0.37,sell,0.0196,0.37,0.541425,36,40,0.406,0.36,0.37,0.1714,2,selling filled stock — it earns while it waits,CCVFKQSB2SJ1
+1788957172.1,cfb,aachc-cfb-wins-2026-11-28-hou-6pt5wins,SELL,1,0.74,sell,0,0.89,,72,79,0.451,0.73,0.74,0.01,0,selling filled stock — it earns while it waits,CCV0CVGNMSJR
+1788957172.1,cfb,aachc-cfb-wins-2026-11-28-ind-11pt5wins,SELL,1,0.02,sell,0,0.97,,24,31,0.269,0.01,0.47,0.25,0,selling filled stock — it earns while it waits,CCTXG7TRAT6S
+1788957292.1,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,0.01,0.12,earn,0.5856,0.03,,15,24,0,0.11,0.12,0.08,-0.01,joins the touch — the book has been quiet,CCVSAMX02SJZ
+1788957760.4,politics,scc-hrep-rep-2026-11-03-gte195,SELL,0.01,0.7,backfill,,1.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCTXFQ7Q6SJH
+1788957768.6,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,15,0.08,bond,0,0.02,0.009875,8,13,0.415,0.07,0.09,-0.0701,-674,bond: took 15 NO at 8c — it was in the way of our resting order,CCVXQSQA4SJH
+1788957829.5,politics,scc-hrep-rep-2026-11-03-gte195,SELL,3.99,0.7,sell,1.0397,1.15,0.7755,72,78,0.559,0.69,0.87,0.0755,0.01,selling filled stock — it earns while it waits,CCTXFQ7Q6SJH
+1788957829.5,politics,scc-hrep-rep-2026-11-03-gte195,SELL,4,0.7,sell,0,0.02,0.7755,72,78,0.559,0.69,0.87,0.0755,-3.99,selling filled stock — it earns while it waits,CCVXQDNR2T75
+1788957949.6,nfl,tec-nfl-nfcsouth-2027-01-10-w-no,BUY,0.01,0.45,earn,4.6875,0.36,,26,44,0,0.45,0.46,0.08,0.01,joins the touch — the book has been quiet,CCVNNH724SJR
+1788958092.2,nfl,tec-nfl-droy-2027-02-11-w-emmmcn,BUY,1,0.3,earn,0.3672,0.04,,8,20,0,0.02,0.18,0.15,1,2 ticks behind the touch — we would hold 5% of the bid side,CCW01CXXTSJR
+1788958272.2,politics,ussewc-usse-ms-2026-11-03-rep,SELL,2,0.97,sell,0,0.12,0.979325,94,97,0.661,0.86,0.88,0.0093,0,selling filled stock — it earns while it waits,CCVY282PGSX4
+1788958512.5,nfl,tec-nfl-afcsouth-2027-01-10-w-hou,BUY,0.5,0.55,manual,36.2352,0.69,,48,59,0,0.48,0.6,0.01,0.5,the owner's own order — the engine leaves it alone,CCVGZ5RPGSX4
+1788958781.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,51,0.464,sell,6.3962,1.63,0.5,46,48,0.72,0.463,0.464,0.036,0,selling filled stock — it earns while it waits,CCTKW6MKRSK5
+1788958781.5,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,17,0.14,sell,0,0.03,0.214375,18,21,0.762,0.12,0.15,0.0744,0,selling filled stock — it earns while it waits,CCW4SYBV0SX0
+1788958834.7,nfl,ftsc-nfl-qbmostfp-2027-01-10-jaxdar,BUY,0.09,0.25,backfill,,1.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVAX4EGWSK5
+1788959006.4,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,10,0.91,sell,0,0.05,0.99935,91,93,0.936,0.88,0.94,0.0894,0,selling filled stock — it earns while it waits,CCW5JN04MSJ1
+1788959066.4,politics,usgubewc-usgub-al-2026-11-03-rep,BUY,3,0.87,sell,0,0.9,0.987125,91,95,0.797,0.87,0.88,-0.1171,0,buying back the short at or under what it sold for — the bid earns while it wait,CCVFG1PCMT75
+1788959066.4,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,13,0.16,bond,0.8004,0.08,0.012875,11,15,0.769,0.15,0.16,-0.1471,-50,bond more: split — 13 at 16c carry the share; never dearer than his first price,CCW5J63APT6S
+1788959126.4,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,2,0.15,bond,0,0.02,0.012875,13,17,0.807,0.13,0.16,-0.1371,-52,bond: took 2 NO at 15c — it was in the way of our resting order,CCW7YA614T6S
+1788959126.4,nfl,aqc-nfl-afc-2027-01-24-champq-cin,SELL,1,0.25,sell,0.0362,0.98,,21,28,0.402,0.24,0.25,-0.01,0,selling filled stock — it earns while it waits,CCVDSSN28SJH
+1788959186.4,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,1,0.13,bond,0,0.02,0.012875,14,18,0.833,0.12,0.16,-0.1171,-53,bond: took 1 NO at 13c — it was in the way of our resting order,CCW7XGVZ8SK5
+1788959256.2,politics,ussewc-usse-ma-2026-11-03-rep,BUY,12.71,0.05,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCW7SVYB8SJH
+1788959284.3,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,9.97,0.12,bond,0,0.03,0.012875,14,18,0.854,0.11,0.15,-0.1071,-62.97,bond: took 9.97 NO at 12c — it was in the way of our resting order,CCW7XR94CT75
+1788959344.3,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,10,0.95,sell,0,0.04,0.99935,91,93,0.939,0.9,0.95,0.0494,-10,selling filled stock — it earns while it waits,CCW8ZPXD6T3P
+1788959491.8,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,25,0.12,bond,0,0.02,0.012875,14,18,0.869,0.11,0.14,-0.1071,-88,bond: took 25 NO at 12c — it was in the way of our resting order,CCWB01SYASX0
+1788959671.8,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,1,0.13,bond,0,0.02,0.012875,14,18,0.875,0.11,0.13,-0.1171,-89,bond: took 1 NO at 13c — it was in the way of our resting order,CCWCEYNE0SJ1
+1788959671.8,nfl,tec-nfl-droy-2027-02-11-w-arvree,BUY,0.51,0.31,earn,2.2523,0.13,,19,36,0,0.31,0.32,0.03,0.51,joins the touch — the book has been quiet,CCW7HREFJT75
+1788959822.3,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,-2,0.02,fix,,13.52,,,,,,,,,size trimmed by 2 to the exchange's count (order CC4F9HGW8R45),CC4F9HGW8R45
+1788959822.3,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-47.32,0.94,fix,,16.83,,,,,,,,,size trimmed by 47.32 to the exchange's count (order CC6TTN77WR47),CC6TTN77WR47
+1788959822.3,politics,scc-hrep-rep-2026-11-03-gte205,BUY,-1,0.52,fix,0.3125,7.39,0.52785,49,54,0.001,0.52,0.53,-0.0079,0,size trimmed by 1 to the exchange's count (order CCAYC7WDTR42),CCAYC7WDTR42
+1788959822.3,politics,ussewc-usse-id-2026-11-03-todach,SELL,-1.51,0.06,fix,3.76,15.51,,5,10,0.671,0.02,0.09,0.02,0.49,size trimmed by 1.51 to the exchange's count (order CCAE6S682R3Y),CCAE6S682R3Y
+1788959822.3,politics,ussewc-usse-id-2026-11-03-todach,SELL,-0.49,0.06,fix,,15.5,,,,,,,,,size trimmed by 0.49 to the exchange's count (order CCAE6S682R3Y),CCAE6S682R3Y
+1788959822.3,politics,ussewc-usse-id-2026-11-03-todach,SELL,-2,0.06,fix,0.0865,15.49,,5,12,0.547,0.03,0.06,0.02,2,size trimmed by 2 to the exchange's count (order CCAE6S682R3Y),CCAE6S682R3Y
+1788959822.3,politics,ussewc-usse-ms-2026-11-03-dem,SELL,-4,0.06,fix,6.25,1.97,0.020675,6,10,0.75,0.05,0.12,-0.0393,-10,size trimmed by 4 to the exchange's count (order CCEPCHNJ2R3Z),CCEPCHNJ2R3Z
+1788959822.3,politics,ussewc-usse-ms-2026-11-03-dem,SELL,-2,0.06,fix,0.2016,1.93,0.020675,5,9,0.684,0.04,0.06,-0.0393,-6,size trimmed by 2 to the exchange's count (order CCEPCHNJ2R3Z),CCEPCHNJ2R3Z
+1788959822.3,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.03,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVKP8MW6SJZ
+1788959822.3,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.03,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVKZTPGASJH
+1788959822.3,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.03,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVMAM7WWT3P
+1788959822.3,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.03,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVRXRGJJT6S
+1788959822.3,politics,usgubewc-usgub-wy-2026-11-03-rep,BUY,0.05,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVS698TAT6S
+1788959822.3,politics,scc-hrep-rep-2026-11-03-gte195,SELL,0.01,0.7,backfill,,1.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCTXFQ7Q6SJH
+1788959822.3,politics,ussewc-usse-ma-2026-11-03-rep,BUY,12.71,0.05,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCW7SVYB8SJH
+1788959822.3,nfl,fptc-nfl-rbfpou-2027-01-10-bucirv,SELL,-1,0.21,fix,0.8503,0.66,,,,0.421,,,,0,size trimmed by 1 to the exchange's count (order CCTZX9WERSX0),CCTZX9WERSX0
+1788959822.3,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,BUY,0.1,0.2,backfill,,0.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCV6XNZHET75
+1788959822.3,nfl,ftsc-nfl-qbmostfp-2027-01-10-jaxdar,BUY,0.09,0.25,backfill,,1.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVAX4EGWSK5
