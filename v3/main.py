@@ -1657,6 +1657,32 @@ class Monitor:
         self.store.save_soon(st, force_remote=True)
         return {"ok": True, "note": note, "graduated": sorted(fam.graduated)}
 
+    def open_market(self, which: str, slug: str) -> dict:
+        """The owner's tap (2026-09-09: "don't place orders in these
+        races before I get the chance to look at them"): a market on
+        held ground opens for orders. Audited and persisted at once,
+        like a switch flip."""
+        fam = self.families.get(which)
+        if fam is None:
+            return {"ok": False, "note": f"no family called {which}"}
+        slug = str(slug or "").strip()
+        if not slug:
+            return {"ok": False, "note": "which market?"}
+        now = time.time()
+        r = fam.open_market(slug, now)
+        if not r.get("ok"):
+            return r
+        self._audit({"op": "open_market", "family": which, "market": slug,
+                     "initiator": "owner", "ts": now})
+        self._note(f"{fam.cfg.name}: {fam._label(slug)} opened for orders by the owner")
+        st = dict(self.last_state) if self.last_state else {}
+        st[f"fam_{which}"] = fam.to_dict()
+        st["saved_at"] = now
+        self.last_state = st
+        self.freeze_payload()
+        self.store.save_soon(st, force_remote=True)
+        return {"ok": True, "note": f"{fam._label(slug)}: {r.get('note')}"}
+
     def _fair_for(self, slug: str) -> float | None:
         """One fair per market: the OWNER'S number when he has set one,
         else the model's. Every consumer of fair — the past-fair caps,

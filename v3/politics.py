@@ -217,6 +217,13 @@ def config() -> FamilyConfig:
         # the same day, declined.
         enter_tokens=("usgub", "usse", "senate", "uspres", "usp-2028",
                       "usp-party", "usho", "scc-hrep"),
+        # the state races (owner, 2026-09-09: "Yes state races should be
+        # included ... But don't place orders in these races before I
+        # get the chance to look at them"): attorneys general,
+        # lieutenant governors, secretaries of state, state supreme
+        # courts — scanned, scored and shown; no order until he opens
+        # the market from the status page
+        hold_tokens=("usag", "usltgov", "ussos", "ussupct"),
         rest_from=None, rest_until=None,      # politics rests every day
         min_days_out=3,
         # owner, 2026-08-30 ("make actions up to our limit"), after his
