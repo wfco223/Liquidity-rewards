@@ -200,6 +200,12 @@ class FamilyConfig:
     # the whole universe). Exits, adopted orders, and dead handling are
     # never scoped — only where fresh money goes.
     enter_tokens: tuple[str, ...] | None = None
+    # Ground to LOOK at but not enter: slugs with these tokens are
+    # discovered, scanned and scored like the rest, and shown on the
+    # page, but no order rests there until the owner opens the market
+    # (owner, 2026-09-09: "don't place orders in these races before I
+    # get the chance to look at them")
+    hold_tokens: tuple[str, ...] | None = None
     max_actions_per_cycle: int = 6
     books_per_cycle: int = 16
     scan_reserve: int = 6
@@ -628,6 +634,10 @@ class Family:
         # politics budget" — orders there answer to the bond budget, not
         # this family's ceiling, and never graduate
         self.bond_markets: set[str] = set()
+        # held ground the owner has opened for orders (persisted), and
+        # the markets discovery found in the last week: slug -> {ts, name}
+        self.opened: set[str] = set()
+        self.new_markets: dict[str, dict] = {}
         # the event's market count as last seen for every market, so a
         # short events feed (2026-09-05: the list went blind and every
         # estimate read $0.00) does not take the divisor with it
@@ -669,11 +679,61 @@ class Family:
                 or any(t in slug for t in self.cfg.freeze_tokens))
 
     def enterable(self, slug: str) -> bool:
+        """This family's ground: scanned, scored and shown. Held ground
+        (hold_tokens) counts too — it is looked at; may_enter says
+        whether fresh money may go there."""
         if self._avoided(slug) or self._frozen(slug) \
                 or self._liquidating(slug):
             return False
         toks = self.cfg.enter_tokens
-        return toks is None or any(t in slug for t in toks)
+        if toks is None or any(t in slug for t in toks):
+            return True
+        htoks = self.cfg.hold_tokens or ()
+        return any(t in slug for t in htoks)      # held ground, opened or not
+
+    def held_ground(self, slug: str) -> bool:
+        """Ground the owner wants to look at before any order rests
+        there, until he opens the market (owner, 2026-09-09)."""
+        toks = self.cfg.hold_tokens
+        return bool(toks) and any(t in slug for t in toks) \
+            and slug not in self.opened
+
+    def may_enter(self, slug: str) -> bool:
+        """Where fresh money may go: enterable ground that is not held."""
+        return self.enterable(slug) and not self.held_ground(slug)
+
+    def open_market(self, slug: str, now: float | None = None) -> dict:
+        """His tap: orders may rest in this held market from now on."""
+        if slug not in self.universe:
+            return {"ok": False, "note": "not a market this family knows"}
+        toks = self.cfg.hold_tokens or ()
+        if not any(t in slug for t in toks):
+            return {"ok": False, "note": "this market is not on held ground — orders were never held here"}
+        if slug in self.opened:
+            return {"ok": True, "note": "already open for orders"}
+        self.opened.add(slug)
+        self._log(event="ground_opened", market=slug,
+                  note="the owner opened this market for orders")
+        return {"ok": True, "note": "open for orders — the next cycle may rest here"}
+
+    def _new_markets_report(self, now: float) -> list[dict]:
+        """Markets discovery found in the last week, newest first, with
+        what the scan made of each and whether orders may rest there."""
+        out = []
+        for slug, meta in list(self.new_markets.items()):
+            sb = self.scoreboard.get(slug) or {}
+            plans = sb.get("plans") or []
+            est = round(sum(float(p.get("ev", p.get("est", 0.0)) or 0.0) for p in plans), 2)
+            n_orders = sum(1 for o in list(self.orders.values()) if o.market == slug)
+            out.append({"market": slug, "name": meta.get("name") or slug,
+                        "since": float(meta.get("ts") or 0.0),
+                        "held": self.held_ground(slug),
+                        "opened": slug in self.opened,
+                        "scanned": slug in self.scoreboard,
+                        "est": est, "why": str(sb.get("why") or "")[:120],
+                        "orders": n_orders})
+        out.sort(key=lambda r: -r["since"])
+        return out[:60]
 
     def knows(self, slug: str) -> bool:
         """This family's ground: discovered markets, plus anything we
@@ -972,8 +1032,27 @@ class Family:
             for slug, row in found.items():
                 if row.get("name"):
                     self.names.learn(slug, {"title": row["name"]})
+        for s in list(self.new_markets):
+            if now - float(self.new_markets[s].get("ts") or 0.0) > 7 * 86400.0:
+                del self.new_markets[s]
         if fresh:
-            self._log(event="discovered", n=len(found), new=len(fresh))
+            names = []
+            for s in sorted(fresh):
+                nm = str((found.get(s) or {}).get("name") or s)
+                self.new_markets[s] = {"ts": round(now, 1), "name": nm}
+                names.append(nm)
+            held = sorted(s for s in fresh if self.held_ground(s))
+            self._log(event="discovered", n=len(found), new=len(fresh),
+                      markets=sorted(fresh)[:40], held=len(held))
+            # owner, 2026-09-09: "I didn't get any sort of notification.
+            # Can you give me a report on any newly added markets?"
+            shown = names[:12]
+            more = f" … and {len(names) - 12} more" if len(names) > 12 else ""
+            self.alert(f"{self.cfg.tag}: {len(fresh)} new market"
+                       f"{'s' if len(fresh) != 1 else ''} on the exchange",
+                       "\n".join(shown) + more
+                       + (f"\n{len(held)} on held ground — no orders until you open them"
+                          if held else ""))
 
     def refresh_terms(self, client, now: float) -> None:
         """Two cadences: markets we're in (fast), the whole universe in a
@@ -3028,7 +3107,7 @@ class Family:
                 break
             if slug not in self.universe or self._dead_here(slug):
                 continue
-            if not self.enterable(slug):
+            if not self.may_enter(slug):
                 continue
             days = slug_days_out(slug, now)
             if days is not None and days < self.cfg.min_days_out:
@@ -3413,7 +3492,7 @@ class Family:
             if actions <= 0 or spent >= self.cfg.grow_usd - 1e-9:
                 break
             if slug not in self.universe or self._dead_here(slug) \
-                    or not self.enterable(slug):
+                    or not self.may_enter(slug):
                 continue
             days = slug_days_out(slug, now)
             if days is not None and days < self.cfg.min_days_out:
@@ -4837,7 +4916,7 @@ class Family:
         for slug in sorted(self.universe, key=lambda s: self._label(s)):
             if actions <= 0:
                 break
-            if (not self.enterable(slug) or self._dead_here(slug)
+            if (not self.may_enter(slug) or self._dead_here(slug)
                     or self.kicked_off(slug, now)):
                 continue
             prog, _why = self._prog_row(slug)
@@ -4902,7 +4981,7 @@ class Family:
                 break
             if spent >= self.cfg.probe_usd - 1e-9:
                 break
-            if not self.enterable(slug) or self._dead_here(slug):
+            if not self.may_enter(slug) or self._dead_here(slug):
                 continue
             prog, _w = self._prog_row(slug)
             if prog is None:
@@ -5211,6 +5290,8 @@ class Family:
         if self.cfg.settle_s > 0.0:
             summary["settling"] = sum(1 for o in list(self.orders.values())
                                       if not o.settled)
+        if self.new_markets:
+            summary["new_markets"] = self._new_markets_report(now)
         summary["inventory"] = {k: dict(v) for k, v in list(self.inventory.items())}
         # every held position by what it earns per dollar of
         # liquidation value (owner, 2026-08-26: "even the ones with no
@@ -5405,6 +5486,8 @@ class Family:
             "pos_moves": self.pos_moves[-500:],
             "exit_float": self.exit_float,
             "float_day": self.float_day,
+            "opened": sorted(self.opened),
+            "new_markets": self.new_markets,
             "pending_pages": self.pending_pages,
             "gone_pending": {oid: {"rec": asdict(g["rec"]),
                                    "until": g["until"]}
@@ -5451,6 +5534,9 @@ class Family:
         self.inventory = dict(d.get("inventory") or {})
         self.exit_float = {k: dict(v) for k, v in (d.get("exit_float") or {}).items()}
         self.float_day = dict(d.get("float_day") or {"day": "", "usd": 0.0})
+        self.opened = {str(s) for s in (d.get("opened") or [])}
+        self.new_markets = {str(k): dict(v) for k, v in (d.get("new_markets") or {}).items()
+                            if isinstance(v, dict)}
         self.probe_ratchet = {k: list(v) for k, v in
                               (d.get("probe_ratchet") or {}).items()}
         self.positions_seen = dict(d.get("positions_seen") or {})

@@ -3489,3 +3489,43 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788974391.2,politics,ussewc-usse-ky-2026-11-03-rep,BUY,0.62,0.93,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZRRTC92SJR
 1788974391.2,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,BUY,-1,0.11,fix,0.0406,2.73,,10,14,0.624,0.11,0.12,-0.01,4,size trimmed by 1 to the exchange's count (order CCWNXBD06SX0),CCWNXBD06SX0
 1788974391.2,nfl,ftsc-nfl-dstmostfp-2027-01-10-nyj,BUY,1,0.18,backfill,,0.51,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZDTK3ZGT3P
+1788974552.8,politics,ussewc-usse-mt-2026-11-03-setbod,BUY,0.46,0.08,backfill,,0.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZ63ZGEYSJR
+1788974563.9,politics,ussewc-usse-mt-2026-11-03-setbod,BUY,2,0.08,earn,1.6412,0.89,,9,13,0.476,0.09,0.1,-0.03,141,1 tick behind the touch — we would hold 39% of the bid side,CCZ63ZGEYSJR
+1788974569.4,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,25,0.04,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZN8WWSASX0
+1788974624.1,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,2,0.12,backfill,,4.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCWEZTRJCSJ1
+1788974629.7,politics,usgubewc-usgub-ne-2026-11-03-rep,BUY,10,0.95,earn,1.3889,2.24,0.9653,92,95,0.409,0.95,0.96,-0.0153,19.99,joins the touch — the book has been quiet,CCY1FEE50SX0
+1788974629.7,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,10,0.84,earn,2.0832,0.02,0.862275,83,86,0.738,0.85,0.86,-0.0223,25,1 tick behind the touch — we would hold 33% of the bid side,CCZZ8444RT3P
+1788974689.7,politics,usgubewc-usgub-pa-2026-11-03-rep,BUY,42,0.05,bond,2.3265,6.07,0.00165,4,9,0,0.03,0.06,0.0484,0,bond: moved up to keep 80% of the best reward,CCTN5NZQRT3P
+1788974749.7,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,SELL,1,0.07,sell,0,0.49,,8,21,0.252,0.02,0.07,0.07,0,selling filled stock — it earns while it waits,CCZGZME3GSJ1
+1788974929.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.61,sell,0,0,,58,64,0.613,0.61,0.62,0,0,taker dump — sold into the bid (the carved exception),CD02K6BXJSK5
+1788975049.7,nfl,aqc-nfl-2027-01-10-playoffq-dal,SELL,0.01,0.45,earn,0.0222,0.66,,44,55,0,0.44,0.45,0.04,-0.01,joins the touch — the book has been quiet,CCZEA26H8T75
+1788975109.7,nfl,ftsc-nfl-kmostfp-2027-01-10-ryafit,BUY,1,0.26,earn,0.293,1.8,,23,30,0,0.26,0.27,-0.01,1,joins the touch — the book has been quiet,CCYGT48ZASJZ
+1788975209.3,politics,ussewc-usse-la-2026-11-03-rep,SELL,22,0.95,sell,0.0674,2.51,0.9646,92,95,0.774,0.88,0.94,0.0146,0,selling filled stock — it earns while it waits,CCXXF1RX8SJH
+1788975209.3,politics,ussewc-usse-la-2026-11-03-rep,BUY,10,0.9,manual,0.0004,5.33,0.9646,92,95,0.774,0.88,0.94,-0.0646,10,the owner's own order — the engine leaves it alone,CCVG1JSAMT75
+1788975209.3,politics,ewc-usse-me-2026-11-03-dem,BUY,20,0.68,sell,1.6424,2.31,0.6472,64,68,0.324,0.67,0.69,0.0328,0,buying back the short at or under what it sold for — the bid earns while it wait,CCY4KDNVJSX0
+1788975329.3,politics,ussewc-usse-la-2026-11-03-rep,SELL,10,0.89,sell,0,0.03,0.9646,92,95,0.836,0.88,0.94,0.0746,0,selling filled stock — it earns while it waits,CD04JW9VASK5
+1788975329.3,politics,ussewc-usse-sc-2026-11-03-rep,BUY,20,0.83,earn,0.3106,1.01,0.925175,86,90,0.529,0.83,0.84,-0.0952,30,at the touch — a fill here is 7 ticks inside value (Silver + evidence),CCZ8NY30ASJH
+1788975329.3,politics,ussewc-usse-la-2026-11-03-rep,SELL,10,0.89,sell,0,0.02,0.9646,92,95,0.836,0.88,0.94,0.0746,-10,selling filled stock — it earns while it waits,CD04Y0VQET75
+1788975468.9,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,BUY,0.06,0.3,backfill,,1.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZ0D2TJ2T6S
+1788975629.3,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,20,0.91,earn,0.596,0.36,0.996175,96,99,0.663,0.9,0.94,-0.0862,20,1 tick behind the touch — we would hold 6% of the bid side,CCZX3JTX0SJR
+1788976013.3,nfl,ftsc-nfl-rbtop12fp-2027-01-10-deach,BUY,0.01,0.41,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD0ATHF1MSJ1
+1788976019.3,politics,ussewc-usse-nj-2026-11-03-dem,SELL,6,0.99,backfill,,0.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZEXXZDTT6S
+1788976024.6,politics,ussewc-usse-nj-2026-11-03-dem,BUY,7.06,0.97,backfill,,0.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZEA2P1WT75
+1788976053.6,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,BUY,2,0.23,backfill,,0.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZHDC408SJH
+1788976063.9,politics,ussewc-usse-co-2026-11-03-rep,SELL,3,0.05,hand,,3.67,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBT478HNTQ3Z
+1788976063.9,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,3,0.05,hand,,10.88,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBPG17938Q3H
+1788976063.9,politics,ussewc-usse-ms-2026-11-03-dem,SELL,6,0.06,hand,,1.95,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCEPCHNJ2R3Z
+1788976063.9,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,2,0.02,hand,,13.52,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC4F9HGW8R45
+1788976063.9,politics,scc-hrep-rep-2026-11-03-gte205,BUY,5,0.52,hand,,7.37,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCAYC7WDTR42
+1788976063.9,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,5,0.21,hand,,5.43,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCCN6ZJMCR3Y
+1788976063.9,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,47.32,0.94,hand,,16.83,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC6TTN77WR47
+1788976063.9,politics,ussewc-usse-id-2026-11-03-todach,SELL,4,0.06,hand,,15.5,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CCAE6S682R3Y
+1788976063.9,politics,ussewc-usse-mt-2026-11-03-setbod,BUY,0.46,0.08,backfill,,0.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZ63ZGEYSJR
+1788976063.9,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,25,0.04,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZN8WWSASX0
+1788976063.9,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,2,0.12,backfill,,4.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCWEZTRJCSJ1
+1788976063.9,politics,ussewc-usse-nj-2026-11-03-dem,SELL,6,0.99,backfill,,0.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZEXXZDTT6S
+1788976063.9,politics,ussewc-usse-nj-2026-11-03-dem,BUY,7.06,0.97,backfill,,0.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZEA2P1WT75
+1788976063.9,nfl,ftsc-nfl-dstmostfp-2027-01-10-nyj,BUY,-0.56,0.18,fix,0.0002,0.53,,10,18,0,0.24,0.25,0.04,0.56,size trimmed by 0.56 to the exchange's count (order CCZDTK3ZGT3P),CCZDTK3ZGT3P
+1788976063.9,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,BUY,0.06,0.3,backfill,,1.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZ0D2TJ2T6S
+1788976063.9,nfl,ftsc-nfl-rbtop12fp-2027-01-10-deach,BUY,0.01,0.41,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD0ATHF1MSJ1
+1788976063.9,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,BUY,2,0.23,backfill,,0.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZHDC408SJH
