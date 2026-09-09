@@ -3163,3 +3163,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788935938.4,cfb,aachc-cfb-wins-2026-11-28-pitt-9pt5wins,BUY,0.4,0.29,backfill,,16.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC8CCST58R40
 1788935938.4,cfb,aachc-cfb-wins-2026-11-28-utahst-3pt5wins,BUY,0.03,0.67,backfill,,13.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCAKGQXVYR46
 1788935938.4,nfl,aqc-nfl-nfc-2027-01-24-champq-sea,SELL,0.3,0.33,backfill,,3.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJQF110RR45
+1788936662.9,politics,ussewc-usse-co-2026-11-03-dem,BUY,-6,0.94,fix,0,0.02,0.9947,91,94,0.848,0.93,0.94,-0.0547,183,size trimmed by 6 to the exchange's count (order CCPNX2XK0R45),CCPNX2XK0R45
+1788936662.9,politics,ussewc-usse-la-2026-11-03-rep,BUY,5,0.92,backfill,,4.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC9VQF0DWR47
+1788936662.9,politics,ussewc-usse-ky-2026-11-03-rep,SELL,60.63,0.94,backfill,,7.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC8S407DTR3V
+1788936662.9,politics,ussewc-usse-tn-2026-11-03-rep,SELL,68.66,0.93,backfill,,6.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC93WRF82R3V
+1788936662.9,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,20,0.04,hand,,10.22,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC742NF6RR42
+1788936662.9,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,2,0.02,hand,,13.52,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC4F9HGW8R45
+1788936662.9,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,47.32,0.94,backfill,,16.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC6TTN77WR47
