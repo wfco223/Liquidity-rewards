@@ -142,14 +142,41 @@ class TestTheExitFloat(unittest.TestCase):
         self.assertEqual(len(fl), 2)
         self.assertAlmostEqual(fl[-1]["to"], 0.59, places=3)
 
-    def test_an_earning_exit_holds_its_level(self):
+    def test_an_earning_exit_holds_where_a_tick_closer_is_worth_no_more(self):
         r = self._rig()
         self._go_dry(r); r.cycle()
         self.assertEqual(len([e for e in r.fam.log if e.get("event") == "exit_floated"]), 1)
+        r.fam._float_wants_more = lambda *a, **k: False
         for o in self._exits(r):
             o.live_est = 0.40                      # it earns now
         r.cycle(advance=1800.0)
         self.assertEqual(len([e for e in r.fam.log if e.get("event") == "exit_floated"]), 1)
+
+    def test_an_earning_exit_keeps_stepping_while_a_tick_closer_is_worth_more(self):
+        # owner, 2026-09-09: "not minimally earning. Just optimally
+        # earning, where there is no marginal benefit to moving up any
+        # further all things considered"
+        r = self._rig()
+        self._go_dry(r); r.cycle()                 # step one, cancel
+        self._go_dry(r); r.cycle()                 # re-rested at 60c
+        r.fam._float_wants_more = lambda *a, **k: True
+        for o in self._exits(r):
+            o.live_est = 0.40                      # earning, and a tick closer is worth more
+        r.cycle(advance=1800.0)
+        fl = [e for e in r.fam.log if e.get("event") == "exit_floated"]
+        self.assertEqual(len(fl), 2, fl)
+        self.assertAlmostEqual(fl[-1]["to"], 0.59, places=3)
+
+    def test_wants_more_weighs_earnings_against_the_loss_on_a_fill(self):
+        r = self._rig()
+        book = r.exchange.books[A]
+        # one tick closer to the 42c ask touch, from 44c to 43c, on a
+        # 60c basis: a fat pool makes the extra share worth the extra
+        # give-up; a thin one does not
+        r.fam._side_pool = lambda slug, prog: 100.0
+        self.assertTrue(r.fam._float_wants_more(A, "SELL", book, 0.44, 0.43, 10.0, 0.60))
+        r.fam._side_pool = lambda slug, prog: 0.05
+        self.assertFalse(r.fam._float_wants_more(A, "SELL", book, 0.44, 0.43, 10.0, 0.60))
 
     def test_the_day_budget_stops_the_float(self):
         r = self._rig(exit_float_usd_day=0.15)     # one step of 10c fits, two do not
