@@ -4530,7 +4530,7 @@ class TestTheAmplifier(Base):
     def test_the_phantom_sales_of_sep_9_are_repaired_once(self):
         from v3 import bonds as bm
         rows = bm.REPAIRS["amp-phantom-2026-09-09"]
-        self.b.repairs_done = []                       # not yet applied on this ledger
+        self.b.repairs_done = ["amp-phantom-2026-09-09b"]   # only the first is due on this ledger
         for slug, side, qty, cost, proceeds, gain in rows:
             self.b.approve(slug, self.now) if slug not in self.b.approved else None
             self.assertNotIn(slug, self.b.lots)
@@ -4542,18 +4542,38 @@ class TestTheAmplifier(Base):
         self.assertAlmostEqual(self.b.cash, cash0 - 678.00, places=2)
         self.assertAlmostEqual(self.b.realized, real0 - 3.01, places=2)
         self.assertAlmostEqual(self.b.sold_usd, sold0 - 678.00, places=2)
-        self.assertEqual(self.b.repairs_done, ["amp-phantom-2026-09-09"])
+        self.assertIn("amp-phantom-2026-09-09", self.b.repairs_done)
         self.assertEqual(len([e for e in self.b.log if e["event"] == "repaired"]), 3)
         # once: a restart and another cycle change nothing
         d = self.b.to_dict()
         b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
                    clock=lambda: self.r.now)
         b2.restore(copy.deepcopy(d))
-        self.assertEqual(b2.repairs_done, ["amp-phantom-2026-09-09"])
+        self.assertIn("amp-phantom-2026-09-09", b2.repairs_done)
         for slug, side, qty, cost, proceeds, gain in rows:
             self.assertAlmostEqual(b2.held(slug, side), qty, places=2)   # the lot survived the restore
         cash1 = b2.cash
         b2._apply_repairs()
         self.assertAlmostEqual(b2.cash, cash1)
+
+    def test_the_second_repair_reverses_money_only(self):
+        """Between 18:56Z and 19:24Z seven more lots were booked sold
+        through the amplifier with no trade behind them; the exchange's
+        record counted them back in at their real cost before the fix
+        booted, so only the phantom money comes off."""
+        from v3 import bonds as bm
+        rows = bm.REPAIRS["amp-phantom-2026-09-09b"]
+        self.b.repairs_done = ["amp-phantom-2026-09-09"]     # the first is done, the second not
+        lots0 = copy.deepcopy(self.b.lots)
+        cash0, real0, sold0 = self.b.cash, self.b.realized, self.b.sold_usd
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertAlmostEqual(self.b.cash, cash0 - 395.64, places=2)
+        self.assertAlmostEqual(self.b.realized, real0 - 10.94, places=2)
+        self.assertAlmostEqual(self.b.sold_usd, sold0 - 395.64, places=2)
+        for slug, side, qty, cost, proceeds, gain in rows:
+            self.assertEqual(qty, 0.0)
+            self.assertEqual(self.b.lots.get(slug), lots0.get(slug))   # no lot touched
+        self.assertEqual(len([e for e in self.b.log if e["event"] == "repaired"]), 7)
+        self.assertIn("amp-phantom-2026-09-09b", self.b.repairs_done)
 
 

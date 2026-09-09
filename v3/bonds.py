@@ -172,6 +172,20 @@ REPAIRS = {
         ("usgubewc-usgub-mn-2026-11-03-dem", "YES", 104.0, 97.6573, 98.70, 0.07),
         ("usgubewc-usgub-al-2026-11-03-dem", "NO", 83.97, 74.0171, 75.62, 0.48),
     ],
+    # the same fault between 18:56Z and 19:24Z, before the fix booted:
+    # seven more lots booked sold through the amplifier with no trade
+    # behind them. Those lots were already counted back in from the
+    # exchange's record at their real cost, so only the phantom
+    # proceeds and gain come off (shares 0: no lot is booked).
+    "amp-phantom-2026-09-09b": [
+        ("scc-senate-gop-2026-11-03-56", "NO", 0.0, 0.0, 6.08, 0.02),
+        ("scc-hrep-rep-2026-11-03-gte235", "NO", 0.0, 0.0, 59.17, 0.32),
+        ("ussewc-usse-co-2026-11-03-dem", "YES", 0.0, 0.0, 136.92, 1.28),
+        ("ussewc-usse-ky-2026-11-03-rep", "YES", 0.0, 0.0, 88.59, 0.03),
+        ("ussewc-usse-ma-2026-11-03-dem", "YES", 0.0, 0.0, 67.20, 9.30),
+        ("ussewc-usse-tn-2026-11-03-dem", "NO", 0.0, 0.0, 23.58, 0.02),
+        ("usgubewc-usgub-il-2026-11-03-rep", "NO", 0.0, 0.0, 14.10, -0.03),
+    ],
 }
 BAIT_QTY = 1.0              # the bait: one share a tick inside their best on the buy side
 BAIT_WAIT_S = 2 * 3600.0    # nobody followed in this long: the bait comes off
@@ -2607,23 +2621,25 @@ class Bonds:
             if key in self.repairs_done:
                 continue
             for slug, side, qty, cost, proceeds, gain in rows:
-                self._book_lot(slug, side, qty, cost, ref=f"repair:{key}")
                 self.cash = round(self.cash - proceeds, 4)
                 self.realized = round(self.realized - gain, 4)
                 self.sold_usd = round(self.sold_usd - proceeds, 4)
                 self._amp_booked.pop(slug, None)
                 self._amp_seen.pop(slug, None)
-                bs, _ = self.earn(side)
-                for o in list(self.fam.orders.values()):
-                    if o.market == slug and o.side == bs and o.purpose == "sell":
-                        # the family's exit rested while the lot was gone:
-                        # it is the bond's exit again
-                        o.purpose = "bond"
-                        o.why = "bond: resting — the bond's exit, claimed back after the ledger repair"
+                if qty > 0.005:
+                    self._book_lot(slug, side, qty, cost, ref=f"repair:{key}")
+                    bs, _ = self.earn(side)
+                    for o in list(self.fam.orders.values()):
+                        if o.market == slug and o.side == bs and o.purpose == "sell":
+                            # the family's exit rested while the lot was gone:
+                            # it is the bond's exit again
+                            o.purpose = "bond"
+                            o.why = "bond: resting — the bond's exit, claimed back after the ledger repair"
                 self._log(event="repaired", market=slug, side=side, qty=qty, cost=round(cost, 2),
                           proceeds=proceeds, gain=gain,
-                          note=(f"{key}: the lot is back at its real cost; ${proceeds:.2f} of "
-                                f"phantom proceeds and ${gain:.2f} of gain reversed"))
+                          note=(f"{key}: " + (f"the lot is back at its real cost; " if qty > 0.005
+                                              else "the lot was already counted back in; ")
+                                + f"${proceeds:.2f} of phantom proceeds and ${gain:.2f} of gain reversed"))
             self.repairs_done.append(key)
 
     def _amp_pull(self, slug: str, why: str) -> int:
