@@ -78,13 +78,15 @@ long and accreted, so search it rather than reading it through.
   the proceeds cash at once. Owner's tap only; the engine never sells a
   bond under cost. The amplifier (owner, 2026-09-09 "amplify my exit
   orders by placing buy orders for the underdogs in markets where I'm
-  not meeting my targets using my held shares alone"): where a bond
-  exit's side falls short of Target Size, the engine rests a buy of the
-  underdog (a short beside the lot) at the far edge, behind the exit,
-  sized to the gap, so the exit pays. Its expected loss a day is drawn
-  from a budget of 50% of the bonds' average daily earnings; an exit
-  fill pulls it for two hours; the bonds switch off pulls it. Nothing
-  else may cross.
+  not meeting my targets using my held shares alone ... it should help
+  me earn at the price level where my exit order is"): a buy of the
+  underdog (a short beside the lot) one tick behind each bond exit, so
+  our size at the exit's level claims more of the side's reward. Sized
+  where the earnings it adds pay for its expected loss at least twice
+  over; all amplifiers together within 50% of the bonds' average daily
+  earnings of expected loss; an exit fill pulls it for two hours; the
+  amplifier itself trading books the lot's shares sold and pulls the
+  rest; the bonds switch off pulls it. Nothing else may cross.
 - Bond money (owner, 2026-09-06): the bonds buy within the budget
   market by market — in any one market, what is held at cost plus that
   market's buy orders stays under the budget; across markets the orders

@@ -4138,21 +4138,24 @@ class TestTheBoardCountsBothSides(Base):
 class TestTheAmplifier(Base):
     """Owner, 2026-09-09: "amplify my exit orders by placing buy orders
     for the underdogs in markets where I'm not meeting my targets using
-    my held shares alone. They should be small enough to only eat a
-    fraction of the profits since they are negative ev ... about 50% of
-    the average earn rate for bonds over the last few days. And if my
-    exit orders fill, we should pull the amplifiers. The exit order
-    should be higher in the book than the buy orders"."""
+    my held shares alone ... about 50% of the average earn rate for
+    bonds over the last few days. And if my exit orders fill, we should
+    pull the amplifiers. The exit order should be higher in the book
+    than the buy orders"; then "it should help me earn at the price
+    level where my exit order is. This isn't about target size, it's
+    about reaching my earnings targets"."""
 
-    def short_book(self, now, ask_q=300.0):
-        # the ask side holds 300 of the 5,000 Target Size: it pays nobody
+    def crowded_book(self, now, crowd=2000.0):
+        # the ask side is over Target Size, but 2,000 of someone else's
+        # shares sit at 99c with our exit: our 100 hold 5% of the level
         return Book(bids=((0.98, 50.0), (0.50, 20000.0)),
-                    asks=((0.99, ask_q),), tick=0.01, fetched_at=now)
+                    asks=((0.99, crowd), (0.999, 20000.0)),
+                    tick=0.01, fetched_at=now)
 
     def setUp(self):
         super().setUp()
         self.b.approve(AL, self.now)
-        self.seed(AL, self.short_book(self.now))
+        self.seed(AL, self.crowded_book(self.now))
         self.bond(AL, "YES", 100.0, 0.90)
         self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}   # no buy-more here
         # three days of bond earnings on the books: $40 a day -> a $20/day budget
@@ -4162,56 +4165,64 @@ class TestTheAmplifier(Base):
     def amps(self, slug=AL):
         return self.b._amp_orders(slug)
 
-    def test_the_amplifier_carries_the_ask_side_over_target_behind_the_exit(self):
+    def exits(self, slug=AL):
+        return [o for o in self.orders(slug, "SELL", decoy=False)
+                if not str(o.why).startswith("bond amplifier")]
+
+    def test_the_amplifier_rests_a_tick_behind_the_exit_and_pays_for_itself(self):
         self.b.cycle(self.now, self.positions(), on=True)
-        ex = self.orders(AL, "SELL", decoy=False)
-        ex = [o for o in ex if not str(o.why).startswith("bond amplifier")]
+        ex = self.exits()
         self.assertEqual(len(ex), 1)
         a = self.amps()
         self.assertEqual(len(a), 1, a)
         amp = a[0]
         self.assertEqual(amp.side, "SELL")
         self.assertEqual(amp.intent, BUY_SHORT)              # a buy of the underdog
-        self.assertAlmostEqual(amp.price, 0.99)               # the far edge of a whole-cent book
-        self.assertGreaterEqual(amp.price, ex[0].price - 1e-9)   # never nearer the touch than the exit
-        self.assertEqual(amp.qty, 5950.0)                     # 1.25 x 5,000 less the 300 there
+        # a whole-cent book ends at 99c: the exit is there, so the
+        # amplifier shares the level, behind it in time
+        self.assertAlmostEqual(amp.price, ex[0].price)
+        self.assertGreaterEqual(amp.price, ex[0].price - 1e-9)
         self.assertTrue(str(amp.why).startswith("bond amplifier"))
         rested = [e for e in self.b.log if e["event"] == "amp_rested"]
         self.assertEqual(len(rested), 1)
         self.assertGreater(rested[0]["gain"], 0.0)
+        # its expected loss is at most half the earnings it adds, and within the day's budget
+        self.assertLessEqual(rested[0]["exp_loss"], 0.5 * rested[0]["gain"] + 1e-9)
         self.assertLessEqual(rested[0]["exp_loss"], 20.0)
         self.assertIn(AL, self.b.amp)
         # the exit machinery never counts it as an exit
         self.assertEqual(self.b._earn_seen[AL], ex[0].qty)
 
+    def test_a_tick_behind_when_the_grid_allows(self):
+        book = Book(bids=((0.95, 50.0), (0.50, 20000.0)),
+                    asks=((0.97, 2000.0), (0.999, 20000.0)), tick=0.01, fetched_at=self.now)
+        self.seed(AL, book)
+        self.b.cycle(self.now, self.positions(), on=True)
+        ex = self.exits()
+        self.assertTrue(ex)
+        a = self.amps()
+        self.assertEqual(len(a), 1, a)
+        self.assertAlmostEqual(a[0].price, round(ex[0].price + 0.01, 4))
+
     def test_the_day_budget_is_half_the_average_earnings_and_binds(self):
         self.assertAlmostEqual(self.b._avg_earn_day(), 40.0)
         self.assertAlmostEqual(self.b._amp_budget_day(), 20.0)
         for k in (1, 2, 3):
-            self.b.accrued[self.b._day(self.now - k * 86400.0)] = 0.20   # a dime a day
+            self.b.accrued[self.b._day(self.now - k * 86400.0)] = 0.02   # two cents a day
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertEqual(self.amps(), [])
         self.assertIn("over the day's budget", self.b.amp_note.get(AL, ""))
 
-    def test_no_amplifier_where_the_side_meets_target_on_its_own(self):
-        self.seed(AL, yes_book(self.now))                   # 20,300 on the ask side
+    def test_nothing_where_the_earnings_added_cannot_pay_for_the_loss(self):
+        self.b.fam._side_pool = lambda slug, prog: 0.05      # a nickel a day on this side
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertEqual(self.amps(), [])
-        self.assertIn("Target Size on its own", self.b.amp_note.get(AL, ""))
-
-    def test_others_arriving_pull_it(self):
-        self.b.cycle(self.now, self.positions(), on=True)
-        self.assertEqual(len(self.amps()), 1)
-        self.seed(AL, yes_book(self.now + 60))              # a 20,000 wall lands
-        self.b.cycle(self.now + 60, self.positions(), on=True)
-        self.assertEqual(self.amps(), [])
-        self.assertTrue(any(e["event"] == "amp_pulled" for e in self.b.log))
-        self.assertNotIn(AL, self.b.amp)
+        self.assertIn("nothing pays here", self.b.amp_note.get(AL, ""))
 
     def test_an_exit_fill_pulls_it_for_two_hours(self):
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertEqual(len(self.amps()), 1)
-        ex = [o for o in self.orders(AL, "SELL") if not str(o.why).startswith("bond amplifier")][0]
+        ex = self.exits()[0]
         sold = 40.0                                          # part of the exit traded
         self.r.exchange.live[ex.id]["size"] = ex.qty - sold
         self.r.fam.orders[ex.id].qty = ex.qty - sold
@@ -4222,13 +4233,26 @@ class TestTheAmplifier(Base):
         pulled = [e for e in self.b.log if e["event"] == "amp_pulled"]
         self.assertTrue(pulled and "exit filled" in pulled[-1]["note"], pulled)
         self.assertGreater(self.b.amp_hold.get(AL, 0.0), self.now + 60)
-        # inside the hold nothing new rests, even though the side is still short
         self.b.cycle(self.now + 600, self.positions(), on=True)
         self.assertEqual(self.amps(), [])
         self.assertIn("back in", self.b.amp_note.get(AL, ""))
-        # after it, the amplifier is back (the remaining exit still needs the help)
         self.b.cycle(self.now + 60 + bonds_mod.AMP_AFTER_FILL_S + 60, self.positions(), on=True)
         self.assertEqual(len(self.amps()), 1)
+
+    def test_the_amplifier_trading_books_the_lot_sold_and_pulls_the_rest(self):
+        self.b.cycle(self.now, self.positions(), on=True)
+        amp = self.amps()[0]
+        traded = 30.0
+        self.r.exchange.live[amp.id]["size"] = amp.qty - traded
+        self.r.fam.orders[amp.id].qty = amp.qty - traded
+        self.exch(AL, 100.0 - traded, 0.90)                  # the lot's shares went
+        cash0 = self.b.cash
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual(self.amps(), [])
+        self.assertAlmostEqual(self.b.held(AL, "YES"), 70.0, places=4)
+        self.assertAlmostEqual(self.b.cash - cash0, traded * amp.price, places=2)
+        self.assertTrue(any(e["event"] == "amp_filled" for e in self.b.log))
+        self.assertGreater(self.b.amp_hold.get(AL, 0.0), self.now + 60)
 
     def test_the_switch_off_pulls_it(self):
         self.b.cycle(self.now, self.positions(), on=True)
@@ -4251,11 +4275,23 @@ class TestTheAmplifier(Base):
         self.assertTrue(is_wall(amp))
         self.assertTrue(is_wall(amp, 100.0))
 
+    def test_the_exit_reads_the_amplifier_as_its_own_size_not_competition(self):
+        self.b.cycle(self.now, self.positions(), on=True)
+        ex = self.exits()[0]
+        amp = self.amps()[0]
+        # the exchange's book shows everything resting: the crowd, our
+        # exit and our amplifier at 99c
+        self.seed(AL, self.crowded_book(self.now + 30, crowd=2000.0 + ex.qty + amp.qty))
+        book = self.r.cache.fresh(AL, 120, self.now + 30)
+        levels = self.b._levels_net(AL, "SELL", book)
+        at_level = sum(q for p, q in levels if abs(p - 0.99) < 1e-9)
+        self.assertAlmostEqual(at_level, 2000.0)             # only the crowd competes
+
     def test_the_view_carries_it(self):
         self.b.cycle(self.now, self.positions(), on=True)
         v = self.b.view(self.now, self.positions())
         row = [r for r in v["rows"] if r["market"] == AL][0]
-        self.assertEqual(row["amp"]["qty"], 5950.0)
+        self.assertGreater(row["amp"]["qty"], 0.0)
         self.assertGreater(row["amp"]["gain"], 0.0)
         self.assertAlmostEqual(v["amp_budget"], 20.0)
         self.assertGreater(v["amp_in_play"], 0.0)
