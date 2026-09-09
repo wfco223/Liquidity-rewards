@@ -26,5 +26,10 @@ ENV MALLOC_ARENA_MAX=2
 # read, the survey frame, a discovery pass) raised the high-water mark
 # for good. Routing small objects through the system allocator lets the
 # per-cycle trim hand that memory back too (owner yes, 2026-09-09).
-ENV PYTHONMALLOC=malloc
+# Withdrawn the same morning: under it the process sat flat at ~205 MB
+# after each trim, but the peak WITHIN a cycle grew (295 MB at 06:42Z,
+# 707 MB at 08:14Z) and the monitor went silent at 08:16Z — no state
+# save, no hourly publish — which is what a boot that dies at its first
+# cycle's peak looks like. The trim-per-cycle and two arenas stay.
+# ENV PYTHONMALLOC=malloc
 CMD ["python", "launcher.py"]
