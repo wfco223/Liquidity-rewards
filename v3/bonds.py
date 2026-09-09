@@ -129,23 +129,36 @@ BOOK_READS_PER_CYCLE = 40   # at the START of the pass, this many at most (owner
 # And if my exit orders fill, we should pull the amplifiers. The exit
 # order should be higher in the book than the buy orders"; then: "it
 # should help me earn at the price level where my exit order is. This
-# isn't about target size, it's about reaching my earnings targets"):
-# a buy of the underdog — a short beside the lot — one tick BEHIND the
-# exit, so our size at the exit's level claims more of the side's
-# score and the exit earns more. Sized where the earnings it adds pay
-# for its expected loss (the fill model's odds at that depth x the loss
-# a share against Silver's odds) at least 1/AMP_FRACTION times over;
-# every bond's amplifier draws that expected loss from one budget,
-# AMP_FRACTION of the bonds' average daily earnings; an exit fill
-# pulls it for AMP_AFTER_FILL_S; the amplifier itself trading books
-# the lot's shares sold and pulls the rest.
+# isn't about target size, it's about reaching my earnings targets";
+# then, 2026-09-09 evening: "I want it to be that the amplifier joins
+# at the exit price. And the fill odds seem high. My exits will be
+# bought first, and I don't make that many sales. And the amplifier
+# should rest orders for the underdogs in each market that do not
+# exceed $26/day. It may exceed that summed across markets. earnings
+# does not have to cover it's own anticipated loss."):
+# a buy of the underdog — a short beside the lot — AT the exit's
+# price, behind it in line, so our size at the exit's level claims
+# more of the side's score. In each market the largest size the money
+# allows whose expected loss stays under that market's cap,
+# AMP_FRACTION of the bonds' average daily earnings; across markets
+# the caps add up. The fill odds are the exits' own: on how many
+# market-days an exit sold over the last AMP_SALES_DAYS days, times the
+# share of those sales big enough to take the exit ahead first. The
+# earnings it adds are shown, never a gate. An exit fill pulls it for
+# AMP_AFTER_FILL_S; the amplifier itself trading books the lot's
+# shares sold and pulls the rest; what the exchange funds of it is
+# what rests (a trimmed order is kept at the size given, and it does
+# not try to grow again for AMP_GROW_S).
 AMP_FRACTION = 0.50
 AMP_DAYS = 3
 AMP_AFTER_FILL_S = 2 * 3600.0
 AMP_WHY = "bond amplifier"
 AMP_QTYS = (5, 10, 20, 30, 50, 75, 100, 150, 200, 300, 500, 750, 1000, 1500, 2000, 3000)
-AMP_COOLDOWN_S = 1800.0     # after a pull for want of pay, room or budget: nothing new here this long
+AMP_COOLDOWN_S = 1800.0     # after a pull for want of an exit, money or cap: nothing new here this long
 AMP_RESIZE_FRAC = 0.50      # a resting amplifier is resized only when the plan differs by this much
+AMP_SALES_DAYS = 7          # the exits' own sales over this many days set the fill odds
+AMP_P_FLOOR = 0.005         # never under half a percent a day
+AMP_GROW_S = 3600.0         # after the exchange trimmed one, no try to grow it for this long
 BAIT_QTY = 1.0              # the bait: one share a tick inside their best on the buy side
 BAIT_WAIT_S = 2 * 3600.0    # nobody followed in this long: the bait comes off
 BOOK_SHOW = 6               # levels per side the page shows
@@ -337,6 +350,7 @@ class Bonds:
         self.amp_note: dict[str, str] = {}     # slug -> why none rests, for the card
         self._amp_booked: dict[str, float] = {}   # slug -> booked_out seen by the amplifier pass
         self._amp_seen: dict[str, float] = {}     # slug -> amplifier shares last seen resting
+        self._amp_sales_last: dict = {}           # the exits' sale record the last pass used
         self.placed_ids: dict[str, list[str]] = {}   # slug -> ids of exits this bond placed
         # a sale by his hand the position feed has not shown yet: the
         # sync must not hand the sold shares back meanwhile
@@ -2436,13 +2450,64 @@ class Bonds:
     def _amp_budget_day(self) -> float:
         return round(AMP_FRACTION * self._avg_earn_day(), 4)
 
-    def _amp_plan(self, slug: str, side: str, book, now: float) -> dict | None:
-        """What an amplifier here would be and what it is worth: a buy of
-        the underdog one tick behind the exit (or at its level when the
-        grid ends there), sized where the earnings it adds to what we
-        hold at that level pay for its expected loss at least
-        1/AMP_FRACTION times over."""
+    def _amp_sales(self, now: float) -> dict:
+        """The bond exits' own record over the last AMP_SALES_DAYS days,
+        from the family's fills: on how many market-days an exit sold,
+        out of how many market-days exits were working, and the sizes
+        those sales took (owner, 2026-09-09: "the fill odds seem high.
+        My exits will be bought first, and I don't make that many
+        sales")."""
+        since = now - AMP_SALES_DAYS * 86400.0
+        sale_days: set = set()
+        sizes: list[float] = []
+        for e in list(getattr(self.fam, "fills", None) or []):
+            if not isinstance(e, dict) or e.get("purpose") != "bond":
+                continue
+            ts = float(e.get("ts") or 0.0)
+            if ts < since or ts > now + 1.0:
+                continue
+            m = str(e.get("market") or "")
+            try:
+                bs, _ = self.earn(self._side_of(m))
+            except Exception:  # noqa: BLE001 — a market the ledger no longer knows
+                continue
+            if e.get("side") != bs:
+                continue                      # a buy-more or a take, not an exit selling
+            sale_days.add((self._day(ts), m))
+            sizes.append(float(e.get("qty") or 0.0))
+        working = len(self._working())
+        market_days = max(working, 1) * AMP_SALES_DAYS
+        sizes.sort()
+        return {"sale_days": len(sale_days), "market_days": market_days,
+                "sales": len(sizes), "sizes": sizes,
+                "median_sale": (sizes[len(sizes) // 2] if sizes else 0.0),
+                "p_exit": round(len(sale_days) / market_days, 4)}
+
+    @staticmethod
+    def _amp_fill_p(exit_qty: float, sales: dict) -> tuple[float, float]:
+        """Chance an amplifier behind an exit of `exit_qty` trades within
+        a day: the exits' own sale rate, times the share of those sales
+        big enough to take the whole exit ahead of it first (it sits at
+        the exit's price, later in line). Floored at AMP_P_FLOOR.
+        Returns (p, reach)."""
+        sizes = sales.get("sizes") or []
+        if not sizes or exit_qty <= 0.005:
+            reach = 1.0
+        else:
+            reach = sum(1 for q in sizes if q >= exit_qty - 1e-9) / len(sizes)
+        p = max(AMP_P_FLOOR, float(sales.get("p_exit") or 0.0) * reach)
+        return round(p, 4), round(reach, 4)
+
+    def _amp_plan(self, slug: str, side: str, book, now: float,
+                  sales: dict | None = None) -> dict | None:
+        """What the amplifier here would be (owner, 2026-09-09): a buy of
+        the underdog AT the exit's price, behind it in line, the largest
+        size the money allows whose expected loss stays under this
+        market's cap — AMP_FRACTION of the bonds' average daily
+        earnings. The earnings it adds are shown, never a gate."""
         from .survey import wall_collateral
+        if sales is None:
+            sales = self._amp_sales(now)
         bs, _ = self.earn(side)
         exits = self._orders(slug, bs, decoy=False)
         if not exits:
@@ -2452,20 +2517,11 @@ class Bonds:
         if prog is None or not prog.is_live():
             self.amp_note[slug] = "no live program read here"
             return None
-        pool = self.fam._side_pool(slug, prog) or 0.0
-        if pool <= 0:
-            self.amp_note[slug] = "no reward pool read for this side"
-            return None
-        tick = book.tick or 0.01
-        near = (min(o.price for o in exits) if bs == "SELL"
-                else max(o.price for o in exits))
-        px = round(near + tick, 4) if bs == "SELL" else round(near - tick, 4)
-        if not (0.001 - 1e-9 <= px <= 0.999 + 1e-9):
-            px = near                     # the grid ends at the exit: same level, behind it in time
-        own = book.side(bs)
-        touch = own[0][0] if own else None
-        ticks = self._ticks_behind(bs, touch, px, tick)
-        pf = self._fill_p(slug, bs, ticks if ticks is not None else 0)
+        # the exit nearest the touch: its price is the amplifier's
+        px = (min(o.price for o in exits) if bs == "SELL"
+              else max(o.price for o in exits))
+        exit_q = sum(o.qty for o in exits if abs(o.price - px) < 1e-9)
+        pf, reach = self._amp_fill_p(exit_q, sales)
         odds = self.fair(slug)
         odds = float(odds) if odds is not None else (0.995 if side == "YES" else 0.005)
         if bs == "SELL":       # a short of the favourite: loses (1-px) if YES, wins px if NO
@@ -2473,38 +2529,43 @@ class Bonds:
         else:                  # a buy of the favourite at the floor: loses px if NO, wins (1-px) if YES
             loss_ps = (1.0 - odds) * px - odds * (1.0 - px)
         loss_ps = max(loss_ps, 0.0005)
-        lots = [(o.price, o.qty) for o in exits]
-        _sh0, est0 = self._share_lots(slug, bs, book, lots)
-        # sizes the bond money rules allow here (the resting amplifier's
-        # own collateral counts as room, since it would be replaced)
-        room = self.market_room(slug) + sum(
-            wall_collateral(a.side, a.price, a.qty) for a in self._amp_orders(slug))
-        best = None
+        cap = self._amp_budget_day()
+        # the money: this market's room under the bond budget, and what
+        # the exchange says it will fund (the resting amplifier's own
+        # collateral counts as room, since it would be replaced)
+        own_coll = sum(wall_collateral(a.side, a.price, a.qty) for a in self._amp_orders(slug))
+        room = self.market_room(slug) + own_coll
+        bp = self._buying_power(now)
+        if bp is not None:
+            room = min(room, max(float(bp), 0.0) + own_coll)
+        qty = 0.0
         for q in AMP_QTYS:
             if wall_collateral(bs, px, float(q)) > room + 1e-9:
                 break
-            _sh, est = self._share_lots(slug, bs, book, lots + [(px, float(q))])
-            gain = est - est0
-            exp_loss = pf * loss_ps * q
-            if gain <= 0.005 or exp_loss > AMP_FRACTION * gain + 1e-9:
-                if best is not None:
-                    break             # the marginal share is fading: bigger no longer pays
-                continue
-            net = gain - exp_loss
-            if best is None or net > best["net"] + 1e-9:
-                best = {"qty": float(q), "px": px, "gain": round(gain, 4),
-                        "exp_loss": round(exp_loss, 4), "net": net,
-                        "collateral": round(wall_collateral(bs, px, float(q)), 4),
-                        "ratio": (gain / exp_loss if exp_loss > 1e-9 else float("inf")),
-                        "pf": round(pf, 4), "loss_ps": round(loss_ps, 5),
-                        "est0": round(est0, 4), "est": round(est, 4)}
-        if best is None:
-            self.amp_note[slug] = (f"nothing pays here: at {px * 100:g}c no size within the "
-                                   f"room (${room:,.2f}) adds earnings worth "
-                                   f"{1 / AMP_FRACTION:.0f}x its expected loss "
-                                   f"(fill odds {pf:.0%}/day, {loss_ps * 100:.2f}c a share)")
+            if pf * loss_ps * q > cap + 1e-9:
+                break
+            qty = float(q)
+        if qty <= 0:
+            if wall_collateral(bs, px, float(AMP_QTYS[0])) > room + 1e-9:
+                self.amp_note[slug] = (f"no money for it: ${max(room, 0.0):,.2f} of room here "
+                                       f"(the bond budget and the exchange's free money)")
+            else:
+                self.amp_note[slug] = (f"over this market's cap: even {AMP_QTYS[0]} shares at "
+                                       f"{px * 100:g}c would risk "
+                                       f"${pf * loss_ps * AMP_QTYS[0]:.2f}/day against "
+                                       f"${cap:.2f}/day ({AMP_FRACTION:.0%} of the bonds' "
+                                       f"${self._avg_earn_day():.2f}/day average)")
             return None
-        return best
+        lots = [(o.price, o.qty) for o in exits]
+        _sh0, est0 = self._share_lots(slug, bs, book, lots)
+        _sh, est = self._share_lots(slug, bs, book, lots + [(px, qty)])
+        return {"qty": qty, "px": px, "gain": round(max(est - est0, 0.0), 4),
+                "exp_loss": round(pf * loss_ps * qty, 4), "cap": round(cap, 4),
+                "collateral": round(wall_collateral(bs, px, qty), 4),
+                "pf": pf, "reach": reach, "loss_ps": round(loss_ps, 5),
+                "exit_qty": round(exit_q, 2), "est0": round(est0, 4), "est": round(est, 4),
+                "sale_days": sales.get("sale_days", 0),
+                "market_days": sales.get("market_days", 0)}
 
     def _amp_pull(self, slug: str, why: str) -> int:
         n = 0
@@ -2518,13 +2579,22 @@ class Bonds:
         self._amp_seen.pop(slug, None)
         return n
 
+    def _amp_odds_note(self, plan: dict, qty: float, exp_loss: float) -> str:
+        return (f"at the exit's price: adds ~${plan['gain']:.2f}/day, expected loss "
+                f"${exp_loss:.2f}/day of this market's ${plan['cap']:.2f}/day "
+                f"(fill odds {plan['pf']:.1%}/day — exits sold on {plan['sale_days']} of "
+                f"{plan['market_days']} market-days, {plan['reach']:.0%} of sales big enough "
+                f"to take the {plan['exit_qty']:g} ahead first; {plan['loss_ps'] * 100:.2f}c "
+                f"a share)")
+
     def _amplify_all(self, positions: dict, now: float) -> list[dict]:
         """Once a cycle after the exits: every working bond's amplifier
-        placed, resized or pulled, the day's expected-loss budget spent
-        on the best pay-per-loss first."""
+        placed, resized, stepped back behind a re-placed exit, or pulled.
+        Each market has its own cap; across markets they add up."""
+        from .survey import wall_collateral
         placed: list[dict] = []
-        budget = self._amp_budget_day()
-        plans: list[tuple] = []
+        sales = self._amp_sales(now)
+        self._amp_sales_last = {k: v for k, v in sales.items() if k != "sizes"}
         for slug in self._working():
             side = self._side_of(slug)
             bs, _ = self.earn(side)
@@ -2582,49 +2652,46 @@ class Bonds:
             book = self.fam.cache.fresh(slug, BOOK_ACT_S, now)
             if book is None:
                 continue
-            plan = self._amp_plan(slug, side, book, now)
+            plan = self._amp_plan(slug, side, book, now, sales)
             if plan is None:
                 if amps:
                     self._amp_pull(slug, self.amp_note.get(slug, "no longer needed"))
                     self.amp_hold[slug] = now + AMP_COOLDOWN_S
                 continue
-            plans.append((plan["ratio"], slug, side, bs, plan, amps))
-        plans.sort(key=lambda t: -t[0])
-        spent = 0.0
-        for ratio, slug, side, bs, plan, amps in plans:
-            if plan["exp_loss"] > budget - spent + 1e-9:
-                self.amp_note[slug] = (f"over the day's budget: this one would risk "
-                                       f"${plan['exp_loss']:.2f}/day, ${max(budget - spent, 0):.2f} "
-                                       f"of ${budget:.2f} left ({AMP_FRACTION:.0%} of the bonds' "
-                                       f"${self._avg_earn_day():.2f}/day average)")
-                if amps:
-                    self._amp_pull(slug, "over the day's expected-loss budget")
-                    self.amp_hold[slug] = now + AMP_COOLDOWN_S
-                continue
-            if not amps:
-                why_not = self._can_spend(plan["collateral"], now, slug)
-                if why_not:
-                    self.amp_note[slug] = f"{why_not} — the amplifier holds ${plan['collateral']:.2f}"
-                    self.amp_hold[slug] = now + AMP_COOLDOWN_S
-                    continue
-            spent += plan["exp_loss"]
             qty, px = plan["qty"], plan["px"]
             _bs, entry_intent = self.entry("NO" if side == "YES" else "YES")   # the underdog
             pos = float((positions.get(slug) or (0.0, 0.0))[0]) if positions else 0.0
-            why = (f"{AMP_WHY}: {qty:g} a tick behind the exit at {px * 100:g}c — our size "
-                   f"at the exit's level claims more of the side (${plan['est0']:.2f} -> "
-                   f"${plan['est']:.2f}/day)")
+            why = (f"{AMP_WHY}: {qty:g} at the exit's price, {px * 100:g}c, behind it in "
+                   f"line — our size at that level claims more of the side "
+                   f"(${plan['est0']:.2f} -> ${plan['est']:.2f}/day)")
             if amps:
                 cur = amps[0]
+                # the exit ahead was re-placed since the amplifier rested:
+                # it would now be first in line at that price. Step back
+                # behind it (owner: "My exits will be bought first")
+                ahead = [o for o in self._orders(slug, bs, decoy=False)
+                         if abs(o.price - cur.price) < 1e-9]
+                if ahead and any(o.placed_ts > cur.placed_ts + 1e-6 for o in ahead):
+                    self._amp_pull(slug, "the exit was re-placed — stepping back behind it")
+                    self._log(event="amp_requeued", market=slug, price=cur.price, qty=cur.qty)
+                    amps = []
+            if amps:
+                cur = amps[0]
+                a_cur = self.amp.get(slug) or {}
+                grow_wait = (qty > cur.qty + 1e-9
+                             and now - float(a_cur.get("trimmed_at") or 0.0) < AMP_GROW_S)
                 # hysteresis: the size grid steps by a third to a half, so
                 # a plan that flickers between neighbours must not move
-                # the order every cycle
+                # the order every cycle; and one the exchange trimmed is
+                # not asked to grow again for a while
                 same = (abs(cur.price - px) < 1e-9
-                        and abs(cur.qty - qty) <= max(1.0, AMP_RESIZE_FRAC * cur.qty))
+                        and (abs(cur.qty - qty) <= max(1.0, AMP_RESIZE_FRAC * cur.qty)
+                             or grow_wait))
                 if same and len(amps) == 1:
-                    self.amp[slug] = dict(self.amp.get(slug) or {}, qty=cur.qty, px=cur.price,
-                                          exp_loss=plan["exp_loss"], gain=plan["gain"])
-                    self._amp_seen[slug] = amp_q = sum(o.qty for o in amps)
+                    exp_loss = round(plan["pf"] * plan["loss_ps"] * cur.qty, 4)
+                    self.amp[slug] = dict(a_cur, qty=cur.qty, px=cur.price,
+                                          exp_loss=exp_loss, gain=plan["gain"], pf=plan["pf"])
+                    self._amp_seen[slug] = sum(o.qty for o in amps)
                     self.amp_note.pop(slug, None)
                     continue
                 r = self.fam.desk.reprice({"id": cur.id, "market": slug, "side": bs,
@@ -2644,37 +2711,60 @@ class Bonds:
                         self.fam.orders.pop(extra.id, None)
                 kind = "amp_resized"
                 use_intent = cur.intent
+                rested_q = qty
+                trimmed = ""
             else:
+                why_not = self._can_spend(plan["collateral"], now, slug)
+                if why_not:
+                    self.amp_note[slug] = f"{why_not} — the amplifier holds ${plan['collateral']:.2f}"
+                    self.amp_hold[slug] = now + AMP_COOLDOWN_S
+                    continue
                 r = self.fam.desk.place_resting(slug, bs, px, qty, net_position=pos,
                                                 initiator="owner", intent=entry_intent)
+                rested_q = qty
+                trimmed = ""
                 if not (r.ok and r.order_id):
-                    self.amp_note[slug] = f"refused: {r.note[:80]}"
-                    self._log(event="amp_refused", market=slug, note=r.note[:120])
-                    continue
+                    if r.order_id and float(r.resting_qty or 0.0) >= 1.0:
+                        # the exchange funded part of it: that part rests,
+                        # and it IS the amplifier — the free money sizes an
+                        # order, never gates one (owner, 2026-09-06)
+                        rested_q = round(float(r.resting_qty), 2)
+                        trimmed = f" — the exchange funded {rested_q:g} of {qty:g}"
+                    else:
+                        self.amp_note[slug] = f"refused: {r.note[:80]}"
+                        self._log(event="amp_refused", market=slug, note=r.note[:120])
+                        continue
                 kind = "amp_rested"
                 use_intent = r.intent or entry_intent
             px = r.price or px
+            exp_loss = round(plan["pf"] * plan["loss_ps"] * rested_q, 4)
+            gain = plan["gain"]
+            if rested_q < qty - 1e-9:
+                lots = [(o.price, o.qty) for o in self._orders(slug, bs, decoy=False)]
+                _s0, e0 = self._share_lots(slug, bs, book, lots)
+                _s1, e1 = self._share_lots(slug, bs, book, lots + [(px, rested_q)])
+                gain = round(max(e1 - e0, 0.0), 4)
             self.fam.orders[r.order_id] = FamilyOrder(
-                id=r.order_id, market=slug, side=bs, price=px, qty=qty,
+                id=r.order_id, market=slug, side=bs, price=px, qty=rested_q,
                 intent=use_intent, placed_ts=now, purpose="bond", why=why)
-            self.amp[slug] = {"qty": qty, "px": px, "since": round(now, 1),
-                              "exp_loss": plan["exp_loss"], "gain": plan["gain"]}
+            self.amp[slug] = {"qty": rested_q, "px": px, "since": round(now, 1),
+                              "exp_loss": exp_loss, "gain": gain, "pf": plan["pf"],
+                              "trimmed_at": (round(now, 1) if trimmed else 0.0)}
             self._amp_seen[slug] = sum(o.qty for o in self._amp_orders(slug))
             self.amp_note.pop(slug, None)
-            self._log(event=kind, market=slug, side=side, price=px, qty=qty,
-                      gain=plan["gain"], exp_loss=plan["exp_loss"],
-                      note=f"adds ~${plan['gain']:.2f}/day at the exit's level, expected "
-                           f"cost ${plan['exp_loss']:.2f}/day (fill odds {plan['pf']:.0%}/day, "
-                           f"{plan['loss_ps'] * 100:.2f}c a share)")
+            self._log(event=kind, market=slug, side=side, price=px, qty=rested_q,
+                      gain=gain, exp_loss=exp_loss,
+                      note=self._amp_odds_note(dict(plan, gain=gain), rested_q, exp_loss) + trimmed)
             placed.append({"market": slug, "bond": side, "side": bs, "price": px,
-                           "qty": qty, "amp": True})
+                           "qty": rested_q, "amp": True})
         return placed
 
     def _amp_view(self, slug: str) -> dict | None:
         a = self.amp.get(slug)
         if a:
             return {"qty": a.get("qty"), "px": a.get("px"), "gain": a.get("gain"),
-                    "exp_loss": a.get("exp_loss"), "since": a.get("since"), "note": None}
+                    "exp_loss": a.get("exp_loss"), "since": a.get("since"),
+                    "pf": a.get("pf"), "note": None}
         note = self.amp_note.get(slug)
         return {"note": note} if note else None
 
@@ -4366,6 +4456,7 @@ class Bonds:
                 "amp_fraction": AMP_FRACTION,
                 "amp_in_play": round(sum(float(a.get("exp_loss") or 0.0) for a in self.amp.values()), 2),
                 "amp_unlocks": round(sum(float(a.get("gain") or 0.0) for a in self.amp.values()), 2),
+                "amp_odds": dict(self._amp_sales_last), "amp_sales_days": AMP_SALES_DAYS,
                 "no_money_usd": NO_MONEY_USD, "money_back_usd": MONEY_BACK_USD,
                 "earned": self._earned(),
                 "unpinged": round(self.unpinged, 2),
