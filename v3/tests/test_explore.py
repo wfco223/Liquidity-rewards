@@ -107,7 +107,52 @@ class TestExploringOrders(unittest.TestCase):
         self.assertNotIn("explore", s)
 
 
+class TestTheBonusCountsAtTheGate(unittest.TestCase):
+    """_plan_side picks by EV plus bonus; the placer must judge by the
+    same number, or a depth chosen for what it teaches is refused at
+    the door (the 2026-09-09 gap)."""
+
+    def _plan(self, ev, score):
+        return {"side": "BUY", "px": 0.44, "qty": 1.0, "share": 0.05,
+                "est": 0.05, "ev": ev, "bonus": round(score - ev, 4),
+                "score": score, "p_fill": 0.3, "fill_cost": 0.02,
+                "cost": 0.44, "why": "exploring — joins the touch"}
+
+    def test_exploring_places_a_plan_the_bonus_lifts_over_the_bar(self):
+        r = Rig(cfg=explore_cfg())
+        r.add_market(A, book=thin_book(r.now))
+        r.cycle()
+        for o in list(r.exchange.live.values()):
+            r.exchange.cancel(o["id"]) if hasattr(r.exchange, "cancel") else None
+        r.fam.orders.clear(); r.fam.last_action.clear()
+        r.fam.scoreboard[A] = {"ts": r.now, "plans": [self._plan(ev=-0.05, score=0.25)],
+                               "why": "", "est": 0.05, "conf": 0.0}
+        r.cache.put(A, thin_book(r.now))
+        left = r.fam._enter(r.now, {}, 6)
+        self.assertEqual(left, 5)
+        self.assertTrue(any(o.market == A and o.purpose == "earn"
+                            for o in r.fam.orders.values()))
+
+    def test_not_exploring_still_judges_by_ev(self):
+        r = Rig()
+        r.add_market(A)
+        r.cycle()
+        r.fam.orders.clear(); r.fam.last_action.clear()
+        r.fam.scoreboard[A] = {"ts": r.now, "plans": [self._plan(ev=-0.05, score=0.25)],
+                               "why": "", "est": 0.05, "conf": 0.0}
+        left = r.fam._enter(r.now, {}, 6)
+        self.assertEqual(left, 6)
+        self.assertFalse(any(o.market == A for o in r.fam.orders.values()))
+
+
 class TestTheNflIsTheExplorer(unittest.TestCase):
+    def test_nfl_rereads_idle_markets_every_fifteen_minutes(self):
+        from v3 import football
+        c = football.nfl()
+        self.assertEqual(c.rescan_s, 900.0)
+        self.assertEqual(c.books_per_cycle, 40)
+        self.assertEqual(c.scan_reserve, 16)
+
     def test_nfl_config_explores_with_a_dollar_per_order(self):
         from v3 import football
         c = football.nfl()
