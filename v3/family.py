@@ -305,6 +305,32 @@ class FamilyConfig:
     # the gate's margin; only the family-wide budget stops applying,
     # and small exits neither draw on it nor count against it.
     exit_small_giveup_usd: float = 0.50
+    # THE SETTLE CHECK (owner, 2026-09-09: "be better about waiting
+    # around when placing orders for a bit to see if someone chases us
+    # off the earnings ... slower but more accurate ... just do the ev
+    # calculation again and reevaluate"): settle_s after a new order
+    # rests, its book is read fresh and its side re-planned with the
+    # order in place. No plan, or one under the bar: the order comes
+    # off. A different price or size: it moves, through every rail.
+    # The settled estimate replaces the placement claim. 0 = off.
+    settle_s: float = 0.0
+    # new orders per cycle while settling (0 = the action allowance)
+    enter_per_cycle: int = 0
+    # THE EXIT FLOAT (owner, 2026-09-09: "They can step down to where
+    # they are earning. Just make sure the numbers about fill costs are
+    # updating because I don't want this to be a runaway machine"): an
+    # exit that has measured $0 for exit_float_idle_s may step one tick
+    # past break-even toward the touch every exit_float_step_s, until
+    # it measures earning, never past the touch (an ask joins the ask
+    # touch at most, a buy-back the bid touch). Every step's concession
+    # (tick x shares) is booked in the wind-down ledger and drawn from
+    # a per-day family budget; the realized loss when a floated exit
+    # fills feeds the fill model's cost of a fill (fillmodel.trip_cost),
+    # so more give-up on exits makes every new entry dearer to place.
+    exit_float: bool = False
+    exit_float_idle_s: float = 6 * 3600.0
+    exit_float_step_s: float = 1800.0
+    exit_float_usd_day: float = 5.0
     # Cycle-out rule (owner, 2026-08-20: "be very picky... and if
     # something's not working cycle out of it"): an order measured under
     # min_est_day for this long, with no plan at this market that clears
@@ -426,6 +452,8 @@ class FamilyOrder:
     verdict: str = ""    # plain-English live state, refreshed each cycle
     read_ts: float = 0.0  # when _read_live last set live_est in this process
                           # (0 = restored from a save, not read since)
+    settled: bool = True      # False until the settle check has re-planned it
+    settle_tries: int = 0
     # the 8-hour earning trail (owner, 2026-08-26: "keep track of the
     # percentage decrease in rewards from an 8 hour peak"): half-hour
     # buckets of the order's best measured $/day, oldest dropped past
@@ -545,6 +573,9 @@ class Family:
         self._last_accrual = 0.0
         self.silent_cancels = 0
         self.gone_pending: dict[str, dict] = {}   # vanished, feed pending
+        self.exit_float: dict[str, dict] = {}     # "slug|side" -> {px, since, steps}
+        self.float_day: dict = {"day": "", "usd": 0.0}
+        self._client = None
         self.probe_ratchet: dict[str, list] = {}  # "slug|side" ->
                                                   # [ticks allowed, last advance ts]
         self._nurse_base: dict[str, dict] = {}    # young orders' first-
@@ -1953,6 +1984,19 @@ class Family:
             self.inv_since[rec.market] = now
         inv = self.inventory.setdefault(rec.market, {"qty": 0.0, "cost": 0.0})
         q0, c0 = inv["qty"], inv["cost"]
+        if rec.purpose == "sell" and abs(q0) > 0.005:
+            # what closing really cost per share against the basis it
+            # closed (owner, 2026-09-09: "make sure the numbers about
+            # fill costs are updating") — the fill model's trip_cost
+            basis = c0 / q0
+            if rec.side == "SELL" and q0 > 0:
+                loss_ps = max(basis - rec.price, 0.0)
+            elif rec.side == "BUY" and q0 < 0:
+                loss_ps = max(rec.price - basis, 0.0)
+            else:
+                loss_ps = None
+            if loss_ps is not None:
+                self.fillmodel.observe_round_trip(rec.market, loss_ps, filled)
         if rec.side == "BUY":
             inv["qty"] += filled
             inv["cost"] += filled * rec.price
@@ -1961,6 +2005,7 @@ class Family:
             inv["cost"] -= filled * rec.price
         qty_after = round(inv["qty"], 2)
         if abs(inv["qty"]) < 0.005:
+            self._float_forget(rec.market)
             self.inventory.pop(rec.market, None)
             since = self.inv_since.pop(rec.market, None)
             if since is not None and now > since:
@@ -2234,6 +2279,7 @@ class Family:
               client, switch_on: bool, foreign_ids=(),
               exits_only: bool = False, trades=None,
               money_out: bool = False) -> dict:
+        self._client = client
         self.reconcile(open_orders, positions, now, trades=trades)
         killed = self._kill_zombies()
         if killed:
@@ -2278,6 +2324,7 @@ class Family:
             self._sell(now, self.cfg.max_actions_per_cycle)
             return self._finish(summary, now)
         actions = self.cfg.max_actions_per_cycle
+        actions = self._settle_check(now, actions)
 
         # game window: pull everything that isn't an exit — the owner's
         # hand orders included (owner, 2026-09-02, shown the Week-1 pull
@@ -2945,6 +2992,9 @@ class Family:
     def _enter(self, now: float, positions: dict, actions: int) -> int:
         have = {(o.market, o.side) for o in list(self.orders.values())
                 if o.purpose != "sell"}
+        placed_now = 0
+        per_cycle = (self.cfg.enter_per_cycle
+                     if self.cfg.enter_per_cycle > 0 else actions)
         # proven ground first (owner, 2026-08-20: "looking at the orders
         # that were the most successful and trying to replicate those") —
         # a market's record of actually PAYING us counts alongside what
@@ -2967,7 +3017,7 @@ class Family:
                          if sb.get("plans")),
                         key=lambda kv: -sum(worth(p) for p in kv[1]["plans"]))
         for slug, sb in ranked:
-            if actions <= 0:
+            if actions <= 0 or placed_now >= per_cycle:
                 break
             if slug not in self.universe or self._dead_here(slug):
                 continue
@@ -2977,7 +3027,7 @@ class Family:
             if days is not None and days < self.cfg.min_days_out:
                 continue
             for plan in sb["plans"]:
-                if actions <= 0:
+                if actions <= 0 or placed_now >= per_cycle:
                     break
                 if worth(plan) < self.cfg.min_est_day:
                     continue    # under the bar (old plans lack ev: use est)
@@ -3052,19 +3102,212 @@ class Family:
                         share=plan["share"],
                         live_pf=(round(plan["p_fill"], 4)
                                  if plan.get("p_fill") is not None
-                                 else None))   # the guard admitted it at
+                                 else None),   # the guard admitted it at
                                                # these odds; the spend
                                                # charges the same
+                        settled=(self.cfg.settle_s <= 0.0))
                     self._log(event="place", market=slug, side=plan["side"],
                               price=plan["px"], qty=plan["qty"],
                               est=plan["est"], why=plan["why"][:90])
                     self._mark(slug, plan["side"], now)
                     actions -= 1
+                    placed_now += 1
                 else:
                     self._log(event="refused", market=slug, side=plan["side"],
                               note=r.note[:90])
                     self._mark(slug, plan["side"], now)
         return actions
+
+    def _settle_check(self, now: float, actions: int) -> int:
+        """Owner, 2026-09-09: after a new order has rested settle_s, read
+        its book FRESH and run the plan again with the order in place.
+        Nothing worth resting any more: the order comes off. A better
+        price or size: it moves, through the desk's rails. Either way
+        the settled estimate replaces the claim made at placement, so
+        the pages, the ledger and the fill model grade what actually
+        stood once others had reacted. At most enter_per_cycle checks a
+        cycle (each is a fresh read), oldest first."""
+        if self.cfg.settle_s <= 0.0 or self._client is None:
+            return actions
+        due = sorted((o for o in list(self.orders.values())
+                      if not o.settled
+                      and o.purpose in ("earn", "solo", "revive")
+                      and now - o.placed_ts >= self.cfg.settle_s),
+                     key=lambda o: o.placed_ts)
+        lim = self.cfg.enter_per_cycle if self.cfg.enter_per_cycle > 0 else 2
+        for rec in due[:lim]:
+            if actions <= 0:
+                break
+            if rec.id not in self.orders:
+                continue
+            slug = rec.market
+            try:
+                book = self._client.book(slug, fetched_at=now)
+                self.cache.put(slug, book)
+            except Exception as e:  # noqa: BLE001
+                rec.settle_tries += 1
+                if rec.settle_tries >= 3:
+                    rec.settled = True
+                self._log(event="settle_unread", market=slug, side=rec.side,
+                          error=str(e)[:60])
+                continue
+            prog, _why = self._prog_row(slug)
+            side_pool = self._side_pool(slug, prog) if prog is not None else None
+            plan = None
+            if prog is not None and side_pool:
+                room = max(self._market_budget(slug) - self.market_spent(slug)
+                           + self._charge(rec), 0.0)
+                try:
+                    plan = self._plan_side(slug, book, rec.side, prog,
+                                           side_pool, room, own=rec)
+                except Exception as e:  # noqa: BLE001
+                    self._log(event="settle_unread", market=slug,
+                              side=rec.side, error=str(e)[:60])
+                    rec.settled = True
+                    continue
+            worth = (plan.get("score", plan["ev"]) if plan and self.cfg.explore
+                     else plan.get("ev", plan["est"]) if plan else None)
+            rec.settled = True
+            if plan is None or worth < self.cfg.min_est_day:
+                r = self.desk.cancel(rec.id, slug)
+                if r.ok:
+                    self.orders.pop(rec.id, None)
+                    self.evidence.order_gone(slug, rec.id)
+                    self._log(event="settle_pulled", market=slug, side=rec.side,
+                              price=rec.price, qty=rec.qty,
+                              claimed=round(rec.est_day, 2),
+                              now=(round(plan["est"], 2) if plan else 0.0),
+                              note=(f"{self.cfg.settle_s:.0f}s on: worth "
+                                    f"${worth:.2f}/day, under the bar"
+                                    if plan else
+                                    f"{self.cfg.settle_s:.0f}s on: nothing "
+                                    f"here clears the bar any more"))
+                    actions -= 1
+                continue
+            tick = book.tick or 0.01
+            moved = (abs(plan["px"] - rec.price) > tick / 2
+                     or abs(plan["qty"] - rec.qty) > 0.25 * max(rec.qty, 0.01))
+            if moved:
+                r = self.desk.reprice({"id": rec.id, "market": slug,
+                                       "side": rec.side, "price": rec.price,
+                                       "size": rec.qty, "intent": rec.intent},
+                                      plan["px"], plan["qty"])
+                if r.ok and r.order_id:
+                    self.orders.pop(rec.id, None)
+                    self.evidence.order_gone(slug, rec.id)
+                    self.orders[r.order_id] = FamilyOrder(
+                        id=r.order_id, market=slug, side=rec.side,
+                        price=(r.price or plan["px"]), qty=plan["qty"],
+                        intent=(r.intent or rec.intent), placed_ts=now,
+                        purpose=rec.purpose, why=plan["why"],
+                        est_day=plan["est"], share=plan["share"],
+                        live_pf=(round(plan["p_fill"], 4)
+                                 if plan.get("p_fill") is not None else None),
+                        settled=True)
+                    self._log(event="settle_moved", market=slug, side=rec.side,
+                              price=rec.price, to=(r.price or plan["px"]),
+                              qty=plan["qty"], claimed=round(rec.est_day, 2),
+                              now=round(plan["est"], 2),
+                              note=(f"{self.cfg.settle_s:.0f}s on, re-planned: "
+                                    + plan["why"][:70]))
+                    if getattr(r, "two_orders", False):
+                        self.alert(f"{self.cfg.tag}: two orders on the book",
+                                   f"{self._label(slug)}: {r.note[:120]}")
+                    actions -= 1
+                    continue
+                self._log(event="settle_kept", market=slug, side=rec.side,
+                          price=rec.price, qty=rec.qty,
+                          claimed=round(rec.est_day, 2), now=round(plan["est"], 2),
+                          note=f"move refused: {r.note[:60]}")
+            else:
+                self._log(event="settle_kept", market=slug, side=rec.side,
+                          price=rec.price, qty=rec.qty,
+                          claimed=round(rec.est_day, 2), now=round(plan["est"], 2),
+                          note=f"{self.cfg.settle_s:.0f}s on: holds "
+                               f"{plan['share'] * 100:.0f}% of its side")
+            # the settled measure replaces the claim
+            rec.est_day = plan["est"]
+            rec.share = plan["share"]
+        return actions
+
+    # -- the exit float (owner, 2026-09-09) ---------------------------------
+
+    def _float_day_key(self, now: float) -> str:
+        return time.strftime("%Y-%m-%d", time.gmtime(now))
+
+    def _float_budget_left(self, now: float) -> float:
+        day = self._float_day_key(now)
+        if self.float_day.get("day") != day:
+            self.float_day = {"day": day, "usd": 0.0}
+        return max(self.cfg.exit_float_usd_day - float(self.float_day.get("usd") or 0.0), 0.0)
+
+    def _float_spend(self, now: float, usd: float) -> None:
+        self._float_budget_left(now)
+        self.float_day["usd"] = round(float(self.float_day.get("usd") or 0.0) + usd, 4)
+
+    def _float_level(self, slug: str, side: str, mine: list, base_px: float,
+                     book, now: float, qty: float) -> float | None:
+        """The price this side's exits may rest at once they have measured
+        $0 for exit_float_idle_s: one tick past the last level toward the
+        touch every exit_float_step_s, never past the touch, each step's
+        concession drawn from the day's budget. An exit that measures
+        earning holds its level. None = no float for this side."""
+        if not self.cfg.exit_float or qty <= 0.005 or book is None:
+            return None
+        key = f"{slug}|{side}"
+        st = self.exit_float.get(key)
+        if not mine:
+            # between the cancel and the re-rest nothing is measuring:
+            # the level stands, no step is taken
+            return float(st["px"]) if st else None
+        measured = [o for o in mine if o.live_est is not None]
+        earning = any((o.live_est or 0.0) > 0.005 for o in measured)
+        idle = (bool(measured) and not earning
+                and all(o.dry_since is not None
+                        and now - o.dry_since >= self.cfg.exit_float_idle_s
+                        for o in measured))
+        if st is None and not idle:
+            return None
+        tick = book.tick or 0.01
+        if side == "SELL":
+            limit = (book.asks[0][0] if book.asks
+                     else (book.bids[0][0] + tick) if book.bids else 0.002)
+        else:
+            limit = (book.bids[0][0] if book.bids
+                     else (book.asks[0][0] - tick) if book.asks else 0.998)
+        level = float(st["px"]) if st else float(base_px)
+        at_limit = (level <= limit + 1e-9) if side == "SELL" else (level >= limit - 1e-9)
+        stepped = False
+        if (idle and not at_limit
+                and (st is None or now - float(st.get("since") or 0.0)
+                     >= self.cfg.exit_float_step_s)):
+            nxt = round(level - tick, 3) if side == "SELL" else round(level + tick, 3)
+            nxt = max(nxt, limit) if side == "SELL" else min(nxt, limit)
+            concession = abs(nxt - level) * qty
+            if concession > 1e-9 and self._float_budget_left(now) >= concession - 1e-9:
+                self._float_spend(now, concession)
+                self.exit_float[key] = {"px": nxt, "since": round(now, 1),
+                                        "steps": int((st or {}).get("steps") or 0) + 1}
+                self._note_wind_down(slug, "float", qty, nxt, now, left=qty,
+                                     from_px=level, gain=-concession)
+                idle_h = min((now - (o.dry_since or now)) / 3600.0 for o in measured)
+                self._log(event="exit_floated", market=slug, side=side,
+                          price=level, to=nxt, qty=qty,
+                          note=(f"earning nothing for {idle_h:.1f}h — a tick "
+                                f"toward the touch; ${concession:.2f} conceded, "
+                                f"${self._float_budget_left(now):.2f} of today's "
+                                f"${self.cfg.exit_float_usd_day:.2f} left"))
+                level = nxt
+                stepped = True
+            elif st is None:
+                return None
+        if st is None and not stepped:
+            return None
+        return level
+
+    def _float_forget(self, slug: str) -> None:
+        for side in ("BUY", "SELL"):
+            self.exit_float.pop(f"{slug}|{side}", None)
 
     def _trim(self, now: float, actions: int) -> int:
         while actions > 0:
@@ -4105,6 +4348,30 @@ class Family:
                          else 0.002)
                 if gate_px is not None:
                     lo = min(lo, gate_px)
+                # the float (owner, 2026-09-09): asks that have earned
+                # nothing step down toward the ask touch, a tick at a
+                # time, on the day's concession budget
+                fl = self._float_level(slug, "SELL", mine, floor_px, book, now,
+                                       covered if covered > 0.005 else rest)
+                if fl is not None:
+                    lo = min(lo, max(fl, (book.bids[0][0] + book.tick)
+                                     if book.bids else 0.002))
+                    above = [o for o in mine if o.price > fl + book.tick / 2
+                             and o.id in self.orders
+                             and (o.live_est or 0.0) <= 0.005]
+                    if above and self._can_replace():
+                        worst = max(above, key=lambda o: o.price)
+                        rr = self.desk.cancel(worst.id, worst.market)
+                        if rr.ok:
+                            self.orders.pop(worst.id, None)
+                            self.evidence.order_gone(worst.market, worst.id)
+                            self._log(event="exit_float_move", market=slug,
+                                      side="SELL", price=worst.price, to=fl,
+                                      qty=worst.qty,
+                                      note="stepping down to the float level "
+                                           "— re-rested next pass")
+                            actions -= 1
+                        continue
                 # an exit resting BELOW today's floor — yesterday's dry
                 # pricing, a ghost-book quote — retreats: cancelled here,
                 # re-rested at a defensible price next pass (cancel-first
@@ -4330,6 +4597,30 @@ class Family:
                     hi = max(hi, gate_px)
                 if dead_s and step_tgt is not None:
                     hi = max(hi, step_tgt)
+                # the float (owner, 2026-09-09): buy-backs that have
+                # earned nothing step up toward the bid touch, a tick at
+                # a time, on the day's concession budget
+                fl = self._float_level(slug, "BUY", mine, cap_px, book, now,
+                                       covered if covered > 0.005 else rest)
+                if fl is not None:
+                    hi = max(hi, min(fl, (book.asks[0][0] - book.tick)
+                                     if book.asks else fl))
+                    below = [o for o in mine if o.price < fl - book.tick / 2
+                             and o.id in self.orders
+                             and (o.live_est or 0.0) <= 0.005]
+                    if below and self._can_replace():
+                        worst = min(below, key=lambda o: o.price)
+                        rr = self.desk.cancel(worst.id, worst.market)
+                        if rr.ok:
+                            self.orders.pop(worst.id, None)
+                            self.evidence.order_gone(worst.market, worst.id)
+                            self._log(event="exit_float_move", market=slug,
+                                      side="BUY", price=worst.price, to=fl,
+                                      qty=worst.qty,
+                                      note="stepping up to the float level "
+                                           "— re-rested next pass")
+                            actions -= 1
+                        continue
                 # a cover bidding ABOVE today's cap (the 98c-on-a-2c-
                 # basis ghosts) retreats the same way
                 high_stray = [o for o in mine if o.price > hi + 1e-9
@@ -4828,6 +5119,16 @@ class Family:
             summary["explore"] = {"usd": self.cfg.explore_usd,
                                   "hours": self.cfg.explore_hours,
                                   "rows": self._explore_report()}
+        if self.cfg.exit_float:
+            self._float_budget_left(now)
+            tc = self.fillmodel.trip_summary()
+            summary["exit_float"] = {"active": len(self.exit_float),
+                                     "conceded": round(float(self.float_day.get("usd") or 0.0), 2),
+                                     "budget": self.cfg.exit_float_usd_day,
+                                     "trip_c": tc["cents"], "trip_n": tc["n"]}
+        if self.cfg.settle_s > 0.0:
+            summary["settling"] = sum(1 for o in list(self.orders.values())
+                                      if not o.settled)
         summary["inventory"] = {k: dict(v) for k, v in list(self.inventory.items())}
         # every held position by what it earns per dollar of
         # liquidation value (owner, 2026-08-26: "even the ones with no
@@ -5020,6 +5321,8 @@ class Family:
             "graduated": sorted(self.graduated),
             "grad_candidates": self.grad_candidates,
             "pos_moves": self.pos_moves[-500:],
+            "exit_float": self.exit_float,
+            "float_day": self.float_day,
             "pending_pages": self.pending_pages,
             "gone_pending": {oid: {"rec": asdict(g["rec"]),
                                    "until": g["until"]}
@@ -5064,6 +5367,8 @@ class Family:
                 rec.why = "the owner's own order — the engine leaves it alone"
             self.orders[oid] = rec
         self.inventory = dict(d.get("inventory") or {})
+        self.exit_float = {k: dict(v) for k, v in (d.get("exit_float") or {}).items()}
+        self.float_day = dict(d.get("float_day") or {"day": "", "usd": 0.0})
         self.probe_ratchet = {k: list(v) for k, v in
                               (d.get("probe_ratchet") or {}).items()}
         self.positions_seen = dict(d.get("positions_seen") or {})
