@@ -513,6 +513,19 @@ function render(d){
   if(fz.active&&fz.phase!=='rebuild'){out+='<div class="warn">FLATTEN \u2014 '+(fz.cancelled_total||0)+' cancelled, '+(fz.remaining||0)+' to go</div>';}
   out+='</div>';
  }
+ function exploreLine(x){
+  // owner, 2026-09-08: small aggressive orders first, relaxing as each
+  // depth logs our own resting hours — the card says how far along it is
+  if(!x||!x.rows||!x.rows.length)return x?'<div class="l" style="margin-top:8px">exploring \u2014 $'+(x.usd||1).toFixed(2)+' per order, no resting hours logged yet</div>':'';
+  var names={0:'touch',1:'1 back',2:'2 back',3:'3+ back'};
+  var groups={};x.rows.forEach(function(r){(groups[r.group]=groups[r.group]||[]).push(r);});
+  var s='<div class="l" style="margin-top:8px">exploring \u2014 $'+(x.usd||1).toFixed(2)+' per order; the bonus for a depth fades after '+(x.hours||48)+'h of our own resting time there</div>';
+  Object.keys(groups).forEach(function(g){
+   var parts=groups[g].map(function(r){return names[r.depth]+' '+(r.side==='BUY'?'bid':'ask')+' '+r.hours+'h/'+r.fills+' fill'+(r.fills===1?'':'s')+(r.learned?' \u2713':' (+$'+r.bonus.toFixed(2)+')');});
+   s+='<div class="muted" style="font-size:12px">'+esc(g)+': '+parts.join(' \u00b7 ')+'</div>';
+  });
+  return s;
+ }
  fams(d).forEach(function(kv){
   var k=kv[0],s2=kv[1];
   if(s2.error){out+='<div class="card"><b>'+esc(s2.name||k)+'</b><div class="bad">'+esc(s2.error)+'</div></div>';return;}
@@ -527,6 +540,7 @@ function render(d){
    +'</div>'
    +'<div class="l" style="margin-top:6px">budget '+usd(spent)+' / '+usd(cap)+'</div>'
    +bar(cap?100*spent/cap:0)
+   +exploreLine(s2.explore)
    +'<div class="l" style="margin-top:8px">worth the budget \u2014 '+(w.pct||0)+'% of '+(w.scored||0)+' scored'
    +(w.cycle_n?' \u00b7 this cycle '+(w.cycle_pct||0)+'% of '+w.cycle_n:'')+'</div>'
    +bar(w.pct||0,'#6fa8dc')
