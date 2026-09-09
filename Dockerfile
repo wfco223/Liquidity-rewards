@@ -19,4 +19,12 @@ COPY data/silver_senate_races.csv data/silver_gov_races.csv ./data/
 # process grew 5 MB a minute and was killed near 500 MB (2026-09-08).
 # Two arenas, and the monitor trims the heap every cycle (v3/box.py).
 ENV MALLOC_ARENA_MAX=2
+# 2026-09-09: with the trim in place, glibc's own account showed Python
+# using 29 MB while resident memory climbed past 430 MB — the rest was
+# Python's small-object arenas, handed out by the megabyte and given
+# back only when a whole megabyte empties, so every burst (a programs
+# read, the survey frame, a discovery pass) raised the high-water mark
+# for good. Routing small objects through the system allocator lets the
+# per-cycle trim hand that memory back too (owner yes, 2026-09-09).
+ENV PYTHONMALLOC=malloc
 CMD ["python", "launcher.py"]
