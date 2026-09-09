@@ -3087,3 +3087,32 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788927539.9,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,-20,0.04,fix,,10.22,,,,,,,,,size trimmed by 20 to the exchange's count (order CC742NF6RR42),CC742NF6RR42
 1788927539.9,politics,ussewc-usse-co-2026-11-03-rep,BUY,-0.5,0.06,fix,1.6654,2.83,0.004875,6,9,0.837,0.05,0.06,0.0551,0.5,size trimmed by 0.5 to the exchange's count (order CC7750WNTR3Z),CC7750WNTR3Z
 1788927539.9,cfb,aachc-cfb-wins-2026-11-28-minnst-6pt5wins,BUY,0.78,0.5,backfill,,16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC6CS1QT4R42
+1788927666.5,nfl,fptc-nfl-qbfpou-2027-01-10-bropur,BUY,0.01,0.7,earn,1.1221,0.74,,55,73,0,0.69,0.72,0.04,0.01,1 tick in front of the touch — we would hold 72% of the bid side,CCM51GMWTR3X
+1788927666.5,nfl,fptc-nfl-qbfpou-2027-01-10-bakmay,BUY,0.01,0.68,earn,0.5208,0.29,,43,67,0,0.68,0.69,0.1,0.01,joins the touch — the book has been quiet,CCMGBP8R6R46
+1788927666.5,nfl,ftsc-nfl-rbmostfp-w1-2026-09-14-jahgib,BUY,2,0.22,earn,0.0427,2.36,,21,28,0,0.22,0.26,-0.02,2,exploring (+$0.27/day to learn this depth) — joins the touch — the book has been,CCJRA3MJPR3Y
+1788927666.5,nfl,fptc-nfl-qbfpou-2027-01-10-gensmi,BUY,0.72,0.36,earn,0.0018,0.6,,33,44,0,0.41,0.42,-0.03,0.72,exploring (+$0.06/day to learn this depth) — 1 tick behind the touch — we would ,CCM8Y1856R40
+1788927742.7,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,5,0.1,bond,0,0.02,0.009875,10,14,0.806,0.09,0.11,-0.0901,-604,bond: took 5 NO at 10c — it was in the way of our resting order,CCMR31A3GR3Y
+1788927742.7,nfl,ftsc-nfl-rbmostfp-w1-2026-09-14-kyrwil,BUY,4.9,0.15,earn,0.9297,1.82,,11,19,0,0.17,0.18,0,4.9,exploring (+$0.07/day to learn this depth) — 2 ticks behind the touch — we would,CCK8HJ5EMR3W
+1788927802.7,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,25,0.09,bond,0,0.02,0.009875,11,14,0.833,0.08,0.11,-0.0801,-629,bond: took 25 NO at 9c — it was in the way of our resting order,CCMQFZ920R3V
+1788927802.7,nfl,tec-nfl-cbpoty-2027-02-11-w-micpar,BUY,1,0.11,sell,0.5576,0.07,,13,21,0.447,0.11,0.12,-0.05,2,buying back the short at or under what it sold for — the bid earns while it wait,CCMQ6STAPR40
+1788928042.8,nfl,ftsc-nfl-temostfp-w1-2026-09-14-geokit,BUY,2,0.13,earn,0.0514,0.83,,10,17,0,0.13,0.14,0,2,joins the touch — the book has been quiet,CCM54MNW0R45
+1788928225.8,politics,ewc-usse-tx-2026-11-03-dem,SELL,2,0.47,manual,0.0244,2.88,0.561975,47,50,0.748,0.46,0.47,0.092,0,the owner's own order — the engine leaves it alone,CCJCYG666R3Z
+1788928349.8,nfl,ftsc-nfl-temostfp-w1-2026-09-14-brobow,SELL,1,0.26,sell,0.1967,0.66,,24,34,0.451,0.25,0.26,0.02,0,selling filled stock — it earns while it waits,CCMC24EVAR3Y
+1788928349.8,nfl,tec-nfl-oroy-2027-02-11-w-cartat,SELL,1,0.27,sell,2.1995,0.38,,18,23,0.708,0.26,0.27,-0.07,0,selling filled stock — it earns while it waits,CCMKZ8K4JR3X
+1788928589.9,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,BUY,1,0.23,sell,0.067,0.43,,24,29,0.708,0.23,0.24,-0.04,2,buying back the short at or under what it sold for — the bid earns while it wait,CCMM4YSJJR3Y
+1788928835.3,nfl,ftsc-nfl-rbmostfp-w1-2026-09-14-jahgib,SELL,0.05,0.26,sell,0.0015,2.67,,18,25,0.453,0.2,0.26,-0.04,1.95,an exit — its fill reduces the position it sits on,CCJRKBPRJR3V
+1788928835.3,nfl,ftsc-nfl-rbmostfp-w1-2026-09-14-jahgib,SELL,1.95,0.26,sell,0.0596,0.3,,18,25,0.453,0.2,0.26,-0.04,0,selling filled stock — it earns while it waits,CCMQ8YR68R46
+1788929262.3,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,SELL,1,0.19,sell,6.4107,0.08,,21,25,0.764,0.18,0.19,0.04,0,selling filled stock — it earns while it waits,CCN0X5504R45
+1788929322.3,politics,ussewc-usse-ok-2026-11-03-rep,SELL,1,0.98,sell,0,0,0.999675,94,97,0.718,0.98,0.99,0.0197,16,taker dump — sold into the bid (the carved exception),CCN3E7ZT6R3Y
+1788929443.0,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,3,0.97,sell,0,0,0.9999,95,98,0.661,0.97,0.98,0.0299,105,taker dump — sold into the bid (the carved exception),CCN47GM3JR3W
+1788929443.0,politics,enwc-uspres-nom-rep-2028-dontrujr,SELL,1,0.06,sell,0,0,,5,9,0.452,0.06,0.07,0.01,0,taker dump — sold into the bid (the carved exception),CCN3E2XRWR3V
+1788929449.6,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,3,0.96,backfill,,2.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJT9YXGYR47
+1788929503.0,nfl,aqc-nfl-afc-2027-01-24-champq-jax,SELL,0.01,0.13,earn,0.0001,2.05,,9,15,0,0.11,0.12,-0.01,-0.01,exploring (+$0.11/day to learn this depth) — 1 tick behind the touch — we would ,CCKFSHM9WR3V
+1788929728.7,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,1.71,0.94,backfill,,16.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CC6TTN77WR47
+1788929825.2,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,1.71,0.93,bond,0,0.03,0.9952,88,94,0,0.93,0.94,-0.0652,110.7,bond: took 1.71 YES at 93c — it was in the way of our resting order,CCN5PME16R42
+1788929825.2,politics,scc-senate-gop-2026-11-03-49,SELL,11,0.16,earn,1.2407,0.56,0.1495,13,17,0.447,0.14,0.16,-0.0105,-21,1 tick behind the touch — we would hold 34% of the ask side,CCMQSCW6GR3V
+1788930232.7,cfb,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,BUY,1,0.23,earn,1.2095,0.4,,26,35,0.098,0.23,0.24,-0.07,2,1 tick in front of the touch — we would hold 53% of the bid side,CCMZ8XT12R45
+1788930565.4,nfl,tec-nfl-afcnorth-2027-01-10-w-pit,SELL,1,0.19,sell,0.0059,3.25,,,,0.439,,,,0,selling filled stock — it earns while it waits,CCJNMEFG8R3X
+1788930982.7,nfl,fptc-nfl-rbfpou-2027-01-10-bucirv,BUY,1,0.36,backfill,,0.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCMP3Z6RMR46
+1788931041.9,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,12,0.97,void,0,0,0.9982,94,97,0.838,0.97,0.99,0.0282,0,voided: the exchange has no trade for order CCMZVSXTJR3V — the row of 09-09 04:4,CCMZVSXTJR3V
+1788931041.9,nfl,fptc-nfl-rbfpou-2027-01-10-bucirv,BUY,1,0.36,backfill,,0.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCMP3Z6RMR46
