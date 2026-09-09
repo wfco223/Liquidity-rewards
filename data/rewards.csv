@@ -8678,7 +8678,9 @@ date,market,program_type,reward_usd,status
 2026-09-07,aachc-cfb-wins-2026-11-28-ncst-6pt5wins,liquidityProgram,0.13,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-ncst-8pt5wins,liquidityProgram,0.26,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-nd-11pt5wins,liquidityProgram,0.01,PENDING
+2026-09-07,aachc-cfb-wins-2026-11-28-nd-9pt5wins,liquidityProgram,0.05,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-nebr-6pt5wins,liquidityProgram,0.03,PENDING
+2026-09-07,aachc-cfb-wins-2026-11-28-nw-3pt5wins,liquidityProgram,0.04,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-nw-4pt5wins,liquidityProgram,0.03,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-nw-5pt5wins,liquidityProgram,0.06,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-ohiost-11pt5wins,liquidityProgram,0.03,PENDING
@@ -8723,6 +8725,7 @@ date,market,program_type,reward_usd,status
 2026-09-07,aachc-cfb-wins-2026-11-28-wisc-6pt5wins,liquidityProgram,0.78,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-wisc-7pt5wins,liquidityProgram,0.14,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,liquidityProgram,1.06,PENDING
+2026-09-07,aachc-cfb-wins-2026-11-28-wvir-3pt5wins,liquidityProgram,0.1,PENDING
 2026-09-07,aachc-cfb-wins-2026-11-28-wvir-5pt5wins,liquidityProgram,0.25,PENDING
 2026-09-07,aachc-cfb-wins-ou-2026-11-28-ala,liquidityProgram,0.01,PENDING
 2026-09-07,aachc-cfb-wins-ou-2026-11-28-ark,liquidityProgram,0.05,PENDING
@@ -8766,8 +8769,10 @@ date,market,program_type,reward_usd,status
 2026-09-07,ewc-usse-mi-2026-11-03-rep,liquidityProgram,0.04,PENDING
 2026-09-07,ewc-usse-mn-2026-11-03-dem,liquidityProgram,0.03,PENDING
 2026-09-07,ewc-usse-nc-2026-11-03-rep,liquidityProgram,0.14,PENDING
+2026-09-07,ewc-usse-tx-2026-11-03-rep,liquidityProgram,0.07,PENDING
 2026-09-07,paccc-usho-midterms-2026-11-03-dem,liquidityProgram,0.06,PENDING
 2026-09-07,paccc-usho-midterms-2026-11-03-rep,liquidityProgram,1.27,PENDING
+2026-09-07,paccc-usse-midterms-2026-11-03-dem,liquidityProgram,0.43,PENDING
 2026-09-07,scc-hrep-rep-2026-11-03-gte180,liquidityProgram,0.21,PENDING
 2026-09-07,scc-hrep-rep-2026-11-03-gte195,liquidityProgram,0.09,PENDING
 2026-09-07,scc-hrep-rep-2026-11-03-gte200,liquidityProgram,1.76,PENDING
@@ -8780,6 +8785,7 @@ date,market,program_type,reward_usd,status
 2026-09-07,scc-senate-gop-2026-11-03-48,liquidityProgram,0.02,PENDING
 2026-09-07,scc-senate-gop-2026-11-03-49,liquidityProgram,0.03,PENDING
 2026-09-07,scc-senate-gop-2026-11-03-51,liquidityProgram,0.61,PENDING
+2026-09-07,scc-senate-gop-2026-11-03-52,liquidityProgram,0.99,PENDING
 2026-09-07,scc-senate-gop-2026-11-03-53,liquidityProgram,0.1,PENDING
 2026-09-07,scc-senate-gop-2026-11-03-55,liquidityProgram,0.21,PENDING
 2026-09-07,scc-senate-gop-2026-11-03-56,liquidityProgram,0.5,PENDING
@@ -8825,6 +8831,7 @@ date,market,program_type,reward_usd,status
 2026-09-07,ussewc-usse-de-2026-11-03-dem,liquidityProgram,0.3,PENDING
 2026-09-07,ussewc-usse-fl-2026-11-03-dem,liquidityProgram,0.19,PENDING
 2026-09-07,ussewc-usse-fl-2026-11-03-rep,liquidityProgram,1.88,PENDING
+2026-09-07,ussewc-usse-id-2026-11-03-rep,liquidityProgram,0.3,PENDING
 2026-09-07,ussewc-usse-id-2026-11-03-todach,liquidityProgram,4.59,PENDING
 2026-09-07,ussewc-usse-il-2026-11-03-rep,liquidityProgram,1.07,PENDING
 2026-09-07,ussewc-usse-ks-2026-11-03-dem,liquidityProgram,0.77,PENDING
@@ -8834,8 +8841,10 @@ date,market,program_type,reward_usd,status
 2026-09-07,ussewc-usse-la-2026-11-03-rep,liquidityProgram,0.42,PENDING
 2026-09-07,ussewc-usse-ma-2026-11-03-rep,liquidityProgram,1.22,PENDING
 2026-09-07,ussewc-usse-ms-2026-11-03-dem,liquidityProgram,0.14,PENDING
+2026-09-07,ussewc-usse-ms-2026-11-03-rep,liquidityProgram,0.12,PENDING
 2026-09-07,ussewc-usse-mt-2026-11-03-dem,liquidityProgram,0.13,PENDING
 2026-09-07,ussewc-usse-mt-2026-11-03-rep,liquidityProgram,0.37,PENDING
+2026-09-07,ussewc-usse-mt-2026-11-03-setbod,liquidityProgram,4.35,PENDING
 2026-09-07,ussewc-usse-nj-2026-11-03-dem,liquidityProgram,0.18,PENDING
 2026-09-07,ussewc-usse-nj-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-07,ussewc-usse-nm-2026-11-03-dem,liquidityProgram,0.33,PENDING
