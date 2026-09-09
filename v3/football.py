@@ -146,7 +146,13 @@ def nfl() -> FamilyConfig:
         explore_bonus=0.30,
         rest_from=(1, 6), rest_until=(3, 17),
         season_start=(2026, 8, 20),
-        books_per_cycle=20, scan_reserve=8,
+        # 2026-09-09 01:27Z, switch on: nothing placed for hours. An
+        # entry needs a book under two minutes old, idle markets were
+        # re-read every four hours, and the one pass after boot had run
+        # with the switch off. The explorer re-reads its 1,160 idle
+        # markets every 15 minutes, 40 a cycle, so the placer always
+        # has fresh ground to enter.
+        books_per_cycle=40, scan_reserve=16, rescan_s=900.0,
         book_stale_s=300.0, read_age_s=900.0,
         max_actions_per_cycle=6,
         probe_usd=3.0, grow_usd=10.0,
