@@ -70,6 +70,9 @@ class Base(unittest.TestCase):
         # their own
         self.b.budget = 100000.0
         self.b.budget_mode = "fixed"
+        # the one-time production ledger repairs are already applied here;
+        # the test about them clears this
+        self.b.repairs_done = list(bonds_mod.REPAIRS)
 
     def seed(self, slug, book):
         self.r.fam.universe[slug] = {"event_n": 1, "name": slug}
@@ -4357,6 +4360,10 @@ class TestTheAmplifier(Base):
         self.r.exchange.live[amp.id]["size"] = amp.qty - traded
         self.r.fam.orders[amp.id].qty = amp.qty - traded
         self.exch(AL, 100.0 - traded, 0.90)                  # the lot's shares went
+        # and the exchange's record shows the trade on the amplifier's id
+        self.r.fam.fills.append({"ts": self.now + 30, "market": AL, "side": "SELL",
+                                 "qty": traded, "px": amp.price, "oid": amp.id,
+                                 "purpose": "bond", "why": "x"})
         cash0 = self.b.cash
         self.b.cycle(self.now + 60, self.positions(), on=True)
         self.assertEqual(self.amps(), [])
@@ -4459,5 +4466,94 @@ class TestTheAmplifier(Base):
         self.assertEqual(v["amp_odds"]["sale_days"], 3)
         self.assertEqual(v["amp_odds"]["market_days"], 7)
         self.assertNotIn("sizes", v["amp_odds"])
+
+    def test_an_amplifier_that_leaves_the_book_without_a_trade_books_nothing(self):
+        """2026-09-09 17:53Z: a take pulled three amplifiers; the pass read
+        the missing shares as trades and booked the lots sold. Nothing
+        traded. Only the exchange's record may book a sale."""
+        self.b.cycle(self.now, self.positions(), on=True)
+        amp = self.amps()[0]
+        cash0, held0 = self.b.cash, self.b.held(AL, "YES")
+        # the order vanishes — cancelled by a take's clearing, or by the
+        # exchange — with no trade behind it
+        self.r.fam.orders.pop(amp.id)
+        self.r.exchange.live.pop(amp.id, None)
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertEqual([e for e in self.b.log if e["event"] in ("sold", "amp_filled")], [])
+        self.assertTrue(any(e["event"] == "amp_gone" for e in self.b.log))
+        self.assertAlmostEqual(self.b.cash, cash0)
+        self.assertAlmostEqual(self.b.held(AL, "YES"), held0)
+        self.assertEqual(self.amps(), [])
+        self.assertGreater(self.b.amp_hold.get(AL, 0.0), self.now + 60)
+
+    def test_an_amplifier_the_record_shows_traded_books_the_lot_sold(self):
+        self.b.cycle(self.now, self.positions(), on=True)
+        amp = self.amps()[0]
+        traded = 30.0
+        # the exchange's record: a live fill on the amplifier's order id,
+        # plus the backfilled copy of the same trade (never double-counted)
+        for purpose in ("bond", "backfill"):
+            self.r.fam.fills.append({"ts": self.now + 30, "market": AL, "side": "SELL",
+                                     "qty": traded, "px": amp.price, "oid": amp.id,
+                                     "purpose": purpose, "why": "x"})
+        self.r.exchange.live[amp.id]["size"] = amp.qty - traded
+        self.r.fam.orders[amp.id].qty = amp.qty - traded
+        self.exch(AL, 100.0 - traded, 0.90)
+        cash0 = self.b.cash
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        sold = [e for e in self.b.log if e["event"] == "sold"]
+        self.assertEqual(len(sold), 1)
+        self.assertAlmostEqual(sold[0]["qty"], traded)
+        self.assertAlmostEqual(self.b.held(AL, "YES"), 70.0, places=4)
+        self.assertAlmostEqual(self.b.cash - cash0, traded * amp.price, places=2)
+
+    def test_a_take_in_its_way_pulls_it_through_its_own_pull(self):
+        self.b.cycle(self.now, self.positions(), on=True)
+        amp = self.amps()[0]
+        ex = self.exits()[0]
+        # a take of the asks at the exit's level: our exit and amplifier are in its way
+        note, cleared = self.b._clear_way(AL, "SELL", ex.price, self.now + 60)
+        self.assertTrue(cleared, note)
+        self.assertEqual(self.amps(), [])
+        self.assertNotIn(AL, self.b.amp)
+        self.assertNotIn(AL, self.b._amp_seen)
+        pulled = [e for e in self.b.log if e["event"] == "amp_pulled"]
+        self.assertTrue(pulled and "in the way of a take" in pulled[-1]["note"], pulled)
+        self.assertGreater(self.b.amp_hold.get(AL, 0.0), self.now + 60)
+        # and the next pass books nothing
+        cash0, held0 = self.b.cash, self.b.held(AL, "YES")
+        self.b.cycle(self.now + 120, self.positions(), on=True)
+        self.assertEqual([e for e in self.b.log if e["event"] in ("sold", "amp_filled")], [])
+        self.assertAlmostEqual(self.b.cash, cash0)
+        self.assertAlmostEqual(self.b.held(AL, "YES"), held0)
+
+    def test_the_phantom_sales_of_sep_9_are_repaired_once(self):
+        from v3 import bonds as bm
+        rows = bm.REPAIRS["amp-phantom-2026-09-09"]
+        self.b.repairs_done = []                       # not yet applied on this ledger
+        for slug, side, qty, cost, proceeds, gain in rows:
+            self.b.approve(slug, self.now) if slug not in self.b.approved else None
+            self.assertNotIn(slug, self.b.lots)
+        cash0, real0, sold0 = self.b.cash, self.b.realized, self.b.sold_usd
+        self.b.cycle(self.now, self.positions(), on=True)
+        for slug, side, qty, cost, proceeds, gain in rows:
+            self.assertAlmostEqual(self.b.held(slug, side), qty, places=2)
+            self.assertAlmostEqual(self.b.lots[slug]["cost"], cost, places=3)
+        self.assertAlmostEqual(self.b.cash, cash0 - 678.00, places=2)
+        self.assertAlmostEqual(self.b.realized, real0 - 3.01, places=2)
+        self.assertAlmostEqual(self.b.sold_usd, sold0 - 678.00, places=2)
+        self.assertEqual(self.b.repairs_done, ["amp-phantom-2026-09-09"])
+        self.assertEqual(len([e for e in self.b.log if e["event"] == "repaired"]), 3)
+        # once: a restart and another cycle change nothing
+        d = self.b.to_dict()
+        b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
+                   clock=lambda: self.r.now)
+        b2.restore(copy.deepcopy(d))
+        self.assertEqual(b2.repairs_done, ["amp-phantom-2026-09-09"])
+        for slug, side, qty, cost, proceeds, gain in rows:
+            self.assertAlmostEqual(b2.held(slug, side), qty, places=2)   # the lot survived the restore
+        cash1 = b2.cash
+        b2._apply_repairs()
+        self.assertAlmostEqual(b2.cash, cash1)
 
 
