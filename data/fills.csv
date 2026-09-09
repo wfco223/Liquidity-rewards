@@ -3124,3 +3124,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788931924.4,politics,usgubewc-usgub-id-2026-11-03-dem,SELL,0.4,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCNHNRWCGR47
 1788931924.4,nfl,fptc-nfl-rbfpou-2027-01-10-bucirv,BUY,-1,0.36,fix,0.0233,0.97,,,,0,,,,1,size trimmed by 1 to the exchange's count (order CCMP3Z6RMR46),CCMP3Z6RMR46
 1788931924.4,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,BUY,0.1,0.21,backfill,,0.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCN775E5CR42
+1788932219.2,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,20,0.94,backfill,,0.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCNJ3RF2TR3W
+1788932311.0,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,20,0.94,backfill,,0.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCNJ3RF2TR3W
