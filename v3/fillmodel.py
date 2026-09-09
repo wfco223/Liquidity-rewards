@@ -264,6 +264,13 @@ class FillModel:
         acell = self.age_fit.setdefault(f"{fam}|{age_bucket(age_s)}", [0.0, 0.0])
         acell[0] += dt_s
 
+    def own_cell(self, family: str, side: str, ticks_back: int) -> tuple[float, float]:
+        """(our resting seconds, our fills) logged for this family group,
+        side and depth bucket — the exploration's measure of how much a
+        depth has already taught."""
+        cell = self.own_obs.get(self._key(family, side, _bucket(ticks_back)))
+        return (float(cell[0]), float(cell[1])) if cell else (0.0, 0.0)
+
     def observe_own_fill(self, slug: str, side: str, ticks_back: int,
                          age_s: float) -> None:
         fam = family_of(slug)
