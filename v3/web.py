@@ -513,6 +513,15 @@ function render(d){
   if(fz.active&&fz.phase!=='rebuild'){out+='<div class="warn">FLATTEN \u2014 '+(fz.cancelled_total||0)+' cancelled, '+(fz.remaining||0)+' to go</div>';}
   out+='</div>';
  }
+ function floatLine(x,settling){
+  // owner, 2026-09-09: exits step toward the touch on a daily concession
+  // budget; the realized cost of closing feeds the fill model
+  var s='';
+  if(x){s+='<div class="l" style="margin-top:8px">exits floating toward the touch: '+(x.active||0)+' side'+(x.active===1?'':'s')+' stepping \u00b7 $'+(x.conceded||0).toFixed(2)+' of $'+(x.budget||0).toFixed(2)+' conceded today'
+    +(x.trip_n?' \u00b7 closing a filled position has cost '+x.trip_c.toFixed(1)+'c/share over '+x.trip_n+' exit fill'+(x.trip_n===1?'':'s'):' \u00b7 no exit fills graded yet')+'</div>';}
+  if(settling)s+='<div class="l">'+settling+' new order'+(settling===1?'':'s')+' settling \u2014 re-planned 30s after resting</div>';
+  return s;
+ }
  function exploreLine(x){
   // owner, 2026-09-08: small aggressive orders first, relaxing as each
   // depth logs our own resting hours — the card says how far along it is
@@ -541,6 +550,7 @@ function render(d){
    +'<div class="l" style="margin-top:6px">budget '+usd(spent)+' / '+usd(cap)+'</div>'
    +bar(cap?100*spent/cap:0)
    +exploreLine(s2.explore)
+   +floatLine(s2.exit_float,s2.settling)
    +'<div class="l" style="margin-top:8px">worth the budget \u2014 '+(w.pct||0)+'% of '+(w.scored||0)+' scored'
    +(w.cycle_n?' \u00b7 this cycle '+(w.cycle_pct||0)+'% of '+w.cycle_n:'')+'</div>'
    +bar(w.pct||0,'#6fa8dc')
