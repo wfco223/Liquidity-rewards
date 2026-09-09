@@ -3013,3 +3013,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788919794.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,6,0.841,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJTG4K2ER3W
 1788919794.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,1,0.176,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CCJVJ3NR2R3Y
 1788919794.6,nfl,fptc-nfl-tefpou-2027-01-10-mikges,BUY,0.02,0.68,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJF2WTRPR45
+1788919974.2,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,22,0.04,backfill,,0.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJK90WWJR45
+1788919993.7,politics,usgubewc-usgub-co-2026-11-03-dem,BUY,6,0.97,earn,0.5962,0.18,0.9982,94,97,0.821,0.97,0.99,-0.0282,12,1 tick behind the touch — we would hold 5% of the bid side,CCJSPH11WR3V
+1788920183.7,nfl,tec-nfl-oroy-2027-02-11-w-cartat,BUY,1,0.15,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJVJ3RMJR3Y
+1788920183.7,nfl,tec-nfl-oroy-2027-02-11-w-jerlov,BUY,1,0.18,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJHX3488R42
+1788920215.1,cfb,aachc-cfb-wins-2026-11-28-sc-7pt5wins,SELL,1,0.43,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJMAJ4NPR46
+1788920282.4,nfl,fptc-nfl-tefpou-2027-01-10-patfre,SELL,0.05,0.2,backfill,,0.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJSVBHNRR45
+1788920299.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-6,0.841,fix,20.8287,0.09,0.827,83,85,0.857,0.839,0.84,-0.014,-100,size trimmed by 6 to the exchange's count (order CCJTG4K2ER3W),CCJTG4K2ER3W
+1788920299.1,politics,scc-hrep-rep-2026-11-03-gte210,BUY,-19,0.41,fix,1.1309,14.21,0.3823,39,42,0.39,0.36,0.42,0.0277,18,size trimmed by 19 to the exchange's count (order CC6QPC6MWR47),CC6QPC6MWR47
+1788920299.1,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,22,0.04,backfill,,0.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJK90WWJR45
+1788920299.1,cfb,aachc-cfb-wins-2026-11-28-sc-7pt5wins,SELL,1,0.43,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJMAJ4NPR46
+1788920299.1,nfl,tec-nfl-oroy-2027-02-11-w-cartat,BUY,1,0.15,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJVJ3RMJR3Y
+1788920299.1,nfl,tec-nfl-oroy-2027-02-11-w-jerlov,BUY,1,0.18,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJHX3488R42
+1788920299.1,nfl,fptc-nfl-tefpou-2027-01-10-patfre,SELL,0.05,0.2,backfill,,0.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCJSVBHNRR45
