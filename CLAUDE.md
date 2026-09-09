@@ -79,14 +79,24 @@ long and accreted, so search it rather than reading it through.
   bond under cost. The amplifier (owner, 2026-09-09 "amplify my exit
   orders by placing buy orders for the underdogs in markets where I'm
   not meeting my targets using my held shares alone ... it should help
-  me earn at the price level where my exit order is"): a buy of the
-  underdog (a short beside the lot) one tick behind each bond exit, so
-  our size at the exit's level claims more of the side's reward. Sized
-  where the earnings it adds pay for its expected loss at least twice
-  over; all amplifiers together within 50% of the bonds' average daily
-  earnings of expected loss; an exit fill pulls it for two hours; the
-  amplifier itself trading books the lot's shares sold and pulls the
-  rest; the bonds switch off pulls it. Nothing else may cross.
+  me earn at the price level where my exit order is"; then "I want it
+  to be that the amplifier joins at the exit price. And the fill odds
+  seem high. My exits will be bought first, and I don't make that
+  many sales. And the amplifier should rest orders for the underdogs
+  in each market that do not exceed $26/day. It may exceed that
+  summed across markets. earnings does not have to cover it's own
+  anticipated loss."): a buy of the underdog (a short beside the lot)
+  AT each bond exit's price, behind it in line, so our size at the
+  exit's level claims more of the side's reward. In each market the
+  largest size the money allows whose expected loss stays under 50%
+  of the bonds' average daily earnings; across markets the caps add
+  up; the earnings it adds are shown, never a gate. Its fill odds are
+  the exits' own record: how often an exit sold over the last 7 days,
+  times the share of those sales big enough to take the exit ahead
+  first. What the exchange funds of it is what rests. An exit fill
+  pulls it for two hours; the amplifier itself trading books the
+  lot's shares sold and pulls the rest; the bonds switch off pulls
+  it. Nothing else may cross.
 - Bond money (owner, 2026-09-06): the bonds buy within the budget
   market by market — in any one market, what is held at cost plus that
   market's buy orders stays under the budget; across markets the orders
