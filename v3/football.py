@@ -80,6 +80,10 @@ def cfb() -> FamilyConfig:
         capital_usd=100.0, per_market_usd=1.00,
         holdings_in_ceiling=True,
         dump_usd_day=10.0,
+        # owner, 2026-09-09: settle check, two new orders a cycle, exit
+        # float on a $5/day concession budget
+        settle_s=30.0, enter_per_cycle=2,
+        exit_float=True, exit_float_usd_day=5.0,
         # the dead-money drain (owner, 2026-08-29, choosing this over
         # a weekly liquidation): 63 of 90 held positions were earning
         # nothing — exits outside the paying window or on sides below
@@ -137,6 +141,11 @@ def nfl() -> FamilyConfig:
         capital_usd=50.0, per_market_usd=1.00,
         holdings_in_ceiling=True,
         dump_usd_day=10.0,
+        # owner, 2026-09-09: the settle check applies here too; the
+        # explorer keeps six new orders a cycle (breadth is its point);
+        # exits float on a $2/day concession budget
+        settle_s=30.0, enter_per_cycle=6,
+        exit_float=True, exit_float_usd_day=2.0,
         # owner, 2026-09-08: "intentionally small sized risks and
         # intentionally aggressive to see what the markets are like.
         # Then as we get information relax the aggression" — $1 of

@@ -58,6 +58,7 @@ BAIT_PER_TICK = 1.0
 PRIOR_EXPOSURE_S = DAY_S
 
 MARKDOWN_SEED = 0.02             # $/share adverse move on a fill, to start
+TRIP_ALPHA = 0.05                # per share closed: 20 shares move the trip cost ~2/3 of the way
 OFFLOAD_SEED_DAYS = 2.0          # fill -> fully offloaded, until measured
 OFFLOAD_ALPHA = 0.25             # EWMA weight per completed offload
 MARKDOWN_ALPHA = 0.2             # EWMA weight of each new observed fill
@@ -165,6 +166,8 @@ class FillModel:
         # market -> (bid, ask, tick, ts) — last touch seen
         self._last: dict[str, tuple] = {}
         self.markdown: dict[str, float] = {}       # family -> $/share EWMA
+        self.trip_cost: dict[str, float] = {}      # family -> realized $/share lost closing
+        self.trip_n: dict[str, int] = {}
         self.marks_n: dict[str, int] = {}          # family -> graded fills count
         self.scoring_frac: dict[str, float] = {}   # family -> EWMA 0..1
         # INSTRUMENTS, collecting only (owner-approved 2026-08-21): the
@@ -263,6 +266,25 @@ class FillModel:
         cell[0] += dt_s
         acell = self.age_fit.setdefault(f"{fam}|{age_bucket(age_s)}", [0.0, 0.0])
         acell[0] += dt_s
+
+    def observe_round_trip(self, slug: str, loss_ps: float, qty: float) -> None:
+        """What closing a position really cost, per share, against the
+        basis it closed (owner, 2026-09-09) — the exit's give-up made
+        real. Share-weighted EWMA per family; feeds fill_cost."""
+        if qty <= 0:
+            return
+        fam = family_of(slug)
+        cur = self.trip_cost.get(fam, 0.0)
+        w = min(TRIP_ALPHA * qty, 1.0)
+        self.trip_cost[fam] = round(cur * (1 - w) + max(loss_ps, 0.0) * w, 4)
+        self.trip_n[fam] = self.trip_n.get(fam, 0) + 1
+
+    def trip_summary(self) -> dict:
+        n = sum(self.trip_n.values())
+        if not n:
+            return {"cents": None, "n": 0}
+        cents = sum(self.trip_cost.get(f, 0.0) * k for f, k in self.trip_n.items()) / n * 100.0
+        return {"cents": round(cents, 2), "n": n}
 
     def own_cell(self, family: str, side: str, ticks_back: int) -> tuple[float, float]:
         """(our resting seconds, our fills) logged for this family group,
@@ -396,7 +418,9 @@ class FillModel:
         takes. Can go negative where exits earn more than the fill
         loses — which is exactly a fill worth taking."""
         fam = family_of(slug)
-        soft = self.markdown.get(fam, MARKDOWN_SEED)
+        # the realized cost of closing (owner, 2026-09-09) stands in for
+        # the hour-later mark whenever it is the larger number
+        soft = max(self.markdown.get(fam, MARKDOWN_SEED), self.trip_cost.get(fam, 0.0))
         conc = max(ignorance, 0.0)
         if fair is not None:
             excess = (price - fair) if side == "BUY" else (fair - price)
@@ -423,6 +447,7 @@ class FillModel:
 
     def summary(self) -> dict:
         out: dict = {"hazards": {}, "markdown": self.markdown,
+                     "trip_cost": self.trip_cost, "trip_n": self.trip_n,
                      "marks_n": self.marks_n, "scoring_frac": self.scoring_frac,
                      "prior_per_day": dict(PRIOR_HAZARD_PER_DAY)}
         fams = ({k.split("|")[0] for k in self.obs}
@@ -470,7 +495,8 @@ class FillModel:
                 "own_obs": {k: [round(v[0], 1), v[1]]
                             for k, v in self.own_obs.items()},
                 "age_fit": {k: [round(v[0], 1), v[1]]
-                            for k, v in self.age_fit.items()}}
+                            for k, v in self.age_fit.items()},
+                "trip_cost": self.trip_cost, "trip_n": self.trip_n}
 
     @classmethod
     def from_dict(cls, d: dict) -> "FillModel":
@@ -481,6 +507,8 @@ class FillModel:
                      for k, v in (d.get("age_fit") or {}).items()}
         m.obs = {k: [float(v[0]), float(v[1])] for k, v in (d.get("obs") or {}).items()}
         m.markdown = dict(d.get("markdown") or {})
+        m.trip_cost = {k: float(v) for k, v in (d.get("trip_cost") or {}).items()}
+        m.trip_n = {k: int(v) for k, v in (d.get("trip_n") or {}).items()}
         m.marks_n = dict(d.get("marks_n") or {})
         m.scoring_frac = dict(d.get("scoring_frac") or {})
         m.offload_days = dict(d.get("offload_days") or {})

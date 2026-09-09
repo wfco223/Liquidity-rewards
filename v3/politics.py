@@ -154,6 +154,11 @@ def config() -> FamilyConfig:
         # onto the proven pool's own $150 cap — the search money keeps
         # hunting new candidates
         dump_usd_day=50.0,
+        # owner, 2026-09-09: the settle check (30s on, re-plan, pull or
+        # move), two new orders a cycle, and the exit float on a $15/day
+        # concession budget
+        settle_s=30.0, enter_per_cycle=2,
+        exit_float=True, exit_float_usd_day=15.0,
         # owner, 2026-08-29 ("we should find a way to get the resting
         # positions down"): 76 idle positions — $91 of long stock
         # earning nothing plus $83 of collateral frozen in 22 shorts
