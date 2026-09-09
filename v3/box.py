@@ -50,6 +50,9 @@ def box_stats() -> dict:
     """One reading of the container's limits and counters (cumulative
     where the kernel keeps them so; the cycle takes deltas)."""
     out: dict = {}
+    ms = malloc_stats()
+    if ms:
+        out["malloc"] = ms
     # memory
     if os.path.exists(f"{CG2}/memory.current"):
         out["mem_mb"] = _mb(_read(f"{CG2}/memory.current"))
@@ -132,6 +135,34 @@ class GcClock:
         self.runs = 0
         self.gen2 = 0
         return out
+
+
+def malloc_stats() -> dict | None:
+    """glibc's own account of the heap (mallinfo2): what Python is
+    actually using versus what the allocator holds free and cannot
+    give back. If in_use is flat while arena climbs, the growth is
+    fragmentation; if in_use climbs, something is really kept."""
+    try:
+        import ctypes
+        libc = ctypes.CDLL("libc.so.6")
+
+        class MI2(ctypes.Structure):
+            _fields_ = [(n, ctypes.c_size_t) for n in
+                        ("arena", "ordblks", "smblks", "hblks", "hblkhd",
+                         "usmblks", "fsmblks", "uordblks", "fordblks", "keepcost")]
+        libc.mallinfo2.restype = MI2
+        m = libc.mallinfo2()
+    except (OSError, AttributeError):
+        return None
+    except Exception:  # noqa: BLE001
+        return None
+    mb = 1048576.0
+    return {"arena_mb": round(m.arena / mb, 1),        # heap from brk
+            "mmap_mb": round(m.hblkhd / mb, 1),        # big blocks, mmapped
+            "in_use_mb": round(m.uordblks / mb, 1),    # handed out, not freed
+            "free_mb": round(m.fordblks / mb, 1),      # freed, held by glibc
+            "top_free_mb": round(m.keepcost / mb, 1),  # trim-able top chunk
+            "free_chunks": int(m.ordblks)}
 
 
 def deep_mb(obj, budget: int = 300_000, seen: set | None = None) -> float:

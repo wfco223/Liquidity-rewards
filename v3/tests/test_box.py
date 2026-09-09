@@ -30,6 +30,18 @@ class TestTheBox(unittest.TestCase):
         finally:
             gc.callbacks.remove(c._cb)
 
+    def test_malloc_stats_reads_the_allocator_or_says_nothing(self):
+        from v3.box import malloc_stats, box_stats
+        ms = malloc_stats()
+        if ms is None:            # not glibc: nothing to read, no crash
+            self.assertNotIn("malloc", box_stats())
+            return
+        for k in ("arena_mb", "mmap_mb", "in_use_mb", "free_mb", "top_free_mb", "free_chunks"):
+            self.assertIn(k, ms)
+        self.assertGreater(ms["in_use_mb"], 0.0)
+        self.assertGreaterEqual(ms["arena_mb"], 0.0)
+        self.assertEqual(box_stats().get("malloc", {}).keys(), ms.keys())
+
     def test_deep_mb_weighs_a_container_and_shares_what_it_has_seen(self):
         from v3.box import deep_mb
         big = {i: [str(i)] * 3 for i in range(2000)}
