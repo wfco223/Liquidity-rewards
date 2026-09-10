@@ -4469,3 +4469,20 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789079670.2,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,24,0.93,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDS0WZPCESJH
 1789079670.2,politics,ussewc-usse-sd-2026-11-03-rep,SELL,52,0.91,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDS0NT3SASJR
 1789079670.2,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,-2.26,0.2,fix,1.1429,11.04,,19,24,0.617,0.2,0.21,-0.02,4.74,size trimmed by 2.26 to the exchange's count (order CD870WZ1MT3P),CD870WZ1MT3P
+1789079730.2,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,1,0.06,bond,3.7096,0.04,0.000375,4,7,0.749,0.07,0.09,-0.0596,-305,bond more: split — 1 at 6c carry the share; never dearer than his first price,CDS17Z9NJSJR
+1789079790.2,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,3.68,0.07,bond,0,0.02,0.000375,4,7,0.792,0.06,0.09,-0.0696,-308.68,bond: took 3.68 NO at 7c — it was in the way of our resting order,CDS22N1TPT6S
+1789079790.2,politics,ussewc-usse-ky-2026-11-03-dem,SELL,15,0.06,bond,0,0.02,0.0036,3,6,0.593,0.05,0.07,-0.0564,-188,bond: took 15 NO at 6c — it was in the way of our resting order,CDS22N2RCT6S
+1789079850.2,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,12.98,0.06,bond,0,0.02,0.000375,5,8,0.823,0.05,0.09,-0.0596,-321.98,bond: took 12.98 NO at 6c — it was in the way of our resting order,CDS2GNGT8T6S
+1789080155.5,politics,ussewc-usse-ky-2026-11-03-dem,SELL,1,0.06,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDS41XNYMSJH
+1789080267.1,politics,ussewc-usse-ky-2026-11-03-dem,BUY,-25.1,0.06,fix,0,0.03,0.0036,3,7,0.384,0.08,0.09,0.0564,-147.9,size trimmed by 25.1 to the exchange's count (order CDS03JH0YSJR),CDS03JH0YSJR
+1789080267.1,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,-14.6,0.06,fix,0,0.02,0.000375,4,7,0.682,0.05,0.06,0.0596,-304.4,size trimmed by 14.6 to the exchange's count (order CDS064SFGT75),CDS064SFGT75
+1789080267.1,politics,ussewc-usse-ky-2026-11-03-rep,SELL,-106.8,0.91,fix,0,0.02,0.9964,87,90,0.844,0.92,0.98,0.0864,0.2,size trimmed by 106.8 to the exchange's count (order CDS0SHXEJSK5),CDS0SHXEJSK5
+1789080267.1,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,-24,0.93,fix,0,0.02,0.9989,88,92,0.49,0.92,0.94,0.0689,0,size trimmed by 24 to the exchange's count (order CDS0WZPCESJH),CDS0WZPCESJH
+1789080267.1,politics,ussewc-usse-sd-2026-11-03-rep,SELL,-52,0.91,fix,0,0.01,0.991925,89,92,0.356,0.91,0.92,0.0819,0,size trimmed by 52 to the exchange's count (order CDS0NT3SASJR),CDS0NT3SASJR
+1789080267.1,politics,scc-senate-gop-2026-11-03-49,SELL,9,0.16,hand,,2.94,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCMQSCW6GR3V
+1789080267.1,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,3,0.96,hand,,5.28,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCJT9YXGYR47
+1789080267.1,politics,scc-senate-gop-2026-11-03-56,SELL,2836.01,0.03,backfill,,12.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7FF7V7CSJR
+1789080267.1,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,7,0.17,backfill,,15.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9TW1WBESX0
+1789080267.1,politics,scc-senate-gop-2026-11-03-50,SELL,42.99,0.16,backfill,,18.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7MF4KMYSJZ
+1789080267.1,politics,ussewc-usse-ky-2026-11-03-dem,SELL,1,0.06,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDS41XNYMSJH
+1789080267.1,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,2.26,0.2,backfill,,11.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD870WZ1MT3P
