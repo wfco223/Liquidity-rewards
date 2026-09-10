@@ -4486,3 +4486,17 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789080267.1,politics,scc-senate-gop-2026-11-03-50,SELL,42.99,0.16,backfill,,18.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7MF4KMYSJZ
 1789080267.1,politics,ussewc-usse-ky-2026-11-03-dem,SELL,1,0.06,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDS41XNYMSJH
 1789080267.1,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,2.26,0.2,backfill,,11.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD870WZ1MT3P
+1789081507.6,cfb,aachc-cfb-wins-2026-11-28-mich-10pt5wins,SELL,0.05,0.06,backfill,,8.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDJC5QPN4SJZ
+1789081523.5,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,18.72,0.22,sell,24.868,0.73,0.158225,20,22,0.802,0.21,0.22,-0.0618,138.28,an exit — its fill reduces the position it sits on,CDRTX6QYGSX4
+1789081523.5,cfb,aachc-cfb-wins-2026-11-28-mich-10pt5wins,SELL,17,0.06,sell,0.3566,8.24,,2,8,0.411,0.01,0.02,-0.01,3,selling filled stock — it earns while it waits,CDJC5QPN4SJZ
+1789081583.5,politics,ussewc-usse-ar-2026-11-03-rep,SELL,2,0.91,sell,0.4839,1,0.984225,90,94,0.585,0.9,0.91,0.0742,4,selling filled stock — it earns while it waits,CDRMPMY1PSJR
+1789082052.1,politics,paccc-usse-midterms-2026-11-03-rep,SELL,90,0.533,sell,25.4909,1.92,0.4789,52,54,0.831,0.532,0.533,-0.0541,0,an exit — its fill reduces the position it sits on,CDQZ8HYCESJH
+1789082117.3,politics,ussewc-usse-nm-2026-11-03-dem,SELL,0.1,0.97,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSA9JJ4ASK5
+1789082172.1,politics,ussewc-usse-nm-2026-11-03-dem,SELL,0.05,0.97,sell,0,0.35,0.9955,93,96,0.825,0.92,0.97,0.0255,2.95,selling filled stock — it earns while it waits,CDSA9JJ4ASK5
+1789082692.0,politics,ussewc-usse-nm-2026-11-03-dem,SELL,0.05,0.97,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSMH9PFTT3P
+1789082776.0,politics,ussewc-usse-nm-2026-11-03-dem,SELL,1.95,0.97,sell,0,0.15,0.9955,94,97,0.847,0.92,0.97,0.0255,0.05,selling filled stock — it earns while it waits,CDSMH9PFTT3P
+1789083104.3,politics,ussewc-usse-nm-2026-11-03-dem,SELL,2,0.97,sell,0,0.09,0.9955,,,0.864,,,0.0255,-2,selling filled stock — it earns while it waits,CDSS3TAXRT6S
+1789083270.8,politics,ussewc-usse-ky-2026-11-03-dem,SELL,-1,0.06,fix,0,0.07,0.0036,3,6,0.695,0.05,0.09,-0.0564,-189,size trimmed by 1 to the exchange's count (order CDS41XNYMSJH),CDS41XNYMSJH
+1789083270.8,politics,ussewc-usse-nm-2026-11-03-dem,SELL,0.1,0.97,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSA9JJ4ASK5
+1789083270.8,politics,ussewc-usse-nm-2026-11-03-dem,SELL,0.05,0.97,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSMH9PFTT3P
+1789083270.8,cfb,aachc-cfb-wins-2026-11-28-mich-10pt5wins,SELL,0.05,0.06,backfill,,8.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDJC5QPN4SJZ
