@@ -542,3 +542,26 @@ class TestImprove(unittest.TestCase):
         for o in bids:
             self.assertLessEqual(o.price, 0.47 - 0.01 + 1e-9)
             self.assertLessEqual(o.price * o.qty, 0.51)
+
+
+class TestTheMidtermPoolsPayDaily(unittest.TestCase):
+    """Owner, 2026-09-10: "The estimator doesn't appear to be taking into
+    account the new reward pools." The midterms programs carry an end
+    date (election day); their pool is still what they pay a day, the
+    settled politics rule — the window never divides it."""
+
+    def test_a_bounded_politics_pool_is_not_divided_by_its_window(self):
+        from v3.programs import Program
+        r = Rig()
+        r.add_market(A)
+        r.cycle()
+        r.fam.universe[A]["event_n"] = 2
+        bounded = Program(pool=1500.0, target=25000.0, df=0.3, status="active",
+                          pid="midterms_t1_control_bop_tossup_senate_20260909",
+                          start="2026-09-10T00:00:00Z", end="2026-11-04T00:00:00Z")
+        open_ended = Program(pool=1500.0, target=25000.0, df=0.3, status="active",
+                             pid="politics_high_20260727", start="2026-07-28T00:00:00Z")
+        self.assertAlmostEqual(r.fam._side_pool(A, bounded), 375.0)      # 1500 / 2 markets / 2 sides
+        self.assertAlmostEqual(r.fam._side_pool(A, open_ended), 375.0)
+        # the property that did the dividing still does, for golf's sake
+        self.assertAlmostEqual(bounded.daily_pool, 1500.0 / 55.0)

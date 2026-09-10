@@ -3742,13 +3742,15 @@ class Bonds:
         # the side against the line, for the qualify button (owner,
         # 2026-09-06): the same goal the button builds to, 125% of Target
         # Size, and what a wall closing the gap would hold
+        from .programs import pool_days
         from .survey import QUALIFY_TARGET_MULT, wall_collateral, wall_price
         side_size = sum(q for _, q in levels)
         target = float(prog.target)
         goal = target * QUALIFY_TARGET_MULT
         gap = max(goal - side_size, 0.0)
         wpx = wall_price(ebs, tick)
-        return {"side": ebs, "pool_day": round(float(prog.daily_pool or 0.0), 2),
+        # per day, never divided by a politics program's window (2026-09-10)
+        return {"side": ebs, "pool_day": round(float(prog.pool or 0.0) / pool_days(prog, slug), 2),
                 "event_n": n,
                 "side_pool": (round(pool, 4) if pool is not None else None),
                 "target": target, "df": float(prog.df),
