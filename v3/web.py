@@ -61,7 +61,7 @@ def authed(get_header, query_string: str, password: str) -> bool:
 # routes still answer for a bookmark, but they are off the bar. Fills
 # and watch became sub-pages of quick look.
 NAV = (("quick look", "."), ("status", "status"), ("orders", "orders"),
-       ("pay", "pay"), ("bonds", "bonds"), ("survey", "survey"),
+       ("pay", "pay"), ("bonds", "bonds"),
        ("log", "log"), ("switch", "switch"))
 SUBNAV = {"quick": (("meter", "."), ("fills", "fills"), ("watch", "watch")),
           "orders": (("orders", "orders"),)}
@@ -475,7 +475,7 @@ function bar(pct,col){return '<div class="mtrack"><div class="mfill" style="widt
 function cycleLine(d){
  var cs=d.cycle_stats;if(!cs||!cs.laps)return '';
  var L=cs.laps,parts=[];
- ['read board','rewards watch','publish files','families','bonds','survey','state','payload','snapshot'].forEach(function(k){if(L[k]!=null&&L[k]>=0.5)parts.push(k+' '+L[k]+'s');});
+ ['read board','rewards watch','publish files','families','bonds','state','payload','snapshot'].forEach(function(k){if(L[k]!=null&&L[k]>=0.5)parts.push(k+' '+L[k]+'s');});
  var bx=cs.box||{},gc=cs.gc||{};
  var mem=(cs.rss_mb!=null?Math.round(cs.rss_mb)+' MB':'')+(bx.mem_max_mb?' of '+Math.round(bx.mem_max_mb)+' MB':'');
  var h='<div class="sub'+((L.total||0)>90?' warn':' muted')+'">last pass '+(L.total||0)+'s'+(parts.length?' \u2014 '+parts.join(', '):'');
@@ -1965,76 +1965,7 @@ function render(d){
 
 # (title, nav highlight, page JS, sub-nav group). Plan and model keep
 # their routes for a bookmark but are off the bar (owner, 2026-08-31).
-SURVEY_JS = r"""
-// A continuously cycling leaderboard of market prefixes (owner,
-// 2026-08-31). It samples a few markets every cycle, at random within
-// each prefix, and ranks on the MEDIAN share of a side per dollar at
-// risk — cfb holds 13% of a side for 41 cents, about 32 on this scale.
-// Never on the max: one lucky thin book would crown a prefix.
-function svBest(i){window._svOpen=(window._svOpen===i?null:i);
- if(window._d)document.getElementById('view').innerHTML=render(window._d);}
-function svNum(x,d){return (x||0).toFixed(d==null?2:d);}
-function render(d){
- if(d.starting)return bootCard(d);
- var s=d.survey;
- if(!s)return '<div class="card muted">The survey has not run yet.</div>';
- var sm=s.sampler||{}, full=(s.frame||'').indexOf('NOT a full frame')<0;
- var out='<div class="card"><b>Prefix leaderboard</b>'
-  +'<div class="muted" style="font-size:12px">Samples a few markets every cycle, at random within each prefix. Reads books and terms; it places nothing.</div>'
-  +'<div class="kpi" style="margin-top:8px">'
-  +'<div><div class="v">'+(sm.population||0).toLocaleString()+'</div><div class="l">markets in frame</div></div>'
-  +'<div><div class="v">'+(sm.prefixes||0)+'</div><div class="l">prefixes</div></div>'
-  +'<div><div class="v">'+(s.ranked||[]).length+'</div><div class="l">ranked</div></div>'
-  +'<div><div class="v">'+(s.sampling||[]).length+'</div><div class="l">still sampling</div></div>'
-  +'</div>'
-  +'<div class="vrd'+(full?'':' warn')+'">'+esc(s.frame||'frame not loaded yet')+'</div>'
-  +'<div class="muted" style="font-size:12px">seed '+esc(String(sm.seed))
-  +' \u00b7 '+(sm.left_this_pass||0).toLocaleString()+' left in this pass'
-  +' \u00b7 '+(sm.passes||0)+' passes'
-  +(s.at?' \u00b7 last sampled '+when(s.at):'')+'</div></div>';
- var r=s.ranked||[];
- if(r.length){
-  out+='<div class="card"><table><tr><th>market kind</th><th class="r">n</th>'
-   +'<th class="r">$/day per $1</th><th class="r">side per $1</th>'
-   +'<th class="r">share</th><th class="r">touch</th></tr>';
-  r.forEach(function(k,i){
-   var good=k.median_ypd>=0.16;
-   out+='<tr'+((k.best||[]).length?' style="cursor:pointer" onclick="svBest('+i+')"':'')+'>'
-    +'<td>'+esc(k.prefix)+((k.best||[]).length?' <span class="muted">\u25be</span>':'')+'</td>'
-    +'<td class="r">'+k.n+'</td>'
-    +'<td class="r'+(good?' ok':'')+'"><b>'+svNum(k.median_ypd,3)+'</b></td>'
-    +'<td class="r muted">'+svNum(k.median_spd,3)+'</td>'
-    +'<td class="r">'+svNum(k.median_share_pct,3)+'%</td>'
-    +'<td class="r">'+(k.median_touch||0).toLocaleString()+'</td></tr>';
-   if(window._svOpen===i){
-    (k.best||[]).forEach(function(b){
-     out+='<tr><td colspan="6" class="muted" style="font-size:12px;padding-left:14px">'
-      +'<code>'+esc(b.market)+'</code> '+(b.side==='BUY'?'bid':'ask')+' '+pc(b.px)
-      +' \u00b7 '+svNum(b.ypd,3)+' $/day per $1'
-      +' \u00b7 '+svNum(b.share_pct,2)+'% of side'
-      +' \u00b7 touch '+(b.touch||0).toLocaleString()
-      +' \u00b7 '+usd(b.est_day)+'/day</td></tr>';});
-   }});
-  out+='</table><div class="hint">Ranked on <b>$/day per $1 at risk</b> \u2014 what a dollar resting here earns in a day. College football, the one that works, runs a median of <b>0.16</b>; politics 0.05. Marked green at 0.16 or better. Tap a row for the actual markets behind it. "side per $1" is how much of a side that dollar buys: high on its own means the side is cheap to own but may pay nothing, which is why it is not the ranking.</div></div>';
- }else{
-  out+='<div class="card muted">Nothing ranked yet. A prefix needs '
-   +(s.min_samples||12)+' scored sides before its median means anything.</div>';
- }
- var y=s.sampling||[];
- if(y.length){
-  var body='';
-  y.slice(0,40).forEach(function(k){
-   body+='<div class="vrd muted">'+esc(k.prefix)+' \u2014 '+k.n+' of '
-    +(s.min_samples||12)+' sides'
-    +(k.live_skipped?' \u00b7 '+k.live_skipped+' skipped, event live':'')
-    +'</div>';});
-  out+='<div class="card"><details><summary><b>Still sampling</b> '
-   +'<span class="muted">\u2014 '+y.length+' prefixes</span></summary>'
-   +body+'</details></div>';
- }
- return out;
-}
-"""
+# The survey page is gone with the survey (owner, 2026-09-10).
 
 PAGES = {
     "/": ("Quick look", "meter", GRAPH_JS, "quick"),
@@ -2045,7 +1976,6 @@ PAGES = {
     "/orders": ("Orders", "orders", ORDERS_JS, ""),
     "/pay": ("Pay", "pay", PAY_JS, ""),
     "/grades": ("Pay", "pay", PAY_JS, ""),
-    "/survey": ("Survey", "survey", SURVEY_JS, ""),
     "/bonds": ("Bonds", "bonds", BONDS_JS, ""),
     "/switch": ("Switches", "switch", SWITCH_JS, ""),
     "/log": ("Log", "log", LOG_JS, ""),
