@@ -161,10 +161,14 @@ long and accreted, so search it rather than reading it through.
   risk and rewards it can earn"): the concession past fair is charged
   in full as a fill cost and the size is chosen with the price. After
   an entry fills, the rest of it comes off and that side rests nothing
-  new for two hours, and an entry never adds to a position past the
-  stake (2026-09-10: an ask at the touch of the House dem control
-  market filled eleven times in fifteen minutes while the tender
-  re-rested it). An exit joins the touch and never sits under the
+  new for fifteen minutes, then re-enters at a quarter of the stake
+  and ramps back to full size two hours after the fill ("The stand off
+  after a fill for a side should be 15 minutes and when entering size
+  should be scaled down until the two hour window has passed"), and
+  an entry never adds to a position past the stake (2026-09-10: an
+  ask at the touch of the House dem control market filled eleven
+  times in fifteen minutes while the tender re-rested it). An exit
+  joins the touch and never sits under the
   position's cost (his fair when the cost is unknown). A market
   without a fair is
   shown with Silver's number as a suggestion and nothing is tended
