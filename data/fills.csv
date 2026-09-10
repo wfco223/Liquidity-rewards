@@ -3877,3 +3877,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789023671.7,politics,ussewc-usse-ky-2026-11-03-rep,BUY,4.62,0.91,bond,0,0.02,0.996425,92,95,0.821,0.91,0.92,-0.0864,60.62,bond: took 4.62 YES at 91c — it was in the way of our resting order,CDBKMZ5DTSK5
 1789023895.7,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,73,0.94,backfill,,1.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDAM9R1M0SJ1
 1789024211.8,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,73,0.94,backfill,,1.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDAM9R1M0SJ1
+1789024392.7,politics,enwc-ussep-de-2026-09-15-rep-johshu,SELL,185,0.06,sell,0,0,,7,11,0.559,0.06,0.07,0.03,0,taker dump — sold into the bid (the carved exception),CDBSJ9VX0SJR
+1789024572.7,politics,scc-senate-gop-2026-11-03-48,SELL,3.55,0.18,manual,0.7091,5,0.14145,15,20,0.465,0.17,0.18,-0.0386,-24.55,the owner's own order — the engine leaves it alone,CD7M40B3TSJH
+1789025009.4,politics,ewc-usgub-ca-2026-11-03-stehil,SELL,10,0.06,earn,0.6285,0.68,0.000625,3,7,0.699,0.05,0.06,-0.0594,-10,1 tick in front of the touch — we would hold 2% of the ask side,CDBBZDAB0SJZ
+1789025044.3,politics,ussewc-usse-co-2026-11-03-dem,SELL,40.31,0.95,backfill,,4.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD80Z7EFPSJZ
+1789025069.4,politics,ussewc-usse-co-2026-11-03-dem,SELL,17,0.95,manual,7.7529,4.67,0.995125,92,95,0.781,0.94,0.95,0.0451,100,the owner's own order — the engine leaves it alone,CD80Z7EFPSJZ
+1789025129.4,politics,ussewc-usse-co-2026-11-03-dem,BUY,40,0.94,manual,4.729,4.7,0.995125,93,95,0.815,0.94,0.95,-0.0551,140,the owner's own order — the engine leaves it alone,CD808PG5TT75
+1789025189.4,politics,ussewc-usse-ky-2026-11-03-dem,SELL,23,0.06,bond,3.1538,1.16,0.003575,4,9,0.419,0.05,0.13,-0.0564,-198,bond more: split — 23 at 6c carry the share; never dearer than his first price,CDAZEE5G4SJR
+1789025489.6,politics,usgubewc-usgub-ok-2026-11-03-rep,BUY,6.66,0.9,earn,6.1881,0.32,0.9414,91,96,0.495,0.9,0.91,-0.0414,6.66,at the touch — a fill here is 4 ticks inside value (Silver + evidence),CDBSMRXCWSX4
+1789025549.7,politics,ewc-usgub-ca-2026-11-03-stehil,BUY,10,0.05,sell,0.3934,0.15,0.000625,5,8,0.759,0.05,0.06,0.0494,0,buying back the short at or under what it sold for — the bid earns while it wait,CDBXG2R6JT75
+1789025729.7,politics,scc-senate-gop-2026-11-03-52,SELL,19,0.09,manual,10.9557,5.11,0.09095,8,11,0.741,0.08,0.09,0.001,-19,the owner's own order — the engine leaves it alone,CD7R765ZJT3P
+1789025789.7,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,55,0.94,sell,1.1401,1.8,0.998675,91,95,0.677,0.93,0.95,-0.0587,0,buying back the short at or under what it sold for — the bid earns while it wait,CDAM9R1M0SJ1
+1789026760.2,nfl,ftsc-nfl-wrtop12fp-2027-01-10-garrwil,SELL,0.01,0.06,earn,0.0008,2.24,,5,15,0,0.05,0.15,0.04,-0.01,joins the touch — the book has been quiet,CDAFRMM1MT6S
+1789027180.3,politics,usgubewc-usgub-sc-2026-11-03-dem,SELL,5,0.04,earn,0.4668,0.96,0.021675,3,8,0.632,0.02,0.03,-0.0183,-5,2 ticks in front of the touch — we would hold 98% of the ask side,CDBNDWS8MSJ1
+1789027738.3,politics,paccc-usse-midterms-2026-11-03-rep,SELL,20,0.534,backfill,,3.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9W9CTFMSK5
+1789027833.9,politics,paccc-usho-midterms-2026-11-03-dem,SELL,11,0.845,backfill,,1.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDBNAMN92SX4
+1789027843.2,politics,ussewc-usse-co-2026-11-03-dem,SELL,40.31,0.95,backfill,,4.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD80Z7EFPSJZ
+1789027843.2,politics,paccc-usse-midterms-2026-11-03-rep,SELL,20,0.534,backfill,,3.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9W9CTFMSK5
+1789027843.2,politics,paccc-usho-midterms-2026-11-03-dem,SELL,11,0.845,backfill,,1.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDBNAMN92SX4
