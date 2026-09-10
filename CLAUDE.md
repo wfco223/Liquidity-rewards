@@ -181,8 +181,12 @@ long and accreted, so search it rather than reading it through.
   tender should stop"). His qualifying walls (1c bids, 99c asks)
   never impair the tender ("My qualifying orders (1c or 99c) should
   not impair the tender from placing orders"): they count as offering
-  none of the lot, and the money they hold is counted back into the
-  buying power the stake follows. The expected-loss cap counts
+  none of the lot, the money they hold is counted back into the
+  buying power the stake follows, and their size stays on the book
+  in the model: a 1c bid of 25,000 is what carries a side to the
+  25,000 target, and with it stripped the whole bid side had read as
+  earning nothing (22:35Z: the balance-of-power exit at the touch
+  showed $0.00 a day). Only the order a plan replaces is netted out. The expected-loss cap counts
   entries only: an exit is the position leaving, counts nothing and
   is never pulled by the cap (21:00Z: a cover was rested and pulled
   "over the cap" eight times in four minutes); a cover of a short is
