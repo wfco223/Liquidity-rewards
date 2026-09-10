@@ -53,7 +53,14 @@ long and accreted, so search it rather than reading it through.
   way, ask me if I want to cancel the order and if I say yes, cancel
   the order and then sell"): a sale by his tap that his own order
   blocks comes back as a question naming the order; his yes cancels
-  that one order and runs the sale. Never without the yes.
+  that one order and runs the sale. Never without the yes. The
+  other carve-out (owner, 2026-09-10 "my orders should be like any
+  other the tender places, susceptible to being moved if there is
+  another place they could be resting that is more positive ev"):
+  in a focus market he has given a fair, his own orders are the
+  focus tender's to move, resize and pull under its rules, his 1c
+  and 99c qualifying walls excepted; where no fair is set they stay
+  as he left them.
 - FROZEN ground — the engine does NOTHING there (owner, 2026-08-24
   "Don't sell my gop governor count race orders. In fact don't touch
   those"): places nothing, rests no exits, reprices nothing, cancels
