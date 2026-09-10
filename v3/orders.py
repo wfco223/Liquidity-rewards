@@ -184,6 +184,9 @@ class OrderResult:
     resting_qty: float = 0.0      # what the open list showed resting when the
                                   # verify fell short (the exchange trims an
                                   # order to the money there, 2026-09-04)
+    withdrawn_id: str = ""        # a reprice's replacement that never showed
+                                  # resting and was cancelled: the caller may
+                                  # still own a fill of it
 
 
 class OrderDesk:
@@ -456,6 +459,18 @@ class OrderDesk:
             except ApiError as e:
                 last = f"open-orders read failed: {e}"
             if self._clock() >= deadline:
+                if want_id and seen_n == 0:
+                    # never seen resting: the exchange's own word on the
+                    # order, when it has one (filled at once, rejected,
+                    # cancelled), so the record says why
+                    state = ""
+                    try:
+                        fn = getattr(self.client, "order_state", None)
+                        state = str(fn(want_id) or "") if fn is not None else ""
+                    except Exception:  # noqa: BLE001
+                        state = ""
+                    if state:
+                        last = f"{last}; the exchange lists it as {state}"
                 return False, last, seen
             if want_id and seen_n >= 2:
                 # seen twice at the smaller size: the exchange cut it to
@@ -515,7 +530,8 @@ class OrderDesk:
                 # withdraw it so we never hold a ghost. Original untouched.
                 self.cancel(placed.order_id, slug, initiator=initiator)
             return OrderResult(ok=False, order_id=existing["id"], intent=placed.intent,
-                               note=f"original untouched — {placed.note}")
+                               note=f"original untouched — {placed.note}",
+                               withdrawn_id=placed.order_id or "")
         kept = (f" {trimmed:g} of {qty:g} (the exchange kept what the money allows)"
                 if not placed.ok else "")
         old = self.cancel(existing["id"], slug, initiator=initiator)

@@ -288,6 +288,16 @@ class Client:
             })
         return orders
 
+    def order_state(self, order_id: str) -> str:
+        """The exchange's state for one order, from the open list's raw
+        rows (which keep finished orders for a while): the word on an
+        order the verify never saw resting. "" when it is not listed."""
+        j = self.get(TRADE_API + "/v1/orders/open", signed=True)
+        for o in j.get("orders") or []:
+            if str(o.get("id") or "") == str(order_id):
+                return str(o.get("state") or "")
+        return ""
+
     # -- market data (public) ------------------------------------------------
 
     BOOK_DEPTH = 50          # the endpoint's documented maximum
