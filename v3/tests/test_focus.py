@@ -198,20 +198,49 @@ class TestTheProgramWatch(Base):
 
 
 class TestThePlan(Base):
-    def test_an_entry_is_ten_percent_of_buying_power_within_the_fair_bound(self):
-        self.f.set_fair(NC, 45.0)
+    def test_an_entry_is_up_to_ten_percent_of_buying_power_and_may_sit_past_fair(self):
+        # owner, 2026-09-10: "A bid over fair value is fine as long as
+        # it is appropriately sized for the risk and rewards it can
+        # earn" — the concession past fair is a fill cost, charged in
+        # full, and the size is chosen with the price
+        self.f.set_fair(NC, 40.0)                # the touch (44/47) sits past it
         self.tick()
         row = self.f.rows[NC]
         self.assertEqual(row["stake"], 200.0)
         buy = row["sides"]["BUY"]
-        self.assertLessEqual(buy["px"], 0.44 + 1e-9)          # fair 45c: a bid at most 44c
-        self.assertEqual(buy["qty"], float(int(200.0 / buy["px"])))
+        self.assertLessEqual(buy["qty"] * buy["px"], 200.0 + 1e-6)
+        if buy["px"] > 0.40:
+            self.assertAlmostEqual(buy["conc"], buy["px"] - 0.40, places=4)
+            self.assertGreaterEqual(buy["fc"], buy["conc"] + self.f.fill_floor - 1e-9)
         sell = row["sides"]["SELL"]
-        self.assertGreaterEqual(sell["px"], 0.46 - 1e-9)
         for p in (buy, sell):
             self.assertAlmostEqual(p["ev"], p["est"] - p["loss"] - p["coc"], places=3)
             self.assertGreater(p["pf"], 0.0)
             self.assertGreaterEqual(p["fc"], self.f.fill_floor)
+        # the slot a tick inside the fair is always among the candidates
+        book = self.r.cache.any_age(NC)
+        self.assertIn(0.39, self.f._cands("BUY", book, 0.40))
+        self.assertIn(0.44, self.f._cands("BUY", book, 0.40))
+
+    def test_a_small_pool_far_past_fair_sizes_the_entry_down_or_back(self):
+        # a $100 tier: little to earn against a 24c concession at the
+        # touch — the best order is smaller than the full stake, or
+        # sits back at the fair
+        self.f.set_fair(PLAIN, 20.0)
+        self.r.fam.universe[PLAIN] = {"event_n": 1, "name": PLAIN}
+        self.f.terms.current[PLAIN] = self.r.fam.terms.get(PLAIN)
+        self.f.markets = sorted(set(self.f.markets) | {PLAIN})
+        row = self.f._row(PLAIN, self.r.now, {}, 2000.0)
+        buy = row["sides"]["BUY"]
+        full = float(int(200.0 / buy["px"]))
+        self.assertTrue(buy["qty"] < full or buy["px"] <= 0.19 + 1e-9,
+                        (buy["qty"], full, buy["px"]))
+        self.assertGreater(buy["ev"], 0.0)
+
+    def test_an_exit_never_sits_under_fair(self):
+        book = self.r.cache.any_age(NC)
+        for px in self.f._cands("SELL", book, 0.50, bound=True):
+            self.assertGreaterEqual(px, 0.51 - 1e-9)
 
     def test_without_a_fair_silver_stands_in_for_the_plan_only(self):
         self.tick()
@@ -305,8 +334,13 @@ class TestTending(Base):
                 if p.get("px"):
                     plans.append((p["ev"], s, sd))
         plans.sort(reverse=True)
-        best = plans[0]
-        self.assertTrue(self.mine(best[1], best[2]))
+        # the best EV that fits under the cap on its own is rested (two
+        # identical plans tie: either one)
+        best_ev = next(t[0] for t in plans
+                       if self.f.rows[t[1]]["sides"][t[2]]["risk"] <= 60.0)
+        rested = [(t[0], t[1], t[2]) for t in plans if self.mine(t[1], t[2])]
+        self.assertTrue(rested)
+        self.assertAlmostEqual(rested[0][0], best_ev, places=3)
 
     def test_the_engine_orders_here_become_the_tenders(self):
         self.r.fam.orders["e1"] = FamilyOrder(id="e1", market=NC, side="BUY", price=0.30,
