@@ -3866,3 +3866,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789018701.5,politics,ussewc-usse-mt-2026-11-03-rep,SELL,19,0.84,bond,1.6156,0.53,0.983825,77,81,0.923,0.86,0.88,0.1438,0,bond: moved up to keep 80% of the best reward,CDA0AJW0GSK5
 1789019066.8,nfl,fptc-nfl-qbfpou-2027-01-10-danjon,BUY,1,0.7,earn,0.9827,3.4,,68,74,0,0.7,0.73,-0.01,1,2 ticks behind the touch — we would hold 90% of the bid side,CD7NVF1J6SK5
 1789019186.8,nfl,fptc-nfl-qbfpou-2027-01-10-kylmur,BUY,0.01,0.72,earn,0.0154,0.34,,53,68,0,0.72,0.73,0.11,0.01,joins the touch — the book has been quiet,CDA9KZ06GSX4
+1789021303.4,cfb,aachc-cfb-wins-2026-11-28-iowast-5pt5wins,BUY,10,0.09,earn,0.1468,0.3,,10,16,0.347,0.02,0.11,-0.04,11,1 tick behind the touch — we would hold 3% of the bid side,CDATH3V5MSJH
+1789021663.5,nfl,aqc-nfl-2027-01-10-playoffq-lv,SELL,0.5,0.2,earn,0.0626,1.83,,16,23,0,0.19,0.2,-0.01,-0.5,joins the touch — the book has been quiet,CD9KAHHCTSJH
+1789021846.4,nfl,aqc-nfl-2027-01-10-playoffq-lv,BUY,1,0.32,sell,0,0.03,,21,28,0.454,0.19,0.33,0.08,2,buying back the short at or under what it sold for — the bid earns while it wait,CDB6262GPT6S
+1789022266.4,politics,ewc-usse-tx-2026-11-03-dem,SELL,5,0.47,manual,6.4814,4.07,0.58035,47,50,0.797,0.46,0.47,0.1103,-19,the owner's own order — the engine leaves it alone,CD7VQA77RSX0
+1789022386.4,cfb,aachc-cfb-wins-2026-11-28-cah-6pt5wins,BUY,1,0.38,earn,0.2163,1.54,,39,43,0.608,0.27,0.4,-0.03,2,1 tick behind the touch — we would hold 74% of the bid side,CDA1A6CZ0T6S
+1789022629.8,politics,enwc-uspres-nom-dem-2028-jonste,BUY,1,0.01,sell,0,19.5,,1,4,0.035,0.01,0.02,-0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CCT9DHSQPSJR
+1789023172.3,nfl,tec-nfl-opoy-2027-02-11-w-jontay,BUY,0.01,0.14,earn,0.515,1.11,,13,18,0.677,0.14,0.22,-0.02,0.01,7 ticks in front of the touch — we would hold 20% of the bid side,CDAKEF3CMSJZ
+1789023472.3,politics,scc-senate-gop-2026-11-03-50,SELL,42.99,0.16,manual,3.3823,4.65,0.1401,13,17,0.206,0.15,0.16,-0.0199,-42.99,the owner's own order — the engine leaves it alone,CD7MF4KMYSJZ
+1789023671.7,politics,ussewc-usse-ky-2026-11-03-rep,BUY,4.62,0.91,bond,0,0.02,0.996425,92,95,0.821,0.91,0.92,-0.0864,60.62,bond: took 4.62 YES at 91c — it was in the way of our resting order,CDBKMZ5DTSK5
+1789023895.7,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,73,0.94,backfill,,1.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDAM9R1M0SJ1
+1789024211.8,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,73,0.94,backfill,,1.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDAM9R1M0SJ1
