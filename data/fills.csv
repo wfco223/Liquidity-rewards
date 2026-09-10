@@ -3984,3 +3984,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789044144.1,politics,scc-senate-gop-2026-11-03-gte57,SELL,-100,0.05,fix,0.8214,9.94,0.002575,1,4,0.283,0.04,0.05,-0.0474,-110,size trimmed by 100 to the exchange's count (order CD7SAPNCPT6S),CD7SAPNCPT6S
 1789044144.1,politics,scc-senate-gop-2026-11-03-55,SELL,-250,0.03,fix,22.9282,1.93,0.0166,1,4,0.602,0.04,0.06,-0.0134,-250,size trimmed by 250 to the exchange's count (order CDEKF6ACYT75),CDEKF6ACYT75
 1789044144.1,politics,ussewc-usse-ky-2026-11-03-rep,SELL,60.63,0.94,hand,,7.09,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC8S407DTR3V
+1789044187.4,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,SELL,1,0.44,sell,0,0,,33,45,0.497,0.44,0.45,-0.04,0,taker dump — sold into the bid (the carved exception),CDGHSAH1WSX4
+1789044209.8,politics,ussewc-usse-wy-2026-11-03-rep,BUY,5.47,0.94,backfill,,2.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDEQZYWQGT3P
+1789044330.3,politics,ussewc-usse-ms-2026-11-03-dem,SELL,12,0.08,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDG4JD1MGSJH
+1789044343.7,politics,scc-senate-gop-2026-11-03-56,SELL,-1000,0.03,fix,8.837,10.29,0.006225,3,6,0.784,0.02,0.03,-0.0238,500,size trimmed by 1000 to the exchange's count (order CD7FF7V7CSJR),CD7FF7V7CSJR
+1789044343.7,politics,scc-senate-gop-2026-11-03-gte57,SELL,-100,0.05,fix,0.8214,9.94,0.002575,1,4,0.283,0.04,0.05,-0.0474,-110,size trimmed by 100 to the exchange's count (order CD7SAPNCPT6S),CD7SAPNCPT6S
+1789044343.7,politics,scc-senate-gop-2026-11-03-55,SELL,-250,0.03,fix,22.9282,1.93,0.0166,1,4,0.602,0.04,0.06,-0.0134,-250,size trimmed by 250 to the exchange's count (order CDEKF6ACYT75),CDEKF6ACYT75
+1789044343.7,politics,ussewc-usse-ky-2026-11-03-rep,SELL,60.63,0.94,hand,,7.09,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC8S407DTR3V
+1789044343.7,politics,ussewc-usse-wy-2026-11-03-rep,BUY,5.47,0.94,backfill,,2.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDEQZYWQGT3P
+1789044343.7,politics,ussewc-usse-ms-2026-11-03-dem,SELL,12,0.08,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDG4JD1MGSJH
