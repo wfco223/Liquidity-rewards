@@ -459,11 +459,15 @@ class SilverFairs:
         v = self.race_fair(slug)
         if v is not None:
             return v
-        if "usho" in slug and slug.rsplit("-", 1)[-1] in ("dem", "rep"):
-            ctl = self.control("house")
+        tail = slug.rsplit("-", 1)[-1]
+        if tail in ("dem", "rep") and ("usho" in slug or "usse-midterms" in slug):
+            # chamber control: the House winner markets, and the Senate
+            # control market (2026-09-10: it had no number, so the fair
+            # the owner asked for could not be seeded there)
+            ctl = self.control("house" if "usho" in slug else "senate")
             if ctl:
                 gop = ctl.get("deluxe") or next(iter(ctl.values()))
-                return gop if slug.endswith("rep") else 1.0 - gop
+                return gop if tail == "rep" else 1.0 - gop
         return self.fair(slug)
 
     def _refresh_races(self, now: float) -> bool:

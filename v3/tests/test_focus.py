@@ -658,6 +658,160 @@ class TestAfterAFill(Base):
         self.assertFalse(self.mine(NC, "BUY"))
 
 
+class TestTheRecordOfTheOrders(Base):
+    """21:00Z, 2026-09-10: the balance-of-power cover was rested and
+    pulled "over the cap" eight times in four minutes; a refused resize
+    on New York governor was retried every twenty seconds; and two
+    orders the desk reported "placed but not resting" filled as the
+    owner's own trades. Exits count nothing toward the cap and are
+    never trimmed by it; a cover closes the short; a refused placement
+    or move waits out the cooldown; an unverified placement is
+    withdrawn, claimed, and any fill of it is the tender's."""
+
+    def hide_next_placement(self):
+        """The exchange accepts the next placement but its open list
+        never shows it (a fill at once, a rejection, a lagging list)."""
+        ex = self.r.exchange
+        hidden: set = set()
+        flag = [True]
+        orig_post = ex.post
+
+        def post(url, body, path=None, **kw):
+            r = orig_post(url, body, path=path, **kw)
+            if url.endswith("/v1/orders") and flag[0]:
+                hidden.add(r["order"]["id"])
+                flag[0] = False
+            return r
+        ex.post = post
+        ex.open_orders = lambda: [dict(o) for o in ex.live.values() if o["id"] not in hidden]
+        # the desk's verify waits on the clock: the rig's sleep must move it
+        self.r.desk._sleep = lambda sec: setattr(self.r, "now", self.r.now + sec)
+        return hidden, flag
+
+    def test_an_exit_counts_nothing_toward_the_cap_and_is_never_trimmed_by_it(self):
+        self.r.positions[NC] = (200.0, 200.0 * 0.40)
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        self.assertEqual(len(self.mine(NC, "SELL")), 1)      # the exit
+        self.assertEqual(len(self.mine(NC, "BUY")), 1)       # an entry
+        entry_risk = self.f.risk_used()
+        self.assertGreater(entry_risk, 0.0)
+        # the cap shrinks under the entry: the entry comes off, the exit stays
+        self.f.loss_cap = 0.5
+        self.tick()
+        self.assertEqual(len(self.mine(NC, "SELL")), 1)
+        self.assertFalse(self.mine(NC, "BUY"))
+        pulls = [e for e in self.f.log if e.get("event") == "pull" and "cap" in e.get("why", "")]
+        self.assertTrue(pulls and all(e["side"] == "BUY" for e in pulls), pulls)
+        self.assertEqual(self.f.risk_used(), 0.0)
+
+    def test_a_cover_closes_the_short_and_a_long_resting_as_one_is_relaid(self):
+        self.r.positions[NC] = (-200.0, 200.0 * 0.53)
+        self.f.set_fair(NC, 40.0)
+        self.tick()
+        cover = self.mine(NC, "BUY")[0]
+        self.assertEqual(cover.intent, focus_mod.SELL_SHORT)
+        self.assertEqual(self.r.exchange.live[cover.id]["intent"], focus_mod.SELL_SHORT)
+        # a cover the desk laid as a fresh long is re-laid as the close it is
+        cover.intent = focus_mod.BUY_LONG
+        self.r.exchange.live[cover.id]["intent"] = focus_mod.BUY_LONG
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        covers = self.mine(NC, "BUY")
+        self.assertEqual(len(covers), 1)
+        self.assertNotEqual(covers[0].id, cover.id)
+        self.assertEqual(covers[0].intent, focus_mod.SELL_SHORT)
+        self.assertNotIn(cover.id, self.r.exchange.live)
+
+    def test_a_placement_the_list_never_shows_is_withdrawn_and_its_fill_is_the_tenders(self):
+        hidden, _ = self.hide_next_placement()
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        self.assertEqual(len(hidden), 1)
+        hid = next(iter(hidden))
+        refused = [e for e in self.f.log if e.get("event") == "refused"]
+        self.assertEqual(len(refused), 1)
+        self.assertTrue(refused[0]["note"].startswith("withdrawn"), refused[0])
+        side = refused[0]["side"]
+        self.assertIn(hid, self.f.mine_ids)                  # claimed
+        self.assertNotIn(hid, self.r.exchange.live)          # withdrawn
+        self.assertGreater(self.f.moved_at.get(f"{NC}|{side}", 0.0), 0.0)
+        # it had filled before the withdrawal: the journal books it to
+        # the tender, and the side stands off
+        self.r.fam.fills.append({"ts": self.r.now, "market": NC, "side": side,
+                                 "qty": refused[0]["qty"], "oid": hid, "purpose": "hand"})
+        self.tick()
+        self.assertIn(f"{NC}|{side}", self.f.filled_at)
+        self.assertTrue(any(e.get("event") == "filled" and e.get("market") == NC
+                            for e in self.f.log))
+        self.assertFalse(self.mine(NC, side))
+
+    def test_a_refused_move_waits_out_the_cooldown(self):
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        bid = self.mine(NC, "BUY")[0]
+        # a bigger stake wants a bigger order; the replacement never shows
+        self.f.set_stake(NC, 400.0)
+        self.f.moved_at.clear()
+        hidden, flag = self.hide_next_placement()
+        posts = [0]
+        ex = self.r.exchange
+        inner = ex.post
+
+        def counting(url, body, path=None, **kw):
+            if url.endswith("/v1/orders"):
+                posts[0] += 1
+            return inner(url, body, path=path, **kw)
+        ex.post = counting
+        self.tick()
+        refused = [e for e in self.f.log if e.get("event") == "move_refused"]
+        self.assertEqual(len(refused), 1, refused)
+        self.assertIn(bid.id, self.r.exchange.live)          # the original stays
+        self.assertNotIn(next(iter(hidden)), self.r.exchange.live)
+        n = posts[0]
+        # the next passes do not try again inside the cooldown
+        flag[0] = True
+        self.tick()
+        self.tick()
+        self.assertEqual(posts[0], n)
+        self.assertEqual(len([e for e in self.f.log if e.get("event") == "move_refused"]), 1)
+        # the cooldown out, the list showing orders again: the move lands
+        flag[0] = False
+        self.r.now += focus_mod.FOCUS_MOVE_COOLDOWN_S
+        self.tick()
+        self.assertTrue(any(e.get("event") == "moved" and e.get("market") == NC
+                            for e in self.f.log))
+
+
+class TestSilverSeedsTheFairsHeNamed(Base):
+    def test_a_named_market_gets_silvers_number_once(self):
+        # owner, 2026-09-10: "those little hanging fruit markets that you
+        # identified except for Alaska set the fair to Nate Silvers"
+        saved = focus_mod.FOCUS_SILVER_FAIRS
+        focus_mod.FOCUS_SILVER_FAIRS = (OH, AK)
+        try:
+            self.assertNotIn(OH, self.f.fairs)
+            self.tick()
+            self.assertEqual(self.f.fairs[OH], 0.52)             # Silver's number
+            self.assertIn(OH, self.f.silver_seeded)
+            self.assertTrue(any(e.get("event") == "fair_set" and e.get("market") == OH
+                                and "Silver" in e.get("note", "") for e in self.f.log))
+            self.assertTrue(self.mine(OH))                       # tended from it now
+            # AK is on the list here only to show a clear is final: cleared
+            # by him, never seeded again
+            self.assertEqual(self.f.fairs[AK], 0.30)
+            self.f.set_fair(AK, "-")
+            self.tick()
+            self.assertNotIn(AK, self.f.fairs)
+            # and the seed survives a restart
+            d = json.loads(json.dumps(self.f.to_dict()))
+            g = Focus(self.r.fam, self.r.exchange, self.b, clock=lambda: self.r.now)
+            g.restore(d)
+            self.assertEqual(g.silver_seeded, {OH, AK})
+        finally:
+            focus_mod.FOCUS_SILVER_FAIRS = saved
+
+
 class TestHisTaps(Base):
     def test_place_cancel_and_move_any_order_here(self):
         self.tick(on=False)

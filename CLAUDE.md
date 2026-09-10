@@ -182,7 +182,22 @@ long and accreted, so search it rather than reading it through.
   never impair the tender ("My qualifying orders (1c or 99c) should
   not impair the tender from placing orders"): they count as offering
   none of the lot, and the money they hold is counted back into the
-  buying power the stake follows. A market
+  buying power the stake follows. The expected-loss cap counts
+  entries only: an exit is the position leaving, counts nothing and
+  is never pulled by the cap (21:00Z: a cover was rested and pulled
+  "over the cap" eight times in four minutes); a cover of a short is
+  placed as the close it is (SELL_SHORT), never as a fresh long. A
+  refused placement or resize waits out the cooldown before another
+  try (a refused resize had been retried every twenty seconds). An
+  order the desk placed but never saw resting is withdrawn at once,
+  its id stays the tender's, and a fill of it in the meantime is
+  booked to the tender (20:09Z and 20:24Z: two such orders filled as
+  "your own trade"); the verify note carries the exchange's own state
+  for it. The markets in FOCUS_SILVER_FAIRS (his "little hanging
+  fruit markets ... except for Alaska set the fair to Nate Silvers,
+  the silver bulletins model") get Silver's number as their fair
+  once, the first pass the model has one; a fair he clears stays
+  cleared. A market
   without a fair is
   shown with Silver's number as a suggestion and nothing is tended
   ("Yes for 5"). The fill cost never reads under 2c a share ("The fill
