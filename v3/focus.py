@@ -88,6 +88,14 @@ FOCUS_ACT_AGE_S = 45.0          # no order rests or moves on a book older than t
 FOCUS_TERMS_S = 600.0           # the focus markets' terms re-read this often
 FOCUS_TERMS_SLICE = 200         # the politics universe walked this many slugs a pass
 FOCUS_LOSS_CAP_USD = 1000.0     # expected loss resting, all the tender's orders
+# the cap's slack (2026-09-10, 23:32-23:35Z: orders rested under the cap
+# were pulled "over the cap" three minutes later as the readings moved —
+# 25 such pulls in an hour): the trim starts only past this much over,
+# and an order rested in the last FOCUS_CAP_GRACE_S is pulled only when
+# the cap is far over
+FOCUS_CAP_SLACK = 1.10
+FOCUS_CAP_FAR = 1.25
+FOCUS_CAP_GRACE_S = 300.0
 FOCUS_STAKE_FRAC = 0.10         # the list's entry: 10% of his buying power
 FOCUS_COC_DAY = 0.005           # cost of capital: per dollar tied up, a day
 FOCUS_FILL_COST_MIN = 0.02      # $/share a fill's cost never reads under
@@ -584,6 +592,8 @@ class Focus:
                 o.why = "yours — the tender tends it like its own"
                 o.pinned = False
                 self._claim_id(o.id)
+                self._log(event="adopted", market=o.market, side=o.side, price=o.price,
+                          qty=o.qty, note="your order — the tender tends it like its own now")
 
     @staticmethod
     def _who(o: FamilyOrder) -> str:
@@ -988,9 +998,13 @@ class Focus:
         binds across markets, best EV first."""
         actions = FOCUS_ACTIONS_PER_PASS
         blocked = self._blocked()
-        # over the cap: the weakest tender orders come off first
+        # over the cap: the weakest tender orders come off first — past
+        # the slack only, and an order just rested stays unless the cap
+        # is far over (the readings that put it under the cap a pass ago
+        # have not changed that much)
         used = self.risk_used()
-        if used > self.loss_cap + 1e-9:
+        if used > self.loss_cap * FOCUS_CAP_SLACK + 1e-9:
+            far_over = used > self.loss_cap * FOCUS_CAP_FAR
             mine = sorted((o for o in list(self.fam.orders.values())
                            if o.purpose == PURPOSE and o.market in self.markets
                            and not self._exit_order(o)),
@@ -998,6 +1012,8 @@ class Focus:
             for o in mine:
                 if used <= self.loss_cap or actions <= 0:
                     break
+                if not far_over and now - float(o.placed_ts or 0.0) < FOCUS_CAP_GRACE_S:
+                    continue
                 r = self.fam.desk.cancel(o.id, o.market, initiator="auto")
                 if r.ok:
                     self.fam.orders.pop(o.id, None)
