@@ -59,6 +59,9 @@ FOCUS_ALLOW_TOKENS = ("usgub-ak",)   # avoided ground the tender may still work
 FOCUS_CYCLE_S = 15.0
 FOCUS_BOOK_MAX_AGE_S = 30.0     # a focus market's book older than this is read again
 FOCUS_BOOK_READS = 12           # ...this many a pass at most, oldest first
+FOCUS_BOOK_READS_BOOT = 150     # a market with no book at all is read at once,
+                                # this many a pass (owner, 2026-09-10: "The
+                                # start up time for focus has to be very short")
 FOCUS_ACT_AGE_S = 45.0          # no order rests or moves on a book older than this
 FOCUS_TERMS_S = 600.0           # the focus markets' terms re-read this often
 FOCUS_TERMS_SLICE = 200         # the politics universe walked this many slugs a pass
@@ -205,14 +208,19 @@ class Focus:
 
     def seed(self, now: float) -> None:
         """Boot: the family's terms stand in until the tender's own
-        reads land, and the ground is claimed before the first family
-        cycle can act on it."""
+        reads land, the ground is claimed before the first family
+        cycle can act on it, and the page lists the markets at once
+        (books and plans follow on the first pass, seconds later)."""
         with self.lock:
             for slug, prog in list(self.fam.terms.current.items()):
                 if slug not in self.terms.current:
                     self.terms.current[slug] = prog
                     self.terms.updated_at[slug] = float(self.fam.terms.updated_at.get(slug) or 0.0)
             self.refresh_markets(now, quiet=True)
+            self._claim_orders()
+            self._plan_all(now, {}, None)
+            self.note = "starting — the books are being read"
+            self._freeze(now, None, bool(self.switch_on()))
 
     def refresh_markets(self, now: float, quiet: bool = False) -> list[str]:
         out = []
@@ -262,7 +270,9 @@ class Focus:
             self.last_terms_own = now
             batch += list(self.markets)
         uni = sorted(self.fam.universe)
-        if uni and not force:
+        if uni and not force and self.last_pass > 0.0:
+            # the universe walk waits for the second pass: the first is
+            # for the focus markets' own terms and books
             lo = self._rotor % len(uni)
             take = FOCUS_TERMS_SLICE
             batch += uni[lo:lo + take] + uni[:max(0, lo + take - len(uni))]
@@ -297,12 +307,18 @@ class Focus:
 
     def _refresh_books(self, now: float) -> int:
         due = []
+        unread = 0
         for slug in self.markets:
             age = self.fam.cache.age(slug, now)
             if age > FOCUS_BOOK_MAX_AGE_S:
                 due.append((-age, slug))
+                if age == float("inf"):
+                    unread += 1
         n = 0
-        for _, slug in sorted(due)[:FOCUS_BOOK_READS]:
+        # a market with no book at all (boot, or newly boosted) is read
+        # now, all of them: the page must not wait a pass per dozen
+        cap = FOCUS_BOOK_READS_BOOT if unread else FOCUS_BOOK_READS
+        for _, slug in sorted(due)[:cap]:
             try:
                 book = self.client.book(slug, fetched_at=now)
             except Exception:  # noqa: BLE001 — next pass
