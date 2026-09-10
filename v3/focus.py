@@ -529,8 +529,10 @@ class Focus:
                            "ask_q": round(book.asks[0][1], 1) if book.asks else 0.0,
                            "age_s": round(age, 1) if age != float("inf") else None,
                            "tick": book.tick,
-                           "bids": [[p, round(q, 1)] for p, q in book.bids[:5]],
-                           "asks": [[p, round(q, 1)] for p, q in book.asks[:5]]}
+                           # the book itself (owner, 2026-09-10: "I need to
+                           # be able to see the book on focus markets")
+                           "bids": [[p, round(q, 1)] for p, q in book.bids[:8]],
+                           "asks": [[p, round(q, 1)] for p, q in book.asks[:8]]}
         # every order here, with what it measures on this book
         for o in self._orders(slug):
             d = {"id": o.id, "side": o.side, "price": o.price, "qty": o.qty,
