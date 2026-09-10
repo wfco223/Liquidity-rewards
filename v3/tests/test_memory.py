@@ -18,8 +18,7 @@ import unittest
 
 from v3 import football, politics
 from v3.api import Client, events_of
-from v3.main import (SURVEY_BOOT_WAIT_S, SURVEY_FRAME_EVERY_S, mem_limit_mb,
-                     rss_mb, survey_frame_due)
+from v3.main import mem_limit_mb, rss_mb
 from v3.programs import pick_period, program_from_period
 from v3.survey import (PERIOD_KEEP, ROW_KEEP, category_banned, compact_row,
                        group_of, is_live_event)
@@ -193,34 +192,6 @@ class TestStreamedDiscovery(unittest.TestCase):
                        fail_after=1)
         with self.assertRaises(RuntimeError):
             politics.discover(c2)
-
-
-class TestSurveyClock(unittest.TestCase):
-    BOOT = 1_000_000.0
-
-    def test_never_in_a_boots_first_minutes(self):
-        self.assertIsNone(survey_frame_due(self.BOOT + 60, self.BOOT, 0.0))
-        self.assertIsNotNone(survey_frame_due(self.BOOT + SURVEY_BOOT_WAIT_S,
-                                              self.BOOT, 0.0))
-
-    def test_the_clock_sits_three_hours_off_discovery(self):
-        # discovery runs at boot and every six hours after
-        last = 0.0
-        fetches = []
-        t = self.BOOT
-        while t < self.BOOT + 48 * 3600:
-            nxt = survey_frame_due(t, self.BOOT, last)
-            if nxt is not None:
-                fetches.append(t)
-                last = nxt
-            t += 300.0
-        self.assertGreaterEqual(len(fetches), 7)
-        disc = [self.BOOT + k * SURVEY_FRAME_EVERY_S for k in range(9)]
-        gap = min(abs(f - d) for f in fetches[1:] for d in disc)
-        self.assertGreaterEqual(gap, 2.5 * 3600)      # never the same minute
-        # ...and steady six hours apart once shifted
-        for a, b in zip(fetches[1:], fetches[2:]):
-            self.assertAlmostEqual(b - a, SURVEY_FRAME_EVERY_S, delta=600)
 
 
 class TestMemoryLine(unittest.TestCase):

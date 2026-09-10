@@ -864,11 +864,11 @@ def prune_ladder_seen(seen: dict, day: str,
 # 90% at the hourly publish three minutes later, then the kill — and
 # every boot since replaying the same peak in its own second cycle).
 # The number the app could not state is now stated every cycle.
-SURVEY_FRAME_EVERY_S = 6 * 3600.0
-SURVEY_BOOT_WAIT_S = 600.0          # discovery and the first publish own
-                                    # a boot's first minutes
-SURVEY_FIRST_OFFSET_S = 3 * 3600.0  # puts the refetch clock three hours
-                                    # off discovery's, for good
+# The survey itself is gone (owner, 2026-09-10: "Take off the survey
+# entirely. Save the data on GitHub but i don't need it"): nothing
+# samples, nothing enumerates the exchange, no page. Its last table is
+# data/survey_prefix_stats_2026-09-10.csv; the module keeps only the
+# shared math (walls, collateral).
 
 
 def rss_mb() -> float:
@@ -900,22 +900,6 @@ def mem_limit_mb() -> float | None:
         if v.isdigit() and int(v) < (1 << 50):
             return int(v) / 1048576.0
     return None
-
-
-def survey_frame_due(now: float, boot_ts: float, last_at: float,
-                     every: float = SURVEY_FRAME_EVERY_S,
-                     boot_wait: float = SURVEY_BOOT_WAIT_S,
-                     first_offset: float = SURVEY_FIRST_OFFSET_S):
-    """When the survey frame refetches: never in a boot's first minutes,
-    then every six hours on a clock three hours off discovery's, so the
-    two biggest fetches never share a minute. Returns the value to keep
-    as last_at when due, None otherwise. The first fetch after a boot
-    stores now + first_offset, which is what shifts the clock."""
-    if now - boot_ts < boot_wait:
-        return None
-    if last_at and now - last_at < every:
-        return None
-    return now + (first_offset if not last_at else 0.0)
 
 
 class Monitor:
@@ -974,16 +958,6 @@ class Monitor:
         self.paid_seen: dict[str, float] = {}
         self._paid_by_day: dict[str, dict[str, float]] = {}
         self.mkt_claim_day: dict[str, float] = {}
-        # the cycling market survey: a seeded sampler and the running
-        # per-prefix evidence. The seed is recorded so a run can be
-        # reproduced and audited (owner, 2026-08-31).
-        from . import survey as _sv
-        self.survey = _sv.Sampler(seed=20260831)
-        self.survey_stats: dict[str, _sv.PrefixStat] = {}
-        self.survey_at = 0.0
-        self.survey_frame_note = ""
-        self.survey_meta: dict = {}
-        self.survey_event_n: dict = {}
         self.cancel_jobs: list = []
         # the daily ladder snapshot (owner, 2026-09-02): which UTC day
         # has been written, and which markets earned recently so a
@@ -1292,7 +1266,6 @@ class Monitor:
         self.boots = list(saved.get("boots") or [])
         self.deaths = list(saved.get("deaths") or [])[-30:]
         self.mem_trail = list(saved.get("mem_trail") or [])[-360:]
-        self._survey_frame_at = float(saved.get("survey_frame_at") or 0.0)
         self.audit = list(saved.get("audit") or [])
         self.flatten_done = bool(saved.get("flatten_done"))
         self.flat_stats = dict(saved.get("flat_stats")
@@ -1301,13 +1274,6 @@ class Monitor:
         self.paid_seen = dict(saved.get("paid_seen") or {})
         self._rebuild_paid_by_day()
         self.mkt_claim_day = dict(saved.get("mkt_claim_day") or {})
-        from . import survey as _sv2
-        for pref, row in (saved.get("survey_stats") or {}).items():
-            st = _sv2.PrefixStat(prefix=pref)
-            st.__dict__.update({k: v for k, v in row.items()
-                                if k in st.__dict__})
-            self.survey_stats[pref] = st
-        self.survey_frame_note = str(saved.get("survey_frame") or "")
         self.cancel_jobs = list(saved.get("cancel_jobs") or [])
         self.ladder_day = str(saved.get("ladder_day") or "")
         if saved.get("bonds"):
@@ -1410,7 +1376,6 @@ class Monitor:
             "boots": self.boots[-20:], "errors": self.errors,
             "deaths": getattr(self, "deaths", [])[-30:],
             "mem_trail": getattr(self, "mem_trail", [])[-360:],
-            "survey_frame_at": getattr(self, "_survey_frame_at", 0.0),
             "audit": self.audit[-60:],
             "master_switch": self.master.to_dict(),
             "flatten_done": self.flatten_done,
@@ -1428,9 +1393,6 @@ class Monitor:
             "sw_bonds": self.switches["bonds"].to_dict(),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
-            "survey_stats": {p: st.__dict__ for p, st
-                             in list(self.survey_stats.items())[:200]},
-            "survey_frame": self.survey_frame_note,
             "actuals_by_day": self.actuals_by_day,
             "actuals_by_fam": self.actuals_by_fam,
             "owner_fairs": dict(self.owner_fairs),
@@ -2318,8 +2280,7 @@ class Monitor:
         lim = mem_limit_mb()
         lines += [f"Memory: {rss_mb():.0f} MB in use"
                   + (f" of the box's {lim:,.0f} MB" if lim else "")
-                  + ". The six-hour fetches are the peaks; discovery "
-                  "and the survey refetch now run three hours apart.", ""]
+                  + ". The six-hour discovery fetch is the peak.", ""]
         total_rate = 0.0
         total_today = 0.0
         for key, fam in self.families.items():
@@ -2861,164 +2822,6 @@ class Monitor:
                        "posting or the hourly publish")
         return ok
 
-    # The surveyor reads books and terms and writes a file. It never
-    # places, moves or cancels anything. It runs a few markets per cycle
-    # for ever, so the leaderboard keeps improving instead of being one
-    # snapshot of whatever the API happened to return first.
-    SURVEY_PER_CYCLE = 6            # markets probed per cycle
-    SURVEY_TERMS_BATCH = 300        # terms fetched when the frame is refreshed
-
-    def _survey_frame(self, now: float) -> str:
-        """Load the population to sample from, refreshed a few times a
-        day.
-
-        Asks the exchange for every market on a LIVE liquidity program —
-        which is the population that matters, not every market that ever
-        carried one. Each row brings its own category, subcategory,
-        product and event start time, so the sampler strata are the
-        exchange's labels and the live-event filter costs no extra call.
-        Falls back to the tags we can name, and SAYS which it got: a
-        random draw from a frame we cannot prove is complete is not a
-        random draw from the market (owner, 2026-08-31).
-        """
-        from . import survey as sv
-        nxt = survey_frame_due(now, getattr(self, "boot_ts", 0.0),
-                               getattr(self, "_survey_frame_at", 0.0))
-        if nxt is None:
-            return getattr(self, "survey_frame_note", "")
-        self._survey_frame_at = nxt
-        mem0 = rss_mb()
-        # rows arrive already slimmed to the seven fields the sampler
-        # reads — never the 4.5 KB raw row (owner, 2026-09-02)
-        rows, note = self.client.all_programs(compact=sv.compact_row)
-        self._note(f"memory: {mem0:.0f} -> {rss_mb():.0f} MB resident "
-                   f"across the survey frame refetch ({len(rows):,} rows)")
-        # Why do culture and crypto rows carry category/subcategory while
-        # sports rows fall back to the slug? Show one of each rather than
-        # guess — the same probe that found orderPriceMinTickSize (owner,
-        # 2026-08-31).
-        if rows and not getattr(self, "_inc_shape_noted", False):
-            self._inc_shape_noted = True
-            with_lab = next((r for r in rows if r.get("category")), None)
-            without = next((r for r in rows if not r.get("category")), None)
-            self._note("incentives row keys: "
-                       + ",".join(sorted(rows[0].keys())))
-            for tag, r in (("labelled", with_lab), ("unlabelled", without)):
-                if not r:
-                    self._note(f"incentives {tag}: none in {len(rows)} rows")
-                    continue
-                self._note(f"incentives {tag}: {r.get('marketSlug')} "
-                           f"category={r.get('category')!r} "
-                           f"subcategory={r.get('subcategory')!r} "
-                           f"product={r.get('instrumentProduct')!r} "
-                           f"state={r.get('instrumentState')!r} "
-                           f"eventStart={r.get('eventStartTime')!r}")
-        kept = [r for r in rows
-                if r.get("marketSlug") and not sv.category_banned(r)]
-        if kept:
-            self.survey_meta = {str(r["marketSlug"]): r for r in kept}
-            # How many markets SHARE this pool? A reward pool belongs to
-            # the program period, not to one market, so a market in a
-            # 30-market event competes for a thirtieth of it. The survey
-            # had this hardcoded to 1, overstating every multi-market
-            # side by up to 30x (owner, 2026-08-31). The full enumeration
-            # makes the real divisor countable: markets carrying the same
-            # programId.
-            from .programs import pick_period as _pp
-            share_n: dict[str, int] = {}
-            pid_of: dict[str, str] = {}
-            for r in kept:
-                per = _pp(r.get("timePeriods") or [], str(r["marketSlug"]))
-                pid = str((per or {}).get("programId") or "")
-                if pid:
-                    pid_of[str(r["marketSlug"])] = pid
-                    share_n[pid] = share_n.get(pid, 0) + 1
-            self.survey_event_n = {slug: share_n.get(pid, 1)
-                                   for slug, pid in pid_of.items()}
-            self.survey.load([(str(r["marketSlug"]), sv.group_of(r))
-                              for r in kept])
-            dropped = len(rows) - len(kept)
-            full = note == "enumerated"
-            self.survey_frame_note = (
-                ("exchange enumeration: " if full else "NOT a full frame — "
-                 + note + "; ")
-                + f"{len(kept):,} markets on live liquidity programs"
-                + (f", {dropped} excluded by category" if dropped else ""))
-        else:
-            seen: set[str] = set()
-            for fam in self.families.values():
-                seen.update(fam.universe or {})
-            self.survey_meta = {}
-            self.survey.load(sorted(seen))
-            self.survey_frame_note = (
-                f"NOT a full frame — {note}; sampling the "
-                f"{len(seen):,} markets our own tags return")
-        self._note("survey frame: " + self.survey_frame_note)
-        return self.survey_frame_note
-
-    def survey_step(self, now: float) -> dict:
-        """One turn of the cycling survey: draw a few markets at random
-        within their stratum, skip anything whose event is live or about
-        to be, score both sides, and fold the result into the running
-        leaderboard."""
-        from . import survey as sv
-        from .programs import pick_period, program_from_period, with_event_n
-
-        self._survey_frame(now)
-        picks = self.survey.next_batch(self.SURVEY_PER_CYCLE)
-        if not picks:
-            return {"ok": False, "note": "nothing to sample"}
-        meta = getattr(self, "survey_meta", {})
-        need = [p for p in picks if p not in meta]
-        raw = {}
-        if need:
-            try:
-                raw = self.client.programs(need)
-            except Exception as e:  # noqa: BLE001 — never breaks a cycle
-                return {"ok": False, "note": f"terms: {type(e).__name__}"}
-        done = 0
-        for slug in picks:
-            row = meta.get(slug) or raw.get(slug) or {}
-            group = sv.group_of(row) if row else sv.kind_of(slug)
-            st = self.survey_stats.setdefault(group,
-                                              sv.PrefixStat(prefix=group))
-            # owner, 2026-08-31: stay out of live events until he has a
-            # way of quoting them. Re-checked every pass — a market that
-            # was quiet this morning goes live at kickoff. eventStartTime
-            # rides on the incentives row, so this costs nothing.
-            if sv.is_live_event(row, now):
-                st.live_skipped += 1
-                continue
-            per = pick_period(row.get("timePeriods") or [], slug)
-            if not per:
-                continue
-            prog = with_event_n(program_from_period(per),
-                                getattr(self, "survey_event_n", {}).get(slug, 1))
-            if not (prog.pool > 0 and prog.is_live()):
-                continue
-            try:
-                book = self.client.book(slug, fetched_at=now)
-            except Exception:  # noqa: BLE001
-                continue
-            st.markets += 1
-            done += 1
-            pool_side = (prog.daily_pool / max(prog.event_n, 1)) / 2.0
-            for side in ("BUY", "SELL"):
-                st.record(sv.probe_side(book, prog, side, pool_side),
-                          now, slug)
-            self.client._sleep(0.05)
-        self.survey_at = now
-        return {"ok": True, "probed": done,
-                "frame": getattr(self, "survey_frame_note", "")}
-
-    def survey_view(self) -> dict:
-        from . import survey as sv
-        out = sv.leaderboard(self.survey_stats)
-        out["frame"] = getattr(self, "survey_frame_note", "")
-        out["sampler"] = self.survey.state()
-        out["at"] = round(getattr(self, "survey_at", 0.0), 1)
-        return out
-
     def schedule_cancel(self, match: str, at_ts: float, note: str = "") -> dict:
         """Cancel every resting order whose market contains `match`, at
         `at_ts`. One shot, then it forgets.
@@ -3344,22 +3147,6 @@ class Monitor:
             self._tick_probe()
         except Exception as e:  # noqa: BLE001 — a diagnostic, never a blocker
             self._note(f"tick probe failed: {type(e).__name__}: {e}")
-        try:
-            lb = self.survey_view()
-            top = lb["ranked"][:5]
-            if top:
-                self._note("survey leaderboard: " + " | ".join(
-                    f"{r['prefix']} {r['median_spd']:.2f} share%/$ "
-                    f"(n={r['n']}, touch {r['median_touch']:,.0f})"
-                    for r in top))
-            sm = lb["sampler"]
-            self._note(f"survey: {sm['population']:,} markets in frame, "
-                       f"{sm['prefixes']} strata (biggest {sm['biggest']}, "
-                       f"{sm['merged']} merged up, {sm['too_small']} still "
-                       f"too small), {len(lb['ranked'])} ranked, "
-                       f"{len(lb['sampling'])} sampling")
-        except Exception as e:  # noqa: BLE001 — a diagnostic, never a blocker
-            self._note(f"survey report failed: {type(e).__name__}: {e}")
         try:
             # FILL-MODEL CALIBRATION, out loud (owner, 2026-08-25: the
             # expected-risk budget leans on these odds, so they are
@@ -4019,15 +3806,9 @@ class Monitor:
         d["labels"] = labels
         d["now"] = time.time()
         d["boot"] = dict(self.boot_stage or {})
-        # the last market survey's per-kind summary. Copied, not shared,
-        # and only the summary — the full rows live in data/survey.csv.
         cj = [dict(j) for j in getattr(self, "cancel_jobs", [])]
         if cj:
             d["cancel_jobs"] = cj
-        try:
-            d["survey"] = self.survey_view()
-        except Exception:  # noqa: BLE001 — the payload never dies for research
-            pass
         try:
             d["bonds"] = self.bonds.view(time.time())
             self._note_walls(d["bonds"].get("rows") or [])
@@ -4181,8 +3962,6 @@ class Monitor:
             mb: dict = {}
             weigh = [("last_state", getattr(self, "last_state", None)),
                      ("payload_json", getattr(self, "payload_json", None)),
-                     ("survey_meta", getattr(self, "survey_meta", None)),
-                     ("survey_stats", getattr(self, "survey_stats", None)),
                      ("names.known", getattr(getattr(self, "names", None), "known", None)),
                      ("rewards_seen", self.rewards_seen), ("paid_seen", self.paid_seen),
                      ("mkt_claim_day", getattr(self, "mkt_claim_day", None)),
@@ -4484,15 +4263,6 @@ class Monitor:
             self._run_due_cancels(now)
         except Exception as e:  # noqa: BLE001 — never breaks the cycle
             self._note(f"scheduled cancel: {type(e).__name__}: {e}")
-        # the survey rides at the BACK of the cycle, after every family
-        # has been managed, and never on the boot cycle — it is research,
-        # and the money comes first (owner, 2026-08-31)
-        if self._first_cycle_done:
-            try:
-                self.survey_step(now)
-            except Exception as e:  # noqa: BLE001 — research never breaks it
-                self._note(f"survey step: {type(e).__name__}: {e}")
-        lap("survey")
         self._stage("first save", 98)
         st = self._state(now, summaries)
         self.last_state = st

@@ -132,6 +132,14 @@ long and accreted, so search it rather than reading it through.
   never fire on their own. Do not add a cron workflow — put the work
   in the monitor's publish loop instead.
 - Alerts go through ntfy; the topic name is a password.
+- The market survey is GONE (owner, 2026-09-10 "Take off the survey
+  entirely. Save the data on GitHub but i don't need it"): nothing
+  samples, nothing enumerates the exchange's programs, no survey tab,
+  no survey state. Its last table is
+  data/survey_prefix_stats_2026-09-10.csv (with the raw .json beside
+  it) and the older rows are data/survey.csv. v3/survey.py stays only
+  for the shared math (walls, collateral, live-event checks). Do not
+  bring the survey back without the owner's yes.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

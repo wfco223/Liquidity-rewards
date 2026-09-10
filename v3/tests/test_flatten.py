@@ -70,15 +70,14 @@ class TestHowTheLastRunEnded(unittest.TestCase):
         st = m._state(time.time(), {})
         self.assertEqual(st["deaths"][-1]["code"], -9)
 
-    def test_the_memory_trail_and_the_frame_clock_survive_a_restart(self):
+    def test_the_memory_trail_survives_a_restart(self):
         m = Monitor()
-        m._survey_frame_at = 12345.0
         m.mem_trail = [[999.0, 250.0, 8.0]]
         st = m._state(time.time(), {})
         m.store.save_local(st)
         m2 = Monitor()
-        self.assertEqual(m2._survey_frame_at, 12345.0)
         self.assertEqual(m2.mem_trail, [[999.0, 250.0, 8.0]])
+        self.assertNotIn("survey_stats", st)                 # the survey is gone (2026-09-10)
         self.assertEqual(m2.deaths, [])
 
 
