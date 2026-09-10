@@ -105,7 +105,11 @@ long and accreted, so search it rather than reading it through.
   market"; 2026-09-08 "Set the per market cap on bonds to 50% of the
   total budget"): a market's buy orders, his Enter and the sniper's
   take all fit that share less what the market already holds. The exchange's free money only sizes an order,
-  never gates one. Politics and cfb may buy only with free money beyond
+  never gates one. "The only money to deploy automatically for bonds
+  is the budget" (owner, 2026-09-10): buys draw on the budget alone, a
+  sale returns the lot's cost to the budget, and sale proceeds are
+  his — shown as money returned, never redeployed by the engine.
+  Politics and cfb may buy only with free money beyond
   what the bonds may still spend (their room). No engine pulls a
   resting bid to "free money".
 - NO SCHEDULED GitHub Actions (owner, 2026-08-24: "remove the GitHub
