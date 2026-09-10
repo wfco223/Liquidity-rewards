@@ -154,9 +154,13 @@ long and accreted, so search it rather than reading it through.
   the cost of capital tie up"). Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
-  he has set a fair for that market, never past it, and keeps the
-  expected loss (collateral x fill odds) under $1,000 across its
-  orders ("For 6 expected loss of 1000"); a market without a fair is
+  he has set a fair for that market and keeps the expected loss
+  (collateral x fill odds) under $1,000 across its orders ("For 6
+  expected loss of 1000"). An entry may sit past his fair ("A bid over
+  fair value is fine as long as it is appropriately sized for the
+  risk and rewards it can earn"): the concession past fair is charged
+  in full as a fill cost and the size is chosen with the price; an
+  exit never sits under his fair. A market without a fair is
   shown with Silver's number as a suggestion and nothing is tended
   ("Yes for 5"). The fill cost never reads under 2c a share ("The fill
   cost for politics has been high recently. Keep that in mind").
