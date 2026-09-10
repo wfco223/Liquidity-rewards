@@ -88,6 +88,15 @@ FOCUS_MOVE_COOLDOWN_S = 300.0   # an order moves at most this often
 # market at the touch")
 FOCUS_REFILL_WAIT_S = 2 * 3600.0
 FOCUS_BP_EVERY_S = 60.0
+FOCUS_BP_WINDOW_S = 1800.0      # the stake follows the HIGHEST buying-power read of
+                                # the last half hour: a fill's dip must not pull every
+                                # order and re-rest it a minute later (13:43-13:46Z)
+FOCUS_VANISH_WAIT_S = 600.0     # an order gone from the open list is a fill only when
+                                # the family's journal says so; the list left the TX
+                                # governor bid out for one read (13:35Z) and the tender
+                                # took it for a fill, held the side and pulled the
+                                # restored order
+MINE_IDS_KEEP = 600
 FOCUS_ACTIONS_PER_PASS = 8      # places, moves and pulls a pass
 FOCUS_MAX_ORDERS = 40           # the tender's own orders, all markets
 # the stream's 200 subscriptions (owner, 2026-09-10: "we'll have to
@@ -139,6 +148,10 @@ class Focus:
         self.filled_at: dict[str, float] = {}     # slug|side -> when an entry last filled
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
         self._gone_by_me: set[str] = set()        # ids the tender itself cancelled or replaced
+        self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
+        self._journaled: set[str] = set()         # journal rows already counted (oid|ts)
+        self.mine_ids: list[str] = []             # every order id the tender ever placed (bounded)
+        self._bp_reads: list[tuple] = []          # (ts, bp) over the last window
         self.markets: list[str] = []
         self.rows: dict[str, dict] = {}
         self.last_terms_own = 0.0
@@ -180,7 +193,18 @@ class Focus:
         if val is None:
             return self._bp[0] if self._bp is not None else None
         self._bp = (val, now)
+        self._bp_reads = [(ts, v) for ts, v in self._bp_reads
+                          if now - ts <= FOCUS_BP_WINDOW_S] + [(now, val)]
         return val
+
+    def stake_bp(self, now: float) -> float | None:
+        """The buying power the stake follows: the highest read of the
+        last FOCUS_BP_WINDOW_S."""
+        bp = self.buying_power(now)
+        vals = [v for ts, v in self._bp_reads if now - ts <= FOCUS_BP_WINDOW_S]
+        if bp is not None:
+            vals.append(bp)
+        return max(vals) if vals else None
 
     def stake(self, slug: str, bp: float | None) -> tuple[float, str]:
         s = self.stakes.get(slug)
@@ -351,13 +375,22 @@ class Focus:
         return [o for o in list(self.fam.orders.values())
                 if o.market == slug and (side is None or o.side == side)]
 
-    @staticmethod
-    def _is_mine(o: FamilyOrder) -> bool:
-        """The tender's own order: its entries, and its exits even after
-        the family re-labels one "sell" (a fill reduces the position)
-        — else every fill grew a new exit piece beside the last."""
-        return o.purpose == PURPOSE or (
-            o.purpose == "sell" and str(o.why or "").startswith("focus exit"))
+    def _is_mine(self, o: FamilyOrder) -> bool:
+        """The tender's own order, by id first: the family re-labels a
+        tender exit "sell" and rewrites its reason once a fill makes it
+        reduce the position (13:36Z, the Senate control market), and
+        the tender must still know its own."""
+        return (o.id in self._mine_set or o.purpose == PURPOSE
+                or str(o.why or "").startswith("focus "))
+
+    @property
+    def _mine_set(self) -> set[str]:
+        return set(self.mine_ids)
+
+    def _claim_id(self, oid: str) -> None:
+        if oid and oid not in self.mine_ids:
+            self.mine_ids.append(oid)
+            del self.mine_ids[:-MINE_IDS_KEEP]
 
     def _mine(self, slug: str, side: str | None = None) -> list[FamilyOrder]:
         return [o for o in self._orders(slug, side) if self._is_mine(o)]
@@ -365,23 +398,55 @@ class Focus:
     def _forget(self, oid: str) -> None:
         self._gone_by_me.add(oid)
         self._last_mine.pop(oid, None)
+        self._vanished.pop(oid, None)
+
+    def _journal_fills(self, oid: str, since: float) -> float:
+        """Shares the family's fill journal books to this order since
+        `since` — the one record that separates a fill from an order
+        the open list merely left out for a read."""
+        got = 0.0
+        for row in list(getattr(self.fam, "fills", None) or [])[-400:]:
+            if str(row.get("oid") or "") != oid:
+                continue
+            ts = float(row.get("ts") or 0.0)
+            key = f"{oid}|{ts}"
+            if ts < since - 120.0 or key in self._journaled:
+                continue
+            self._journaled.add(key)
+            got += float(row.get("qty") or 0.0)
+        if len(self._journaled) > 2000:
+            self._journaled = set(list(self._journaled)[-1000:])
+        return got
 
     def _note_fills(self, now: float) -> None:
-        """An entry of the tender's that shrank or vanished without the
-        tender's own cancel filled (the family's reconcile books it):
-        the side waits FOCUS_REFILL_WAIT_S before any new entry."""
+        """A tender entry that shrank or vanished is a FILL only when the
+        family's journal books shares to it; then the side waits
+        FOCUS_REFILL_WAIT_S before any new entry. An order the open
+        list left out for a read comes back untouched (the family
+        restores its record); a silent cancel holds nothing."""
         cur = {o.id: o for o in list(self.fam.orders.values())
                if self._is_mine(o) and o.market in self.markets}
         for oid, (slug, side, qty) in list(self._last_mine.items()):
             if oid in self._gone_by_me:
                 continue
             o = cur.get(oid)
-            if o is None or o.qty < qty - 0.5:
-                got = qty if o is None else qty - o.qty
+            if o is None:
+                self._vanished.setdefault(oid, (slug, side, qty, now))
+            elif o.qty < qty - 0.5:
+                self._vanished.setdefault(oid, (slug, side, qty - o.qty, now))
+        for oid, (slug, side, qty, since) in list(self._vanished.items()):
+            got = self._journal_fills(oid, since)
+            if got >= 0.5:
                 self.filled_at[f"{slug}|{side}"] = now
                 self._log(event="filled", market=slug, side=side, qty=round(got, 2),
                           note=f"an entry filled — nothing new rests on this side for "
                                f"{FOCUS_REFILL_WAIT_S / 3600:g} h")
+                self._vanished.pop(oid, None)
+            elif oid in cur and cur[oid].qty >= qty - 0.5 and now - since < FOCUS_VANISH_WAIT_S:
+                # back at full size: the list had left it out for a read
+                self._vanished.pop(oid, None)
+            elif now - since > FOCUS_VANISH_WAIT_S:
+                self._vanished.pop(oid, None)     # gone for good, unbooked: not a fill
         self._last_mine = {oid: (o.market, o.side, o.qty) for oid, o in cur.items()}
         self._gone_by_me = {i for i in self._gone_by_me if i in cur}
 
@@ -574,7 +639,7 @@ class Focus:
             self._claim_orders()
             self._note_fills(now)            # before the plans: a fill holds its side
             self._refresh_books(now)
-            bp = self.buying_power(now)
+            bp = self.stake_bp(now)
             positions = positions or {}
             self._plan_all(now, positions, bp)
             acted = self._tend(now, positions, on) if on else 0
@@ -697,7 +762,8 @@ class Focus:
                 if wait > 0:
                     at = time.strftime("%H:%M", time.gmtime(self.filled_at[key]))
                     row["tend"][side] = {"note": f"an entry filled at {at}Z — nothing new on "
-                                                 f"this side for {wait / 60:.0f} min more"}
+                                                 f"this side for {wait / 60:.0f} min more",
+                                         "hold": True}
                     continue
                 room = stake
                 adds = (side == "BUY" and net > 0.005) or (side == "SELL" and net < -0.005)
@@ -706,10 +772,10 @@ class Focus:
                     room = stake - held_coll
                     if room < 1.0:
                         row["tend"][side] = {"note": f"holding ${held_coll:,.0f} here already "
-                                                     f"— no entry that adds to it"}
+                                                     f"— no entry that adds to it", "hold": True}
                         continue
                 if fair is None:
-                    row["tend"][side] = {"note": "no fair set"}
+                    row["tend"][side] = {"note": "no fair set", "hold": True}
                     continue
                 plan = self._entry_plan(slug, side, book, prog, pool, fair, room)
                 row["tend"][side] = plan if plan else {"note": "nothing earns on this side"}
@@ -796,10 +862,10 @@ class Focus:
             for side in ("BUY", "SELL"):
                 plan = (row.get("tend") or {}).get(side) or {}
                 is_exit = bool(plan.get("exit"))
-                note = plan.get("note")
+                note, hold = plan.get("note"), bool(plan.get("hold"))
                 plan = plan if plan.get("px") else None
-                wants.append((plan["ev"] if plan else -1.0, slug, side, plan or {"note": note},
-                              is_exit))
+                wants.append((plan["ev"] if plan else -1.0, slug, side,
+                              plan or {"note": note, "hold": hold}, is_exit))
         wants.sort(key=lambda t: -t[0])
         for ev, slug, side, plan, is_exit in wants:
             if actions <= 0:
@@ -817,6 +883,15 @@ class Focus:
                               qty=o.qty, why="one order a side")
             cur = mine[0] if mine else None
             if not plan or not plan.get("px") or (plan["ev"] <= 0.0 and not is_exit):
+                # a resting order is judged by ITS OWN expected value, not
+                # by today's plan at a stake that moved (13:43-13:46Z: the
+                # balance-of-power ask was pulled and re-rested three times
+                # in three minutes on buying-power dips); a hold — a fill,
+                # a position past the stake, no fair — always pulls it
+                own_ev = float(cur.live_ev) if (cur is not None and cur.live_ev is not None) else None
+                if (cur is not None and not (plan or {}).get("hold")
+                        and own_ev is not None and own_ev > 0.0):
+                    continue
                 if cur is not None:
                     r = self.fam.desk.cancel(cur.id, slug, initiator="auto")
                     if r.ok:
@@ -845,6 +920,7 @@ class Focus:
                 actions -= 1
                 rested = plan["qty"] if r.ok else (r.resting_qty if r.order_id and r.resting_qty >= 1.0 else 0.0)
                 if r.order_id and rested >= 1.0:
+                    self._claim_id(r.order_id)
                     self.fam.orders[r.order_id] = FamilyOrder(
                         id=r.order_id, market=slug, side=side, price=(r.price or plan["px"]),
                         qty=rested, intent=r.intent, placed_ts=now, purpose=PURPOSE,
@@ -894,6 +970,7 @@ class Focus:
             else:
                 self.fam.orders.pop(cur.id, None)
             self._forget(cur.id)
+            self._claim_id(r.order_id)
             self.fam.orders[r.order_id] = FamilyOrder(
                 id=r.order_id, market=slug, side=side, price=(r.price or plan["px"]),
                 qty=rested, intent=cur.intent, placed_ts=now, purpose=PURPOSE,
@@ -1159,7 +1236,7 @@ class Focus:
                 "coc_day": self.coc_day,
                 "fill_floor": self.fill_floor, "loss_cap": self.loss_cap,
                 "first_seen": dict(self.first_seen), "moved_at": dict(self.moved_at),
-                "filled_at": dict(self.filled_at),
+                "filled_at": dict(self.filled_at), "mine_ids": list(self.mine_ids[-MINE_IDS_KEEP:]),
                 "events": self.events[-EVENTS_KEEP:], "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -1176,5 +1253,6 @@ class Focus:
         self.first_seen = {str(k): float(v) for k, v in (d.get("first_seen") or {}).items()}
         self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
         self.filled_at = {str(k): float(v) for k, v in (d.get("filled_at") or {}).items()}
+        self.mine_ids = [str(x) for x in (d.get("mine_ids") or [])][-MINE_IDS_KEEP:]
         self.events = list(d.get("events") or [])[-EVENTS_KEEP:]
         self.log = list(d.get("log") or [])[-LOG_KEEP:]
