@@ -3968,3 +3968,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789042543.1,politics,scc-senate-gop-2026-11-03-56,SELL,1000,0.03,manual,12.8526,10.13,0.006225,2,5,0.663,0.02,0.03,-0.0238,2000,the owner's own order — the engine leaves it alone,CD7FF7V7CSJR
 1789042543.1,politics,scc-senate-gop-2026-11-03-54,SELL,100,0.04,manual,7.0014,9.78,0.034925,2,6,0.477,0.03,0.04,-0.0051,-100,the owner's own order — the engine leaves it alone,CD7S584HJT6S
 1789042764.5,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,0.26,0.2,backfill,,9.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD870WZ1MT3P
+1789042935.8,politics,scc-senate-gop-2026-11-03-56,SELL,500,0.03,manual,9.4457,10.24,0.006225,2,5,0.736,0.02,0.03,-0.0238,1500,the owner's own order — the engine leaves it alone,CD7FF7V7CSJR
+1789043004.1,politics,scc-senate-gop-2026-11-03-gte57,SELL,100,0.05,backfill,,9.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7SAPNCPT6S
+1789043012.8,politics,scc-senate-gop-2026-11-03-56,SELL,1000,0.03,backfill,,10.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7FF7V7CSJR
+1789043019.8,politics,scc-senate-gop-2026-11-03-55,SELL,250,0.03,backfill,,1.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDEKF6ACYT75
+1789043108.9,politics,scc-senate-gop-2026-11-03-gte57,SELL,100,0.05,backfill,,9.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7SAPNCPT6S
+1789043108.9,politics,scc-senate-gop-2026-11-03-56,SELL,1000,0.03,backfill,,10.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7FF7V7CSJR
+1789043108.9,politics,scc-senate-gop-2026-11-03-55,SELL,250,0.03,backfill,,1.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDEKF6ACYT75
