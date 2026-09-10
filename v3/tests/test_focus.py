@@ -617,7 +617,9 @@ class TestAfterAFill(Base):
         # stake is 10% of $2,060, not of $2,000
         self.assertAlmostEqual(self.f.walls_held(), 60.0, places=2)
         self.assertAlmostEqual(row["stake"], 206.0, places=2)
-        # a small resting ask of his is not a wall: it offers part of the lot
+        # a small resting ask of his is not a wall: in a market with a
+        # fair it is the tender's (owner, 2026-09-10), so the exit stays
+        # one order for the whole lot and his ask comes off beside it
         self.r.fam.orders["h1"] = FamilyOrder(id="h1", market=NC, side="SELL", price=0.48,
                                               qty=50.0, intent=SELL_LONG, placed_ts=self.r.now,
                                               purpose="manual", why="his ask")
@@ -626,7 +628,11 @@ class TestAfterAFill(Base):
         self.f.moved_at.clear()
         self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
         self.tick()
-        self.assertEqual(self.f.rows[NC]["exit"]["qty"], 150.0)
+        self.assertEqual(self.f.rows[NC]["exit"]["qty"], 200.0)
+        asks = [o for o in self.r.fam.orders.values()
+                if o.market == NC and o.side == "SELL" and not focus_mod.is_wall(o)]
+        self.assertEqual(len(asks), 1)
+        self.assertEqual(asks[0].qty, 200.0)
 
     def test_the_exit_is_one_order_even_after_the_family_relabels_it(self):
         self.r.positions[NC] = (200.0, 200.0 * 0.40)
@@ -867,7 +873,10 @@ class TestHisTaps(Base):
         self.assertNotIn(rec2.id, self.r.exchange.live)
         self.assertFalse(self.r.fam.orders)
 
-    def test_a_tender_order_he_moves_becomes_his(self):
+    def test_a_tender_order_he_moves_is_tended_again_where_a_fair_is_set(self):
+        # owner, 2026-09-10: "my orders should be like any other the
+        # tender places, susceptible to being moved if there is another
+        # place they could be resting that is more positive ev"
         self.f.set_fair(NC, 45.0)
         self.tick()
         o = self.mine(NC, "BUY")[0]
@@ -877,9 +886,40 @@ class TestHisTaps(Base):
         self.assertEqual(rec.purpose, "manual")
         self.f.moved_at.clear()
         self.tick()
-        # the tender rests its own bid beside his, never touches his
-        self.assertIn(rec.id, self.r.exchange.live)
-        self.assertEqual(rec.price, 0.40)
+        # his bid five ticks back earns less than the plan: it is the
+        # tender's again and re-laid at the plan, one order on the side
+        bids = self.mine(NC, "BUY")
+        self.assertEqual(len(bids), 1)
+        self.assertNotEqual(bids[0].price, 0.40)
+        self.assertNotIn(rec.id, self.r.exchange.live)
+        self.assertEqual(len([x for x in self.r.fam.orders.values()
+                              if x.market == NC and x.side == "BUY"]), 1)
+
+    def test_his_orders_are_the_tenders_only_where_a_fair_is_set_and_never_his_walls(self):
+        def his(oid, slug, side, px, q):
+            self.r.fam.orders[oid] = FamilyOrder(id=oid, market=slug, side=side, price=px,
+                                                 qty=q, intent=BUY_LONG if side == "BUY" else SELL_LONG,
+                                                 placed_ts=self.r.now - 600, purpose="manual",
+                                                 why="the owner's own order")
+            self.r.exchange.live[oid] = {"id": oid, "market": slug, "side": side, "price": px,
+                                         "size": q, "intent": BUY_LONG if side == "BUY" else SELL_LONG}
+        his("h1", NC, "BUY", 0.40, 100.0)            # a fair is set here
+        his("h2", OH, "BUY", 0.40, 100.0)            # no fair: stays his
+        his("h3", NC, "BUY", 0.01, 25000.0)          # his qualifying wall: stays his
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        self.assertEqual(self.r.fam.orders["h2"].purpose, "manual")
+        self.assertEqual(self.r.fam.orders["h3"].purpose, "manual")
+        self.assertIn("h3", self.r.exchange.live)
+        self.assertIn("h2", self.r.exchange.live)
+        # his NC bid became the tender's and was re-laid at the plan
+        self.assertNotIn("h1", self.r.exchange.live)
+        bids = [x for x in self.r.fam.orders.values()
+                if x.market == NC and x.side == "BUY" and not focus_mod.is_wall(x)]
+        self.assertEqual(len(bids), 1)
+        self.assertEqual(bids[0].purpose, PURPOSE)
+        self.assertTrue(any(e.get("event") == "moved" and e.get("market") == NC
+                            for e in self.f.log))
 
     def test_the_numbers_and_the_fair_go_in_plain_units(self):
         self.assertTrue(self.f.set_number("coc", 1.0)["ok"])

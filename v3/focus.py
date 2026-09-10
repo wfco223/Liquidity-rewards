@@ -561,7 +561,12 @@ class Focus:
 
     def _claim_orders(self) -> None:
         """The engine's orders on focus ground become the tender's; the
-        bonds' exits become plain exits. His own stay his."""
+        bonds' exits become plain exits. His own orders in a market he
+        has given a fair are the tender's too (owner, 2026-09-10: "my
+        orders should be like any other the tender places, susceptible
+        to being moved if there is another place they could be resting
+        that is more positive ev") — his qualifying walls excepted, and
+        in a market without a fair they stay as he left them."""
         for o in list(self.fam.orders.values()):
             if o.market not in self.markets:
                 continue
@@ -573,6 +578,12 @@ class Focus:
             elif o.purpose == "bond":
                 o.purpose = "sell"
                 o.why = "inherited from the bonds — an exit"
+            elif (o.purpose == "manual" and not is_wall(o)
+                  and self.why_not_tended(o.market) is None):
+                o.purpose = PURPOSE
+                o.why = "yours — the tender tends it like its own"
+                o.pinned = False
+                self._claim_id(o.id)
 
     @staticmethod
     def _who(o: FamilyOrder) -> str:
@@ -1276,8 +1287,10 @@ class Focus:
             return {"ok": True, "n": n, "note": f"{n} tender order{'s' if n != 1 else ''} pulled"}
 
     def place(self, slug: str, side: str, cents, qty, net: float = 0.0) -> dict:
-        """His own order here, by his tap: bypasses the switches, keeps
-        every other rail, and the tender leaves it alone."""
+        """His own order here, by his tap: bypasses the switches and
+        keeps every other rail. In a market he has given a fair the
+        tender tends it like its own from the next pass; elsewhere it
+        stays where he put it."""
         with self.lock:
             side = str(side or "").upper()
             if side not in ("BUY", "SELL"):
@@ -1321,8 +1334,9 @@ class Focus:
 
     def move(self, slug: str, order_id: str, cents=None, qty=None) -> dict:
         """His move or resize of any order here — his own, the engine's
-        or the tender's. What he touches becomes his: the tender leaves
-        it where he put it."""
+        or the tender's. In a market he has given a fair the tender
+        tends it like its own from the next pass (owner, 2026-09-10);
+        elsewhere it stays where he put it."""
         with self.lock:
             rec = self.fam.orders.get(str(order_id or ""))
             if rec is None:
@@ -1350,7 +1364,7 @@ class Focus:
             self.fam.orders[r.order_id] = FamilyOrder(
                 id=r.order_id, market=rec.market, side=rec.side, price=(r.price or new_px),
                 qty=rested, intent=rec.intent, placed_ts=self._clock(), purpose="manual",
-                why="moved by you on the focus page — the tender leaves it alone")
+                why="moved by you on the focus page")
             self._log(event="his_move", market=rec.market, side=rec.side, was=rec.price,
                       price=(r.price or new_px), qty=rested, of=self._who(rec))
             return {"ok": True, "note": r.note + (f" — {rested:g} resting" if not r.ok else ""),
