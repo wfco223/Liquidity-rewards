@@ -111,6 +111,37 @@ class TestTheGround(Base):
         self.assertFalse(self.mine(BP))
         self.assertFalse(self.mine(AG))
 
+    def test_a_market_taken_off_his_hands_list_is_tended_and_put_back_is_not(self):
+        # owner, 2026-09-10: "Give me a button to take a market off of
+        # the hand tended list"
+        self.f.set_fair(BP, 20.0)
+        self.tick()
+        self.assertTrue(self.f.rows[BP]["by_hand"])
+        self.assertFalse(self.mine(BP))
+        r = self.f.release(BP, True)
+        self.assertTrue(r["ok"], r)
+        self.tick()
+        self.assertIsNone(self.f.rows[BP]["not_tended"])
+        self.assertTrue(self.f.rows[BP]["released"])
+        self.assertTrue(self.mine(BP))
+        self.assertTrue(self.r.fam._avoided(BP))       # the engine still avoids it
+        # a market the engine never avoided cannot be "released"
+        self.assertFalse(self.f.release(NC, True)["ok"])
+        # back to his hand: the tender's orders come off, his own stay
+        self.f.place(BP, "BUY", 15.0, 10.0)
+        r = self.f.release(BP, False)
+        self.assertTrue(r["ok"], r)
+        self.tick()
+        self.assertFalse(self.mine(BP))
+        self.assertTrue([o for o in self.r.fam.orders.values()
+                         if o.market == BP and o.purpose == "manual"])
+        self.assertIn("own hand", self.f.rows[BP]["not_tended"])
+        # and the release survives a restart
+        self.f.release(BP, True)
+        g = Focus(self.r.fam, self.r.exchange, self.b, clock=lambda: self.r.now)
+        g.restore(json.loads(json.dumps(self.f.to_dict())))
+        self.assertIn(BP, g.released)
+
     def test_the_focus_ground_does_not_charge_the_family_ceiling(self):
         self.tick()
         self.r.fam.orders["x1"] = FamilyOrder(id="x1", market=NC, side="BUY", price=0.40,

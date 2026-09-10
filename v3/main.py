@@ -4384,6 +4384,10 @@ class Monitor:
             r = self.focus.pause(market, False)
         elif op == "focus_pull":
             r = self.focus.pull(market)
+        elif op == "focus_release":
+            r = self.focus.release(market, True)
+        elif op == "focus_unrelease":
+            r = self.focus.release(market, False)
         elif op == "focus_place":
             net = 0.0
             try:
