@@ -237,10 +237,12 @@ class TestThePlan(Base):
                         (buy["qty"], full, buy["px"]))
         self.assertGreater(buy["ev"], 0.0)
 
-    def test_an_exit_never_sits_under_fair(self):
+    def test_an_exit_never_sits_under_its_bound(self):
+        # the bound is inclusive: at the price itself is fine
         book = self.r.cache.any_age(NC)
-        for px in self.f._cands("SELL", book, 0.50, bound=True):
-            self.assertGreaterEqual(px, 0.51 - 1e-9)
+        for px in self.f._cands("SELL", book, 0.50, bound=True, improve=False):
+            self.assertGreaterEqual(px, 0.50 - 1e-9)
+        self.assertNotIn(0.46, self.f._cands("SELL", book, 0.50, bound=True, improve=False))
 
     def test_without_a_fair_silver_stands_in_for_the_plan_only(self):
         self.tick()
@@ -379,6 +381,98 @@ class TestTending(Base):
         # no second ask opens a short beside the exit
         self.assertEqual(len([o for o in self.r.fam.orders.values()
                               if o.market == NC and o.side == "SELL"]), 1)
+
+
+class TestAfterAFill(Base):
+    """2026-09-10, the House dem control market: an ask at the touch
+    filled eleven times in fifteen minutes while the tender re-rested
+    it after every fill, and the exits sat eight ticks behind the touch
+    bound by his fair. Now: a fill of an entry pulls the rest and holds
+    that side for two hours; an entry never adds past the stake; the
+    exit joins the touch, never under the position's cost."""
+
+    def fill(self, order, qty):
+        """The exchange fills part of a tender order: the family's
+        reconcile shrinks the record and books the position."""
+        live = self.r.exchange.live[order.id]
+        live["size"] -= qty
+        if live["size"] < 0.5:
+            self.r.exchange.live.pop(order.id, None)
+        net, cost = self.r.positions.get(order.market, (0.0, 0.0))
+        if order.side == "SELL":
+            self.r.positions[order.market] = (net - qty, cost + qty * (1.0 - order.price))
+        else:
+            self.r.positions[order.market] = (net + qty, cost + qty * order.price)
+        self.r.switch = False
+        self.r.cycle(advance=1.0)            # the reconcile, nothing placed
+        self.r.switch = True
+
+    def test_a_fill_pulls_the_rest_of_the_entry_and_holds_the_side(self):
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ask = self.mine(NC, "SELL")[0]
+        self.fill(ask, 20.0)
+        self.tick()
+        self.assertFalse(self.mine(NC, "SELL"))      # the rest came off
+        self.assertTrue(any(e.get("event") == "filled" for e in self.f.log))
+        self.assertIn("filled", self.f.rows[NC]["tend"]["SELL"].get("note", "")
+                      if "note" in self.f.rows[NC]["tend"]["SELL"] else "filled")
+        for _ in range(3):
+            self.tick()
+        self.assertFalse(self.mine(NC, "SELL"))      # and stays off
+        # two hours on, the side is open again
+        self.r.now += focus_mod.FOCUS_REFILL_WAIT_S
+        self.tick()
+        self.assertTrue(self.mine(NC, "SELL") or "filled" not in
+                        (self.f.rows[NC]["tend"]["SELL"].get("note") or ""))
+
+    def test_the_exit_joins_the_touch_and_never_sits_under_cost(self):
+        # short 200 opened at 47c: cost a share 53c of collateral, the
+        # break-even YES price 47c; the bid touch is 44c, under it
+        self.r.positions[NC] = (-200.0, 200.0 * 0.53)
+        self.f.set_fair(NC, 40.0)
+        self.tick()
+        ex = self.f.rows[NC]["exit"]
+        self.assertEqual(ex["side"], "BUY")
+        self.assertEqual(ex["px"], 0.44)              # the touch, under cost
+        self.assertAlmostEqual(ex["basis"], 0.47, places=4)
+        bids = self.mine(NC, "BUY")
+        self.assertEqual(len(bids), 1)
+        self.assertEqual((bids[0].price, bids[0].qty), (0.44, 200.0))
+        # the touch above cost: the exit sits at cost, not past it
+        self.r.exchange.books[NC] = wide_book(self.r.now, bid=0.48, ask=0.51)
+        self.f.moved_at.clear()
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["exit"]["px"], 0.47)
+
+    def test_the_exit_is_one_order_even_after_the_family_relabels_it(self):
+        self.r.positions[NC] = (200.0, 200.0 * 0.40)
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ask = self.mine(NC, "SELL")[0]
+        ask.purpose = "sell"                          # the family's re-label
+        self.r.positions[NC] = (300.0, 300.0 * 0.40)  # the lot grew
+        self.f.moved_at.clear()
+        self.tick()
+        exits = [o for o in self.r.fam.orders.values()
+                 if o.market == NC and o.side == "SELL" and o.why.startswith("focus exit")]
+        self.assertEqual(len(exits), 1)
+        self.assertEqual(exits[0].qty, 300.0)
+
+    def test_an_entry_never_adds_past_the_stake(self):
+        # long 400 at 45c: $180 of the $200 stake is held already
+        self.r.positions[NC] = (400.0, 180.0)
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        t = self.f.rows[NC]["tend"]["BUY"]
+        if t.get("px"):
+            self.assertLessEqual(t["qty"] * t["px"], 20.0 + 1e-6)
+        else:
+            self.assertIn("no entry that adds", t["note"])
+        self.r.positions[NC] = (500.0, 225.0)
+        self.tick()
+        self.assertIn("no entry that adds", self.f.rows[NC]["tend"]["BUY"]["note"])
+        self.assertFalse(self.mine(NC, "BUY"))
 
 
 class TestHisTaps(Base):
