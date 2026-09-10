@@ -80,6 +80,12 @@ FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much
 # best order is often a smaller one
 FOCUS_SIZE_FRACS = (1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1)
 FOCUS_MOVE_COOLDOWN_S = 300.0   # an order moves at most this often
+# an order whose expected value reads under zero comes off only after
+# it has read so for this long (2026-09-10 14:00-14:50Z: on the
+# tenth-cent seat-count and balance-of-power books the touch flickers
+# by a tenth, the order reads three ticks behind for one pass, and the
+# Senate lte45 ask was pulled 21 times and re-rested 19 in an hour)
+FOCUS_WEAK_DWELL_S = 300.0
 # after an entry of the tender's fills, nothing new rests on that side
 # for this long and the rest of the order comes off (2026-09-10, the
 # House dem control market: an ask at the touch filled eleven times in
@@ -146,6 +152,7 @@ class Focus:
         self.first_seen: dict[str, float] = {}
         self.moved_at: dict[str, float] = {}
         self.filled_at: dict[str, float] = {}     # slug|side -> when an entry last filled
+        self.weak_since: dict[str, float] = {}    # slug|side -> reading under zero since
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
         self._gone_by_me: set[str] = set()        # ids the tender itself cancelled or replaced
         self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
@@ -396,9 +403,15 @@ class Focus:
         return [o for o in self._orders(slug, side) if self._is_mine(o)]
 
     def _forget(self, oid: str) -> None:
+        """The tender cancelled or replaced this id: not a fill, and not
+        the tender's any more (the open list lags a cancel by a read
+        and the family adopts the ghost as the owner's; it drops when
+        the list catches up — the tender must not cancel it twice)."""
         self._gone_by_me.add(oid)
         self._last_mine.pop(oid, None)
         self._vanished.pop(oid, None)
+        if oid in self.mine_ids:
+            self.mine_ids.remove(oid)
 
     def _journal_fills(self, oid: str, since: float) -> float:
         """Shares the family's fill journal books to this order since
@@ -889,25 +902,36 @@ class Focus:
                 # in three minutes on buying-power dips); a hold — a fill,
                 # a position past the stake, no fair — always pulls it
                 own_ev = float(cur.live_ev) if (cur is not None and cur.live_ev is not None) else None
+                key = f"{slug}|{side}"
                 if (cur is not None and not (plan or {}).get("hold")
                         and own_ev is not None and own_ev > 0.0):
+                    self.weak_since.pop(key, None)
                     continue
+                if cur is not None and not (plan or {}).get("hold"):
+                    # under zero: only a reading that has held for the
+                    # dwell pulls it (a tenth-cent flicker does not)
+                    since = self.weak_since.setdefault(key, now)
+                    if now - since < FOCUS_WEAK_DWELL_S:
+                        continue
                 if cur is not None:
                     r = self.fam.desk.cancel(cur.id, slug, initiator="auto")
                     if r.ok:
                         self.fam.orders.pop(cur.id, None)
                         self._forget(cur.id)
+                        self.weak_since.pop(key, None)
                         actions -= 1
                         self._log(event="pull", market=slug, side=side, price=cur.price,
                                   qty=cur.qty,
                                   why=(plan.get("note") or "nothing earns on this side"
                                        if not plan or not plan.get("px")
-                                       else f"expected value {plan['ev']:+.2f}/day"))
+                                       else f"expected value {plan['ev']:+.2f}/day for "
+                                            f"{FOCUS_WEAK_DWELL_S / 60:.0f} min"))
                 continue
             book = self.fam.cache.fresh(slug, FOCUS_ACT_AGE_S, now)
             if book is None or blocked:
                 continue
             key = f"{slug}|{side}"
+            self.weak_since.pop(key, None)
             if cur is None:
                 if not is_exit and used + plan["risk"] > self.loss_cap + 1e-9:
                     continue                      # the cap: the best EV got in first
