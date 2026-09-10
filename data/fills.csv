@@ -4104,3 +4104,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789052366.5,nfl,ftsc-nfl-kmostfp-2027-01-10-harmev,BUY,0.1,0.19,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDHF5W9S6SK5
 1789052366.5,nfl,ftsc-nfl-kmostfp-2027-01-10-jakbat,BUY,0.16,0.18,backfill,,2.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDFDF5G1WSX4
 1789052366.5,nfl,fptc-nfl-rbfpou-2027-01-10-camska,BUY,1,0.3,backfill,,6.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDCND5HXET3P
+1789052562.2,cfb,aachc-cfb-wins-2026-11-28-ala-6pt5wins,SELL,5,0.8,earn,0.7185,6.02,,76,80,0.351,0.78,0.79,-0.02,-8.01,1 tick behind the touch — we would hold 8% of the ask side,CDDA66RY4SJR
+1789053043.8,politics,usgubewc-usgub-al-2026-11-03-rep,BUY,20,0.85,earn,2.4632,1.06,0.986825,89,92,0.817,0.85,0.9,-0.1368,20,1 tick behind the touch — we would hold 39% of the bid side,CDHPWVYGMT75
+1789053223.8,politics,paccc-balpow-2026-11-03-dsweep,BUY,1,0.5,manual,0,4.99,,48,51,0.597,0.5,0.51,0.01,51,the owner's own order — the engine leaves it alone,CDECXDD6MSJ1
+1789053510.1,cfb,aachc-cfb-wins-2026-11-28-rutger-4pt5wins,BUY,2,0.19,backfill,,3.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDG2DW43GSJ1
+1789053565.8,cfb,aachc-cfb-wins-2026-11-28-rutger-4pt5wins,BUY,2,0.19,backfill,,3.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDG2DW43GSJ1
+1789053565.8,nfl,fptc-nfl-rbfpou-2027-01-10-camska,BUY,-1,0.3,fix,0.0123,6.67,,,,0.423,,,,2,size trimmed by 1 to the exchange's count (order CDCND5HXET3P),CDCND5HXET3P
