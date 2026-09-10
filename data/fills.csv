@@ -3960,3 +3960,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789042145.9,cfb,aachc-cfb-wins-2026-11-28-clmsn-6pt5wins,BUY,-1,0.8,fix,,70.28,,,,,,,,,size trimmed by 1 to the exchange's count (order C8DCB2024MW0),C8DCB2024MW0
 1789042145.9,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,BUY,0.1,0.23,backfill,,0.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZHDC408SJH
 1789042145.9,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,BUY,0.06,0.3,backfill,,2.98,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCZ0D2TJ2T6S
+1789042423.1,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,1,0.2,manual,0.4621,9.2,,22,28,0,0.22,0.23,-0.05,1,the owner's own order — the engine leaves it alone,CD870WZ1MT3P
+1789042423.1,nfl,ftsc-nfl-kmostfp-2027-01-10-chrbos,BUY,0.89,0.14,earn,1.334,1.1,,16,23,0.377,0.15,0.16,-0.06,2.89,1 tick behind the touch — we would hold 21% of the bid side,CDF4P5T7CT75
+1789042454.7,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,0.26,0.2,backfill,,9.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD870WZ1MT3P
+1789042483.1,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,1,0.2,manual,0.3646,9.22,,21,25,0.454,0.22,0.23,-0.03,2,the owner's own order — the engine leaves it alone,CD870WZ1MT3P
+1789042483.1,nfl,ftsc-nfl-kmostfp-2027-01-10-chrbos,BUY,1,0.14,earn,0.7404,1.11,,13,17,0.59,0.15,0.16,-0.01,4,1 tick behind the touch — we would hold 21% of the bid side,CDF4P5T7CT75
+1789042543.1,politics,scc-senate-gop-2026-11-03-56,SELL,1000,0.03,manual,12.8526,10.13,0.006225,2,5,0.663,0.02,0.03,-0.0238,2000,the owner's own order — the engine leaves it alone,CD7FF7V7CSJR
+1789042543.1,politics,scc-senate-gop-2026-11-03-54,SELL,100,0.04,manual,7.0014,9.78,0.034925,2,6,0.477,0.03,0.04,-0.0051,-100,the owner's own order — the engine leaves it alone,CD7S584HJT6S
+1789042764.5,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,0.26,0.2,backfill,,9.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD870WZ1MT3P

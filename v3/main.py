@@ -4355,12 +4355,23 @@ class Monitor:
         and tended here. Positions come from the last cycle's read (a
         minute old at most); fills are the family's reconcile to book,
         as for every order in the politics book."""
+        boot_pos: dict | None = None
         while True:
             t0 = time.time()
             try:
                 on = bool(self.master.on and self.switches["focus"].on
-                          and self._floor_ok)
-                self.focus.cycle(t0, getattr(self, "_bond_positions", None) or {}, on)
+                          and getattr(self, "_floor_ok", False))
+                pos = getattr(self, "_bond_positions", None)
+                if pos is None:
+                    # before the first cycle: one read of its own, so
+                    # held stock shows on the page from the first pass
+                    if boot_pos is None:
+                        try:
+                            boot_pos = dict(self.client.positions_net() or {})
+                        except Exception:  # noqa: BLE001 — the cycle's read follows
+                            boot_pos = {}
+                    pos = boot_pos
+                self.focus.cycle(t0, pos or {}, on)
             except Exception as e:  # noqa: BLE001 — the loop survives anything
                 self._note(f"focus: {type(e).__name__}: {e}")
             time.sleep(max(FOCUS_CYCLE_S - (time.time() - t0), 2.0))
@@ -4432,19 +4443,18 @@ class Monitor:
         self._note(f"serving on :{web.port}")
         backoff = 5.0
         stream_started = False
-        focus_started = False
+        # the focus tender's own loop starts NOW, before the board is
+        # read (owner, 2026-09-10: "The start up time for focus has to
+        # be very short"): its ground was claimed at seed, its first
+        # pass reads every focus book itself and its positions once
+        if getattr(self, "focus", None) is not None:
+            threading.Thread(target=self._focus_loop, daemon=True,
+                             name="focus").start()
         while True:
             t0 = time.time()
             try:
                 self.cycle()
                 backoff = 5.0
-                # the focus tender's own loop starts once the board has
-                # been read: its ground is claimed already (seed), its
-                # first pass needs the books and positions of one cycle
-                if not focus_started and getattr(self, "focus", None) is not None:
-                    focus_started = True
-                    threading.Thread(target=self._focus_loop, daemon=True,
-                                     name="focus").start()
                 # the feed pours ~54 book updates a second across 200
                 # markets through this one shared CPU. Holding it back
                 # until the first cycle has finished stops it competing
