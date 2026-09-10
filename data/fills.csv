@@ -4071,3 +4071,36 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789048645.6,politics,ussewc-usse-ma-2026-11-03-dem,SELL,28,0.96,backfill,,2.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDESMHD3MSJH
 1789048645.6,nfl,ftsc-nfl-dstmostfp-2027-01-10-pit,BUY,1,0.16,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDGNRJ1XMSJ1
 1789048650.9,nfl,ftsc-nfl-dstmostfp-2027-01-10-pit,BUY,1,0.16,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDGNRJ1XMSJ1
+1789048922.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,48,0.843,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDH7J3RXYSK5
+1789048974.5,politics,paccc-usho-midterms-2026-11-03-dem,SELL,67,0.843,focus,19.2865,0.51,0.8351,84,85,0.958,0.842,0.843,-0.0079,-115,focus entry: ~$64.43/day; fill odds 70%/day; EV +53.95/day,CDH7J3RXYSK5
+1789048977.8,nfl,ftsc-nfl-kmostfp-2027-01-10-harmev,BUY,0.1,0.19,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDHF5W9S6SK5
+1789048990.1,nfl,ftsc-nfl-kmostfp-2027-01-10-jakbat,BUY,0.16,0.18,backfill,,2.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDFDF5G1WSX4
+1789048990.6,politics,ussewc-usse-ar-2026-11-03-dem,BUY,2.4,0.04,backfill,,9.74,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9B8STW0SJ1
+1789049034.5,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,2.74,0.2,manual,1.1429,11.04,,19,24,0.617,0.2,0.21,-0.02,4.74,the owner's own order — the engine leaves it alone,CD870WZ1MT3P
+1789049339.0,nfl,ftsc-nfl-temostfp-2027-01-10-kylpit,BUY,4.98,0.1,earn,1.0546,8.38,,9,17,0,0.1,0.11,-0.03,4.98,joins the touch — the book has been quiet,CDAJB0KCAT3P
+1789049399.0,politics,scc-senate-gop-2026-11-03-56,SELL,164.42,0.03,manual,1.9637,12.04,0.006225,3,6,0.837,0.02,0.03,-0.0238,-0.42,the owner's own order — the engine leaves it alone,CD7FF7V7CSJR
+1789049945.8,politics,paccc-balpow-2026-11-03-rsweep,SELL,50,0.15,manual,6.1596,12,,12,16,0.574,0.14,0.15,-0.01,-50,the owner's own order — the engine leaves it alone,CD7N5QPW0T6S
+1789049945.8,politics,paccc-usho-midterms-2026-11-03-dem,BUY,92,0.842,sell,16.2015,0.2,0.8351,84,85,0.959,0.842,0.843,0.0069,-23,an exit — its fill reduces the position it sits on,CDHPWW8NGT75
+1789050005.8,politics,paccc-balpow-2026-11-03-rsweep,SELL,100,0.15,manual,11.9274,12.02,,13,16,0.686,0.14,0.15,-0.01,-250,the owner's own order — the engine leaves it alone,CD7MC5SGET3P
+1789050063.8,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,7.01,0.17,backfill,,9.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9TW1WBESX0
+1789050176.0,politics,scc-senate-gop-2026-11-03-55,BUY,5,0.06,backfill,,0.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDH8YTYMTSJZ
+1789050305.9,politics,ussewc-usse-fl-2026-11-03-rep,BUY,10,0.89,earn,1.502,4.04,0.904925,90,93,0.659,0.89,0.9,-0.0149,10,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CDEGDFEQMT75
+1789050305.9,politics,ussewc-usse-nj-2026-11-03-dem,BUY,20,0.92,earn,0.0046,0.74,0.995325,97,99,0.79,0.95,0.97,-0.0753,20,1 tick behind the touch — we would hold 9% of the bid side,CDHBVF63TSJZ
+1789050416.6,politics,ussewc-usse-ri-2026-11-03-dem,SELL,10,0.99,sell,0.0093,0.7,0.99925,96,98,0.859,0.98,0.99,0.0092,0,selling filled stock — it earns while it waits,CDHDVD5PASX4
+1789050416.6,politics,ussewc-usse-fl-2026-11-03-rep,SELL,10,0.86,sell,0,0.03,0.904925,89,92,0.734,0.85,0.9,0.0449,0,selling filled stock — it earns while it waits,CDHZQDVVCSK5
+1789051100.8,nfl,ftsc-nfl-qbmostfp-w1-2026-09-14-matsta,SELL,0.01,0.17,manual,0.0591,0.68,,2,9,0.45,0.01,0.17,-0.12,-0.02,the owner's own order — the engine leaves it alone,CDHJ84QKWSX0
+1789051521.8,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.58,sell,0.2596,21.26,,56,62,0.512,0.58,0.59,-0.01,2,buying back the short at or under what it sold for — the bid earns while it wait,CD02VZ7XCSX4
+1789051521.8,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.54,sell,0,0,,54,61,0.653,0.54,0.55,0.04,0,taker dump — sold into the bid (the carved exception),CDJ9KTBRASJH
+1789051794.7,politics,paccc-usho-midterms-2026-11-03-dem,BUY,23,0.842,sell,1.7115,0.43,0.8351,84,85,0.96,0.842,0.843,0.0069,0,an exit — its fill reduces the position it sits on,CDJ04PPDASJZ
+1789051914.7,politics,ussewc-usse-nj-2026-11-03-dem,SELL,20,0.97,sell,0.0176,0.45,0.995325,95,98,0.82,0.83,0.96,0.0253,0,selling filled stock — it earns while it waits,CDJ0C65BRSX0
+1789052356.1,nfl,fptc-nfl-rbfpou-2027-01-10-camska,BUY,1,0.3,backfill,,6.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDCND5HXET3P
+1789052366.5,politics,enwc-usgubp-ri-2026-09-09-dem-greste,SELL,500,0.01,void,0,2.75,,7,88,0.021,,,0.4,0,voided: the exchange has no trade for order CDFN7ZPSET6S — the row of 09-10 14:2,CDFN7ZPSET6S
+1789052366.5,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,1,0.04,hand,,10.22,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC742NF6RR42
+1789052366.5,politics,paccc-usho-midterms-2026-11-03-dem,SELL,48,0.843,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDH7J3RXYSK5
+1789052366.5,politics,ussewc-usse-ar-2026-11-03-dem,BUY,2.4,0.04,backfill,,9.74,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9B8STW0SJ1
+1789052366.5,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,7.01,0.17,backfill,,9.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9TW1WBESX0
+1789052366.5,politics,scc-senate-gop-2026-11-03-55,BUY,5,0.06,backfill,,0.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDH8YTYMTSJZ
+1789052366.5,nfl,ftsc-nfl-dstmostfp-2027-01-10-pit,BUY,-1,0.16,fix,,1.1,,,,,,,,,size trimmed by 1 to the exchange's count (order CDGNRJ1XMSJ1),CDGNRJ1XMSJ1
+1789052366.5,nfl,ftsc-nfl-kmostfp-2027-01-10-harmev,BUY,0.1,0.19,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDHF5W9S6SK5
+1789052366.5,nfl,ftsc-nfl-kmostfp-2027-01-10-jakbat,BUY,0.16,0.18,backfill,,2.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDFDF5G1WSX4
+1789052366.5,nfl,fptc-nfl-rbfpou-2027-01-10-camska,BUY,1,0.3,backfill,,6.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDCND5HXET3P
