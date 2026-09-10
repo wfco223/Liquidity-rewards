@@ -4167,6 +4167,10 @@ class TestTheAmplifier(Base):
 
     def setUp(self):
         super().setUp()
+        # the amplifier is killed (owner, 2026-09-10); its rules are
+        # still tested here with the flag on, for the record
+        self._amp_flag = bonds_mod.AMP_ENABLED
+        bonds_mod.AMP_ENABLED = True
         self.b.approve(AL, self.now)
         self.seed(AL, self.crowded_book(self.now))
         self.bond(AL, "YES", 100.0, 0.90)
@@ -4174,6 +4178,10 @@ class TestTheAmplifier(Base):
         # three days of bond earnings on the books: $40 a day -> a $20/day cap a market
         for k in (1, 2, 3):
             self.b.accrued[self.b._day(self.now - k * 86400.0)] = 40.0
+
+    def tearDown(self):
+        bonds_mod.AMP_ENABLED = self._amp_flag
+        super().tearDown()
 
     def amps(self, slug=AL):
         return self.b._amp_orders(slug)
@@ -4775,5 +4783,65 @@ class TestHeldGround(Base):
         self.b.cycle(self.now, self.positions(), on=True)
         self.assertIn(H, self.b.approved)
         self.assertEqual([e for e in self.b.log if e["event"] == "held_ground"], [])
+
+
+class TestTheAmplifierIsKilled(Base):
+    """Owner, 2026-09-10: "Kill the amplifier. There is a bug that bought
+    3000 shares of yes on a 56 seat senate market ... At 5 cents which
+    is a total risk for 150 dollars. That is way way way past the 28
+    dollars I told you to set." Nothing rests, and whatever rests from
+    before comes off."""
+
+    def crowded_book(self, now, crowd=2000.0):
+        return Book(bids=((0.98, 50.0), (0.50, 20000.0)),
+                    asks=((0.99, crowd), (0.999, 20000.0)),
+                    tick=0.01, fetched_at=now)
+
+    def setUp(self):
+        super().setUp()
+        self.assertFalse(bonds_mod.AMP_ENABLED)
+        self.b.approve(AL, self.now)
+        self.seed(AL, self.crowded_book(self.now))
+        self.bond(AL, "YES", 100.0, 0.90)
+        self.b.more_cap[AL] = {"usd": 0.0, "by": "owner", "first": ""}
+        for k in (1, 2, 3):
+            self.b.accrued[self.b._day(self.now - k * 86400.0)] = 40.0
+
+    def amps(self, slug=AL):
+        return self.b._amp_orders(slug)
+
+    def test_nothing_rests_and_the_page_says_so(self):
+        for k in range(3):
+            self.seed(AL, self.crowded_book(self.now + 60 * k))
+            self.b.cycle(self.now + 60 * k, self.positions(), on=True)
+        self.assertEqual(self.amps(), [])
+        self.assertEqual([e for e in self.b.log if e["event"] in ("amp_rested", "amp_resized")], [])
+        self.assertTrue(self.b._orders(AL, "SELL", decoy=False))     # the exit still works
+        v = self.b.view(self.now + 120, self.positions())
+        self.assertIsNone(v["amp_budget"])
+        self.assertIn("killed", v["amp_off"])
+
+    def test_an_amplifier_resting_from_before_is_pulled_switch_on_or_off(self):
+        # placed by the build before the kill: it carries the amplifier's
+        # own words, and the bonds switch being on does not save it
+        live = self.r.exchange.live
+        live["AMP0"] = {"id": "AMP0", "market": AL, "side": "SELL", "price": 0.99,
+                        "size": 3000.0, "intent": BUY_SHORT}
+        self.r.fam.orders["AMP0"] = FamilyOrder(
+            id="AMP0", market=AL, side="SELL", price=0.99, qty=3000.0, intent=BUY_SHORT,
+            placed_ts=self.now - 600, purpose="bond",
+            why=f"{bonds_mod.AMP_WHY}: 3000 at the exit's price, 99c, behind it in line")
+        self.b._amp_ids[AL] = ["AMP0"]
+        self.b.amp[AL] = {"qty": 3000.0, "px": 0.99, "since": self.now - 600}
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertNotIn("AMP0", live)
+        self.assertNotIn("AMP0", self.r.fam.orders)
+        self.assertNotIn(AL, self.b.amp)
+        self.assertNotIn(AL, self.b._amp_ids)
+        ev = [e for e in self.b.log if e["event"] == "amp_pulled"]
+        self.assertEqual(len(ev), 1)
+        self.assertIn("killed", ev[0]["note"])
+        # and the exit of the lot is untouched
+        self.assertTrue(self.b._orders(AL, "SELL", decoy=False))
 
 

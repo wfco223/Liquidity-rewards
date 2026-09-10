@@ -3712,3 +3712,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789003645.1,politics,ussewc-usse-ky-2026-11-03-rep,SELL,0.63,0.94,backfill,,1.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD5564S4AT6S
 1789003645.1,politics,ussewc-usse-ky-2026-11-03-dem,SELL,12,0.06,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6CJMFVRSJR
 1789003645.1,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,2.47,0.06,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6NKYECJT75
+1789003938.3,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,2,0.95,backfill,,0.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6YYFKQASJ1
+1789004004.5,politics,ussewc-usse-ri-2026-11-03-dem,BUY,20,0.84,earn,2.9206,0.54,0.99925,96,99,0.772,0.73,0.97,-0.1593,20,1 tick behind the touch — we would hold 10% of the bid side,CD6J3JAQYT6S
+1789004004.5,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,11,0.93,bond,2.2877,0.1,0.996525,91,96,0.442,0.93,0.95,-0.0665,269,bond more: split — 150 at 93c carry the share; never dearer than his first price,CD6YJ48E2SJZ
+1789004152.4,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,13,0.94,bond,0,0.09,0.996525,90,94,0.619,0.93,0.95,-0.0565,282,bond: took 13 YES at 94c — it was in the way of our resting order,CD708D7VET6S
+1789004378.9,politics,ussewc-usse-ri-2026-11-03-dem,SELL,20,0.97,sell,0.8128,0.1,0.99925,,,0.808,,,0.0292,0,selling filled stock — it earns while it waits,CD70W7ZBMSX4
+1789004553.2,politics,usgubewc-usgub-co-2026-11-03-dem,BUY,9,0.97,hand,,0.71,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBZA02KX0Q3X
+1789004553.2,politics,ussewc-usse-la-2026-11-03-rep,BUY,3,0.95,hand,,1.24,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBZ0G4P30Q46
+1789004553.2,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,2,0.95,backfill,,0.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6YYFKQASJ1
