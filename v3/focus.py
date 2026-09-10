@@ -48,10 +48,11 @@ import math
 import threading
 import time
 
-from .family import FamilyOrder
+from .family import FamilyOrder, is_wall
 from .intents import BUY_LONG, BUY_SHORT, capital_at_risk
 from .programs import pool_days
 from .scoring import estimate_join
+from .survey import wall_collateral
 from .terms import TermsStore
 
 FOCUS_POOL_MIN_USD = 250.0      # a program paying this a day per event is boosted
@@ -211,14 +212,28 @@ class Focus:
                           if now - ts <= FOCUS_BP_WINDOW_S] + [(now, val)]
         return val
 
+    def walls_held(self) -> float:
+        """What his qualifying walls (1c bids, 99c asks) hold on the
+        exchange. Owner, 2026-09-10: "My qualifying orders (1c or 99c)
+        should not impair the tender from placing orders" — the money
+        they tie up is counted back into the buying power the stake
+        follows, as the bonds' money gate already does."""
+        tot = 0.0
+        for o in list(self.fam.orders.values()):
+            if is_wall(o) and o.purpose != "bond":
+                tot += wall_collateral(o.side, o.price, o.qty)
+        return round(tot, 2)
+
     def stake_bp(self, now: float) -> float | None:
         """The buying power the stake follows: the highest read of the
-        last FOCUS_BP_WINDOW_S."""
+        last FOCUS_BP_WINDOW_S, plus what his walls hold."""
         bp = self.buying_power(now)
         vals = [v for ts, v in self._bp_reads if now - ts <= FOCUS_BP_WINDOW_S]
         if bp is not None:
             vals.append(bp)
-        return max(vals) if vals else None
+        if not vals:
+            return None
+        return max(vals) + self.walls_held()
 
     def stake(self, slug: str, bp: float | None) -> tuple[float, str]:
         s = self.stakes.get(slug)
@@ -647,15 +662,23 @@ class Focus:
     def _exit_plan(self, slug: str, side: str, book, prog, pool: float,
                    fair: float | None, qty: float, basis: float | None) -> dict | None:
         """Where `qty` held shares exit on this side: at the touch, or
-        the nearest slot behind it that is not under the position's
-        own cost (his fair standing in when the cost is unknown).
-        Exits join the touch, never sit inside it, and never sell under
-        cost (2026-09-10: exits bounded by fair sat eight ticks behind
-        the touch while the tender kept opening more at the touch)."""
+        the nearest slot behind it that is not under BOTH his fair and
+        the position's cost. Exits join the touch and never sit inside
+        it. A price at or past either measure is a good exit — past
+        fair by his own number, past cost as a locked gain — so the
+        bound is whichever of the two lets the exit nearer the touch
+        (owner, 2026-09-10: "if an exit is not earning, then it should
+        be placed closer to the touch" — an exit held at its 59c cost
+        with his fair at 49c and the market at 53c earned nothing).
+        His fair alone can bring an exit to the touch; the cost alone
+        never keeps it away."""
         if qty < 1.0:
             return None
         levels = self._levels_net(slug, side, book)
-        bound = basis if basis is not None else fair
+        bounds = [b for b in (fair, basis) if b is not None]
+        bound = None
+        if bounds:
+            bound = min(bounds) if side == "SELL" else max(bounds)
         cands = self._cands(side, book, bound, bound=bound is not None, improve=False)
         if not cands:
             return None
@@ -829,15 +852,19 @@ class Focus:
                     plan["scale_note"] = (f"{scale * 100:.0f}% of the stake — filled "
                                           f"{since_fill / 60:.0f} min ago, full size at 2 h")
                 row["tend"][side] = plan if plan else {"note": "nothing earns on this side"}
-            # the exit of what is held: at the touch, never under cost
+            # the exit of what is held: at the touch, never under both
+            # his fair and the cost
             if xs is not None:
-                others = sum(o.qty for o in self._orders(slug, xs) if not self._is_mine(o))
+                # his own orders on the exit side already offer part of the
+                # lot — except his qualifying walls, which offer nothing
+                others = sum(o.qty for o in self._orders(slug, xs)
+                             if not self._is_mine(o) and not is_wall(o))
                 q = float(math.floor(abs(net) - others))
                 xp = (self._exit_plan(slug, xs, book, prog, pool, fair, q, basis)
                       if q >= 1.0 else None)
                 row["exit"] = ({"side": xs, **xp} if xp else
                                {"side": xs, "note": ("your own orders already offer the lot"
-                                                     if q < 1.0 else "no price at or past cost on this book")})
+                                                     if q < 1.0 else "no price at or past your fair or the cost on this book")})
                 row["tend"][xs] = dict(row["exit"], exit=True) if xp else row["exit"]
         elif book is None:
             row["note"] = "no book read yet"

@@ -550,24 +550,83 @@ class TestAfterAFill(Base):
         self.assertEqual(len(ex2), 1)
         self.assertEqual(ex2[0].qty, 400.0)
 
-    def test_the_exit_joins_the_touch_and_never_sits_under_cost(self):
+    def test_the_exit_joins_the_touch_when_either_his_fair_or_the_cost_allows(self):
         # short 200 opened at 47c: cost a share 53c of collateral, the
-        # break-even YES price 47c; the bid touch is 44c, under it
+        # break-even YES price 47c; the bid touch is 44c, under it —
+        # a gain against the cost, so the touch, though past his fair
         self.r.positions[NC] = (-200.0, 200.0 * 0.53)
         self.f.set_fair(NC, 40.0)
         self.tick()
         ex = self.f.rows[NC]["exit"]
         self.assertEqual(ex["side"], "BUY")
-        self.assertEqual(ex["px"], 0.44)              # the touch, under cost
+        self.assertEqual(ex["px"], 0.44)              # the touch
         self.assertAlmostEqual(ex["basis"], 0.47, places=4)
         bids = self.mine(NC, "BUY")
         self.assertEqual(len(bids), 1)
         self.assertEqual((bids[0].price, bids[0].qty), (0.44, 200.0))
-        # the touch above cost: the exit sits at cost, not past it
+        # the touch past both his fair and the cost: the exit sits at
+        # the nearer of the two, not past it
         self.r.exchange.books[NC] = wide_book(self.r.now, bid=0.48, ask=0.51)
         self.f.moved_at.clear()
         self.tick()
         self.assertEqual(self.f.rows[NC]["exit"]["px"], 0.47)
+        # his fair raised past the cost: the fair alone brings the exit
+        # to the touch (owner, 2026-09-10: "if an exit is not earning,
+        # then it should be placed closer to the touch")
+        self.f.set_fair(NC, 50.0)
+        self.f.moved_at.clear()
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["exit"]["px"], 0.48)
+
+    def test_the_cost_alone_never_keeps_an_exit_off_the_touch(self):
+        # 2026-09-10, Senate Republican control: 195 held at a 59c cost,
+        # his fair 49c, the ask touch 53c — the exit had sat at 59c,
+        # earning nothing
+        self.r.positions[NC] = (195.0, 195.0 * 0.59)
+        self.f.set_fair(NC, 49.0)
+        self.r.exchange.books[NC] = wide_book(self.r.now, bid=0.50, ask=0.53)
+        self.tick()
+        ex = self.f.rows[NC]["exit"]
+        self.assertEqual((ex["side"], ex["px"], ex["qty"]), ("SELL", 0.53, 195.0))
+        self.assertGreater(ex["est"], 0.0)
+        self.assertAlmostEqual(ex["basis"], 0.59, places=4)
+        asks = self.mine(NC, "SELL")
+        self.assertEqual((asks[0].price, asks[0].qty), (0.53, 195.0))
+        # the touch under both: the exit rests at his fair, the nearer
+        self.r.exchange.books[NC] = wide_book(self.r.now, bid=0.44, ask=0.47)
+        self.f.moved_at.clear()
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["exit"]["px"], 0.49)
+
+    def test_his_qualifying_wall_offers_none_of_the_lot_and_widens_the_stake(self):
+        # owner, 2026-09-10: "My qualifying orders (1c or 99c) should not
+        # impair the tender from placing orders"
+        self.r.fam.orders["w1"] = FamilyOrder(id="w1", market=NC, side="SELL", price=0.99,
+                                              qty=6000.0, intent=SELL_LONG, placed_ts=self.r.now,
+                                              purpose="manual", why="his wall")
+        self.r.exchange.live["w1"] = {"id": "w1", "market": NC, "side": "SELL",
+                                      "price": 0.99, "size": 6000.0, "intent": SELL_LONG}
+        self.r.positions[NC] = (200.0, 200.0 * 0.40)
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        row = self.f.rows[NC]
+        # the exit offers the whole lot beside the wall
+        self.assertEqual((row["exit"]["px"], row["exit"]["qty"]), (0.47, 200.0))
+        self.assertEqual(self.mine(NC, "SELL")[0].qty, 200.0)
+        # the $60 the wall holds counts back into the buying power: the
+        # stake is 10% of $2,060, not of $2,000
+        self.assertAlmostEqual(self.f.walls_held(), 60.0, places=2)
+        self.assertAlmostEqual(row["stake"], 206.0, places=2)
+        # a small resting ask of his is not a wall: it offers part of the lot
+        self.r.fam.orders["h1"] = FamilyOrder(id="h1", market=NC, side="SELL", price=0.48,
+                                              qty=50.0, intent=SELL_LONG, placed_ts=self.r.now,
+                                              purpose="manual", why="his ask")
+        self.r.exchange.live["h1"] = {"id": "h1", "market": NC, "side": "SELL",
+                                      "price": 0.48, "size": 50.0, "intent": SELL_LONG}
+        self.f.moved_at.clear()
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["exit"]["qty"], 150.0)
 
     def test_the_exit_is_one_order_even_after_the_family_relabels_it(self):
         self.r.positions[NC] = (200.0, 200.0 * 0.40)
