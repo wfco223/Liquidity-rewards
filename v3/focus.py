@@ -132,6 +132,7 @@ class Focus:
         self.pass_s = 0.0
         self.books_read = 0
         self.note = ""
+        self._blocked_noted = 0.0
         self.payload_json = b'{"ok":false,"note":"the first pass has not run yet"}'
 
     # -- plumbing --------------------------------------------------------------
@@ -504,6 +505,17 @@ class Focus:
             acted = self._tend(now, positions, on) if on else 0
             if not on:
                 self.note = "the focus switch is off — showing, not tending"
+            elif self._blocked():
+                # the desk's breaker (2026-09-10, 12:23Z: the third
+                # address of the day read as a VPN and the tender sat
+                # silent with a +$141/day plan): say so on the page
+                self.note = ("the exchange refuses this server's orders as a VPN "
+                             "— nothing rests or moves until a Deploy tap gives "
+                             "it a new address; your own taps still try")
+                if now - self._blocked_noted > 900.0:
+                    self._blocked_noted = now
+                    self._log(event="blocked", note="placements refused as a VPN — "
+                                                    "the tender waits for a new address")
             else:
                 self.note = ""
             self.last_pass = now
@@ -622,13 +634,22 @@ class Focus:
             tot += capital_at_risk(o.intent, o.price, o.qty) * max(pf, FOCUS_PF_FLOOR)
         return round(tot, 2)
 
+    def _blocked(self) -> bool:
+        """The desk's placement breaker: the exchange refused the last
+        placement from this address as a VPN."""
+        h = getattr(self.fam.desk, "health", None)
+        try:
+            return bool(h is not None and h.blocked())
+        except Exception:  # noqa: BLE001
+            return False
+
     def _tend(self, now: float, positions: dict, on: bool) -> int:
         """One order a side a market where he has set a fair: rested at
         the best EV slot, kept while it keeps FOCUS_KEEP of the best,
         moved on the cooldown, pulled when nothing earns. The loss cap
         binds across markets, best EV first."""
         actions = FOCUS_ACTIONS_PER_PASS
-        blocked = getattr(getattr(self.fam.desk, "health", None), "blocked", lambda: False)()
+        blocked = self._blocked()
         # over the cap: the weakest tender orders come off first
         used = self.risk_used()
         if used > self.loss_cap + 1e-9:
@@ -992,7 +1013,7 @@ class Focus:
                 "n": len(self.markets), "bp": bp, "stake": stake, "stake_src": src,
                 "loss_cap": self.loss_cap, "risk_used": self.risk_used(),
                 "coc_day": self.coc_day, "fill_floor": self.fill_floor,
-                "on": bool(on), "note": self.note,
+                "on": bool(on), "note": self.note, "blocked": self._blocked(),
                 "tended": sum(1 for r in rows if not r.get("not_tended")),
                 "mine": sum(1 for o in list(self.fam.orders.values())
                             if o.purpose == PURPOSE and o.market in self.markets),
