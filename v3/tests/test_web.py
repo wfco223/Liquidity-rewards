@@ -213,9 +213,11 @@ class TestRedesign(unittest.TestCase):
         # 2026-09-10: "Take off the survey entirely")
         # the focus tab (owner, 2026-09-10: "I need very high
         # visibility into the new markets")
+        # second from the left (owner, 2026-09-10: "make that the
+        # second tab from the left")
         self.assertEqual(labels,
-                         ["quick look", "status", "orders", "pay", "bonds",
-                          "focus", "log", "switch"])
+                         ["quick look", "focus", "status", "orders", "pay",
+                          "bonds", "log", "switch"])
         self.assertEqual(web.PAGES["/focus"][1], "focus")
         self.assertEqual(web.PAGES["/bonds"][3], "")
         self.assertNotIn("/survey", web.PAGES)
