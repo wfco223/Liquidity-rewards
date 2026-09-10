@@ -3746,3 +3746,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789006747.4,politics,paccc-balpow-2026-11-03-rsweep,SELL,100,0.14,backfill,,0.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD74DJCF0SX4
 1789006747.4,politics,paccc-balpow-2026-11-03-rsweep,BUY,0.4,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7MYBV5GSJ1
 1789006747.4,nfl,ftsc-nfl-temostfp-w1-2026-09-14-brestr,BUY,0.46,0.06,backfill,,0.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD79YE4E2SX4
+1789007506.9,cfb,aachc-cfb-wins-2026-11-28-nd-8pt5wins,BUY,1,0.97,sell,0.5721,14.95,,86,94,0.039,0.87,0.88,0.07,2,buying back the short at or under what it sold for — the bid earns while it wait,CCTXW5EM2SJ1
+1789007566.9,cfb,aachc-cfb-wins-2026-11-28-utahst-6pt5wins,SELL,1,0.34,sell,0,0,,25,35,0.025,0.34,0.35,-0.03,0,taker dump — sold into the bid (the carved exception),CD7VEWNYET75
+1789007591.2,politics,scc-senate-gop-2026-11-03-56,SELL,0.01,0.03,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7FF7V7CSJR
+1789007626.9,cfb,aachc-cfb-wins-2026-11-28-utahst-6pt5wins,BUY,1,0.34,sell,0,1.89,,25,35,0.025,0.34,0.35,0.03,1,buying back the short at or under what it sold for — the bid earns while it wait,CD68P3BJ0T75
+1789007685.8,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,25,0.02,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7MWWXKJT75
+1789007685.8,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,20,0.02,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7HKG34MT75
+1789007743.6,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,5.12,0.04,backfill,,0.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD74DACAASJZ
+1789007825.7,politics,paccc-balpow-2026-11-03-rsweep,SELL,-100,0.14,fix,0.2662,0.61,,10,17,0,0.14,0.15,0,-100,size trimmed by 100 to the exchange's count (order CD74DJCF0SX4),CD74DJCF0SX4
+1789007825.7,politics,scc-senate-gop-2026-11-03-56,SELL,0.01,0.03,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7FF7V7CSJR
+1789007825.7,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,25,0.02,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7MWWXKJT75
+1789007825.7,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,20,0.02,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7HKG34MT75
+1789007825.7,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,5.12,0.04,backfill,,0.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD74DACAASJZ
