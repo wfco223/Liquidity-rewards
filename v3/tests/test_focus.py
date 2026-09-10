@@ -826,6 +826,38 @@ class TestHisWallCarriesTheSide(Base):
         self.assertEqual(self.f.rows[NC]["exit"]["est"], 0.0)
 
 
+class TestTheCapHasSlack(Base):
+    def test_a_little_over_the_cap_pulls_nothing_and_a_fresh_order_waits(self):
+        # 23:32-23:35Z: orders rested under the cap were pulled "over the
+        # cap" three minutes later as the readings moved
+        self.f.set_fair(NC, 45.0)
+        self.f.set_fair(OH, 52.0)
+        self.tick()
+        entries = [o for o in self.mine() if not self.f._exit_order(o)]
+        self.assertGreaterEqual(len(entries), 2)
+        used = self.f.risk_used()
+        self.assertGreater(used, 0.0)
+        # the cap a hair under what rests: within the slack, nothing moves
+        self.f.loss_cap = used / 1.05
+        self.tick()
+        self.assertFalse([e for e in self.f.log if e.get("event") == "pull" and "cap" in e.get("why", "")])
+        self.assertEqual(len([o for o in self.mine() if not self.f._exit_order(o)]), len(entries))
+        # past the slack but not far over: the orders just rested are spared
+        self.f.loss_cap = used / 1.15
+        self.tick()
+        self.assertFalse([e for e in self.f.log if e.get("event") == "pull" and "cap" in e.get("why", "")])
+        # five minutes on, the weakest comes off
+        self.r.now += focus_mod.FOCUS_CAP_GRACE_S
+        self.tick()
+        pulls = [e for e in self.f.log if e.get("event") == "pull" and "cap" in e.get("why", "")]
+        self.assertTrue(pulls)
+        # far over: even a fresh order comes off
+        self.f.loss_cap = 0.5
+        self.f.moved_at.clear()
+        self.tick()
+        self.assertFalse([o for o in self.mine() if not self.f._exit_order(o)])
+
+
 class TestSilverSeedsTheFairsHeNamed(Base):
     def test_a_named_market_gets_silvers_number_once(self):
         # owner, 2026-09-10: "those little hanging fruit markets that you

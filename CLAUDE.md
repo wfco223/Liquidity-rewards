@@ -196,7 +196,12 @@ long and accreted, so search it rather than reading it through.
   showed $0.00 a day). Only the order a plan replaces is netted out. The expected-loss cap counts
   entries only: an exit is the position leaving, counts nothing and
   is never pulled by the cap (21:00Z: a cover was rested and pulled
-  "over the cap" eight times in four minutes); a cover of a short is
+  "over the cap" eight times in four minutes); the cap has slack —
+  the trim starts only 10% over, and an order rested in the last
+  five minutes is pulled only when the cap is 25% over (23:32-23:35Z:
+  orders rested under the cap were pulled three minutes later as the
+  readings moved, 25 such pulls in an hour); his orders the tender
+  adopts count toward the cap like its own and are logged "adopted"; a cover of a short is
   placed as the close it is (SELL_SHORT), never as a fresh long. A
   refused placement or resize waits out the cooldown before another
   try (a refused resize had been retried every twenty seconds). An
