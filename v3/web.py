@@ -2059,6 +2059,9 @@ function fCard(r,f){
  o.push('<div class="sub">stake a side '+fField('fs-'+r.market,'','6em','$')+fBtn('Set','fStake(\''+m+'\')','small')+' <span class="muted">'+usd(r.stake)+' now ('+esc(r.stake_src)+')</span>'+(r.stake_src==='set by you'?fBtn('Back to 10%','fOp(\'focus_stake\',\''+m+'\',\'\')','small off'):'')+'</div>');
  o.push('<div class="sub">rest <select id="fps-'+r.market+'" style="font-size:16px;padding:6px"><option value="BUY">a bid</option><option value="SELL">an ask</option></select> '+fField('fpp-'+r.market,'','5em','¢')+fField('fpq-'+r.market,'','5em','shares')+fBtn('Place','fPlace(\''+m+'\')','small')+'</div>');
  o.push('<div class="sub">'+(r.paused?fBtn('Resume the tender here','fOp(\'focus_resume\',\''+m+'\')','small'):fBtn('Pause the tender here','fOp(\'focus_pause\',\''+m+'\')','small off'))+fBtn('Pull the tender\'s orders','fOp(\'focus_pull\',\''+m+'\')','small off')+'</div>');
+ // his hand's list (owner, 2026-09-10: "Give me a button to take a market off of the hand tended list")
+ if(r.by_hand)o.push('<div class="sub">'+fBtn('Take off my hand\'s list \u2014 let the tender work it','if(confirm(\'Let the tender rest orders here from your fair? Your own orders stay yours.\'))fOp(\'focus_release\',\''+m+'\')','small')+'</div>');
+ else if(r.released)o.push('<div class="sub"><span class="pill on">off your hand\'s list</span> '+fBtn('Back to my hand','fOp(\'focus_unrelease\',\''+m+'\')','small off')+'</div>');
  o.push('<div class="muted"><code>'+m+'</code>'+(p.pid?' · '+esc(pid)+' · target '+fmtsz(p.target||0)+' · df '+p.df:'')+(p.side_pool?' · '+usd(p.side_pool)+'/day a side':'')+'</div>');
  o.push('</details></div>');
  return o.join('');
