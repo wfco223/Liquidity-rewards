@@ -3758,3 +3758,25 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789007825.7,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,25,0.02,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7MWWXKJT75
 1789007825.7,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,20,0.02,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7HKG34MT75
 1789007825.7,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,5.12,0.04,backfill,,0.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD74DACAASJZ
+1789008034.8,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,BUY,2,0.22,earn,3.4153,0.15,,22,25,0.805,0.16,0.24,-0.02,2,1 tick behind the touch — we would hold 69% of the bid side,CD7TSWHS6T75
+1789008154.9,politics,ussewc-usse-co-2026-11-03-dem,BUY,17,0.94,bond,0,0.01,0.995125,91,94,0.745,0.95,0.96,-0.0551,17,bond: took 17 YES at 94c — it was in the way of our resting order,CD7ZMP0P4SK5
+1789008154.9,politics,ussewc-usse-va-2026-11-03-dem,BUY,0.1,0.96,bond,0,0,0.994625,96,99,0.828,0.94,0.97,-0.0346,0.1,bond: took 0.1 YES at 96c — it was in the way of our resting order,CD80DFWF4SJ1
+1789008203.7,politics,ussewc-usse-co-2026-11-03-dem,BUY,100,0.95,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CD80RVA1WSJZ
+1789008214.9,nfl,tec-nfl-afceast-2027-01-10-w-ne,BUY,2,0.49,earn,1.0153,0.16,,45,52,0,0.49,0.5,0.01,2,joins the touch — the book has been quiet,CD7W18M62T6S
+1789008393.9,politics,scc-senate-gop-2026-11-03-49,BUY,32,0.16,manual,0,0.5,0.1509,15,18,0.791,0.16,0.18,0.0091,32,the owner's own order — the engine leaves it alone,CD7M94STWT6S
+1789008453.9,cfb,aachc-cfb-wins-2026-11-28-cah-6pt5wins,SELL,1.1,0.4,sell,0,0,,40,47,0.625,0.4,0.41,0.03,0.9,taker dump — sold into the bid (the carved exception),CD81XED2RT75
+1789008589.6,cfb,aachc-cfb-wins-2026-11-28-utahst-6pt5wins,BUY,0.46,0.34,backfill,,0.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7W8VDQ4T75
+1789008970.5,nfl,aqc-nfl-afc-2027-01-24-champq-ind,BUY,0.4,0.14,backfill,,1.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD72VBEW6SJH
+1789009121.1,cfb,aachc-cfb-wins-2026-11-28-minnst-8pt5wins,BUY,1,0.24,manual,3.5714,9.23,,,,0.359,,,,5,the owner's own order — the engine leaves it alone,CD0A2T7PPSJ1
+1789009127.4,cfb,aachc-cfb-wins-2026-11-28-vtech-8pt5wins,BUY,0.01,0.3,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD86KAC06SJH
+1789009294.0,cfb,aachc-cfb-wins-2026-11-28-minnst-8pt5wins,BUY,0.01,0.23,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD87N1YQYSJ1
+1789009295.2,cfb,aachc-cfb-wins-2026-11-28-wvir-7pt5wins,BUY,1,0.23,backfill,,0.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD836GCTASJH
+1789009295.3,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,-24.88,0.02,fix,1.1699,0.3,,1,6,0.012,0.02,0.04,0.01,-50,size trimmed by 24.88 to the exchange's count (order CD7MWWXKJT75),CD7MWWXKJT75
+1789009295.3,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,-20,0.02,fix,0.9359,0.42,,1,6,0.012,0.02,0.04,0.02,-25.12,size trimmed by 20 to the exchange's count (order CD7HKG34MT75),CD7HKG34MT75
+1789009295.3,politics,paccc-balpow-2026-11-03-rhou-dsen,SELL,-5.12,0.04,fix,0.0842,0.91,,1,6,0.012,0.02,0.04,0,-5.12,size trimmed by 5.12 to the exchange's count (order CD74DACAASJZ),CD74DACAASJZ
+1789009295.3,politics,ussewc-usse-co-2026-11-03-dem,BUY,100,0.95,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CD80RVA1WSJZ
+1789009295.3,cfb,aachc-cfb-wins-2026-11-28-utahst-6pt5wins,BUY,0.46,0.34,backfill,,0.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7W8VDQ4T75
+1789009295.3,cfb,aachc-cfb-wins-2026-11-28-vtech-8pt5wins,BUY,0.01,0.3,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD86KAC06SJH
+1789009295.3,cfb,aachc-cfb-wins-2026-11-28-minnst-8pt5wins,BUY,0.01,0.23,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD87N1YQYSJ1
+1789009295.3,cfb,aachc-cfb-wins-2026-11-28-wvir-7pt5wins,BUY,1,0.23,backfill,,0.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD836GCTASJH
+1789009295.3,nfl,aqc-nfl-afc-2027-01-24-champq-ind,BUY,0.4,0.14,backfill,,1.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD72VBEW6SJH
