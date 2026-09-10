@@ -438,6 +438,7 @@ class OrderDesk:
         wait = 1.0
         last = "order not seen in the open list"
         seen = 0.0
+        seen_n = 0                # polls that showed it resting, trimmed
         while True:
             try:
                 for o in self.client.open_orders():
@@ -451,9 +452,16 @@ class OrderDesk:
                                       f"{o['price'] * 100:g}c (id {o['id']})"), o["size"]
                     last = f"resting only {o['size']:g} of {min_qty:g}"
                     seen = float(o["size"] or 0.0)
+                    seen_n += 1
             except ApiError as e:
                 last = f"open-orders read failed: {e}"
             if self._clock() >= deadline:
+                return False, last, seen
+            if want_id and seen_n >= 2:
+                # seen twice at the smaller size: the exchange cut it to
+                # the money there and a resting order never grows — no
+                # point waiting out the deadline (2026-09-10: four such
+                # waits stalled every cycle by a minute)
                 return False, last, seen
             self._sleep(wait)
             wait = min(wait * 2, 4.0)
@@ -483,12 +491,16 @@ class OrderDesk:
         return OrderResult(ok=True, note="cancel-all sent")
 
     def reprice(self, existing: dict, new_price: float, new_qty: float | None = None,
-                *, initiator: str = "auto") -> OrderResult:
+                *, initiator: str = "auto", keep_trimmed: bool = False) -> OrderResult:
         """Move an order to a new price/size WITHOUT ever risking its loss:
         place the replacement, verify it rests (by id, at full size), and
         only then cancel the original. `existing` needs id, market, side,
         price, size, and intent (the replacement keeps the same intent —
-        deriving it fresh could flip a SELL_LONG into a BUY_SHORT)."""
+        deriving it fresh could flip a SELL_LONG into a BUY_SHORT).
+        With keep_trimmed a replacement the exchange cut to the money
+        there still counts: it stays at the size that rests (reported in
+        resting_qty) and the original goes — the amplifier's rule (owner,
+        2026-09-09: "What the exchange funds of it is what rests")."""
         slug, side = existing["market"], existing["side"]
         qty = round(new_qty if new_qty is not None else existing["size"], 2)
         placed = self.place_resting(
@@ -496,23 +508,28 @@ class OrderDesk:
             intent=existing.get("intent") or None,
             initiator=initiator, verify=True,
         )
-        if not placed.ok:
+        trimmed = float(placed.resting_qty or 0.0)
+        if not placed.ok and not (keep_trimmed and placed.order_id and trimmed >= 1.0):
             if placed.order_id:
                 # The unverified replacement may still be live somewhere —
                 # withdraw it so we never hold a ghost. Original untouched.
                 self.cancel(placed.order_id, slug, initiator=initiator)
             return OrderResult(ok=False, order_id=existing["id"], intent=placed.intent,
                                note=f"original untouched — {placed.note}")
+        kept = (f" {trimmed:g} of {qty:g} (the exchange kept what the money allows)"
+                if not placed.ok else "")
         old = self.cancel(existing["id"], slug, initiator=initiator)
         if not old.ok:
             # Two orders resting: costs a little size, far better than
             # losing our place. Surface it loudly; the caller alerts.
             return OrderResult(ok=True, order_id=placed.order_id, intent=placed.intent,
                                price=placed.price, two_orders=True,
-                               note=(f"replacement resting (id {placed.order_id}) but the "
+                               resting_qty=trimmed if not placed.ok else 0.0,
+                               note=(f"replacement resting{kept} (id {placed.order_id}) but the "
                                      f"original {existing['id']} failed to cancel — "
                                      f"two orders on the book"))
         return OrderResult(ok=True, order_id=placed.order_id, intent=placed.intent,
                            price=placed.price,
-                           note=f"repriced: new {placed.order_id} resting, "
+                           resting_qty=trimmed if not placed.ok else 0.0,
+                           note=f"repriced: new {placed.order_id} resting{kept}, "
                                 f"original {existing['id']} cancelled")

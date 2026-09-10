@@ -2800,6 +2800,19 @@ class Family:
                     del self.orders[rec.id]
                     actions -= 1
                 continue
+            if self.held_ground(rec.market) and rec.purpose != "sell":
+                # held ground (owner, 2026-09-10 "The model is buying in
+                # new markets that I didn't approve"): the engine's own
+                # bids, asks and probes come off; the exits of what is
+                # already held stay so the positions can close
+                r = self.desk.cancel(rec.id, rec.market)
+                if r.ok:
+                    self._log(event="pull", market=rec.market, side=rec.side,
+                              why="owner: held ground — nothing rests here "
+                                  "until he opens the market")
+                    del self.orders[rec.id]
+                    actions -= 1
+                continue
             # ON-GRID SWEEP (owner, 2026-08-26: "Go through and change
             # all the non whole number price orders"): the desk now
             # snaps every NEW price to the book's grid; this walks the
