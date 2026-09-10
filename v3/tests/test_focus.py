@@ -426,6 +426,58 @@ class TestAfterAFill(Base):
         self.assertTrue(self.mine(NC, "SELL") or "filled" not in
                         (self.f.rows[NC]["tend"]["SELL"].get("note") or ""))
 
+    def test_an_order_the_open_list_left_out_for_a_read_is_not_a_fill(self):
+        # 13:35Z: the list left the TX governor bid out for one read; the
+        # family restored its record a minute later; the tender had
+        # taken it for a fill, held the side and pulled the restored order
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        bid = self.mine(NC, "BUY")[0]
+        live = self.r.exchange.live.pop(bid.id)
+        self.r.switch = False
+        self.r.cycle(advance=1.0)                    # the read that left it out
+        self.r.exchange.live[bid.id] = live
+        self.r.cycle(advance=1.0)                    # and the one that shows it again
+        self.r.switch = True
+        self.tick()
+        self.assertFalse(self.f.filled_at)
+        self.assertNotIn("filled", (self.f.rows[NC]["tend"]["BUY"].get("note") or ""))
+        self.assertIn(bid.id, self.r.exchange.live)  # still resting, never pulled
+        self.assertFalse(any(e.get("event") == "filled" for e in self.f.log))
+
+    def test_the_family_relabelling_a_tender_exit_does_not_read_as_a_fill(self):
+        self.r.positions[NC] = (200.0, 200.0 * 0.40)
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ask = self.mine(NC, "SELL")[0]
+        ask.purpose = "sell"
+        ask.why = "an exit — its fill reduces the position it sits on"
+        self.tick()
+        self.assertFalse(self.f.filled_at)
+        self.assertTrue(self.f._is_mine(ask))
+        self.assertEqual(len(self.f._mine(NC, "SELL")), 1)
+
+    def test_a_buying_power_dip_does_not_pull_an_order_earning_on_its_own(self):
+        # 13:43-13:46Z: the balance-of-power ask was pulled and re-rested
+        # three times in three minutes as the stake followed the reads
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ask = self.mine(NC, "SELL")[0]
+        self.f._bp_fn = lambda: 30.0                 # a dip: the stake would be $3
+        self.f._bp = None
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["stake"], 200.0)   # the half-hour high stands
+        self.assertIn(ask.id, self.r.exchange.live)
+        # and when the high has aged out, the plan shrinks but the
+        # resting order stays while its own expected value is positive
+        self.f._bp_reads = []
+        self.f._bp = None
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["stake"], 3.0)
+        self.assertIn(ask.id, self.r.exchange.live)
+        self.assertFalse(any(e.get("event") == "pull" and e.get("market") == NC
+                             for e in self.f.log))
+
     def test_the_exit_joins_the_touch_and_never_sits_under_cost(self):
         # short 200 opened at 47c: cost a share 53c of collateral, the
         # break-even YES price 47c; the bid touch is 44c, under it
