@@ -100,6 +100,15 @@ long and accreted, so search it rather than reading it through.
   pulls it for two hours; the amplifier itself trading books the
   lot's shares sold and pulls the rest; the bonds switch off pulls
   it. Nothing else may cross.
+  KILLED (owner, 2026-09-10 "Kill the amplifier. There is a bug that
+  bought 3000 shares of yes on a 56 seat senate market ... At 5
+  cents which is a total risk for 150 dollars. That is way way way
+  past the 28 dollars I told you to set."): the cap had bounded
+  expected loss a day (fill odds x loss a share x size), never the
+  collateral, and a 3,000-share bid at 5c filled 20 minutes after it
+  rested. AMP_ENABLED is False: nothing rests, every resting
+  amplifier is pulled each cycle, the page says so. Do not bring it
+  back without a cap on the money at risk and the owner's yes.
 - Bond money (owner, 2026-09-06): the bonds buy within the budget
   market by market — in any one market, what is held at cost plus that
   market's buy orders stays under the budget; across markets the orders

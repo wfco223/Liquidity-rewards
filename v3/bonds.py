@@ -149,6 +149,15 @@ BOOK_READS_PER_CYCLE = 40   # at the START of the pass, this many at most (owner
 # shares sold and pulls the rest; what the exchange funds of it is
 # what rests (a trimmed order is kept at the size given, and it does
 # not try to grow again for AMP_GROW_S).
+# KILLED (owner, 2026-09-10: "Kill the amplifier. There is a bug that
+# bought 3000 shares of yes on a 56 seat senate market ... At 5 cents
+# which is a total risk for 150 dollars. That is way way way past the
+# 28 dollars I told you to set."). The cap had bounded expected loss
+# per day (fill odds x loss a share x size), never the collateral: a
+# 3,000-share bid at 5c read as $5.75/day and filled 20 minutes after
+# it rested. With the flag off nothing is placed and every resting
+# amplifier is pulled each cycle; the code below stays for the record.
+AMP_ENABLED = False
 AMP_FRACTION = 0.50
 AMP_DAYS = 3
 AMP_AFTER_FILL_S = 2 * 3600.0
@@ -1849,11 +1858,15 @@ class Bonds:
                 r = self._keep_buying(slug, side, positions, now)
                 if r:
                     placed.append(r)
-            placed.extend(self._amplify_all(positions, now))
-        if not on:
-            for slug in list(self.amp) + [s for s in self._working() if self._amp_orders(s)]:
+            if AMP_ENABLED:
+                placed.extend(self._amplify_all(positions, now))
+        if not on or not AMP_ENABLED:
+            why = ("the bonds switch is off" if AMP_ENABLED
+                   else "the amplifier is killed (owner, 2026-09-10)")
+            for slug in list(dict.fromkeys(list(self.amp) + list(self._amp_ids)
+                                           + [s for s in self._working() if self._amp_orders(s)])):
                 if self._amp_orders(slug):
-                    self._amp_pull(slug, "the bonds switch is off")
+                    self._amp_pull(slug, why)
         for slug in self._working():
             self._watch_bait(slug, self._side_of(slug), now)
         rate = sum(o.live_est or 0.0 for o in list(self.fam.orders.values())
@@ -4638,7 +4651,11 @@ class Bonds:
                                          if o.purpose == "bond"), 2),
                 "board_note": self._board_note(rows),
                 "wall_held": round(self._wall_held(), 2),
-                "amp_budget": round(self._amp_budget_day(), 2),
+                "amp_budget": (round(self._amp_budget_day(), 2) if AMP_ENABLED else None),
+                "amp_off": (None if AMP_ENABLED else
+                            "off — killed (owner, 2026-09-10): its cap bounded expected loss "
+                            "a day, not the money at risk, and a 3,000-share bid at 5c filled. "
+                            "Every resting amplifier is pulled; nothing new rests."),
                 "amp_avg_earn": round(self._avg_earn_day(), 2),
                 "amp_fraction": AMP_FRACTION,
                 "amp_in_play": round(sum(float(a.get("exp_loss") or 0.0) for a in self.amp.values()), 2),
