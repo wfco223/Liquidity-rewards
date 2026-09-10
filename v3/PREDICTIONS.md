@@ -943,3 +943,26 @@ are read per rule-period, not pooled.*
 **Check.** The bonds log (exit_split / exit_unsplit / more_split with
 their exposure figures); data/trades.csv for bond sales by price level;
 data/rewards.csv for the market-days.
+
+### P19 — written 2026-09-10 ~03:00Z, BEFORE Sep 10 posts
+**Claim:** the midterms programs the exchange launched on 2026-09-09
+(T1 toss-up Senate control $1,500, T2 competitive Senate/governor/seat
+counts $600, T3 coverage $250, all carrying an end date of 2026-11-04)
+pay their rewardPool PER DAY, like every politics program before them —
+not spread over the 55-day window to election day.
+**Why:** the August reconciliation settled that politics pools pay in
+full daily (programs.py, `pool_days`); the family's estimate had used a
+property that divides any bounded pool by its window, so $1,500 a day
+read as $6.82 a side (owner, 2026-09-10: "The estimator doesn't appear
+to be taking into account the new reward pools"). And the competition
+on these books — 52,108 shares bid and 46,889 asked at the touch of
+North Carolina Senate rep against a 25,000 target — makes no sense for
+a $27-a-day pool.
+**Falsified if:** when Sep 10 posts, our North Carolina Senate rep
+market-day pays under $3 against the window-divided claim of $0.51/day
+and the daily-pool claim of roughly 55 times that; or, across the T1
+and T2 markets we rest in, the posted total is under a tenth of the
+daily-pool claim.
+**Resolves:** when 2026-09-10 posts to data/rewards.csv (rows for
+ewc-usse-nc-2026-11-03-rep, ewc-usse-oh-2026-11-03-dem/rep,
+ewc-usse-tx-2026-11-03-rep and the scc-senate-gop brackets).
