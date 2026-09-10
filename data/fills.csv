@@ -3720,3 +3720,29 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789004553.2,politics,usgubewc-usgub-co-2026-11-03-dem,BUY,9,0.97,hand,,0.71,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBZA02KX0Q3X
 1789004553.2,politics,ussewc-usse-la-2026-11-03-rep,BUY,3,0.95,hand,,1.24,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBZ0G4P30Q46
 1789004553.2,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,2,0.95,backfill,,0.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6YYFKQASJ1
+1789004682.7,cfb,aachc-cfb-wins-2026-11-28-sc-8pt5wins,SELL,2,0.23,sell,0,0,,24,29,0.554,0.23,0.24,0.03,0,taker dump — sold into the bid (the carved exception),CD75QJ63YT3P
+1789004954.3,politics,ussewc-usse-sc-2026-11-03-rep,SELL,30,0.84,manual,5.8685,0.16,0.92325,83,87,0.625,0.75,0.89,0.0833,0,the owner's own order — the engine leaves it alone,CD72JGBYCT75
+1789004982.6,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,25.88,0.95,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD75FVKM8SK5
+1789004982.6,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,7,0.95,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD73GS2SGT75
+1789005014.3,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,10,0.95,manual,0.335,0.13,0.996525,89,94,0.624,0.93,0.95,0.0465,259,the owner's own order — the engine leaves it alone,CD73QRVJYT3P
+1789005014.3,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,7,0.95,manual,0.469,0.13,0.996525,89,94,0.624,0.93,0.95,0.0465,252,the owner's own order — the engine leaves it alone,CD73GS2SGT75
+1789005171.4,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,80.75,0.22,backfill,,4.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD3DSN416SJZ
+1789005489.6,politics,usgubewc-usgub-fl-2026-11-03-rep,SELL,50,0.84,earn,0.4114,0.51,0.780425,79,83,0.482,0.83,0.84,-0.0596,-137,at the touch — a fill here is 5 ticks inside value (Silver + evidence),CD6YHN62PT6S
+1789005549.6,politics,scc-senate-gop-2026-11-03-56,BUY,3000,0.05,manual,0.3104,0.33,0.006225,4,9,0.421,0.02,0.05,0.0438,2996,the owner's own order — the engine leaves it alone,CD72R8FFMT75
+1789005609.6,politics,scc-senate-gop-2026-11-03-56,BUY,3,0.03,manual,0,0.34,0.006225,3,7,0.61,0.02,0.03,0.0238,3003,the owner's own order — the engine leaves it alone,CD72Z71CMT6S
+1789005609.6,politics,scc-senate-gop-2026-11-03-56,BUY,1,0.05,manual,0.0001,0.34,0.006225,3,7,0.61,0.02,0.03,0.0438,3004,the owner's own order — the engine leaves it alone,CD72Z2HMRSX4
+1789005609.6,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,32.68,0.93,manual,1.4622,0.29,0.996525,92,96,0.713,0.93,0.95,-0.0665,284.68,the owner's own order — the engine leaves it alone,CD73NW2WCSJZ
+1789005766.3,politics,ussewc-usse-ar-2026-11-03-rep,BUY,1.98,0.9,earn,0.2153,1.49,0.983275,91,95,0.563,0.9,0.91,-0.0833,5.98,at the touch — a fill here is 5 ticks inside value (Silver + evidence),CD659ZG7GSX0
+1789005826.5,politics,scc-senate-gop-2026-11-03-49,BUY,30,0.18,sell,0.0993,1.26,0.1509,15,19,0.75,0.14,0.17,0.0291,0,buying back the short at or under what it sold for — the bid earns while it wait,CD6C8C79ASX4
+1789005872.9,nfl,ftsc-nfl-temostfp-w1-2026-09-14-brestr,BUY,0.46,0.06,backfill,,0.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD79YE4E2SX4
+1789005886.5,politics,ussewc-usse-or-2026-11-03-dem,SELL,20,0.94,sell,2.8105,1.52,0.99865,95,99,0.617,0.93,0.97,0.0586,0,selling filled stock — it earns while it waits,CD65EMKBMT3P
+1789006306.5,politics,ussewc-usse-il-2026-11-03-dem,BUY,20,0.96,earn,0.4936,1.53,0.995875,96,99,0.277,0.56,0.97,-0.0359,20,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CD68JDRFASX0
+1789006589.0,politics,paccc-balpow-2026-11-03-rsweep,SELL,100,0.14,backfill,,0.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD74DJCF0SX4
+1789006634.3,politics,paccc-balpow-2026-11-03-rsweep,BUY,0.4,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7MYBV5GSJ1
+1789006747.4,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,11,0.93,void,2.2877,0.1,0.996525,91,96,0.442,0.93,0.95,-0.0665,269,voided: the exchange has no trade for order CD6YJ48E2SJZ — the row of 09-10 01:3,CD6YJ48E2SJZ
+1789006747.4,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,25.88,0.95,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD75FVKM8SK5
+1789006747.4,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,7,0.95,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD73GS2SGT75
+1789006747.4,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,80.75,0.22,backfill,,4.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD3DSN416SJZ
+1789006747.4,politics,paccc-balpow-2026-11-03-rsweep,SELL,100,0.14,backfill,,0.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD74DJCF0SX4
+1789006747.4,politics,paccc-balpow-2026-11-03-rsweep,BUY,0.4,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7MYBV5GSJ1
+1789006747.4,nfl,ftsc-nfl-temostfp-w1-2026-09-14-brestr,BUY,0.46,0.06,backfill,,0.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD79YE4E2SX4
