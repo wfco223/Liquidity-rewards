@@ -80,6 +80,13 @@ FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much
 # best order is often a smaller one
 FOCUS_SIZE_FRACS = (1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1)
 FOCUS_MOVE_COOLDOWN_S = 300.0   # an order moves at most this often
+# after an entry of the tender's fills, nothing new rests on that side
+# for this long and the rest of the order comes off (2026-09-10, the
+# House dem control market: an ask at the touch filled eleven times in
+# fifteen minutes while the tender re-rested it after every fill —
+# "The focus tended just kept putting orders on the us house dem no
+# market at the touch")
+FOCUS_REFILL_WAIT_S = 2 * 3600.0
 FOCUS_BP_EVERY_S = 60.0
 FOCUS_ACTIONS_PER_PASS = 8      # places, moves and pulls a pass
 FOCUS_MAX_ORDERS = 40           # the tender's own orders, all markets
@@ -129,6 +136,9 @@ class Focus:
         self.events: list[dict] = []
         self.first_seen: dict[str, float] = {}
         self.moved_at: dict[str, float] = {}
+        self.filled_at: dict[str, float] = {}     # slug|side -> when an entry last filled
+        self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
+        self._gone_by_me: set[str] = set()        # ids the tender itself cancelled or replaced
         self.markets: list[str] = []
         self.rows: dict[str, dict] = {}
         self.last_terms_own = 0.0
@@ -341,8 +351,39 @@ class Focus:
         return [o for o in list(self.fam.orders.values())
                 if o.market == slug and (side is None or o.side == side)]
 
+    @staticmethod
+    def _is_mine(o: FamilyOrder) -> bool:
+        """The tender's own order: its entries, and its exits even after
+        the family re-labels one "sell" (a fill reduces the position)
+        — else every fill grew a new exit piece beside the last."""
+        return o.purpose == PURPOSE or (
+            o.purpose == "sell" and str(o.why or "").startswith("focus exit"))
+
     def _mine(self, slug: str, side: str | None = None) -> list[FamilyOrder]:
-        return [o for o in self._orders(slug, side) if o.purpose == PURPOSE]
+        return [o for o in self._orders(slug, side) if self._is_mine(o)]
+
+    def _forget(self, oid: str) -> None:
+        self._gone_by_me.add(oid)
+        self._last_mine.pop(oid, None)
+
+    def _note_fills(self, now: float) -> None:
+        """An entry of the tender's that shrank or vanished without the
+        tender's own cancel filled (the family's reconcile books it):
+        the side waits FOCUS_REFILL_WAIT_S before any new entry."""
+        cur = {o.id: o for o in list(self.fam.orders.values())
+               if self._is_mine(o) and o.market in self.markets}
+        for oid, (slug, side, qty) in list(self._last_mine.items()):
+            if oid in self._gone_by_me:
+                continue
+            o = cur.get(oid)
+            if o is None or o.qty < qty - 0.5:
+                got = qty if o is None else qty - o.qty
+                self.filled_at[f"{slug}|{side}"] = now
+                self._log(event="filled", market=slug, side=side, qty=round(got, 2),
+                          note=f"an entry filled — nothing new rests on this side for "
+                               f"{FOCUS_REFILL_WAIT_S / 3600:g} h")
+        self._last_mine = {oid: (o.market, o.side, o.qty) for oid, o in cur.items()}
+        self._gone_by_me = {i for i in self._gone_by_me if i in cur}
 
     def _claim_orders(self) -> None:
         """The engine's orders on focus ground become the tender's; the
@@ -440,7 +481,7 @@ class Focus:
                 "conc": round(conc, 4)}
 
     def _cands(self, side: str, book, fair: float | None,
-               bound: bool = False) -> list[float]:
+               bound: bool = False, improve: bool = True) -> list[float]:
         """Candidate prices, nearest first: a tick inside the touch when
         the spread allows, the touch, out to FOCUS_BEHIND_MAX behind it,
         and the slot a tick inside his fair. With `bound` (an exit)
@@ -459,7 +500,7 @@ class Focus:
             return []
         start = touch if touch is not None else opp - sign * tick
         out = []
-        if touch is not None and opp is not None and abs(opp - touch) > 1.5 * tick:
+        if improve and touch is not None and opp is not None and abs(opp - touch) > 1.5 * tick:
             out.append(touch + sign * tick)       # improve by a tick, never cross
         for k in range(0, FOCUS_BEHIND_MAX + 1):
             out.append(start - k * sign * tick)
@@ -467,6 +508,8 @@ class Focus:
         if fair is not None:
             edge = fair - tick if side == "BUY" else fair + tick
             if bound:
+                # an exit's bound is inclusive: at the price itself is fine
+                edge = fair
                 out = [p for p in out
                        if ((p <= edge + 1e-9) if side == "BUY" else (p >= edge - 1e-9))]
             # the slot a tick inside his fair is always a candidate
@@ -502,18 +545,24 @@ class Focus:
         return best
 
     def _exit_plan(self, slug: str, side: str, book, prog, pool: float,
-                   fair: float, qty: float) -> dict | None:
-        """Where `qty` held shares exit on this side: the best EV slot
-        at or past his fair."""
+                   fair: float | None, qty: float, basis: float | None) -> dict | None:
+        """Where `qty` held shares exit on this side: at the touch, or
+        the nearest slot behind it that is not under the position's
+        own cost (his fair standing in when the cost is unknown).
+        Exits join the touch, never sit inside it, and never sell under
+        cost (2026-09-10: exits bounded by fair sat eight ticks behind
+        the touch while the tender kept opening more at the touch)."""
         if qty < 1.0:
             return None
         levels = self._levels_net(slug, side, book)
-        best = None
-        for px in self._cands(side, book, fair, bound=True):
-            s = self._score(slug, side, book, prog, pool, fair, px, qty, levels, is_exit=True)
-            if best is None or s["ev"] > best["ev"] + 1e-9:
-                best = s
-        return best
+        bound = basis if basis is not None else fair
+        cands = self._cands(side, book, bound, bound=bound is not None, improve=False)
+        if not cands:
+            return None
+        px = cands[0]                             # nearest the touch first
+        out = self._score(slug, side, book, prog, pool, fair, px, qty, levels, is_exit=True)
+        out["basis"] = basis
+        return out
 
     # -- the pass ----------------------------------------------------------------
 
@@ -523,6 +572,7 @@ class Focus:
             self._refresh_terms(now)
             self.refresh_markets(now)
             self._claim_orders()
+            self._note_fills(now)            # before the plans: a fill holds its side
             self._refresh_books(now)
             bp = self.buying_power(now)
             positions = positions or {}
@@ -616,13 +666,21 @@ class Focus:
             row["orders"].append(d)
         row["orders"].sort(key=lambda d: (d["side"], -d["price"]))
         # the entry of 10% of buying power at the optimal price, each side
+        # (the list's sort key), and what the tender itself would rest
+        # under its own rules: the refill wait, the position bound, the
+        # exit of what is held
         best_ev = None
+        row["tend"] = {}
+        basis = None
+        if abs(net) > 0.005 and cost > 0:
+            per = cost / abs(net)                 # the exchange's cost a share
+            basis = round(per if net > 0 else 1.0 - per, 4)
         if book is not None and prog is not None and pool and age <= 3600.0:
             for side in ("BUY", "SELL"):
                 use_fair = fair if fair is not None else silver
                 plan = self._entry_plan(slug, side, book, prog, pool, use_fair, stake)
                 if plan is None:
-                    row["sides"][side] = {"note": ("no price within the fair bound"
+                    row["sides"][side] = {"note": ("nothing earns on this side"
                                                    if stake >= 1.0 else "no stake")}
                     continue
                 plan["fair_used"] = ("yours" if fair is not None
@@ -630,15 +688,41 @@ class Focus:
                 row["sides"][side] = plan
                 if best_ev is None or plan["ev"] > best_ev:
                     best_ev = plan["ev"]
-            # the exit of what is held, at his fair
-            if abs(net) > 0.005 and fair is not None:
-                xs = "SELL" if net > 0 else "BUY"
-                others = sum(o.qty for o in self._orders(slug, xs) if o.purpose != PURPOSE)
+            xs = "SELL" if net > 0.005 else "BUY" if net < -0.005 else None
+            for side in ("BUY", "SELL"):
+                if side == xs:
+                    continue
+                key = f"{slug}|{side}"
+                wait = FOCUS_REFILL_WAIT_S - (now - self.filled_at.get(key, 0.0))
+                if wait > 0:
+                    at = time.strftime("%H:%M", time.gmtime(self.filled_at[key]))
+                    row["tend"][side] = {"note": f"an entry filled at {at}Z — nothing new on "
+                                                 f"this side for {wait / 60:.0f} min more"}
+                    continue
+                room = stake
+                adds = (side == "BUY" and net > 0.005) or (side == "SELL" and net < -0.005)
+                if adds:
+                    held_coll = cost                  # the exchange's collateral held here
+                    room = stake - held_coll
+                    if room < 1.0:
+                        row["tend"][side] = {"note": f"holding ${held_coll:,.0f} here already "
+                                                     f"— no entry that adds to it"}
+                        continue
+                if fair is None:
+                    row["tend"][side] = {"note": "no fair set"}
+                    continue
+                plan = self._entry_plan(slug, side, book, prog, pool, fair, room)
+                row["tend"][side] = plan if plan else {"note": "nothing earns on this side"}
+            # the exit of what is held: at the touch, never under cost
+            if xs is not None:
+                others = sum(o.qty for o in self._orders(slug, xs) if not self._is_mine(o))
                 q = float(math.floor(abs(net) - others))
-                xp = self._exit_plan(slug, xs, book, prog, pool, fair, q) if q >= 1.0 else None
+                xp = (self._exit_plan(slug, xs, book, prog, pool, fair, q, basis)
+                      if q >= 1.0 else None)
                 row["exit"] = ({"side": xs, **xp} if xp else
                                {"side": xs, "note": ("your own orders already offer the lot"
-                                                     if q < 1.0 else "no price past fair on this book")})
+                                                     if q < 1.0 else "no price at or past cost on this book")})
+                row["tend"][xs] = dict(row["exit"], exit=True) if xp else row["exit"]
         elif book is None:
             row["note"] = "no book read yet"
         elif prog is None:
@@ -687,6 +771,7 @@ class Focus:
                 r = self.fam.desk.cancel(o.id, o.market, initiator="auto")
                 if r.ok:
                     self.fam.orders.pop(o.id, None)
+                    self._forget(o.id)
                     used -= capital_at_risk(o.intent, o.price, o.qty) * max(
                         float(o.live_pf if o.live_pf is not None else 1.0), FOCUS_PF_FLOOR)
                     actions -= 1
@@ -703,20 +788,18 @@ class Focus:
                     r = self.fam.desk.cancel(o.id, slug, initiator="auto")
                     if r.ok:
                         self.fam.orders.pop(o.id, None)
+                        self._forget(o.id)
                         actions -= 1
                         self._log(event="pull", market=slug, side=o.side, price=o.price,
                                   qty=o.qty, why=row["not_tended"])
                 continue
-            net = float((positions.get(slug) or (0.0, 0.0))[0] or 0.0)
-            exit_side = "SELL" if net > 0.005 else "BUY" if net < -0.005 else None
             for side in ("BUY", "SELL"):
-                if side == exit_side:
-                    plan = row.get("exit") if row.get("exit", {}).get("px") else None
-                    wants.append((plan["ev"] if plan else -1.0, slug, side, plan or {}, True))
-                else:
-                    plan = row.get("sides", {}).get(side) or {}
-                    plan = plan if plan.get("px") else None
-                    wants.append((plan["ev"] if plan else -1.0, slug, side, plan or {}, False))
+                plan = (row.get("tend") or {}).get(side) or {}
+                is_exit = bool(plan.get("exit"))
+                note = plan.get("note")
+                plan = plan if plan.get("px") else None
+                wants.append((plan["ev"] if plan else -1.0, slug, side, plan or {"note": note},
+                              is_exit))
         wants.sort(key=lambda t: -t[0])
         for ev, slug, side, plan, is_exit in wants:
             if actions <= 0:
@@ -728,19 +811,22 @@ class Focus:
                 r = self.fam.desk.cancel(o.id, slug, initiator="auto")
                 if r.ok:
                     self.fam.orders.pop(o.id, None)
+                    self._forget(o.id)
                     actions -= 1
                     self._log(event="pull", market=slug, side=side, price=o.price,
                               qty=o.qty, why="one order a side")
             cur = mine[0] if mine else None
-            if not plan or plan["ev"] <= 0.0:
+            if not plan or not plan.get("px") or (plan["ev"] <= 0.0 and not is_exit):
                 if cur is not None:
                     r = self.fam.desk.cancel(cur.id, slug, initiator="auto")
                     if r.ok:
                         self.fam.orders.pop(cur.id, None)
+                        self._forget(cur.id)
                         actions -= 1
                         self._log(event="pull", market=slug, side=side, price=cur.price,
                                   qty=cur.qty,
-                                  why=("nothing earns on this side" if not plan
+                                  why=(plan.get("note") or "nothing earns on this side"
+                                       if not plan or not plan.get("px")
                                        else f"expected value {plan['ev']:+.2f}/day"))
                 continue
             book = self.fam.cache.fresh(slug, FOCUS_ACT_AGE_S, now)
@@ -765,6 +851,7 @@ class Focus:
                         why=self._why(plan, is_exit), est_day=plan["est"],
                         live_est=plan["est"], live_pf=plan["pf"], live_ev=plan["ev"])
                     self.moved_at[key] = now
+                    self._last_mine[r.order_id] = (slug, side, rested)
                     if not is_exit:
                         used += plan["risk"]
                     self._log(event="rested", market=slug, side=side, price=(r.price or plan["px"]),
@@ -806,12 +893,14 @@ class Focus:
                 cur.why = "cancel failed during a move — retrying"
             else:
                 self.fam.orders.pop(cur.id, None)
+            self._forget(cur.id)
             self.fam.orders[r.order_id] = FamilyOrder(
                 id=r.order_id, market=slug, side=side, price=(r.price or plan["px"]),
                 qty=rested, intent=cur.intent, placed_ts=now, purpose=PURPOSE,
                 why=self._why(plan, is_exit), est_day=plan["est"],
                 live_est=plan["est"], live_pf=plan["pf"], live_ev=plan["ev"])
             self.moved_at[key] = now
+            self._last_mine[r.order_id] = (slug, side, rested)
             if not is_exit:
                 used += plan["risk"] - cur_risk
             self._log(event="moved", market=slug, side=side, price=(r.price or plan["px"]),
@@ -909,6 +998,7 @@ class Focus:
                 r = self.fam.desk.cancel(o.id, slug, initiator="owner")
                 if r.ok:
                     self.fam.orders.pop(o.id, None)
+                    self._forget(o.id)
                     n += 1
                     self._log(event="pull", market=slug, side=o.side, price=o.price,
                               qty=o.qty, why=why)
@@ -953,6 +1043,7 @@ class Focus:
             r = self.fam.desk.cancel(rec.id, rec.market, initiator="owner")
             if r.ok:
                 self.fam.orders.pop(rec.id, None)
+                self._forget(rec.id)
                 self._log(event="his_cancel", market=rec.market, side=rec.side,
                           price=rec.price, qty=rec.qty, was=self._who(rec))
             return {"ok": r.ok, "note": r.note}
@@ -984,6 +1075,7 @@ class Focus:
                 rec.why = "cancel failed during a move — retrying"
             else:
                 self.fam.orders.pop(rec.id, None)
+            self._forget(rec.id)
             self.fam.orders[r.order_id] = FamilyOrder(
                 id=r.order_id, market=rec.market, side=rec.side, price=(r.price or new_px),
                 qty=rested, intent=rec.intent, placed_ts=self._clock(), purpose="manual",
@@ -1067,6 +1159,7 @@ class Focus:
                 "coc_day": self.coc_day,
                 "fill_floor": self.fill_floor, "loss_cap": self.loss_cap,
                 "first_seen": dict(self.first_seen), "moved_at": dict(self.moved_at),
+                "filled_at": dict(self.filled_at),
                 "events": self.events[-EVENTS_KEEP:], "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -1082,5 +1175,6 @@ class Focus:
         self.loss_cap = float(d.get("loss_cap") or FOCUS_LOSS_CAP_USD)
         self.first_seen = {str(k): float(v) for k, v in (d.get("first_seen") or {}).items()}
         self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
+        self.filled_at = {str(k): float(v) for k, v in (d.get("filled_at") or {}).items()}
         self.events = list(d.get("events") or [])[-EVENTS_KEEP:]
         self.log = list(d.get("log") or [])[-LOG_KEEP:]

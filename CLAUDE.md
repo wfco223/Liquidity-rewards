@@ -159,8 +159,14 @@ long and accreted, so search it rather than reading it through.
   expected loss of 1000"). An entry may sit past his fair ("A bid over
   fair value is fine as long as it is appropriately sized for the
   risk and rewards it can earn"): the concession past fair is charged
-  in full as a fill cost and the size is chosen with the price; an
-  exit never sits under his fair. A market without a fair is
+  in full as a fill cost and the size is chosen with the price. After
+  an entry fills, the rest of it comes off and that side rests nothing
+  new for two hours, and an entry never adds to a position past the
+  stake (2026-09-10: an ask at the touch of the House dem control
+  market filled eleven times in fifteen minutes while the tender
+  re-rested it). An exit joins the touch and never sits under the
+  position's cost (his fair when the cost is unknown). A market
+  without a fair is
   shown with Silver's number as a suggestion and nothing is tended
   ("Yes for 5"). The fill cost never reads under 2c a share ("The fill
   cost for politics has been high recently. Keep that in mind").
