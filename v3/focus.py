@@ -586,14 +586,25 @@ class Focus:
 
     # -- the math ----------------------------------------------------------------
 
-    def _levels_net(self, slug: str, side: str, book) -> list:
-        """The side without our own orders (every purpose), so a plan
-        never credits itself; an order placed after the book was read
-        is not in it and is not subtracted."""
+    def _levels_net(self, slug: str, side: str, book, exclude=None) -> list:
+        """The side as the exchange sees it, less only the orders a plan
+        replaces (by default the tender's own on that side), so a plan
+        never credits its own resting size twice. Everything else
+        stays on the book — his qualifying walls above all: a 1c bid
+        of 25,000 is what carries a side to the 25,000 target, and
+        with every order of ours stripped the model had read such a
+        side as short of the target and earning nothing (2026-09-10,
+        22:35Z: the balance-of-power exit at the touch showed $0.00 a
+        day; the bid entries there showed nothing to earn). An order
+        placed after the book was read is not in it and is not
+        subtracted."""
         tick = book.tick or 0.01
         raw = list(book.side(side))
         read_at = float(getattr(book, "fetched_at", 0.0) or 0.0)
+        ids = set(exclude) if exclude is not None else {o.id for o in self._mine(slug, side)}
         for o in self._orders(slug, side):
+            if o.id not in ids:
+                continue
             if read_at and float(o.placed_ts or 0.0) >= read_at - 1e-6:
                 continue
             raw = [(p, (q - o.qty) if abs(p - o.price) < tick / 2 else q) for p, q in raw]
@@ -836,7 +847,7 @@ class Focus:
                  "purpose": o.purpose, "who": self._who(o), "why": (o.why or "")[:120],
                  "age_s": round(now - float(o.placed_ts or now), 0)}
             if book is not None and prog is not None and pool:
-                levels = self._levels_net(slug, o.side, book)
+                levels = self._levels_net(slug, o.side, book, exclude={o.id})
                 is_exit = o.purpose == "sell" or (
                     (o.side == "SELL" and net > 0.005) or (o.side == "BUY" and net < -0.005))
                 s = self._score(slug, o.side, book, prog, pool, fair, o.price, o.qty,

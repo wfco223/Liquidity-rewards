@@ -783,6 +783,43 @@ class TestTheRecordOfTheOrders(Base):
                             for e in self.f.log))
 
 
+class TestHisWallCarriesTheSide(Base):
+    def test_a_side_his_wall_carries_to_the_target_earns(self):
+        # 22:35Z, 2026-09-10, balance of power dhou-rsen: bids of 301,
+        # 70, 100, 215, 429 and his 25,000 at 1c; the T1 target 25,000.
+        # The model had stripped his wall with every order of ours and
+        # read the bid side as earning nothing — the exit at the touch
+        # showed $0.00 a day
+        thin = Book(bids=((0.41, 2.0), (0.32, 70.0), (0.25, 100.0), (0.23, 215.0),
+                          (0.02, 429.0), (0.01, 37500.0)),
+                    asks=((0.42, 87.0), (0.43, 36.0), (0.48, 70.0), (0.99, 27100.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.r.exchange.books[NC] = thin
+        self.r.fam.orders["wall"] = FamilyOrder(id="wall", market=NC, side="BUY", price=0.01,
+                                                qty=25000.0, intent=BUY_LONG,
+                                                placed_ts=self.r.now - 3600,
+                                                purpose="manual", why="his wall")
+        self.r.exchange.live["wall"] = {"id": "wall", "market": NC, "side": "BUY",
+                                        "price": 0.01, "size": 25000.0, "intent": BUY_LONG}
+        self.r.positions[NC] = (-299.0, 299.0 * 0.583)
+        self.f.set_fair(NC, 31.0)
+        self.tick()
+        row = self.f.rows[NC]
+        # the exit at the touch earns nearly the whole bid-side pool
+        self.assertEqual(row["exit"]["px"], 0.41)
+        self.assertGreater(row["exit"]["est"], 100.0, row["exit"])
+        # his wall itself earns nothing (forty ticks back) and is shown so
+        wall = [d for d in row["orders"] if d["id"] == "wall"][0]
+        self.assertLess(wall["est"], 1.0)
+        # without the wall the side is short of the target: nothing earns
+        self.r.fam.orders.pop("wall")
+        self.r.exchange.live.pop("wall")
+        self.r.exchange.books[NC] = Book(bids=thin.bids[:-1] + ((0.01, 12500.0),),
+                                         asks=thin.asks, tick=0.01, fetched_at=self.r.now)
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["exit"]["est"], 0.0)
+
+
 class TestSilverSeedsTheFairsHeNamed(Base):
     def test_a_named_market_gets_silvers_number_once(self):
         # owner, 2026-09-10: "those little hanging fruit markets that you
