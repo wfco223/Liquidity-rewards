@@ -86,13 +86,17 @@ FOCUS_MOVE_COOLDOWN_S = 300.0   # an order moves at most this often
 # by a tenth, the order reads three ticks behind for one pass, and the
 # Senate lte45 ask was pulled 21 times and re-rested 19 in an hour)
 FOCUS_WEAK_DWELL_S = 300.0
-# after an entry of the tender's fills, nothing new rests on that side
-# for this long and the rest of the order comes off (2026-09-10, the
-# House dem control market: an ask at the touch filled eleven times in
-# fifteen minutes while the tender re-rested it after every fill —
-# "The focus tended just kept putting orders on the us house dem no
-# market at the touch")
-FOCUS_REFILL_WAIT_S = 2 * 3600.0
+# after an entry of the tender's fills, the rest of the order comes off
+# and nothing new rests on that side for FOCUS_REFILL_WAIT_S; then the
+# side re-enters at FOCUS_REFILL_FLOOR of the stake and ramps back to
+# full size by FOCUS_REFILL_SCALE_S after the fill (owner, 2026-09-10:
+# "The stand off after a fill for a side should be 15 minutes and when
+# entering size should be scaled down until the two hour window has
+# passed"; the House dem control market had filled eleven times in
+# fifteen minutes while the tender re-rested at full size)
+FOCUS_REFILL_WAIT_S = 15 * 60.0
+FOCUS_REFILL_SCALE_S = 2 * 3600.0
+FOCUS_REFILL_FLOOR = 0.25
 FOCUS_BP_EVERY_S = 60.0
 FOCUS_BP_WINDOW_S = 1800.0      # the stake follows the HIGHEST buying-power read of
                                 # the last half hour: a fill's dip must not pull every
@@ -771,7 +775,8 @@ class Focus:
                 if side == xs:
                     continue
                 key = f"{slug}|{side}"
-                wait = FOCUS_REFILL_WAIT_S - (now - self.filled_at.get(key, 0.0))
+                since_fill = now - self.filled_at.get(key, 0.0)
+                wait = FOCUS_REFILL_WAIT_S - since_fill
                 if wait > 0:
                     at = time.strftime("%H:%M", time.gmtime(self.filled_at[key]))
                     row["tend"][side] = {"note": f"an entry filled at {at}Z — nothing new on "
@@ -787,10 +792,24 @@ class Focus:
                         row["tend"][side] = {"note": f"holding ${held_coll:,.0f} here already "
                                                      f"— no entry that adds to it", "hold": True}
                         continue
+                scale = 1.0
+                if since_fill < FOCUS_REFILL_SCALE_S:
+                    # back in at a quarter of the stake, ramping to the
+                    # full size by two hours after the fill — applied to
+                    # the room the position bound leaves, not the whole stake
+                    ramp = (since_fill - FOCUS_REFILL_WAIT_S) / max(
+                        FOCUS_REFILL_SCALE_S - FOCUS_REFILL_WAIT_S, 1.0)
+                    scale = min(max(FOCUS_REFILL_FLOOR + (1.0 - FOCUS_REFILL_FLOOR) * ramp,
+                                    FOCUS_REFILL_FLOOR), 1.0)
+                    room = room * scale
                 if fair is None:
                     row["tend"][side] = {"note": "no fair set", "hold": True}
                     continue
                 plan = self._entry_plan(slug, side, book, prog, pool, fair, room)
+                if plan and scale < 1.0:
+                    plan["scale"] = round(scale, 2)
+                    plan["scale_note"] = (f"{scale * 100:.0f}% of the stake — filled "
+                                          f"{since_fill / 60:.0f} min ago, full size at 2 h")
                 row["tend"][side] = plan if plan else {"note": "nothing earns on this side"}
             # the exit of what is held: at the touch, never under cost
             if xs is not None:

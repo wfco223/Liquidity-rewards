@@ -420,11 +420,29 @@ class TestAfterAFill(Base):
         for _ in range(3):
             self.tick()
         self.assertFalse(self.mine(NC, "SELL"))      # and stays off
-        # two hours on, the side is open again
+        # fifteen minutes on, the side re-enters at a quarter of the
+        # stake (owner, 2026-09-10: "The stand off after a fill for a
+        # side should be 15 minutes and when entering size should be
+        # scaled down until the two hour window has passed")
         self.r.now += focus_mod.FOCUS_REFILL_WAIT_S
+        self.f.moved_at.clear()
         self.tick()
-        self.assertTrue(self.mine(NC, "SELL") or "filled" not in
-                        (self.f.rows[NC]["tend"]["SELL"].get("note") or ""))
+        plan = self.f.rows[NC]["tend"]["SELL"]
+        self.assertLess(plan["scale"], focus_mod.FOCUS_REFILL_FLOOR + 0.05)
+        self.assertIn("of the stake", plan["scale_note"])
+        full_qty = self.f.rows[NC]["sides"]["SELL"]["qty"]
+        self.assertLessEqual(plan["qty"], 0.3 * full_qty + 1)
+        self.assertTrue(self.mine(NC, "SELL"))
+        # an hour in, about half way up the ramp; two hours in, full size
+        self.r.now += 45 * 60.0
+        self.f.moved_at.clear()
+        self.tick()
+        mid = self.f.rows[NC]["tend"]["SELL"]["scale"]
+        self.assertTrue(0.45 < mid < 0.8, mid)
+        self.r.now += focus_mod.FOCUS_REFILL_SCALE_S
+        self.f.moved_at.clear()
+        self.tick()
+        self.assertNotIn("scale", self.f.rows[NC]["tend"]["SELL"])
 
     def test_an_order_the_open_list_left_out_for_a_read_is_not_a_fill(self):
         # 13:35Z: the list left the TX governor bid out for one read; the
