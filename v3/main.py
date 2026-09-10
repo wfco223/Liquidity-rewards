@@ -42,6 +42,7 @@ from .estimator import Estimator
 from .silver import SilverFairs
 from .state import StateStore
 from .switch import MasterSwitch
+from .focus import ENGINE_WS_CAP, FOCUS_CYCLE_S, FOCUS_WS_CAP, Focus
 from .ws import Stream
 
 try:
@@ -1023,6 +1024,17 @@ class Monitor:
                            self.silver.model_fair, alert=self.alerts.notify,
                            tax_owed=self._tax_owed, parse=parse_activities,
                            postings=self._postings)
+        # The focus tender (owner, 2026-09-10): the boosted politics
+        # markets, on a loop of their own, tended from his fair prices;
+        # its own switch, off by default like every other
+        self.switches["focus"] = MasterSwitch(alert=self.alerts.notify,
+                                              name="Focus switch",
+                                              scope="Focus")
+        self.focus = Focus(self.families["politics"], self.client, self.bonds,
+                           fair=self.silver.model_fair, alert=self.alerts.notify,
+                           switch_on=lambda: (self.master.on
+                                              and self.switches["focus"].on),
+                           buying_power=self.client.buying_power)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
@@ -1031,6 +1043,12 @@ class Monitor:
                               self.client.key_id, self.client.secret_key)
                        if pol is not None else None)
         self._restore()
+        # the focus ground is claimed before the first family cycle can
+        # act on it: the family's terms stand in until the tender reads
+        try:
+            self.focus.seed(time.time())
+        except Exception as e:  # noqa: BLE001
+            self._note(f"focus seed: {type(e).__name__}: {e}")
         # the restored heap leaves the garbage collector's scans (2026-09-07)
         try:
             self._frozen_objects = freeze_heap()
@@ -1066,27 +1084,35 @@ class Monitor:
                     seen.add(s)
                     out.append(s)
 
+        # the focus markets seat first (owner, 2026-09-10): every
+        # boosted market on the stream, and the old engine's whole list
+        # fits in ENGINE_WS_CAP behind them ("we'll have to dramatically
+        # reduce its websocket budget")
+        focus = getattr(self, "focus", None)
+        if focus is not None:
+            take(sorted(focus.markets), room=min(FOCUS_WS_CAP, SUB_CAP))
+        cap = min(SUB_CAP, len(out) + ENGINE_WS_CAP)
         # the bonds he is in hold seats before everything (owner,
         # 2026-09-03: "reserve a websocket for each of the markets I'm
         # in") — the bonds page's live line reads their books from the
         # cache this stream feeds
         bonds = getattr(self, "bonds", None)
         if bonds is not None:
-            take(sorted(bonds.held_markets()), room=SUB_CAP)
+            take(sorted(bonds.held_markets()), room=cap)
             # and every listed bond market: the bonds page reads their
             # books (owner, 2026-09-03: "A lot of the books are stale")
-            take(sorted(bonds.approved), room=SUB_CAP)
+            take(sorted(bonds.approved), room=cap)
         for key in ("politics", "cfb", "nfl", "nba"):
             fam = self.families.get(key)
             if fam is not None:
                 # the owner's watched races seat before everything
                 take(sorted(s2 for s2 in fam.universe
-                            if fam._watched(s2)), room=SUB_CAP)
+                            if fam._watched(s2)), room=cap)
         for key in ("politics", "cfb", "nfl", "nba"):
             fam = self.families.get(key)
             if fam is not None:
                 take(sorted(fam.active_markets() | set(fam.inventory)),
-                     room=SUB_CAP)
+                     room=cap)
         cands: list[tuple[float, str]] = []
         for key in ("politics", "cfb", "nfl", "nba"):
             fam = self.families.get(key)
@@ -1104,8 +1130,8 @@ class Monitor:
         cands.sort(key=lambda t: (-t[0], t[1]))
         warm = [s for p, s in cands if p > 0.0]
         cold = [s for p, s in cands if p <= 0.0]
-        room = max(SUB_CAP - len(out), 0)
-        take(warm[:room // 2], room=SUB_CAP)     # stable seats for the best
+        room = max(cap - len(out), 0)
+        take(warm[:room // 2], room=cap)     # stable seats for the best
         warm_rest = warm[room // 2:]
 
         def rotate(pool, n, window):
@@ -1116,11 +1142,11 @@ class Monitor:
             return (pool + pool)[off:off + n]
 
         window = int(time.time() // 900)         # a fresh mix every 15 min
-        room = max(SUB_CAP - len(out), 0)
-        take(rotate(warm_rest, (room * 3) // 4, window), room=SUB_CAP)
-        room = max(SUB_CAP - len(out), 0)
-        take(rotate(cold, room, window), room=SUB_CAP)
-        return out[:SUB_CAP]
+        room = max(cap - len(out), 0)
+        take(rotate(warm_rest, (room * 3) // 4, window), room=cap)
+        room = max(cap - len(out), 0)
+        take(rotate(cold, room, window), room=cap)
+        return out[:cap]
 
     def _sampler_loop(self) -> None:
         """The independent clock (REBUILD.md's lesson): earnings are
@@ -1288,6 +1314,10 @@ class Monitor:
             self._pos_last_at = float(pl.get("at") or 0.0)
         if saved.get("sw_bonds"):
             self.switches["bonds"].restore(saved["sw_bonds"])
+        if saved.get("sw_focus"):
+            self.switches["focus"].restore(saved["sw_focus"])
+        if saved.get("focus"):
+            self.focus.restore(saved["focus"])
         self.ladder_seen = {str(k): str(v) for k, v in
                             (saved.get("ladder_seen") or {}).items()}
         self.actuals_by_day = dict(saved.get("actuals_by_day") or {})
@@ -1391,6 +1421,8 @@ class Monitor:
                          "pos": {k: list(v) for k, v in
                                  (getattr(self, "_pos_last", None) or {}).items()}},
             "sw_bonds": self.switches["bonds"].to_dict(),
+            "sw_focus": self.switches["focus"].to_dict(),
+            "focus": self.focus.to_dict(),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
             "actuals_by_day": self.actuals_by_day,
@@ -1459,9 +1491,14 @@ class Monitor:
         for key in self.families:
             st[f"sw_{key}"] = self.switches[key].to_dict()
         st["sw_bonds"] = self.switches["bonds"].to_dict()
+        st["sw_focus"] = self.switches["focus"].to_dict()
         st["saved_at"] = time.time()
         self.last_state = st
         self.freeze_payload()      # a switch flip shows immediately
+        try:
+            self.focus.refreeze()  # the focus page reads its switch too
+        except Exception:  # noqa: BLE001
+            pass
         self.store.save_soon(st, force_remote=True)
         return s
 
@@ -3726,6 +3763,8 @@ class Monitor:
             "master": self.master.state(),
             **({"bonds": self.switches["bonds"].state()}
                if "bonds" in self.switches else {}),
+            **({"focus": self.switches["focus"].state()}
+               if "focus" in self.switches else {}),
             **{k: self._family_switch_state(k) for k in self.families}}
         st["floor"] = self.floor.status()
         st["place_health"] = self.place_health.view()
@@ -4308,6 +4347,78 @@ class Monitor:
                                "ts": round(time.time(), 1)}
         return st
 
+    # -- the focus tender (owner, 2026-09-10) ---------------------------------
+
+    def _focus_loop(self) -> None:
+        """The tender's own clock, every FOCUS_CYCLE_S, outside the
+        family cycle and its lock: the boosted markets are read, planned
+        and tended here. Positions come from the last cycle's read (a
+        minute old at most); fills are the family's reconcile to book,
+        as for every order in the politics book."""
+        while True:
+            t0 = time.time()
+            try:
+                on = bool(self.master.on and self.switches["focus"].on
+                          and self._floor_ok)
+                self.focus.cycle(t0, getattr(self, "_bond_positions", None) or {}, on)
+            except Exception as e:  # noqa: BLE001 — the loop survives anything
+                self._note(f"focus: {type(e).__name__}: {e}")
+            time.sleep(max(FOCUS_CYCLE_S - (time.time() - t0), 2.0))
+
+    def focus_json(self) -> bytes:
+        return getattr(self.focus, "payload_json", b'{"ok":false}')
+
+    def focus_op(self, op: str, market: str, value=None) -> dict:
+        """His taps on the focus page. Every one persisted at once, like
+        a switch flip; the page re-frozen so the tap shows."""
+        market = str(market or "").strip()
+        v = value if isinstance(value, dict) else {}
+        now = time.time()
+        if op == "focus_fair":
+            r = self.focus.set_fair(market, value)
+        elif op == "focus_stake":
+            r = self.focus.set_stake(market, value)
+        elif op == "focus_pause":
+            r = self.focus.pause(market, True)
+        elif op == "focus_resume":
+            r = self.focus.pause(market, False)
+        elif op == "focus_pull":
+            r = self.focus.pull(market)
+        elif op == "focus_place":
+            net = 0.0
+            try:
+                net = float(((getattr(self, "_bond_positions", None) or {}).get(market)
+                             or (0.0,))[0] or 0.0)
+            except Exception:  # noqa: BLE001
+                pass
+            r = self.focus.place(market, v.get("side"), v.get("px"), v.get("qty"), net=net)
+        elif op == "focus_cancel":
+            r = self.focus.cancel(market, str(v.get("order_id") or value or ""))
+        elif op == "focus_move":
+            r = self.focus.move(market, str(v.get("order_id") or ""), v.get("px"), v.get("qty"))
+        elif op in ("focus_coc", "focus_floor", "focus_cap"):
+            r = self.focus.set_number(op[len("focus_"):], value)
+            market = market or "-"
+        elif op == "focus_scan":
+            r = self.focus.scan_now(now)
+            market = market or "-"
+        else:
+            return {"ok": False, "note": f"unknown op {op}"}
+        self._audit({"op": op, "market": market, "initiator": "owner",
+                     "ok": bool(r.get("ok")), "ts": now})
+        if r.get("ok"):
+            st = dict(self.last_state) if self.last_state else {}
+            st["focus"] = self.focus.to_dict()
+            st["fam_politics"] = self.families["politics"].to_dict()
+            st["saved_at"] = now
+            self.last_state = st
+            self.store.save_soon(st, force_remote=True)
+        try:
+            self.focus.refreeze()
+        except Exception:  # noqa: BLE001
+            pass
+        return r
+
     def run(self) -> int:
         from .web import WebServer
         web = WebServer(self)
@@ -4317,11 +4428,19 @@ class Monitor:
         self._note(f"serving on :{web.port}")
         backoff = 5.0
         stream_started = False
+        focus_started = False
         while True:
             t0 = time.time()
             try:
                 self.cycle()
                 backoff = 5.0
+                # the focus tender's own loop starts once the board has
+                # been read: its ground is claimed already (seed), its
+                # first pass needs the books and positions of one cycle
+                if not focus_started and getattr(self, "focus", None) is not None:
+                    focus_started = True
+                    threading.Thread(target=self._focus_loop, daemon=True,
+                                     name="focus").start()
                 # the feed pours ~54 book updates a second across 200
                 # markets through this one shared CPU. Holding it back
                 # until the first cycle has finished stops it competing

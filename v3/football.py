@@ -77,7 +77,10 @@ def cfb() -> FamilyConfig:
         # pinned with holdings eating $32 of it while the planner's idle
         # queue claimed $100+/day across books it could not fund; the
         # $1-per-market breadth cap stays
-        capital_usd=100.0, per_market_usd=1.00,
+        # owner, 2026-09-10: the three families share $250 of expected
+        # loss while the boosted politics markets are the focus
+        # tender's — cfb's share is $60
+        capital_usd=60.0, per_market_usd=1.00,
         holdings_in_ceiling=True,
         dump_usd_day=10.0,
         # owner, 2026-09-09: settle check, two new orders a cycle, exit
@@ -138,7 +141,8 @@ def nfl() -> FamilyConfig:
         # owner, 2026-08-22: "similar to cfb, which has done pretty
         # well" — $50 all-in (orders AND holdings), same dump cap, same
         # coverage and book-freshness posture
-        capital_usd=50.0, per_market_usd=1.00,
+        # owner, 2026-09-10: NFL's share of the families' $250 is $40
+        capital_usd=40.0, per_market_usd=1.00,
         holdings_in_ceiling=True,
         dump_usd_day=10.0,
         # owner, 2026-09-09: the settle check applies here too; the

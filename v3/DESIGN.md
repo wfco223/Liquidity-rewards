@@ -54,6 +54,13 @@ event never shows a dollar figure.
   loop and queue (REBUILD asked for exactly this).
 * **One risk number per family** (`capital_usd`) and one line showing it.
   Per-market caps exist but the family ceiling binds.
+* **The focus tender** (2026-09-10, v3/focus.py). The boosted politics
+  markets are not the family engine's: a loop of its own every 15 s,
+  outside the family cycle, tends them from the owner's fair prices by
+  expected value (reward claim − fill odds × fill cost − cost of
+  capital), one order a side, under a $1,000 expected-loss cap. The
+  family sees that ground as frozen; the bonds hand it over. Every
+  order there is the owner's to move from the /focus page.
 * **Dead market = leave entirely.** Program gone or pool zero: cancel
   every order we have there, exits included, and the seller stands down
   (owner, 2026-08-20: "I don't want to be in markets if there are no

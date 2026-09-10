@@ -971,8 +971,11 @@ class TestStreamRouter(unittest.TestCase):
                     placed_ts=0.0, purpose="earn")
                 # the owner's slot order (2026-08-21): politics
                 # markets he is in first, then cfb held, then rotation
+                # — inside the engine's ENGINE_WS_CAP seats (owner,
+                # 2026-09-10: the focus markets seat first)
                 from v3.family import FamilyOrder as FO
-                for i in range(50):
+                from v3.focus import ENGINE_WS_CAP, FOCUS_WS_CAP
+                for i in range(30):
                     m.families["politics"].orders[f"p{i}"] = FO(
                         id=f"p{i}", market=f"ussewc-usse-x{i}-2026-11-03-rep",
                         side="BUY", price=0.4, qty=1.0, intent=BUY_LONG,
@@ -980,16 +983,23 @@ class TestStreamRouter(unittest.TestCase):
                 slugs = m._ws_slugs()
                 self.assertEqual(
                     slugs.index("aachc-cfb-wins-2026-11-28-ala-9pt5wins"),
-                    50)                      # right after politics' held
-                # and when politics alone fills the cap, politics wins
-                for i in range(50, 300):
+                    30)                      # right after politics' held
+                # and when politics alone fills the engine's cap, politics wins
+                for i in range(30, 300):
                     m.families["politics"].orders[f"p{i}"] = FO(
                         id=f"p{i}", market=f"ussewc-usse-x{i}-2026-11-03-rep",
                         side="BUY", price=0.4, qty=1.0, intent=BUY_LONG,
                         placed_ts=0.0, purpose="earn")
                 slugs = m._ws_slugs()
-                self.assertEqual(len(slugs), 200)
+                self.assertEqual(len(slugs), ENGINE_WS_CAP)
                 self.assertTrue(all(s.startswith("ussewc") for s in slugs))
+                # the focus markets seat before everything, and the
+                # engine's list fits behind them
+                m.focus.markets = [f"ewc-usse-f{i}-2026-11-03-rep" for i in range(120)]
+                slugs = m._ws_slugs()
+                self.assertEqual(slugs[:120], sorted(m.focus.markets))
+                self.assertEqual(len(slugs), 120 + ENGINE_WS_CAP)
+                self.assertLessEqual(len(slugs), FOCUS_WS_CAP + ENGINE_WS_CAP)
             finally:
                 for k in ("V3_STATE_PATH", "V3_FLOOR_PATH"):
                     os.environ.pop(k, None)
@@ -2692,7 +2702,9 @@ class TestNbaFamily(unittest.TestCase):
         from v3.basketball import nba
         from v3.football import nfl
         a, b = nba(), nfl()
-        for f in ("capital_usd", "holdings_in_ceiling",
+        # capital_usd no longer mirrors: the NFL took its share of the
+        # families' $250 (owner, 2026-09-10) while the NBA stays off
+        for f in ("holdings_in_ceiling",
                   "dump_usd_day", "rest_style", "known_ground", "revive",
                   "probe_usd", "grow_usd"):
             self.assertEqual(getattr(a, f), getattr(b, f), f)
@@ -5405,7 +5417,9 @@ class TestExpectedRiskBudget(unittest.TestCase):
     def test_politics_config_carries_the_approved_numbers(self):
         from v3 import politics
         c = politics.config()
-        self.assertEqual(c.capital_usd, 250.0)
+        # owner, 2026-09-10: politics' share of the families' $250 while
+        # the boosted markets are the focus tender's
+        self.assertEqual(c.capital_usd, 150.0)
         # owner, 2026-08-30 "2500 is fine" — the raw-claims planner
         # pressed the old $500 gross bound within hours
         self.assertEqual(c.gross_cap_usd, 2500.0)
