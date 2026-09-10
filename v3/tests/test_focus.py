@@ -525,6 +525,31 @@ class TestAfterAFill(Base):
         self.tick()
         self.assertNotIn(f"{NC}|SELL", self.f.weak_since)
 
+    def test_an_exit_fill_holds_nothing_and_an_exit_follows_the_lot_within_a_minute(self):
+        # owner, 2026-09-10: "Exit orders should never be held and don't
+        # need to ramp up. They can always be placed"
+        self.r.positions[NC] = (200.0, 200.0 * 0.40)
+        self.r.fam.positions_seen[NC] = 200.0        # the family knows the lot
+        self.r.fam.inventory[NC] = {"qty": 200.0, "cost": 80.0}
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ex = self.f._mine(NC, "SELL")[0]
+        self.assertIn("focus exit", ex.why)
+        # part of the exit sells: no hold on the side, logged as the position leaving
+        self.fill(ex, 50.0)
+        self.tick()
+        self.assertNotIn(f"{NC}|SELL", self.f.filled_at)
+        self.assertTrue(any(e.get("event") == "exit_filled" for e in self.f.log))
+        self.assertFalse(any(e.get("event") == "filled" and e.get("market") == NC
+                             for e in self.f.log))
+        # the lot grows again: the exit is re-sized within a minute, not five
+        self.r.positions[NC] = (400.0, 400.0 * 0.40)
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        ex2 = self.f._mine(NC, "SELL")
+        self.assertEqual(len(ex2), 1)
+        self.assertEqual(ex2[0].qty, 400.0)
+
     def test_the_exit_joins_the_touch_and_never_sits_under_cost(self):
         # short 200 opened at 47c: cost a share 53c of collateral, the
         # break-even YES price 47c; the bid touch is 44c, under it
