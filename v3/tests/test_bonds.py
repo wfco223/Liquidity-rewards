@@ -918,6 +918,7 @@ class TestTheBudgetFollowsTaxes(Base):
         self.assertEqual(self.b.budget, 220.0)
         self.tax["owed"] = 264.0                        # more paid, more owed
         self.assertEqual(self.b.view(self.now)["budget"], 264.0)
+        self.bond(AL, "YES", 100.0, 0.64)               # $64 of bonds, paid from the budget
         self.b._pay(64.0)
         self.assertEqual((self.b.budget, self.b.spent), (200.0, 64.0))
         self.b.cycle(self.now + 1, self.positions(), on=False)
@@ -925,7 +926,7 @@ class TestTheBudgetFollowsTaxes(Base):
         v = self.b.view(self.now + 1)
         self.assertEqual(v["budget_mode"], "tax")
         self.assertEqual(v["tax"]["gross"], 1000.0)
-        self.assertEqual(v["money"], 200.0)
+        self.assertEqual(v["money"], 200.0)             # the room: owed less what is held
 
     def test_a_fixed_budget_overrides_and_follow_returns(self):
         self.b.set_budget(50.0)
@@ -1140,6 +1141,7 @@ class TestTheExchangeIsTheTruth(Base):
         # (2026-09-04: one short read wrote off 32 markets), and the
         # record must agree — here it shows no purchase, so it does
         self.bond(AL, "YES", 100.0, 0.98)
+        self.b._pay(98.0)                                      # the budget paid for them
         self.b.cycle(self.now, self.positions(), on=True)     # the exchange showed 100
         self.exch(AL, 60.0, 0.98)                              # 40 sold by hand
         self.b.cycle(self.now + 60, self.positions(), on=True)
@@ -1153,7 +1155,10 @@ class TestTheExchangeIsTheTruth(Base):
         self.assertAlmostEqual(self.b.cash, 40 * 0.98, places=4)
         self.assertEqual(self.b.realized, 0.0)
         self.assertAlmostEqual(self.b.sold_usd, 40 * 0.98, places=4)
-        self.assertEqual(self.b.budget, 1000.0)                # and nothing refunded
+        # the 40 sold return their cost to the budget (owner, 2026-09-10):
+        # the room reopens; the proceeds are his, not the engine's
+        self.assertAlmostEqual(self.b.budget, 1000.0 - 98.0 + 40 * 0.98, places=4)
+        self.assertAlmostEqual(self.b.spent, 60 * 0.98, places=4)
         ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"]
         self.assertEqual((ev[0]["qty"], ev[0]["refund"], ev[0]["sold"]), (40.0, 0.0, 40.0))
         self.assertEqual(ev[0]["priced"], "cost")
@@ -1943,16 +1948,16 @@ class TestTheHeadline(Base):
         self.assertAlmostEqual(e["annual_pct"], 3.61 / 90.5 * 365 / 10, places=3)
         v = self.b.view(self.now)
         self.assertEqual(v["earned"]["invested"], e["invested"])
-        # buying with the $38 of proceeds is not new money: "put in" stays
+        # the proceeds are his, never redeployed (owner, 2026-09-10): the
+        # next buy is budget money, so "put in" grows by it
         self.b._book_lot(TN, "YES", 40.0, 38.0, ref="T2")
         self.b._pay(38.0)
         e = self.b._earned()
         self.assertAlmostEqual(e["invested"], 60 * 0.905 + 38.0, places=2)
-        self.assertAlmostEqual(e["deployed"], 90.5, places=2)
-        # but buying from the budget is
+        self.assertAlmostEqual(e["deployed"], 90.5 + 38.0, places=2)
         self.b._book_lot(GA, "YES", 10.0, 7.0, ref="T3")
         self.b._pay(7.0)
-        self.assertAlmostEqual(self.b._earned()["deployed"], 97.5, places=2)
+        self.assertAlmostEqual(self.b._earned()["deployed"], 135.5, places=2)
         # an older state, or one seeded the wrong way, is re-seeded from
         # what holds: held + proceeds waiting − profit taken
         b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
@@ -2843,7 +2848,9 @@ class TestSellingIntoTheBids(Base):
         self.assertTrue(r["ok"], r["note"])
         self.assertEqual(self.b.held(AL, "YES"), 80.0)
         self.assertAlmostEqual(self.b.cash, 20 * 0.93, places=2)     # the proceeds are cash now
-        self.assertAlmostEqual(self.b._money(), money0 + 20 * 0.93, places=2)   # available capital
+        # the room reopens by the lot's cost (owner, 2026-09-10): the
+        # proceeds are his, the budget never redeploys them
+        self.assertAlmostEqual(self.b._money(), money0 + 20 * 0.95, places=2)
         self.assertAlmostEqual(self.b.realized, 20 * (0.93 - 0.95), places=2)   # the loss is booked
         ev = [e for e in self.b.log if e["event"] == "sold_into"][0]
         self.assertTrue(ev["under_cost"])
@@ -4530,7 +4537,8 @@ class TestTheAmplifier(Base):
     def test_the_phantom_sales_of_sep_9_are_repaired_once(self):
         from v3 import bonds as bm
         rows = bm.REPAIRS["amp-phantom-2026-09-09"]
-        self.b.repairs_done = []                       # not yet applied on this ledger
+        self.b.repairs_done = ["amp-phantom-2026-09-09b",
+                               "budget-model-2026-09-10"]   # only the first is due on this ledger
         for slug, side, qty, cost, proceeds, gain in rows:
             self.b.approve(slug, self.now) if slug not in self.b.approved else None
             self.assertNotIn(slug, self.b.lots)
@@ -4542,18 +4550,95 @@ class TestTheAmplifier(Base):
         self.assertAlmostEqual(self.b.cash, cash0 - 678.00, places=2)
         self.assertAlmostEqual(self.b.realized, real0 - 3.01, places=2)
         self.assertAlmostEqual(self.b.sold_usd, sold0 - 678.00, places=2)
-        self.assertEqual(self.b.repairs_done, ["amp-phantom-2026-09-09"])
+        self.assertIn("amp-phantom-2026-09-09", self.b.repairs_done)
         self.assertEqual(len([e for e in self.b.log if e["event"] == "repaired"]), 3)
         # once: a restart and another cycle change nothing
         d = self.b.to_dict()
         b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
                    clock=lambda: self.r.now)
         b2.restore(copy.deepcopy(d))
-        self.assertEqual(b2.repairs_done, ["amp-phantom-2026-09-09"])
+        self.assertIn("amp-phantom-2026-09-09", b2.repairs_done)
         for slug, side, qty, cost, proceeds, gain in rows:
             self.assertAlmostEqual(b2.held(slug, side), qty, places=2)   # the lot survived the restore
         cash1 = b2.cash
         b2._apply_repairs()
         self.assertAlmostEqual(b2.cash, cash1)
+
+    def test_the_second_repair_reverses_money_only(self):
+        """Between 18:56Z and 19:24Z seven more lots were booked sold
+        through the amplifier with no trade behind them; the exchange's
+        record counted them back in at their real cost before the fix
+        booted, so only the phantom money comes off."""
+        from v3 import bonds as bm
+        rows = bm.REPAIRS["amp-phantom-2026-09-09b"]
+        self.b.repairs_done = ["amp-phantom-2026-09-09",
+                               "budget-model-2026-09-10"]   # the first is done, the second not
+        lots0 = copy.deepcopy(self.b.lots)
+        cash0, real0, sold0 = self.b.cash, self.b.realized, self.b.sold_usd
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertAlmostEqual(self.b.cash, cash0 - 395.64, places=2)
+        self.assertAlmostEqual(self.b.realized, real0 - 10.94, places=2)
+        self.assertAlmostEqual(self.b.sold_usd, sold0 - 395.64, places=2)
+        for slug, side, qty, cost, proceeds, gain in rows:
+            self.assertEqual(qty, 0.0)
+            self.assertEqual(self.b.lots.get(slug), lots0.get(slug))   # no lot touched
+        self.assertEqual(len([e for e in self.b.log if e["event"] == "repaired"]), 7)
+        self.assertIn("amp-phantom-2026-09-09b", self.b.repairs_done)
+
+
+class TestTheBudgetPays(Base):
+    """Owner, 2026-09-10: "The only money to deploy automatically for
+    bonds is the budget. And it's not clear how the proceeds got that
+    high." Buys draw on the budget alone; a sale returns the lot's
+    cost to the budget; proceeds are his, recorded and never
+    redeployed."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.b.cash = 300.0                      # proceeds returned earlier
+
+    def test_a_buy_draws_on_the_budget_not_the_proceeds(self):
+        self.b._pay(50.0)
+        self.assertAlmostEqual(self.b.budget, 950.0)
+        self.assertAlmostEqual(self.b.spent, 50.0)
+        self.assertAlmostEqual(self.b.cash, 300.0)          # untouched
+        self.assertAlmostEqual(self.b.budget_total(), 1000.0)
+
+    def test_a_sale_returns_the_cost_to_the_budget(self):
+        self.b._pay(90.0)
+        self.b._refund_cost(90.0)
+        self.assertAlmostEqual(self.b.budget, 1000.0)
+        self.assertAlmostEqual(self.b.spent, 0.0)
+        self.assertAlmostEqual(self.b.budget_total(), 1000.0)
+
+    def test_money_to_deploy_is_the_room_under_the_budget(self):
+        self.bond(AL, "YES", 100.0, 0.90)                    # $90 held at cost
+        self.assertAlmostEqual(self.b._money(), 1000.0 - 90.0)
+        self.assertAlmostEqual(self.b._money(), self.b.budget_room())
+        v = self.b.view(self.now, self.positions())
+        self.assertAlmostEqual(v["money"], 910.0)
+        self.assertAlmostEqual(v["cash"], 300.0)             # shown, not deployable
+        self.assertAlmostEqual(v["room"], 910.0)
+
+    def test_the_rebase_puts_spent_where_the_lots_are_once(self):
+        # the ledger as it stood: everything held had been paid from
+        # proceeds, so the budget still read the full amount he set
+        self.b.set_budget(2400.45)
+        self.bond(AL, "YES", 2300.0, 2214.55 / 2300.0)
+        self.assertAlmostEqual(self.b.invested(), 2214.55, places=2)
+        self.assertAlmostEqual(self.b.spent, 0.0)
+        self.b.repairs_done = [k for k in bonds_mod.REPAIRS if k != "budget-model-2026-09-10"]
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertAlmostEqual(self.b.spent, 2214.55, places=2)
+        self.assertAlmostEqual(self.b.budget, 185.90, places=2)
+        self.assertAlmostEqual(self.b.budget_total(), 2400.45, places=2)   # the ceiling did not move
+        self.assertAlmostEqual(self.b.budget_room(), 185.90, places=2)
+        self.assertAlmostEqual(self.b.cash, 300.0)           # proceeds untouched
+        self.assertIn("budget-model-2026-09-10", self.b.repairs_done)
+        spent1 = self.b.spent
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertAlmostEqual(self.b.spent, spent1)         # once
 
 
