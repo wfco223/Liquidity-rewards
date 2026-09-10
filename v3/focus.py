@@ -49,13 +49,34 @@ import threading
 import time
 
 from .family import FamilyOrder, is_wall
-from .intents import BUY_LONG, BUY_SHORT, capital_at_risk
+from .intents import BUY_LONG, BUY_SHORT, SELL_SHORT, capital_at_risk
 from .programs import pool_days
 from .scoring import estimate_join
 from .survey import wall_collateral
 from .terms import TermsStore
 
 FOCUS_POOL_MIN_USD = 250.0      # a program paying this a day per event is boosted
+# Owner, 2026-09-10 (on the list of boosted markets with nothing of his
+# resting and no fair — every one but Alaska governor): "those little
+# hanging fruit markets that you identified except for Alaska set the
+# fair to Nate Silvers, the silver bulletins model". Each gets Silver's
+# number as its fair ONCE, the first pass the model has one; from then
+# on the fair is his to move or clear like any other.
+FOCUS_SILVER_FAIRS = (
+    "paccc-usse-midterms-2026-11-03-dem",
+    "ewc-usse-mi-2026-11-03-dem",
+    "ewc-usse-ia-2026-11-03-rep", "ewc-usse-ia-2026-11-03-dem",
+    "ewc-usse-ga-2026-11-03-rep",
+    "ewc-usse-nh-2026-11-03-rep", "ewc-usse-nh-2026-11-03-dem",
+    "ewc-usgub-wi-2026-11-03-rep", "ewc-usgub-wi-2026-11-03-dem",
+    "ewc-usgub-oh-2026-11-03-rep", "ewc-usgub-oh-2026-11-03-dem",
+    "ewc-usgub-nv-2026-11-03-rep", "ewc-usgub-nv-2026-11-03-dem",
+    "ewc-usgub-mi-2026-11-03-rep", "ewc-usgub-mi-2026-11-03-dem",
+    "ewc-usgub-ia-2026-11-03-rep", "ewc-usgub-ia-2026-11-03-dem",
+    "ewc-usse-mn-2026-11-03-rep",
+    "ewc-usgub-az-2026-11-03-rep",
+    "ewc-usgub-ga-2026-11-03-dem",
+)
 FOCUS_ALLOW_TOKENS = ("usgub-ak",)   # avoided ground the tender may still work
 FOCUS_CYCLE_S = 15.0
 FOCUS_BOOK_MAX_AGE_S = 30.0     # a focus market's book older than this is read again
@@ -161,6 +182,7 @@ class Focus:
         self.moved_at: dict[str, float] = {}
         self.filled_at: dict[str, float] = {}     # slug|side -> when an entry last filled
         self.weak_since: dict[str, float] = {}    # slug|side -> reading under zero since
+        self.silver_seeded: set[str] = set()      # FOCUS_SILVER_FAIRS already given a fair
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
         self._gone_by_me: set[str] = set()        # ids the tender itself cancelled or replaced
         self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
@@ -291,6 +313,29 @@ class Focus:
             self._plan_all(now, {}, None)
             self.note = "starting — the books are being read"
             self._freeze(now, None, bool(self.switch_on()))
+
+    def _seed_silver_fairs(self) -> None:
+        """The markets he named get Silver's number as their fair once,
+        the first pass the model has one for them (see
+        FOCUS_SILVER_FAIRS); a fair he later clears stays cleared."""
+        for slug in FOCUS_SILVER_FAIRS:
+            if slug in self.silver_seeded or slug in self.fairs:
+                continue
+            if slug not in self.markets and slug not in self.fam.universe:
+                continue
+            try:
+                v = self.model_fair(slug)
+            except Exception:  # noqa: BLE001
+                v = None
+            if v is None:
+                continue
+            px = round(float(v), 3)
+            if not (0.001 <= px <= 0.999):
+                continue
+            self.fairs[slug] = px
+            self.silver_seeded.add(slug)
+            self._log(event="fair_set", market=slug, fair=px,
+                      note="Silver's number, as you asked (2026-09-10)")
 
     def refresh_markets(self, now: float, quiet: bool = False) -> list[str]:
         out = []
@@ -434,6 +479,20 @@ class Focus:
         self._vanished.pop(oid, None)
         if oid in self.mine_ids:
             self.mine_ids.remove(oid)
+
+    def _withdraw(self, oid: str, slug: str, side: str, qty: float, now: float,
+                  is_exit: bool, cancel: bool = True) -> None:
+        """An order the desk placed but never saw resting: it is the
+        tender's (claimed), it is withdrawn so no ghost lives on, and
+        a fill of it in the meantime is booked to the tender through
+        the journal like any other."""
+        self._claim_id(oid)
+        self._vanished[oid] = (slug, side, qty, now, is_exit)
+        if cancel:
+            try:
+                self.fam.desk.cancel(oid, slug, initiator="auto")
+            except Exception:  # noqa: BLE001
+                pass
 
     def _journal_fills(self, oid: str, since: float) -> float:
         """Shares the family's fill journal books to this order since
@@ -694,6 +753,7 @@ class Focus:
         with self.lock:
             self._refresh_terms(now)
             self.refresh_markets(now)
+            self._seed_silver_fairs()
             self._claim_orders()
             self._note_fills(now)            # before the plans: a fill holds its side
             self._refresh_books(now)
@@ -878,9 +938,13 @@ class Focus:
     # -- tending -----------------------------------------------------------------
 
     def risk_used(self) -> float:
+        """Expected loss across the tender's ENTRIES. An exit is the
+        position leaving — it counts nothing here and the cap never
+        pulls it (21:00Z, the balance-of-power cover was rested and
+        pulled "over the cap" eight times in four minutes)."""
         tot = 0.0
         for o in list(self.fam.orders.values()):
-            if o.purpose != PURPOSE or o.market not in self.markets:
+            if o.purpose != PURPOSE or o.market not in self.markets or self._exit_order(o):
                 continue
             pf = float(o.live_pf) if o.live_pf is not None else 1.0
             tot += capital_at_risk(o.intent, o.price, o.qty) * max(pf, FOCUS_PF_FLOOR)
@@ -906,7 +970,8 @@ class Focus:
         used = self.risk_used()
         if used > self.loss_cap + 1e-9:
             mine = sorted((o for o in list(self.fam.orders.values())
-                           if o.purpose == PURPOSE and o.market in self.markets),
+                           if o.purpose == PURPOSE and o.market in self.markets
+                           and not self._exit_order(o)),
                           key=lambda o: (o.live_ev if o.live_ev is not None else 0.0))
             for o in mine:
                 if used <= self.loss_cap or actions <= 0:
@@ -1004,11 +1069,17 @@ class Focus:
                     continue                      # an exit is never held back
                 r = self.fam.desk.place_resting(slug, side, plan["px"], plan["qty"],
                                                 net_position=float((positions.get(slug) or (0.0,))[0] or 0.0),
+                                                # a cover buys the short back: it
+                                                # frees money rather than tying
+                                                # more up (a BUY_LONG cover had
+                                                # counted against the cap)
+                                                close_short=(is_exit and side == "BUY"),
                                                 initiator="auto")
                 actions -= 1
                 rested = plan["qty"] if r.ok else (r.resting_qty if r.order_id and r.resting_qty >= 1.0 else 0.0)
+                if r.order_id:
+                    self._claim_id(r.order_id)    # every id the desk hands back is the tender's
                 if r.order_id and rested >= 1.0:
-                    self._claim_id(r.order_id)
                     self.fam.orders[r.order_id] = FamilyOrder(
                         id=r.order_id, market=slug, side=side, price=(r.price or plan["px"]),
                         qty=rested, intent=r.intent, placed_ts=now, purpose=PURPOSE,
@@ -1022,17 +1093,32 @@ class Focus:
                               qty=rested, est=plan["est"], pf=plan["pf"], ev=plan["ev"],
                               exit=is_exit, note=("trimmed by the exchange" if not r.ok else ""))
                 else:
+                    # a refused placement waits out the cooldown (21:05Z: a
+                    # refused resize was retried every twenty seconds)
+                    self.moved_at[key] = now
+                    note = r.note
+                    if r.order_id:
+                        # placed but never seen resting: withdraw it so no
+                        # ghost lives on, and any fill of it in the meantime
+                        # is booked to the tender, not to his hand (20:09Z
+                        # and 20:24Z: two such orders filled as "your own
+                        # trade")
+                        self._withdraw(r.order_id, slug, side, plan["qty"], now, is_exit)
+                        note = "withdrawn — " + r.note
                     self._log(event="refused", market=slug, side=side, price=plan["px"],
-                              qty=plan["qty"], note=r.note[:140])
+                              qty=plan["qty"], note=note[:140])
                 continue
             # a resting order: keep, resize or move
             same_px = abs(cur.price - plan["px"]) < 1e-9
             size_ok = abs(cur.qty - plan["qty"]) <= max(1.0, 0.10 * plan["qty"])
-            if same_px and size_ok:
+            # a cover resting as a fresh long (the desk's default for a
+            # bid) is re-laid as the close it is
+            wrong_intent = is_exit and side == "BUY" and cur.intent != SELL_SHORT
+            if same_px and size_ok and not wrong_intent:
                 continue
             cur_ev = float(cur.live_ev if cur.live_ev is not None else 0.0)
             keeps = same_px or cur_ev >= FOCUS_KEEP * plan["ev"] - 1e-9
-            if keeps and size_ok:
+            if keeps and size_ok and not wrong_intent:
                 continue
             cooldown = FOCUS_EXIT_COOLDOWN_S if is_exit else FOCUS_MOVE_COOLDOWN_S
             if now - self.moved_at.get(key, 0.0) < cooldown:
@@ -1044,12 +1130,20 @@ class Focus:
                     float(cur.live_pf if cur.live_pf is not None else 1.0), FOCUS_PF_FLOOR)
                 if used - cur_risk + plan["risk"] > self.loss_cap + 1e-9:
                     continue
+            intent = SELL_SHORT if wrong_intent else cur.intent
             r = self.fam.desk.reprice(
                 {"id": cur.id, "market": slug, "side": side, "price": cur.price,
-                 "size": cur.qty, "intent": cur.intent},
+                 "size": cur.qty, "intent": intent},
                 plan["px"], plan["qty"], initiator="auto", keep_trimmed=True)
             actions -= 1
             if not (r.ok or (r.order_id and r.resting_qty >= 1.0)):
+                # the original stays; the cooldown runs before another try,
+                # and a replacement the desk withdrew is still the tender's
+                # if it filled first
+                self.moved_at[key] = now
+                if r.withdrawn_id:
+                    self._withdraw(r.withdrawn_id, slug, side, plan["qty"], now, is_exit,
+                                   cancel=False)
                 self._log(event="move_refused", market=slug, side=side, price=plan["px"],
                           qty=plan["qty"], note=r.note[:140])
                 continue
@@ -1062,7 +1156,7 @@ class Focus:
             self._claim_id(r.order_id)
             self.fam.orders[r.order_id] = FamilyOrder(
                 id=r.order_id, market=slug, side=side, price=(r.price or plan["px"]),
-                qty=rested, intent=cur.intent, placed_ts=now, purpose=PURPOSE,
+                qty=rested, intent=(r.intent or intent), placed_ts=now, purpose=PURPOSE,
                 why=self._why(plan, is_exit), est_day=plan["est"],
                 live_est=plan["est"], live_pf=plan["pf"], live_ev=plan["ev"])
             self.moved_at[key] = now
@@ -1326,6 +1420,7 @@ class Focus:
                 "fill_floor": self.fill_floor, "loss_cap": self.loss_cap,
                 "first_seen": dict(self.first_seen), "moved_at": dict(self.moved_at),
                 "filled_at": dict(self.filled_at), "mine_ids": list(self.mine_ids[-MINE_IDS_KEEP:]),
+                "silver_seeded": sorted(self.silver_seeded),
                 "events": self.events[-EVENTS_KEEP:], "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -1343,5 +1438,6 @@ class Focus:
         self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
         self.filled_at = {str(k): float(v) for k, v in (d.get("filled_at") or {}).items()}
         self.mine_ids = [str(x) for x in (d.get("mine_ids") or [])][-MINE_IDS_KEEP:]
+        self.silver_seeded = {str(s) for s in (d.get("silver_seeded") or [])}
         self.events = list(d.get("events") or [])[-EVENTS_KEEP:]
         self.log = list(d.get("log") or [])[-LOG_KEEP:]
