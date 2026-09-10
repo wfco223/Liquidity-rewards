@@ -153,6 +153,30 @@ class TestTheGround(Base):
         self.assertAlmostEqual(self.r.fam.family_spent(), 4.0, places=6)
 
 
+class TestTheStartUp(Base):
+    """Owner, 2026-09-10: "The start up time for focus has to be very
+    short." The seed lists the markets on the page at once; the first
+    pass reads every focus book itself, not a dozen a pass."""
+
+    def test_the_seed_lists_the_markets_before_any_pass(self):
+        v = json.loads(self.f.payload_json)
+        self.assertTrue(v["ok"])
+        self.assertEqual({r["market"] for r in v["rows"]}, {NC, OH, AK, BP, AG})
+        self.assertIn("starting", v["note"])
+
+    def test_the_first_pass_reads_every_unread_book(self):
+        self.r.cache._books.clear()
+        self.f.cycle(self.r.now + 1, {}, False)
+        self.assertEqual(self.f.books_read, 5)
+        for s in (NC, OH, AK, BP, AG):
+            self.assertIsNotNone(self.r.cache.any_age(s))
+            self.assertIsNotNone(self.f.rows[s]["book"])
+        # the universe walk waited for the second pass
+        self.assertEqual(self.f._rotor, 0)
+        self.f.cycle(self.r.now + 16, {}, False)
+        self.assertGreater(self.f._rotor, 0)
+
+
 class TestTheProgramWatch(Base):
     def test_a_new_boosted_program_is_an_event_and_a_ping(self):
         self.tick()
