@@ -987,12 +987,16 @@ class Family:
             n = self.event_n_seen.get(slug)
         if not n:
             return None
-        # daily_pool, not pool: a bounded program's rewardPool covers
-        # its whole period, so a tournament-length one read as daily
-        # overstates by the length of the event (owner, 2026-08-31).
-        # Every live program in our four families is open-ended, so this
-        # is the same number for them.
-        return (prog.daily_pool or 0.0) / max(int(n), 1) / 2.0
+        # the pool pays PER DAY for everything but golf's pre-tournament
+        # budgets (programs.pool_days, settled by the August
+        # reconciliation). The 2026-09-09 midterms programs carry an end
+        # date — election day — and the property that divided a bounded
+        # pool by its window read their $1,500/day as $6.82 a side
+        # (owner, 2026-09-10: "The estimator doesn't appear to be taking
+        # into account the new reward pools")
+        from .programs import pool_days
+        per_day = (prog.pool or 0.0) / pool_days(prog, slug)
+        return per_day / max(int(n), 1) / 2.0
 
     # ------------------------------------------------------------ discovery
 
