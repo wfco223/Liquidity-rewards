@@ -60,8 +60,8 @@ def authed(get_header, query_string: str, password: str) -> bool:
 # Owner, 2026-08-31: plan and model run in the background — their
 # routes still answer for a bookmark, but they are off the bar. Fills
 # and watch became sub-pages of quick look.
-NAV = (("quick look", "."), ("status", "status"), ("orders", "orders"),
-       ("pay", "pay"), ("bonds", "bonds"), ("focus", "focus"),
+NAV = (("quick look", "."), ("focus", "focus"), ("status", "status"),
+       ("orders", "orders"), ("pay", "pay"), ("bonds", "bonds"),
        ("log", "log"), ("switch", "switch"))
 SUBNAV = {"quick": (("meter", "."), ("fills", "fills"), ("watch", "watch")),
           "orders": (("orders", "orders"),)}
@@ -2024,12 +2024,21 @@ function fHead(f){
   o+='</div>';}
  return o;
 }
+// the book itself (owner, 2026-09-10: "I need to be able to see the
+// book on focus markets"): eight levels a side, best first, with every
+// order of ours marked at its level
+function fBook(r){var b=r.book||{};var bids=b.bids||[],asks=b.asks||[];if(!bids.length&&!asks.length)return '';
+ var ours={};(r.orders||[]).forEach(function(x){var k=x.side+'|'+Math.round(x.price*1000);ours[k]=(ours[k]||[]).concat([x]);});
+ function mark(side,px){var l=ours[side+'|'+Math.round(px*1000)];if(!l)return '';var you=l.some(function(x){return x.who==='you';});return ' <span class="'+(you?'ok':'muted')+'">\u25C0 '+l.map(function(x){return (x.who==='you'?'you':x.who==='tender'?'tender':x.who)+' '+x.qty;}).join(', ')+'</span>';}
+ var n=Math.max(bids.length,asks.length);var h='<div style="overflow-x:auto"><table style="font-size:13px;margin:4px 0"><tr><th>bids</th><th>asks</th></tr>';
+ for(var i=0;i<n;i++){var bd=bids[i],ak=asks[i];h+='<tr><td>'+(bd?'<b>'+pc(bd[0])+'</b> \u00d7'+fmtsz(bd[1])+mark('BUY',bd[0]):'')+'</td><td>'+(ak?'<b>'+pc(ak[0])+'</b> \u00d7'+fmtsz(ak[1])+mark('SELL',ak[0]):'')+'</td></tr>';}
+ return h+'</table></div>';}
 function fCard(r,f){
  var o=[];var L=r.name||r.market;var p=r.prog||{};var b=r.book||{};var m=esc(r.market);
  var pid=(p.pid||'').replace(/_20\d{6}$/,'').replace(/^midterms_/,'').replace(/_/g,' ');
  o.push('<div class="card">');
  o.push('<div class="name"><b>'+esc(L)+'</b> <span class="pill">'+usd(p.pool_day||0)+'/day'+(p.n>1?' ÷ '+p.n:'')+'</span>'+(r.held?' <span class="pill" style="border-color:#c9a227;color:#e8c547">held</span>':'')+(r.paused?' <span class="pill">paused</span>':'')+(r.ev!=null?' <span class="'+(r.ev>0?'ok':'muted')+'">EV '+fSign(r.ev)+'/day</span>':'')+'</div>');
- if(b.bid!=null||b.ask!=null)o.push('<div class="sub">bid <b>'+pc(b.bid)+'</b> ×'+fmtsz(b.bid_q||0)+' · ask <b>'+pc(b.ask)+'</b> ×'+fmtsz(b.ask_q||0)+(b.age_s!=null?' <span class="muted">· book '+Math.round(b.age_s)+'s old</span>':'')+'</div>');
+ if(b.bid!=null||b.ask!=null)o.push('<div class="sub">bid <b>'+pc(b.bid)+'</b> ×'+fmtsz(b.bid_q||0)+' · ask <b>'+pc(b.ask)+'</b> ×'+fmtsz(b.ask_q||0)+(b.age_s!=null?' <span class="muted">· book '+Math.round(b.age_s)+'s old</span>':'')+'</div>'+fBook(r));
  else o.push('<div class="muted">'+esc(r.note||'no book yet')+'</div>');
  var fairTxt=r.fair!=null?'<b>'+pc(r.fair)+'</b> yours'+(r.silver!=null?' <span class="muted">(Silver '+pc(r.silver)+')</span>':''):(r.silver!=null?'<span class="muted">none — Silver says '+pc(r.silver)+'</span>':'<span class="muted">none</span>');
  o.push('<div class="sub">fair: '+fairTxt+(r.not_tended?' · <span class="warn">'+esc(r.not_tended)+'</span>':' · <span class="ok">tended</span>')+'</div>');
