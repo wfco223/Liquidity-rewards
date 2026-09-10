@@ -3975,3 +3975,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789043108.9,politics,scc-senate-gop-2026-11-03-gte57,SELL,100,0.05,backfill,,9.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7SAPNCPT6S
 1789043108.9,politics,scc-senate-gop-2026-11-03-56,SELL,1000,0.03,backfill,,10.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7FF7V7CSJR
 1789043108.9,politics,scc-senate-gop-2026-11-03-55,SELL,250,0.03,backfill,,1.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDEKF6ACYT75
+1789043362.4,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,BUY,1,0.44,sell,0.2082,23.99,,35,49,0.137,0.44,0.45,0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CCVRN7GV2T6S
+1789043422.4,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,3.99,0.06,bond,3.2231,0.26,0.000325,3,8,0,0.05,0.06,-0.0597,-474.99,bond more: buying up to $74.85 more; never dearer than his first price — 47% of ,CDG4MPPF4SJZ
+1789043482.4,politics,usgubewc-usgub-ct-2026-11-03-rep,SELL,7.98,0.03,manual,2.1203,10.81,0.0028,1,4,0.514,0.02,0.03,-0.0272,-4.98,the owner's own order — the engine leaves it alone,CD73GRHSJT6S
+1789043482.4,politics,usgubewc-usgub-mn-2026-11-03-rep,SELL,3.42,0.07,earn,2.7977,8.71,0.004675,4,7,0.735,0.06,0.07,-0.0653,-3.42,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CD8X51P6RSJH
+1789043482.4,politics,usgubewc-usgub-co-2026-11-03-rep,SELL,7.74,0.03,earn,3.5246,4.78,0.001725,1,4,0.661,0.02,0.03,-0.0283,-8.74,joins the touch — the book has been quiet,CDC8628NRSX0
+1789044144.1,politics,scc-senate-gop-2026-11-03-56,SELL,-1000,0.03,fix,8.837,10.29,0.006225,3,6,0.784,0.02,0.03,-0.0238,500,size trimmed by 1000 to the exchange's count (order CD7FF7V7CSJR),CD7FF7V7CSJR
+1789044144.1,politics,scc-senate-gop-2026-11-03-gte57,SELL,-100,0.05,fix,0.8214,9.94,0.002575,1,4,0.283,0.04,0.05,-0.0474,-110,size trimmed by 100 to the exchange's count (order CD7SAPNCPT6S),CD7SAPNCPT6S
+1789044144.1,politics,scc-senate-gop-2026-11-03-55,SELL,-250,0.03,fix,22.9282,1.93,0.0166,1,4,0.602,0.04,0.06,-0.0134,-250,size trimmed by 250 to the exchange's count (order CDEKF6ACYT75),CDEKF6ACYT75
+1789044144.1,politics,ussewc-usse-ky-2026-11-03-rep,SELL,60.63,0.94,hand,,7.09,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC8S407DTR3V
+1789044187.4,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,SELL,1,0.44,sell,0,0,,33,45,0.497,0.44,0.45,-0.04,0,taker dump — sold into the bid (the carved exception),CDGHSAH1WSX4
+1789044209.8,politics,ussewc-usse-wy-2026-11-03-rep,BUY,5.47,0.94,backfill,,2.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDEQZYWQGT3P
+1789044330.3,politics,ussewc-usse-ms-2026-11-03-dem,SELL,12,0.08,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDG4JD1MGSJH
+1789044343.7,politics,scc-senate-gop-2026-11-03-56,SELL,-1000,0.03,fix,8.837,10.29,0.006225,3,6,0.784,0.02,0.03,-0.0238,500,size trimmed by 1000 to the exchange's count (order CD7FF7V7CSJR),CD7FF7V7CSJR
+1789044343.7,politics,scc-senate-gop-2026-11-03-gte57,SELL,-100,0.05,fix,0.8214,9.94,0.002575,1,4,0.283,0.04,0.05,-0.0474,-110,size trimmed by 100 to the exchange's count (order CD7SAPNCPT6S),CD7SAPNCPT6S
+1789044343.7,politics,scc-senate-gop-2026-11-03-55,SELL,-250,0.03,fix,22.9282,1.93,0.0166,1,4,0.602,0.04,0.06,-0.0134,-250,size trimmed by 250 to the exchange's count (order CDEKF6ACYT75),CDEKF6ACYT75
+1789044343.7,politics,ussewc-usse-ky-2026-11-03-rep,SELL,60.63,0.94,hand,,7.09,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CC8S407DTR3V
+1789044343.7,politics,ussewc-usse-wy-2026-11-03-rep,BUY,5.47,0.94,backfill,,2.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDEQZYWQGT3P
+1789044343.7,politics,ussewc-usse-ms-2026-11-03-dem,SELL,12,0.08,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDG4JD1MGSJH
