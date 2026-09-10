@@ -2009,7 +2009,7 @@ function fHead(f){
  var o='<div class="card"><b>Focus</b> '+(f.on?'<span class="pill on">switch ON</span>':'<span class="pill">switch off — showing, not tending</span>')
  +'<div class="sub">'+f.n+' boosted market'+(f.n!==1?'s':'')+' (programs paying '+usd(f.pool_min)+'/day or more) · '+f.tended+' tended · '+f.mine+' tender order'+(f.mine!==1?'s':'')+' · expected loss <b>'+usd(f.risk_used)+'</b> of '+usd(f.loss_cap)+'</div>'
  +'<div class="sub">buying power '+(f.bp!=null?usd(f.bp):'<span class="warn">unknown</span>')+' → entry stake <b>'+usd(f.stake)+'</b> ('+esc(f.stake_src)+') · pass '+f.pass_s+'s, '+f.books_read+' books re-read'+(f.at?' · '+when(f.at):'')+'</div>'
- +(f.note?'<div class="warn">'+esc(f.note)+'</div>':'')
+ +(f.note?'<div class="'+(f.blocked?'bad':'warn')+'">'+(f.blocked?'<b>Nothing can rest from this server.</b> ':'')+esc(f.note)+'</div>':'')
  +'<div id="fmsg">'+(window._fNote||'')+'</div>'
  +'<details class="how"><summary class="muted">the numbers the tender runs on</summary>'
  +'<div class="sub">cost of capital <b>'+(f.coc_day*100).toFixed(2)+'%/day</b> '+fField('fn-coc','','5em','%')+fBtn('Set','fNum(\'coc\')','small')+'</div>'
