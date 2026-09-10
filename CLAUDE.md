@@ -168,8 +168,10 @@ long and accreted, so search it rather than reading it through.
   an entry never adds to a position past the stake (2026-09-10: an
   ask at the touch of the House dem control market filled eleven
   times in fifteen minutes while the tender re-rested it). An exit
-  joins the touch and never sits under the
-  position's cost (his fair when the cost is unknown). A market
+  joins the touch and never sits under the position's cost (his fair
+  when the cost is unknown); exits are never held, never scaled and
+  follow the lot within a minute ("Exit orders should never be held
+  and don't need to ramp up. They can always be placed"). A market
   without a fair is
   shown with Silver's number as a suggestion and nothing is tended
   ("Yes for 5"). The fill cost never reads under 2c a share ("The fill

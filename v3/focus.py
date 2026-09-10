@@ -79,7 +79,10 @@ FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much
 # claim saturates with size, the fill's cost does not, so past fair the
 # best order is often a smaller one
 FOCUS_SIZE_FRACS = (1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1)
-FOCUS_MOVE_COOLDOWN_S = 300.0   # an order moves at most this often
+FOCUS_MOVE_COOLDOWN_S = 300.0   # an entry moves at most this often
+FOCUS_EXIT_COOLDOWN_S = 60.0    # an exit follows the touch and the lot within a minute
+                                # (owner, 2026-09-10: "Exit orders should never be held
+                                # and don't need to ramp up. They can always be placed")
 # an order whose expected value reads under zero comes off only after
 # it has read so for this long (2026-09-10 14:00-14:50Z: on the
 # tenth-cent seat-count and balance-of-power books the touch flickers
@@ -435,36 +438,51 @@ class Focus:
             self._journaled = set(list(self._journaled)[-1000:])
         return got
 
+    @staticmethod
+    def _exit_order(o: FamilyOrder) -> bool:
+        return o.purpose == "sell" or str(o.why or "").startswith("focus exit")
+
     def _note_fills(self, now: float) -> None:
         """A tender entry that shrank or vanished is a FILL only when the
         family's journal books shares to it; then the side waits
-        FOCUS_REFILL_WAIT_S before any new entry. An order the open
-        list left out for a read comes back untouched (the family
-        restores its record); a silent cancel holds nothing."""
+        FOCUS_REFILL_WAIT_S before any new entry. An exit's fill is
+        the position leaving — it holds nothing (owner, 2026-09-10:
+        "Exit orders should never be held"). An order the open list
+        left out for a read comes back untouched (the family restores
+        its record); a silent cancel holds nothing."""
         cur = {o.id: o for o in list(self.fam.orders.values())
                if self._is_mine(o) and o.market in self.markets}
-        for oid, (slug, side, qty) in list(self._last_mine.items()):
+        for oid, rec in list(self._last_mine.items()):
+            slug, side, qty = rec[0], rec[1], rec[2]
+            was_exit = bool(rec[3]) if len(rec) > 3 else False
             if oid in self._gone_by_me:
                 continue
             o = cur.get(oid)
             if o is None:
-                self._vanished.setdefault(oid, (slug, side, qty, now))
+                self._vanished.setdefault(oid, (slug, side, qty, now, was_exit))
             elif o.qty < qty - 0.5:
-                self._vanished.setdefault(oid, (slug, side, qty - o.qty, now))
-        for oid, (slug, side, qty, since) in list(self._vanished.items()):
+                self._vanished.setdefault(oid, (slug, side, qty - o.qty, now, was_exit))
+        for oid, rec in list(self._vanished.items()):
+            slug, side, qty, since = rec[0], rec[1], rec[2], rec[3]
+            was_exit = bool(rec[4]) if len(rec) > 4 else False
             got = self._journal_fills(oid, since)
             if got >= 0.5:
-                self.filled_at[f"{slug}|{side}"] = now
-                self._log(event="filled", market=slug, side=side, qty=round(got, 2),
-                          note=f"an entry filled — nothing new rests on this side for "
-                               f"{FOCUS_REFILL_WAIT_S / 3600:g} h")
+                if was_exit:
+                    self._log(event="exit_filled", market=slug, side=side, qty=round(got, 2),
+                              note="the position left — the side is not held")
+                else:
+                    self.filled_at[f"{slug}|{side}"] = now
+                    self._log(event="filled", market=slug, side=side, qty=round(got, 2),
+                              note=f"an entry filled — nothing new rests on this side for "
+                                   f"{FOCUS_REFILL_WAIT_S / 60:g} min")
                 self._vanished.pop(oid, None)
             elif oid in cur and cur[oid].qty >= qty - 0.5 and now - since < FOCUS_VANISH_WAIT_S:
                 # back at full size: the list had left it out for a read
                 self._vanished.pop(oid, None)
             elif now - since > FOCUS_VANISH_WAIT_S:
                 self._vanished.pop(oid, None)     # gone for good, unbooked: not a fill
-        self._last_mine = {oid: (o.market, o.side, o.qty) for oid, o in cur.items()}
+        self._last_mine = {oid: (o.market, o.side, o.qty, self._exit_order(o))
+                           for oid, o in cur.items()}
         self._gone_by_me = {i for i in self._gone_by_me if i in cur}
 
     def _claim_orders(self) -> None:
@@ -955,8 +973,8 @@ class Focus:
                 if not is_exit and used + plan["risk"] > self.loss_cap + 1e-9:
                     continue                      # the cap: the best EV got in first
                 n_mine = sum(1 for o in list(self.fam.orders.values()) if o.purpose == PURPOSE)
-                if n_mine >= FOCUS_MAX_ORDERS:
-                    continue
+                if n_mine >= FOCUS_MAX_ORDERS and not is_exit:
+                    continue                      # an exit is never held back
                 r = self.fam.desk.place_resting(slug, side, plan["px"], plan["qty"],
                                                 net_position=float((positions.get(slug) or (0.0,))[0] or 0.0),
                                                 initiator="auto")
@@ -970,7 +988,7 @@ class Focus:
                         why=self._why(plan, is_exit), est_day=plan["est"],
                         live_est=plan["est"], live_pf=plan["pf"], live_ev=plan["ev"])
                     self.moved_at[key] = now
-                    self._last_mine[r.order_id] = (slug, side, rested)
+                    self._last_mine[r.order_id] = (slug, side, rested, is_exit)
                     if not is_exit:
                         used += plan["risk"]
                     self._log(event="rested", market=slug, side=side, price=(r.price or plan["px"]),
@@ -989,7 +1007,8 @@ class Focus:
             keeps = same_px or cur_ev >= FOCUS_KEEP * plan["ev"] - 1e-9
             if keeps and size_ok:
                 continue
-            if now - self.moved_at.get(key, 0.0) < FOCUS_MOVE_COOLDOWN_S:
+            cooldown = FOCUS_EXIT_COOLDOWN_S if is_exit else FOCUS_MOVE_COOLDOWN_S
+            if now - self.moved_at.get(key, 0.0) < cooldown:
                 continue
             cur_risk = 0.0
             if not is_exit:
@@ -1020,7 +1039,7 @@ class Focus:
                 why=self._why(plan, is_exit), est_day=plan["est"],
                 live_est=plan["est"], live_pf=plan["pf"], live_ev=plan["ev"])
             self.moved_at[key] = now
-            self._last_mine[r.order_id] = (slug, side, rested)
+            self._last_mine[r.order_id] = (slug, side, rested, is_exit)
             if not is_exit:
                 used += plan["risk"] - cur_risk
             self._log(event="moved", market=slug, side=side, price=(r.price or plan["px"]),
