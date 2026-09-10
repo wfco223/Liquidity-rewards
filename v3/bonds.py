@@ -1221,6 +1221,27 @@ class Bonds:
 
     # ------------------------------------------------------------ the list
 
+    def _held(self, slug: str) -> bool:
+        """The family's held ground (owner, 2026-09-10 "The model is
+        buying in new markets that I didn't approve"): no order rests
+        there until he opens the market from the page — the bonds
+        included."""
+        fn = getattr(self.fam, "held_ground", None)
+        return bool(fn is not None and fn(slug))
+
+    def _drop_held(self) -> None:
+        """A listing on held ground comes off (2026-09-10: the county
+        winner markets were listed while the ground was still open);
+        a lot already held there keeps its place and its exit."""
+        for slug in list(self.approved):
+            if self._held(slug) and abs(float((self.lots.get(slug) or {}).get("qty") or 0.0)) < 0.005:
+                del self.approved[slug]
+                self._log(event="held_ground", market=slug,
+                          note="off the bond list — held ground until he opens the market")
+        for slug in list(self.proposed):
+            if self._held(slug):
+                self.proposed.pop(slug, None)
+
     def scan(self, now: float, force: bool = False) -> list[str]:
         """Once a night (or on the page's button): Silver's odds propose
         new markets and drop listed ones that left the band. Silent."""
@@ -1232,6 +1253,8 @@ class Bonds:
         new: list[str] = []
         pool = set(self.fam.universe) | set(self.fam.inventory) | set(self.approved)
         for slug in sorted(pool):
+            if slug not in self.approved and self._held(slug):
+                continue                  # held ground: never proposed
             p = self.fair(slug)
             s = side_for(p)
             if slug in self.approved:
@@ -1760,6 +1783,7 @@ class Bonds:
         every held bond earning, work the minnows, enter new ground.
         Places nothing unless the bonds switch is on."""
         self._apply_repairs()
+        self._drop_held()
         self.scan(now)
         self._follow_tax()
         self._mark_engine()
@@ -2811,6 +2835,10 @@ class Bonds:
                 a_cur = self.amp.get(slug) or {}
                 grow_wait = (qty > cur.qty + 1e-9
                              and now - float(a_cur.get("trimmed_at") or 0.0) < AMP_GROW_S)
+                # a resize the exchange refused outright is not tried
+                # again every cycle (2026-09-10: four markets placed and
+                # pulled a 3,000-share order every two minutes)
+                refused_wait = now - float(a_cur.get("refused_at") or 0.0) < AMP_COOLDOWN_S
                 # hysteresis: the size grid steps by a third to a half, so
                 # a plan that flickers between neighbours must not move
                 # the order every cycle; and one the exchange trimmed is
@@ -2818,19 +2846,30 @@ class Bonds:
                 same = (abs(cur.price - px) < 1e-9
                         and (abs(cur.qty - qty) <= max(1.0, AMP_RESIZE_FRAC * cur.qty)
                              or grow_wait))
-                if same and len(amps) == 1:
+                if (same or refused_wait) and len(amps) == 1:
                     exp_loss = round(plan["pf"] * plan["loss_ps"] * cur.qty, 4)
                     self.amp[slug] = dict(a_cur, qty=cur.qty, px=cur.price,
                                           exp_loss=exp_loss, gain=plan["gain"], pf=plan["pf"])
                     self._amp_seen[slug] = sum(o.qty for o in amps)
                     self.amp_note.pop(slug, None)
                     continue
+                # what the exchange funds of the replacement is what
+                # rests (owner: "What the exchange funds of it is what
+                # rests") — the resize used to demand the full size,
+                # the exchange funded a tenth, and the order was placed
+                # and pulled again every cycle (2026-09-10)
                 r = self.fam.desk.reprice({"id": cur.id, "market": slug, "side": bs,
                                            "price": cur.price, "size": cur.qty,
                                            "intent": cur.intent}, px, qty,
-                                          initiator="owner")
+                                          initiator="owner", keep_trimmed=True)
                 if not (r.ok and r.order_id):
+                    # nothing of it rested: the resting amplifier stays
+                    # as it is and the next try waits out the cooldown
                     self.amp_note[slug] = f"resize refused: {r.note[:80]}"
+                    self.amp[slug] = dict(a_cur, refused_at=round(now, 1))
+                    self._log(event="amp_resize_refused", market=slug, price=px, qty=qty,
+                              note=f"{r.note[:100]} — the resting amplifier stays; "
+                                   f"next try in {AMP_COOLDOWN_S / 60:.0f} minutes")
                     continue
                 if r.two_orders:
                     self._two_orders(slug, cur.id, r)
@@ -2844,6 +2883,9 @@ class Bonds:
                 use_intent = cur.intent
                 rested_q = qty
                 trimmed = ""
+                if 1.0 <= float(r.resting_qty or 0.0) < qty - 1e-9:
+                    rested_q = round(float(r.resting_qty), 2)
+                    trimmed = f" — the exchange funded {rested_q:g} of {qty:g}"
             else:
                 why_not = self._can_spend(plan["collateral"], now, slug)
                 if why_not:

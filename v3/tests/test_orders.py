@@ -281,6 +281,26 @@ class TestPlace(unittest.TestCase):
         self.assertFalse(r.ok)
         self.assertIn("273.04 of 2000", r.note)
 
+    def test_verification_ends_early_once_a_trimmed_order_is_seen_twice(self):
+        # 2026-09-10: a trimmed placement waited out the whole deadline,
+        # four times a cycle. Seen twice at the smaller size it is final —
+        # a resting order never grows.
+        desk, client, _ = make_desk()
+        client.post_responses["/v1/orders"] = {"order": {"id": "new1"}}
+        client.open_orders_script = [[resting("new1", side="SELL", price=0.47,
+                                              size=273.04, intent=SELL_LONG)]]
+        t0 = desk._clock()
+        r = desk.place_resting("scc-x", "SELL", 0.47, 2000, net_position=5000)
+        self.assertFalse(r.ok)
+        self.assertAlmostEqual(r.resting_qty, 273.04)
+        self.assertLess(desk._clock() - t0, 3.0)
+        # an order never seen still waits out the deadline
+        client.open_orders_script = [[]]
+        t0 = desk._clock()
+        r = desk.place_resting("scc-x", "SELL", 0.47, 2000, net_position=5000)
+        self.assertFalse(r.ok)
+        self.assertGreaterEqual(desk._clock() - t0, 12.0)
+
     def test_verify_matches_by_id_not_by_price(self):
         # A dead or foreign record at the right price must not pass.
         desk, client, _ = make_desk()
@@ -329,6 +349,42 @@ class TestReprice(unittest.TestCase):
         self.assertTrue(r.ok)
         self.assertTrue(r.two_orders)
         self.assertIn("two orders", r.note)
+
+    def test_a_trimmed_replacement_is_kept_when_asked(self):
+        # the amplifier's rule (owner, 2026-09-09: "What the exchange
+        # funds of it is what rests"): the replacement the exchange cut
+        # to the money stays, the original goes
+        desk, client, _ = make_desk()
+        client.post_responses["/v1/orders"] = {"order": {"id": "new1"}}
+        client.post_responses["/cancel"] = {}
+        client.open_orders_script = [[resting("new1", price=0.08, size=20.0)]]
+        r = desk.reprice(self.existing(), 0.08, keep_trimmed=True)
+        self.assertTrue(r.ok, r.note)
+        self.assertEqual(r.order_id, "new1")
+        self.assertAlmostEqual(r.resting_qty, 20.0)
+        self.assertIn("20 of 45", r.note)
+        cancels = [u for u, _ in client.posts if "/cancel" in u]
+        self.assertEqual(cancels, ["https://api.polymarket.us/v1/order/old1/cancel"])
+
+    def test_a_trimmed_replacement_is_withdrawn_unless_asked(self):
+        desk, client, _ = make_desk()
+        client.post_responses["/v1/orders"] = {"order": {"id": "new1"}}
+        client.post_responses["/cancel"] = {}
+        client.open_orders_script = [[resting("new1", price=0.08, size=20.0)]]
+        r = desk.reprice(self.existing(), 0.08)
+        self.assertFalse(r.ok)
+        cancels = [u for u, _ in client.posts if "/cancel" in u]
+        self.assertEqual(cancels, ["https://api.polymarket.us/v1/order/new1/cancel"])
+
+    def test_a_replacement_never_seen_is_withdrawn_even_when_trimmed_is_fine(self):
+        desk, client, _ = make_desk()
+        client.post_responses["/v1/orders"] = {"order": {"id": "new1"}}
+        client.post_responses["/cancel"] = {}
+        client.open_orders_script = [[]]
+        r = desk.reprice(self.existing(), 0.08, keep_trimmed=True)
+        self.assertFalse(r.ok)
+        cancels = [u for u, _ in client.posts if "/cancel" in u]
+        self.assertEqual(cancels, ["https://api.polymarket.us/v1/order/new1/cancel"])
 
     def test_replacement_keeps_the_original_intent(self):
         # A SELL_LONG ask must never come back as a BUY_SHORT just because

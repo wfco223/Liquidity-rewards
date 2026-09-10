@@ -4315,6 +4315,103 @@ class TestTheAmplifier(Base):
         self.b.cycle(later, self.positions(), on=True)
         self.assertGreater(self.amps()[0].qty, 240.0)
 
+    def trimmed_first(self):
+        """The first placement, trimmed by the exchange to 240."""
+        from v3.orders import OrderResult
+        orig = self.r.desk.place_resting
+        live = self.r.exchange.live
+
+        def trimming(slug, side, price, qty, **kw):
+            if kw.get("intent") != BUY_SHORT:
+                return orig(slug, side, price, qty, **kw)
+            live["TRIM1"] = {"id": "TRIM1", "market": slug, "side": side,
+                             "price": price, "size": 240.0, "intent": kw.get("intent")}
+            return OrderResult(ok=False, order_id="TRIM1", intent=kw.get("intent") or "",
+                               price=price, resting_qty=240.0,
+                               note=f"placed but not resting: resting only 240 of {qty:g}")
+        self.r.desk.place_resting = trimming
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.r.desk.place_resting = orig
+        self.assertEqual([o.id for o in self.amps()], ["TRIM1"])
+
+    def test_a_resize_the_exchange_trims_is_kept_at_the_funded_size(self):
+        # 2026-09-10: the resize demanded the full size, the exchange
+        # funded a tenth of it, and the engine placed and pulled a
+        # 3,000-share order every cycle in four markets
+        from v3 import bonds as bm
+        from v3.orders import OrderResult
+        self.trimmed_first()
+        live = self.r.exchange.live
+        calls = []
+        orig_rp = self.r.desk.reprice
+
+        def trimming_reprice(existing, px, qty=None, **kw):
+            calls.append((existing["id"], px, qty, kw.get("keep_trimmed")))
+            live.pop(existing["id"], None)
+            live["RSZ1"] = {"id": "RSZ1", "market": existing["market"], "side": existing["side"],
+                            "price": px, "size": 260.0, "intent": existing["intent"]}
+            return OrderResult(ok=True, order_id="RSZ1", intent=existing["intent"], price=px,
+                               resting_qty=260.0,
+                               note=f"repriced: new RSZ1 resting 260 of {qty:g}")
+        self.r.desk.reprice = trimming_reprice
+        try:
+            later = self.now + bm.AMP_GROW_S + 120        # the plan may grow again
+            self.seed(AL, self.crowded_book(later))
+            self.b.cycle(later, self.positions(), on=True)
+            self.assertEqual(len(calls), 1)
+            self.assertTrue(calls[0][3])                  # keep what the exchange funds
+            self.assertGreater(calls[0][2], 260.0)        # the plan asked for more
+            self.assertEqual([o.id for o in self.amps()], ["RSZ1"])
+            self.assertAlmostEqual(self.amps()[0].qty, 260.0)
+            self.assertAlmostEqual(self.b.amp[AL]["qty"], 260.0)
+            ev = [e for e in self.b.log if e["event"] == "amp_resized"]
+            self.assertEqual(len(ev), 1)
+            self.assertIn("the exchange funded 260", ev[0]["note"])
+            # trimmed again: not asked to grow for another hour
+            self.seed(AL, self.crowded_book(later + 60))
+            self.b.cycle(later + 60, self.positions(), on=True)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual([o.id for o in self.amps()], ["RSZ1"])
+        finally:
+            self.r.desk.reprice = orig_rp
+
+    def test_a_refused_resize_waits_out_the_cooldown(self):
+        from v3 import bonds as bm
+        from v3.orders import OrderResult
+        self.trimmed_first()
+        calls = []
+        orig_rp = self.r.desk.reprice
+
+        def refusing(existing, px, qty=None, **kw):
+            calls.append(px)
+            return OrderResult(ok=False, order_id=existing["id"], intent=existing["intent"],
+                               note="original untouched — placed but not resting: "
+                                    "order not seen in the open list")
+        self.r.desk.reprice = refusing
+        try:
+            later = self.now + bm.AMP_GROW_S + 120
+            self.seed(AL, self.crowded_book(later))
+            self.b.cycle(later, self.positions(), on=True)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual([o.id for o in self.amps()], ["TRIM1"])   # the resting one stays
+            ev = [e for e in self.b.log if e["event"] == "amp_resize_refused"]
+            self.assertEqual(len(ev), 1)
+            self.assertIn("next try in 30 minutes", ev[0]["note"])
+            self.assertIn("resize refused", self.b.amp_note.get(AL, ""))
+            # not tried again next cycle, nor the one after
+            for dt in (60, 120):
+                self.seed(AL, self.crowded_book(later + dt))
+                self.b.cycle(later + dt, self.positions(), on=True)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual([o.id for o in self.amps()], ["TRIM1"])
+            # after the cooldown it may try once more
+            again = later + bm.AMP_COOLDOWN_S + 120
+            self.seed(AL, self.crowded_book(again))
+            self.b.cycle(again, self.positions(), on=True)
+            self.assertEqual(len(calls), 2)
+        finally:
+            self.r.desk.reprice = orig_rp
+
     def test_it_steps_back_behind_a_re_placed_exit(self):
         from v3.family import FamilyOrder
         from v3.intents import SELL_LONG
@@ -4640,5 +4737,43 @@ class TestTheBudgetPays(Base):
         spent1 = self.b.spent
         self.b.cycle(self.now + 60, self.positions(), on=True)
         self.assertAlmostEqual(self.b.spent, spent1)         # once
+
+
+class TestHeldGround(Base):
+    """Owner, 2026-09-10: "The model is buying in new markets that I
+    didn't approve" — the family's held ground carries no bond listing
+    until he opens the market."""
+
+    H = "pvwc-usgub-ny-nas-2026-11-03-brubla"      # NY governor, Nassau County
+
+    def setUp(self):
+        super().setUp()
+        self.r.fam.cfg.hold_tokens = ("pvwc-",)
+        self.odds[self.H] = 0.011
+
+    def test_a_listing_on_held_ground_comes_off_and_is_never_proposed(self):
+        H = self.H
+        self.assertTrue(self.b.approve(H, self.now)["ok"])
+        self.assertIn(H, self.b.approved)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertNotIn(H, self.b.approved)
+        ev = [e for e in self.b.log if e["event"] == "held_ground"]
+        self.assertEqual([e["market"] for e in ev], [H])
+        # the scan does not propose it either
+        self.r.fam.universe[H] = {"event_n": 2, "name": "Nassau"}
+        self.b.scan(self.now + 60, force=True)
+        self.assertNotIn(H, self.b.proposed)
+        # opened by his tap: it may be proposed again
+        self.assertTrue(self.r.fam.open_market(H, self.now + 90)["ok"])
+        self.b.scan(self.now + 120, force=True)
+        self.assertIn(H, self.b.proposed)
+
+    def test_a_lot_already_held_there_keeps_its_listing(self):
+        H = self.H
+        self.assertTrue(self.b.approve(H, self.now)["ok"])
+        self.bond(H, "NO", 40.0, 0.011)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertIn(H, self.b.approved)
+        self.assertEqual([e for e in self.b.log if e["event"] == "held_ground"], [])
 
 

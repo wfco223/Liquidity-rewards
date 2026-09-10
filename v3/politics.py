@@ -226,7 +226,11 @@ def config() -> FamilyConfig:
         # (winner, and the margin buckets) joined the same way (owner,
         # 2026-09-09 evening: "Those should be included but again,
         # don't place any orders until I say the word")
-        hold_tokens=("usag", "usltgov", "ussos", "ussupct", "housepop"),
+        # and the county winner markets (owner, 2026-09-10 "The model
+        # is buying in new markets that I didn't approve"): their slugs
+        # carry usgub/usse, so they read as governor and senate ground
+        # unless held by their own prefix
+        hold_tokens=("usag", "usltgov", "ussos", "ussupct", "housepop", "pvwc-"),
         rest_from=None, rest_until=None,      # politics rests every day
         min_days_out=3,
         # owner, 2026-08-30 ("make actions up to our limit"), after his
