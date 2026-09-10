@@ -478,6 +478,35 @@ class TestAfterAFill(Base):
         self.assertFalse(any(e.get("event") == "pull" and e.get("market") == NC
                              for e in self.f.log))
 
+    def test_a_negative_reading_pulls_only_after_the_dwell(self):
+        # the tenth-cent flicker: one pass under zero is not a pull
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ask = self.mine(NC, "SELL")[0]
+        # a crossed frame from the stream (an ask under the bid, five
+        # shares): every slot reads ticks behind it and the claim
+        # collapses for the pass the frame stands
+        dead = Book(bids=((0.44, 300.0), (0.02, 60000.0)),
+                    asks=((0.40, 5000.0), (0.46, 300.0), (0.98, 60000.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.r.exchange.books[NC] = dead
+        self.tick()
+        self.assertIn(ask.id, self.r.exchange.live)
+        self.assertIn(f"{NC}|SELL", self.f.weak_since)
+        self.tick()
+        self.assertIn(ask.id, self.r.exchange.live)
+        # the reading holds past the dwell: now it comes off
+        self.r.now += focus_mod.FOCUS_WEAK_DWELL_S
+        self.tick()
+        self.assertNotIn(ask.id, self.r.exchange.live)
+        self.assertTrue(any(e.get("event") == "pull" and "min" in e.get("why", "")
+                            for e in self.f.log))
+        # and a reading that recovers clears the clock
+        self.r.exchange.books[NC] = wide_book(self.r.now)
+        self.f.moved_at.clear()
+        self.tick()
+        self.assertNotIn(f"{NC}|SELL", self.f.weak_since)
+
     def test_the_exit_joins_the_touch_and_never_sits_under_cost(self):
         # short 200 opened at 47c: cost a share 53c of collateral, the
         # break-even YES price 47c; the bid touch is 44c, under it
