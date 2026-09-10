@@ -3858,3 +3858,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789016919.7,cfb,aachc-cfb-wins-2026-11-28-utahst-6pt5wins,BUY,0.1,0.26,backfill,,0.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD92BQ4VYSJH
 1789016919.7,cfb,aachc-cfb-wins-2026-11-28-ore-11pt5wins,BUY,0.22,0.26,backfill,,1.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD8X1NW9ET6S
 1789016919.7,nfl,ftsc-nfl-qbmostfp-2027-01-10-patmah,SELL,0.01,0.17,void,0,0,,10,16,0.455,0.17,0.18,-0.04,4.99,voided: the exchange has no trade for order CD8WDYSW0SJR — the row of 09-10 03:4,CD8WDYSW0SJR
+1789017339.8,politics,ussewc-usse-wy-2026-11-03-rep,BUY,6,0.97,sell,1.2036,0.32,1,97,99,0.809,0.74,0.98,-0.03,0,buying back the short at or under what it sold for — the bid earns while it wait,CD9VHCZ54SX4
+1789017602.7,politics,ewc-usse-tx-2026-11-03-dem,SELL,10,0.47,manual,6.9677,2.77,0.58035,47,50,0.702,0.46,0.47,0.1103,-10,the owner's own order — the engine leaves it alone,CD7VQA77RSX0
+1789018022.8,politics,ussewc-usse-co-2026-11-03-dem,SELL,60,0.95,manual,6.6134,2.71,0.995125,91,94,0.781,0.94,0.95,0.0451,57,the owner's own order — the engine leaves it alone,CD80Z7EFPSJZ
+1789018082.8,politics,ussewc-usse-co-2026-11-03-dem,BUY,60,0.94,manual,6.775,2.74,0.995125,91,94,0.815,0.94,0.95,-0.0551,117,the owner's own order — the engine leaves it alone,CD808PG5TT75
+1789018280.9,politics,ewc-usse-tx-2026-11-03-dem,SELL,4,0.47,manual,6.6183,2.96,0.58035,47,50,0.761,0.46,0.47,0.1103,-14,the owner's own order — the engine leaves it alone,CD7VQA77RSX0
+1789018701.5,politics,ussewc-usse-mt-2026-11-03-rep,SELL,19,0.84,bond,1.6156,0.53,0.983825,77,81,0.923,0.86,0.88,0.1438,0,bond: moved up to keep 80% of the best reward,CDA0AJW0GSK5
+1789019066.8,nfl,fptc-nfl-qbfpou-2027-01-10-danjon,BUY,1,0.7,earn,0.9827,3.4,,68,74,0,0.7,0.73,-0.01,1,2 ticks behind the touch — we would hold 90% of the bid side,CD7NVF1J6SK5
+1789019186.8,nfl,fptc-nfl-qbfpou-2027-01-10-kylmur,BUY,0.01,0.72,earn,0.0154,0.34,,53,68,0,0.72,0.73,0.11,0.01,joins the touch — the book has been quiet,CDA9KZ06GSX4
