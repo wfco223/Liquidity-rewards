@@ -3916,3 +3916,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789031477.2,politics,ussewc-usse-co-2026-11-03-dem,BUY,0.31,0.95,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDCWBBKDYSJZ
 1789031477.2,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,BUY,-0.06,0.3,fix,0.0179,2.99,,30,37,0,0.3,0.34,-0.03,1.94,size trimmed by 0.06 to the exchange's count (order CCZ0D2TJ2T6S),CCZ0D2TJ2T6S
 1789031477.2,nfl,tec-nfl-oroy-2027-02-11-w-jadpri,BUY,-0.1,0.23,fix,,0.83,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CCZHDC408SJH),CCZHDC408SJH
+1789031793.7,nfl,tec-nfl-cbpoty-2027-02-11-w-malnab,SELL,10,0.1,sell,0.4983,5.33,,6,11,0.429,0.07,0.08,-0.02,0,selling filled stock — it earns while it waits,CD914S67RSK5
+1789032007.8,politics,ussewc-usse-fl-2026-11-03-rep,BUY,0.46,0.89,backfill,,5.69,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD8RW41Q6SJH
+1789032153.7,politics,ussewc-usse-id-2026-11-03-rep,BUY,2,0.95,earn,6.25,0.73,0.999225,94,97,0.774,0.91,0.96,-0.0492,2,5 ticks in front of the touch — we would hold 100% of the bid side,CDCZTKD1CSJH
+1789032273.7,politics,ussewc-usse-id-2026-11-03-rep,SELL,2,0.92,sell,0,0.03,0.999225,94,97,0.81,0.91,0.96,0.0792,0,selling filled stock — it earns while it waits,CDDMTDRNTSJH
+1789032273.7,politics,ussewc-usse-id-2026-11-03-rep,SELL,2,0.92,sell,0,0.02,0.999225,94,97,0.81,0.91,0.96,0.0792,-2,selling filled stock — it earns while it waits,CDDNFMKF2T6S
+1789032813.7,politics,ussewc-usse-or-2026-11-03-dem,SELL,20,0.95,sell,2.2686,4.97,0.99865,95,99,0.742,0.94,0.95,0.0486,0,selling filled stock — it earns while it waits,CD9HY0RDPSX4
+1789032813.7,politics,ussewc-usse-or-2026-11-03-dem,SELL,2.4,0.95,sell,0,0.02,0.99865,95,99,0.742,0.94,0.95,0.0486,-2.4,selling filled stock — it earns while it waits,CDDRZFD2MSJR
+1789033076.5,politics,scc-hrep-rep-2026-11-03-gte235,BUY,14,0.03,manual,0.1937,7.14,0.00685,5,9,0.589,0.03,0.04,0.0231,-47,the owner's own order — the engine leaves it alone,CD7SBYCTMSK5
+1789033676.9,nfl,fptc-nfl-qbfpou-2027-01-10-bropur,SELL,0.01,0.48,manual,0.0129,8.09,,44,52,0.321,0.45,0.52,0,-0.01,the owner's own order — the engine leaves it alone,CD73P105ESX0
+1789033796.9,nfl,fptc-nfl-rbfpou-2027-01-10-ashjea,SELL,0.01,0.05,earn,0.0479,0.37,,3,14,0,0.02,0.05,0.03,-0.01,1 tick in front of the touch — we would hold 14% of the ask side,CDDQ7ZKPTT6S
+1789035091.3,politics,ussewc-usse-fl-2026-11-03-rep,BUY,0.46,0.89,backfill,,5.69,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD8RW41Q6SJH
