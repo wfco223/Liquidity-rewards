@@ -109,6 +109,10 @@ class Focus:
         self.fairs: dict[str, float] = {}        # his fair, YES price
         self.stakes: dict[str, float] = {}       # his stake per side, $
         self.paused: set[str] = set()
+        # markets he took off his hand's list (owner, 2026-09-10 "Give me
+        # a button to take a market off of the hand tended list"): the
+        # tender may work them though the engine's avoid list names them
+        self.released: set[str] = set()
         self.coc_day = FOCUS_COC_DAY
         self.fill_floor = FOCUS_FILL_COST_MIN
         self.loss_cap = FOCUS_LOSS_CAP_USD
@@ -175,7 +179,12 @@ class Focus:
         return float(prog.pool) / pool_days(prog, slug) >= FOCUS_POOL_MIN_USD
 
     def _allowed(self, slug: str) -> bool:
-        return any(t in slug for t in FOCUS_ALLOW_TOKENS)
+        return slug in self.released or any(t in slug for t in FOCUS_ALLOW_TOKENS)
+
+    def by_hand(self, slug: str) -> bool:
+        """On his hand's list: the engine avoids it and he has not
+        released it to the tender."""
+        return bool(self.fam._avoided(slug)) and not self._allowed(slug)
 
     def why_not_tended(self, slug: str) -> str | None:
         """None when the tender may rest here; else the plain reason."""
@@ -190,7 +199,7 @@ class Focus:
             return "frozen — hands off (owner, 2026-08-24)"
         if any(t in slug for t in (fam.cfg.liquidate_tokens or ())):
             return "close-out ground — the tender rests nothing new"
-        if fam._avoided(slug) and not self._allowed(slug):
+        if self.by_hand(slug):
             return "your own hand's book — not tended"
         return None
 
@@ -508,6 +517,8 @@ class Focus:
         row = {"market": slug, "name": self._label(slug),
                "fair": fair, "silver": silver, "stake": stake, "stake_src": stake_src,
                "paused": slug in self.paused,
+               "by_hand": self.by_hand(slug),
+               "released": slug in self.released,
                "not_tended": self.why_not_tended(slug),
                "held": bool(self.fam.held_ground(slug)),
                "position": ({"qty": round(net, 2), "cost": round(cost, 2),
@@ -804,6 +815,31 @@ class Focus:
             self._log(event="resumed", market=slug)
             return {"ok": True, "note": "resumed — the tender works it again next pass"}
 
+    def release(self, slug: str, on: bool) -> dict:
+        """His tap: a market comes off his hand's list and the tender may
+        work it (with a fair set); or goes back, the tender's orders
+        pulled and his own left alone."""
+        with self.lock:
+            if slug not in self.markets and slug not in self.fam.universe:
+                return {"ok": False, "note": "not a market the focus knows"}
+            if on:
+                if not self.fam._avoided(slug):
+                    return {"ok": False, "note": "this market is not on your hand's list"}
+                self.released.add(slug)
+                self._log(event="released", market=slug,
+                          note="off the hand's list — the tender may work it")
+                why = self.why_not_tended(slug)
+                return {"ok": True, "note": "off your hand's list — "
+                                            + (f"not tended yet: {why}" if why
+                                               else "the tender works it from your fair")}
+            if slug not in self.released:
+                return {"ok": False, "note": "this market was never released"}
+            self.released.discard(slug)
+            n = self.pull(slug, "back on your hand's list").get("n", 0)
+            self._log(event="unreleased", market=slug)
+            return {"ok": True, "note": f"back on your hand's list — {n} tender order"
+                                        f"{'s' if n != 1 else ''} pulled; your own stay"}
+
     def pull(self, slug: str, why: str = "pulled by you") -> dict:
         with self.lock:
             n = 0
@@ -965,7 +1001,8 @@ class Focus:
 
     def to_dict(self) -> dict:
         return {"fairs": dict(self.fairs), "stakes": dict(self.stakes),
-                "paused": sorted(self.paused), "coc_day": self.coc_day,
+                "paused": sorted(self.paused), "released": sorted(self.released),
+                "coc_day": self.coc_day,
                 "fill_floor": self.fill_floor, "loss_cap": self.loss_cap,
                 "first_seen": dict(self.first_seen), "moved_at": dict(self.moved_at),
                 "events": self.events[-EVENTS_KEEP:], "log": self.log[-LOG_KEEP:]}
@@ -976,6 +1013,7 @@ class Focus:
         self.fairs = {str(k): float(v) for k, v in (d.get("fairs") or {}).items()}
         self.stakes = {str(k): float(v) for k, v in (d.get("stakes") or {}).items()}
         self.paused = {str(s) for s in (d.get("paused") or [])}
+        self.released = {str(s) for s in (d.get("released") or [])}
         self.coc_day = float(d.get("coc_day") or FOCUS_COC_DAY)
         self.fill_floor = float(d.get("fill_floor") if d.get("fill_floor") is not None
                                 else FOCUS_FILL_COST_MIN)
