@@ -4287,3 +4287,43 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789067652.9,politics,paccc-usho-midterms-2026-11-03-dem,SELL,24,0.844,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDNZMC6JESX4
 1789067652.9,politics,paccc-usho-midterms-2026-11-03-dem,BUY,24,0.843,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDNZ6924RSK5
 1789067652.9,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,108,0.18,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDNDEAJD0SJ1
+1789068193.0,politics,ussewc-usse-tn-2026-11-03-dem,SELL,0.5,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPAG2F7CSK5
+1789068226.4,politics,ussewc-usse-tn-2026-11-03-dem,SELL,3,0.05,bond,0,0.02,0.000425,3,7,0.441,0.04,0.06,-0.0496,-38,bond: took 3.5 NO at 5c — it was in the way of our resting order,CDPAG2F7CSK5
+1789068286.4,politics,ussewc-usse-wy-2026-11-03-rep,SELL,10,0.97,sell,0.2208,2.39,1,95,98,0.875,0.96,0.97,0.03,10,selling filled stock — it earns while it waits,CDM92H16JSK5
+1789068384.7,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,50,0.36,manual,0,1.82,,38,42,0.445,0.36,0.37,-0.04,238,placed by you on the focus page,CDMT8FRF6SJZ
+1789069007.6,politics,ussewc-usse-tn-2026-11-03-dem,SELL,2,0.05,bond,0,0.02,0.000425,4,7,0.618,0.04,0.06,-0.0496,-40,bond: took 2 NO at 5c — it was in the way of our resting order,CDPH0Q0T8SX0
+1789069007.6,nfl,aqc-nfl-2027-01-10-playoffq-lv,BUY,0.01,0.25,sell,0.0096,8.02,,23,28,0.666,0.25,0.26,0,-0.99,an exit — its fill reduces the position it sits on,CDFGF3YWGT3P
+1789069188.0,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,10,0.06,earn,0.141,2.17,0.003275,3,6,0.7,0.05,0.08,-0.0567,-20,1 tick behind the touch — we would hold 8% of the ask side,CDMP6FSCPSJZ
+1789069368.0,politics,ussewc-usse-nm-2026-11-03-rep,SELL,1,0.04,sell,0,0,0.004,2,5,0.809,0.04,0.05,-0.036,0,taker dump — sold into the bid (the carved exception),CDPKKGNMWSX0
+1789069488.3,politics,ussewc-usse-il-2026-11-03-dem,SELL,30,0.98,sell,0.0687,1.88,0.995875,95,99,0.616,0.94,0.98,0.0159,0,selling filled stock — it earns while it waits,CDN0DJJYPSJR
+1789069488.3,politics,ussewc-usse-de-2026-11-03-dem,SELL,5,0.94,sell,1.2008,1.19,0.99855,93,96,0.754,0.93,0.98,0.0586,1,selling filled stock — it earns while it waits,CDNK9EMQASJH
+1789069663.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,274,0.844,sell,26.3031,0.72,0.8351,84,85,0.959,0.844,0.845,0.0089,-107,an exit — its fill reduces the position it sits on,CDP1VDG3YT6S
+1789069723.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,83,0.845,focus,243.025,0.08,0.8351,84,85,0.96,0.844,0.845,-0.0099,-190,focus entry: ~$17.55/day; fill odds 79%/day; EV +16.17/day,CDPKV2HVET6S
+1789069997.6,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,0.32,0.41,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPCFY026SX0
+1789070023.8,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,5,0.37,manual,0,2.29,,36,39,0.618,0.38,0.4,0.01,233,moved by you on the focus page — the tender leaves it alone,CDMSPG8TJSX0
+1789070023.8,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,75,0.41,sell,0,0.45,,36,39,0.618,0.38,0.4,-0.03,158,an exit — its fill reduces the position it sits on,CDPCFY026SX0
+1789070023.8,nfl,aqc-nfl-afc-2027-01-24-champq-bal,SELL,0.01,0.39,earn,0.5155,0.03,,33,39,0.61,0.38,0.39,-0.03,-0.01,2 ticks in front of the touch — we would hold 5% of the ask side,CDPQXS2SJSX0
+1789070023.8,nfl,fptc-nfl-rbfpou-2027-01-10-davmon,SELL,0.05,0.22,earn,0.02,0.81,,18,27,0,0.2,0.21,0.01,-0.05,1 tick behind the touch — we would hold 60% of the ask side,CDP2A8N4MSX0
+1789070083.8,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,75.44,0.4,focus,0,0.01,,37,40,0.71,0.38,0.4,-0.01,82.56,focus exit: ~$0.00/day; fill odds 81%/day; EV +7.83/day,CDPR8D04TT3P
+1789070107.8,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,0.14,0.4,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPR8D04TT3P
+1789070143.8,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,44.58,0.42,manual,0,17.61,,38,41,0.767,0.39,0.42,-0.02,37.42,the owner's own order — the engine leaves it alone,CD7NB6RNCT6S
+1789070143.8,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,32.42,0.4,sell,0,0.03,,38,41,0.767,0.39,0.42,0,5,an exit — its fill reduces the position it sits on,CDPR8D04TT3P
+1789070166.7,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,66.67,0.42,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPSCWSRWSK5
+1789070203.8,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,5.42,0.42,manual,0,17.63,,39,42,0.805,0.4,0.42,-0.02,-0.42,the owner's own order — the engine leaves it alone,CD7NB6RNCT6S
+1789070412.4,nfl,fptc-nfl-wrfpou-2027-01-10-jayree,SELL,0.05,0.35,earn,0.0165,2.73,,25,37,0,0.34,0.35,-0.04,-0.05,1 tick in front of the touch — we would hold 14% of the ask side,CDMGCDCC4T75
+1789070551.9,politics,usgubewc-usgub-or-2026-11-03-dem,BUY,2,0.89,backfill,,0.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPQD6XE6SX0
+1789070551.9,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,2,0.17,backfill,,9.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDF1HCYB8SX4
+1789070551.9,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,2.99,0.17,backfill,,15.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9TW1WBESX0
+1789070598.9,nfl,ftsc-nfl-temostfp-2027-01-10-collov,BUY,1,0.44,backfill,,0.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPAM9GPJSX0
+1789070665.5,politics,ussewc-usse-id-2026-11-03-todach,SELL,4,0.06,hand,,15.5,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCAE6S682R3Y
+1789070665.5,politics,paccc-balpow-2026-11-03-dsweep,BUY,42.6,0.5,backfill,,11.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7NCGKVTSX0
+1789070665.5,politics,ewc-usse-tx-2026-11-03-dem,SELL,19,0.47,backfill,,10.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7VQA77RSX0
+1789070665.5,politics,scc-senate-gop-2026-11-03-56,SELL,0.01,0.03,backfill,,12.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7FF7V7CSJR
+1789070665.5,politics,ussewc-usse-tn-2026-11-03-dem,SELL,0.5,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPAG2F7CSK5
+1789070665.5,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,0.32,0.41,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPCFY026SX0
+1789070665.5,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,0.14,0.4,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPR8D04TT3P
+1789070665.5,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,66.67,0.42,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPSCWSRWSK5
+1789070665.5,politics,usgubewc-usgub-or-2026-11-03-dem,BUY,2,0.89,backfill,,0.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPQD6XE6SX0
+1789070665.5,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,2,0.17,backfill,,9.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDF1HCYB8SX4
+1789070665.5,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,2.99,0.17,backfill,,15.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD9TW1WBESX0
+1789070665.5,nfl,ftsc-nfl-temostfp-2027-01-10-collov,BUY,1,0.44,backfill,,0.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPAM9GPJSX0
