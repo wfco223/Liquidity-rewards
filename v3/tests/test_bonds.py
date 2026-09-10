@@ -918,6 +918,7 @@ class TestTheBudgetFollowsTaxes(Base):
         self.assertEqual(self.b.budget, 220.0)
         self.tax["owed"] = 264.0                        # more paid, more owed
         self.assertEqual(self.b.view(self.now)["budget"], 264.0)
+        self.bond(AL, "YES", 100.0, 0.64)               # $64 of bonds, paid from the budget
         self.b._pay(64.0)
         self.assertEqual((self.b.budget, self.b.spent), (200.0, 64.0))
         self.b.cycle(self.now + 1, self.positions(), on=False)
@@ -925,7 +926,7 @@ class TestTheBudgetFollowsTaxes(Base):
         v = self.b.view(self.now + 1)
         self.assertEqual(v["budget_mode"], "tax")
         self.assertEqual(v["tax"]["gross"], 1000.0)
-        self.assertEqual(v["money"], 200.0)
+        self.assertEqual(v["money"], 200.0)             # the room: owed less what is held
 
     def test_a_fixed_budget_overrides_and_follow_returns(self):
         self.b.set_budget(50.0)
@@ -1140,6 +1141,7 @@ class TestTheExchangeIsTheTruth(Base):
         # (2026-09-04: one short read wrote off 32 markets), and the
         # record must agree — here it shows no purchase, so it does
         self.bond(AL, "YES", 100.0, 0.98)
+        self.b._pay(98.0)                                      # the budget paid for them
         self.b.cycle(self.now, self.positions(), on=True)     # the exchange showed 100
         self.exch(AL, 60.0, 0.98)                              # 40 sold by hand
         self.b.cycle(self.now + 60, self.positions(), on=True)
@@ -1153,7 +1155,10 @@ class TestTheExchangeIsTheTruth(Base):
         self.assertAlmostEqual(self.b.cash, 40 * 0.98, places=4)
         self.assertEqual(self.b.realized, 0.0)
         self.assertAlmostEqual(self.b.sold_usd, 40 * 0.98, places=4)
-        self.assertEqual(self.b.budget, 1000.0)                # and nothing refunded
+        # the 40 sold return their cost to the budget (owner, 2026-09-10):
+        # the room reopens; the proceeds are his, not the engine's
+        self.assertAlmostEqual(self.b.budget, 1000.0 - 98.0 + 40 * 0.98, places=4)
+        self.assertAlmostEqual(self.b.spent, 60 * 0.98, places=4)
         ev = [e for e in self.b.log if e["event"] == "trimmed_to_exchange"]
         self.assertEqual((ev[0]["qty"], ev[0]["refund"], ev[0]["sold"]), (40.0, 0.0, 40.0))
         self.assertEqual(ev[0]["priced"], "cost")
@@ -1943,16 +1948,16 @@ class TestTheHeadline(Base):
         self.assertAlmostEqual(e["annual_pct"], 3.61 / 90.5 * 365 / 10, places=3)
         v = self.b.view(self.now)
         self.assertEqual(v["earned"]["invested"], e["invested"])
-        # buying with the $38 of proceeds is not new money: "put in" stays
+        # the proceeds are his, never redeployed (owner, 2026-09-10): the
+        # next buy is budget money, so "put in" grows by it
         self.b._book_lot(TN, "YES", 40.0, 38.0, ref="T2")
         self.b._pay(38.0)
         e = self.b._earned()
         self.assertAlmostEqual(e["invested"], 60 * 0.905 + 38.0, places=2)
-        self.assertAlmostEqual(e["deployed"], 90.5, places=2)
-        # but buying from the budget is
+        self.assertAlmostEqual(e["deployed"], 90.5 + 38.0, places=2)
         self.b._book_lot(GA, "YES", 10.0, 7.0, ref="T3")
         self.b._pay(7.0)
-        self.assertAlmostEqual(self.b._earned()["deployed"], 97.5, places=2)
+        self.assertAlmostEqual(self.b._earned()["deployed"], 135.5, places=2)
         # an older state, or one seeded the wrong way, is re-seeded from
         # what holds: held + proceeds waiting − profit taken
         b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s))
@@ -2843,7 +2848,9 @@ class TestSellingIntoTheBids(Base):
         self.assertTrue(r["ok"], r["note"])
         self.assertEqual(self.b.held(AL, "YES"), 80.0)
         self.assertAlmostEqual(self.b.cash, 20 * 0.93, places=2)     # the proceeds are cash now
-        self.assertAlmostEqual(self.b._money(), money0 + 20 * 0.93, places=2)   # available capital
+        # the room reopens by the lot's cost (owner, 2026-09-10): the
+        # proceeds are his, the budget never redeploys them
+        self.assertAlmostEqual(self.b._money(), money0 + 20 * 0.95, places=2)
         self.assertAlmostEqual(self.b.realized, 20 * (0.93 - 0.95), places=2)   # the loss is booked
         ev = [e for e in self.b.log if e["event"] == "sold_into"][0]
         self.assertTrue(ev["under_cost"])
@@ -4308,6 +4315,103 @@ class TestTheAmplifier(Base):
         self.b.cycle(later, self.positions(), on=True)
         self.assertGreater(self.amps()[0].qty, 240.0)
 
+    def trimmed_first(self):
+        """The first placement, trimmed by the exchange to 240."""
+        from v3.orders import OrderResult
+        orig = self.r.desk.place_resting
+        live = self.r.exchange.live
+
+        def trimming(slug, side, price, qty, **kw):
+            if kw.get("intent") != BUY_SHORT:
+                return orig(slug, side, price, qty, **kw)
+            live["TRIM1"] = {"id": "TRIM1", "market": slug, "side": side,
+                             "price": price, "size": 240.0, "intent": kw.get("intent")}
+            return OrderResult(ok=False, order_id="TRIM1", intent=kw.get("intent") or "",
+                               price=price, resting_qty=240.0,
+                               note=f"placed but not resting: resting only 240 of {qty:g}")
+        self.r.desk.place_resting = trimming
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.r.desk.place_resting = orig
+        self.assertEqual([o.id for o in self.amps()], ["TRIM1"])
+
+    def test_a_resize_the_exchange_trims_is_kept_at_the_funded_size(self):
+        # 2026-09-10: the resize demanded the full size, the exchange
+        # funded a tenth of it, and the engine placed and pulled a
+        # 3,000-share order every cycle in four markets
+        from v3 import bonds as bm
+        from v3.orders import OrderResult
+        self.trimmed_first()
+        live = self.r.exchange.live
+        calls = []
+        orig_rp = self.r.desk.reprice
+
+        def trimming_reprice(existing, px, qty=None, **kw):
+            calls.append((existing["id"], px, qty, kw.get("keep_trimmed")))
+            live.pop(existing["id"], None)
+            live["RSZ1"] = {"id": "RSZ1", "market": existing["market"], "side": existing["side"],
+                            "price": px, "size": 260.0, "intent": existing["intent"]}
+            return OrderResult(ok=True, order_id="RSZ1", intent=existing["intent"], price=px,
+                               resting_qty=260.0,
+                               note=f"repriced: new RSZ1 resting 260 of {qty:g}")
+        self.r.desk.reprice = trimming_reprice
+        try:
+            later = self.now + bm.AMP_GROW_S + 120        # the plan may grow again
+            self.seed(AL, self.crowded_book(later))
+            self.b.cycle(later, self.positions(), on=True)
+            self.assertEqual(len(calls), 1)
+            self.assertTrue(calls[0][3])                  # keep what the exchange funds
+            self.assertGreater(calls[0][2], 260.0)        # the plan asked for more
+            self.assertEqual([o.id for o in self.amps()], ["RSZ1"])
+            self.assertAlmostEqual(self.amps()[0].qty, 260.0)
+            self.assertAlmostEqual(self.b.amp[AL]["qty"], 260.0)
+            ev = [e for e in self.b.log if e["event"] == "amp_resized"]
+            self.assertEqual(len(ev), 1)
+            self.assertIn("the exchange funded 260", ev[0]["note"])
+            # trimmed again: not asked to grow for another hour
+            self.seed(AL, self.crowded_book(later + 60))
+            self.b.cycle(later + 60, self.positions(), on=True)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual([o.id for o in self.amps()], ["RSZ1"])
+        finally:
+            self.r.desk.reprice = orig_rp
+
+    def test_a_refused_resize_waits_out_the_cooldown(self):
+        from v3 import bonds as bm
+        from v3.orders import OrderResult
+        self.trimmed_first()
+        calls = []
+        orig_rp = self.r.desk.reprice
+
+        def refusing(existing, px, qty=None, **kw):
+            calls.append(px)
+            return OrderResult(ok=False, order_id=existing["id"], intent=existing["intent"],
+                               note="original untouched — placed but not resting: "
+                                    "order not seen in the open list")
+        self.r.desk.reprice = refusing
+        try:
+            later = self.now + bm.AMP_GROW_S + 120
+            self.seed(AL, self.crowded_book(later))
+            self.b.cycle(later, self.positions(), on=True)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual([o.id for o in self.amps()], ["TRIM1"])   # the resting one stays
+            ev = [e for e in self.b.log if e["event"] == "amp_resize_refused"]
+            self.assertEqual(len(ev), 1)
+            self.assertIn("next try in 30 minutes", ev[0]["note"])
+            self.assertIn("resize refused", self.b.amp_note.get(AL, ""))
+            # not tried again next cycle, nor the one after
+            for dt in (60, 120):
+                self.seed(AL, self.crowded_book(later + dt))
+                self.b.cycle(later + dt, self.positions(), on=True)
+            self.assertEqual(len(calls), 1)
+            self.assertEqual([o.id for o in self.amps()], ["TRIM1"])
+            # after the cooldown it may try once more
+            again = later + bm.AMP_COOLDOWN_S + 120
+            self.seed(AL, self.crowded_book(again))
+            self.b.cycle(again, self.positions(), on=True)
+            self.assertEqual(len(calls), 2)
+        finally:
+            self.r.desk.reprice = orig_rp
+
     def test_it_steps_back_behind_a_re_placed_exit(self):
         from v3.family import FamilyOrder
         from v3.intents import SELL_LONG
@@ -4530,7 +4634,8 @@ class TestTheAmplifier(Base):
     def test_the_phantom_sales_of_sep_9_are_repaired_once(self):
         from v3 import bonds as bm
         rows = bm.REPAIRS["amp-phantom-2026-09-09"]
-        self.b.repairs_done = []                       # not yet applied on this ledger
+        self.b.repairs_done = ["amp-phantom-2026-09-09b",
+                               "budget-model-2026-09-10"]   # only the first is due on this ledger
         for slug, side, qty, cost, proceeds, gain in rows:
             self.b.approve(slug, self.now) if slug not in self.b.approved else None
             self.assertNotIn(slug, self.b.lots)
@@ -4542,18 +4647,133 @@ class TestTheAmplifier(Base):
         self.assertAlmostEqual(self.b.cash, cash0 - 678.00, places=2)
         self.assertAlmostEqual(self.b.realized, real0 - 3.01, places=2)
         self.assertAlmostEqual(self.b.sold_usd, sold0 - 678.00, places=2)
-        self.assertEqual(self.b.repairs_done, ["amp-phantom-2026-09-09"])
+        self.assertIn("amp-phantom-2026-09-09", self.b.repairs_done)
         self.assertEqual(len([e for e in self.b.log if e["event"] == "repaired"]), 3)
         # once: a restart and another cycle change nothing
         d = self.b.to_dict()
         b2 = Bonds(self.r.fam, self.r.exchange, lambda s: self.odds.get(s),
                    clock=lambda: self.r.now)
         b2.restore(copy.deepcopy(d))
-        self.assertEqual(b2.repairs_done, ["amp-phantom-2026-09-09"])
+        self.assertIn("amp-phantom-2026-09-09", b2.repairs_done)
         for slug, side, qty, cost, proceeds, gain in rows:
             self.assertAlmostEqual(b2.held(slug, side), qty, places=2)   # the lot survived the restore
         cash1 = b2.cash
         b2._apply_repairs()
         self.assertAlmostEqual(b2.cash, cash1)
+
+    def test_the_second_repair_reverses_money_only(self):
+        """Between 18:56Z and 19:24Z seven more lots were booked sold
+        through the amplifier with no trade behind them; the exchange's
+        record counted them back in at their real cost before the fix
+        booted, so only the phantom money comes off."""
+        from v3 import bonds as bm
+        rows = bm.REPAIRS["amp-phantom-2026-09-09b"]
+        self.b.repairs_done = ["amp-phantom-2026-09-09",
+                               "budget-model-2026-09-10"]   # the first is done, the second not
+        lots0 = copy.deepcopy(self.b.lots)
+        cash0, real0, sold0 = self.b.cash, self.b.realized, self.b.sold_usd
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertAlmostEqual(self.b.cash, cash0 - 395.64, places=2)
+        self.assertAlmostEqual(self.b.realized, real0 - 10.94, places=2)
+        self.assertAlmostEqual(self.b.sold_usd, sold0 - 395.64, places=2)
+        for slug, side, qty, cost, proceeds, gain in rows:
+            self.assertEqual(qty, 0.0)
+            self.assertEqual(self.b.lots.get(slug), lots0.get(slug))   # no lot touched
+        self.assertEqual(len([e for e in self.b.log if e["event"] == "repaired"]), 7)
+        self.assertIn("amp-phantom-2026-09-09b", self.b.repairs_done)
+
+
+class TestTheBudgetPays(Base):
+    """Owner, 2026-09-10: "The only money to deploy automatically for
+    bonds is the budget. And it's not clear how the proceeds got that
+    high." Buys draw on the budget alone; a sale returns the lot's
+    cost to the budget; proceeds are his, recorded and never
+    redeployed."""
+
+    def setUp(self):
+        super().setUp()
+        self.b.approve(AL, self.now)
+        self.b.set_budget(1000.0)
+        self.b.cash = 300.0                      # proceeds returned earlier
+
+    def test_a_buy_draws_on_the_budget_not_the_proceeds(self):
+        self.b._pay(50.0)
+        self.assertAlmostEqual(self.b.budget, 950.0)
+        self.assertAlmostEqual(self.b.spent, 50.0)
+        self.assertAlmostEqual(self.b.cash, 300.0)          # untouched
+        self.assertAlmostEqual(self.b.budget_total(), 1000.0)
+
+    def test_a_sale_returns_the_cost_to_the_budget(self):
+        self.b._pay(90.0)
+        self.b._refund_cost(90.0)
+        self.assertAlmostEqual(self.b.budget, 1000.0)
+        self.assertAlmostEqual(self.b.spent, 0.0)
+        self.assertAlmostEqual(self.b.budget_total(), 1000.0)
+
+    def test_money_to_deploy_is_the_room_under_the_budget(self):
+        self.bond(AL, "YES", 100.0, 0.90)                    # $90 held at cost
+        self.assertAlmostEqual(self.b._money(), 1000.0 - 90.0)
+        self.assertAlmostEqual(self.b._money(), self.b.budget_room())
+        v = self.b.view(self.now, self.positions())
+        self.assertAlmostEqual(v["money"], 910.0)
+        self.assertAlmostEqual(v["cash"], 300.0)             # shown, not deployable
+        self.assertAlmostEqual(v["room"], 910.0)
+
+    def test_the_rebase_puts_spent_where_the_lots_are_once(self):
+        # the ledger as it stood: everything held had been paid from
+        # proceeds, so the budget still read the full amount he set
+        self.b.set_budget(2400.45)
+        self.bond(AL, "YES", 2300.0, 2214.55 / 2300.0)
+        self.assertAlmostEqual(self.b.invested(), 2214.55, places=2)
+        self.assertAlmostEqual(self.b.spent, 0.0)
+        self.b.repairs_done = [k for k in bonds_mod.REPAIRS if k != "budget-model-2026-09-10"]
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertAlmostEqual(self.b.spent, 2214.55, places=2)
+        self.assertAlmostEqual(self.b.budget, 185.90, places=2)
+        self.assertAlmostEqual(self.b.budget_total(), 2400.45, places=2)   # the ceiling did not move
+        self.assertAlmostEqual(self.b.budget_room(), 185.90, places=2)
+        self.assertAlmostEqual(self.b.cash, 300.0)           # proceeds untouched
+        self.assertIn("budget-model-2026-09-10", self.b.repairs_done)
+        spent1 = self.b.spent
+        self.b.cycle(self.now + 60, self.positions(), on=True)
+        self.assertAlmostEqual(self.b.spent, spent1)         # once
+
+
+class TestHeldGround(Base):
+    """Owner, 2026-09-10: "The model is buying in new markets that I
+    didn't approve" — the family's held ground carries no bond listing
+    until he opens the market."""
+
+    H = "pvwc-usgub-ny-nas-2026-11-03-brubla"      # NY governor, Nassau County
+
+    def setUp(self):
+        super().setUp()
+        self.r.fam.cfg.hold_tokens = ("pvwc-",)
+        self.odds[self.H] = 0.011
+
+    def test_a_listing_on_held_ground_comes_off_and_is_never_proposed(self):
+        H = self.H
+        self.assertTrue(self.b.approve(H, self.now)["ok"])
+        self.assertIn(H, self.b.approved)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertNotIn(H, self.b.approved)
+        ev = [e for e in self.b.log if e["event"] == "held_ground"]
+        self.assertEqual([e["market"] for e in ev], [H])
+        # the scan does not propose it either
+        self.r.fam.universe[H] = {"event_n": 2, "name": "Nassau"}
+        self.b.scan(self.now + 60, force=True)
+        self.assertNotIn(H, self.b.proposed)
+        # opened by his tap: it may be proposed again
+        self.assertTrue(self.r.fam.open_market(H, self.now + 90)["ok"])
+        self.b.scan(self.now + 120, force=True)
+        self.assertIn(H, self.b.proposed)
+
+    def test_a_lot_already_held_there_keeps_its_listing(self):
+        H = self.H
+        self.assertTrue(self.b.approve(H, self.now)["ok"])
+        self.bond(H, "NO", 40.0, 0.011)
+        self.b.cycle(self.now, self.positions(), on=True)
+        self.assertIn(H, self.b.approved)
+        self.assertEqual([e for e in self.b.log if e["event"] == "held_ground"], [])
 
 

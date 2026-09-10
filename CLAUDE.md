@@ -93,7 +93,10 @@ long and accreted, so search it rather than reading it through.
   up; the earnings it adds are shown, never a gate. Its fill odds are
   the exits' own record: how often an exit sold over the last 7 days,
   times the share of those sales big enough to take the exit ahead
-  first. What the exchange funds of it is what rests. An exit fill
+  first. What the exchange funds of it is what rests — a resize it
+  trims rests at the funded size, one it refuses waits out the
+  cooldown (2026-09-10: the resize had demanded the full size and
+  placed-and-pulled a 3,000-share order every cycle). An exit fill
   pulls it for two hours; the amplifier itself trading books the
   lot's shares sold and pulls the rest; the bonds switch off pulls
   it. Nothing else may cross.
@@ -105,7 +108,11 @@ long and accreted, so search it rather than reading it through.
   market"; 2026-09-08 "Set the per market cap on bonds to 50% of the
   total budget"): a market's buy orders, his Enter and the sniper's
   take all fit that share less what the market already holds. The exchange's free money only sizes an order,
-  never gates one. Politics and cfb may buy only with free money beyond
+  never gates one. "The only money to deploy automatically for bonds
+  is the budget" (owner, 2026-09-10): buys draw on the budget alone, a
+  sale returns the lot's cost to the budget, and sale proceeds are
+  his — shown as money returned, never redeployed by the engine.
+  Politics and cfb may buy only with free money beyond
   what the bonds may still spend (their room). No engine pulls a
   resting bid to "free money".
 - NO SCHEDULED GitHub Actions (owner, 2026-08-24: "remove the GitHub
@@ -146,8 +153,14 @@ long and accreted, so search it rather than reading it through.
   2026-09-09 "Those should be included but again, don't place any
   orders until I say the word") are HELD ground for politics:
   scanned, scored and shown, but no order rests there until he taps
-  Open for orders on that market. Mayors and territories are not on
-  the ground at all.
+  Open for orders on that market. The county winner markets
+  (Maricopa, Fresno, Nassau, Broward — every pvwc- market; owner,
+  2026-09-10 "The model is buying in new markets that I didn't
+  approve") are held the same way: their slugs carry usgub/usse and
+  had read as governor and senate ground. On held ground the engine
+  pulls its own bids, asks and probes and keeps only the exits of
+  what is already held; the bond list carries no held market until
+  he opens it. Mayors and territories are not on the ground at all.
 - Secrets (POLYMARKET_KEY_ID, POLYMARKET_SECRET_KEY, DASH_PASSWORD,
   GITHUB_TOKEN, NTFY_TOPIC) exist only as encrypted Actions/env secrets.
   Never in code, commits, or output files.

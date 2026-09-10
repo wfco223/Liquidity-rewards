@@ -12,6 +12,7 @@ from v3.tests.test_family import Rig, politics_book
 E = "ussewc-usse-ga-2026-11-03-rep"      # ordinary ground: orders may rest
 H = "ewc-usag-az-2026-11-03-dem"         # held ground: looked at, not entered
 H2 = "ewc-ussos-mi-2026-11-03-rep"
+C = "pvwc-usgub-az-mar-2026-11-03-kathob"   # a county winner market: held by its prefix
 
 
 def cfg():
@@ -20,7 +21,7 @@ def cfg():
         rest_style="join_quiet", revive=True,
         capital_usd=100.0, per_market_usd=2.0, revive_max_usd=5.0,
         min_days_out=3,
-        enter_tokens=("usse",), hold_tokens=("usag", "ussos"))
+        enter_tokens=("usse", "usgub"), hold_tokens=("usag", "ussos", "pvwc-"))
 
 
 class TestNewMarketsAreReported(unittest.TestCase):
@@ -134,8 +135,14 @@ class TestHeldGround(unittest.TestCase):
     def test_the_politics_config_holds_the_state_races(self):
         from v3 import politics
         c = politics.config()
-        for tok in ("usag", "usltgov", "ussos", "ussupct", "housepop"):
+        for tok in ("usag", "usltgov", "ussos", "ussupct", "housepop", "pvwc-"):
             self.assertIn(tok, c.hold_tokens)
+        # the county winner markets (owner, 2026-09-10): they carry the
+        # governor and senate tokens, and the prefix holds them
+        for slug in ("pvwc-usgub-az-mar-2026-11-03-kathob", "pvwc-usse-fl-bro-2026-11-03-ashmoo",
+                     "pvwc-usgub-ca-fre-2026-11-03-xavbec", "pvwc-usgub-ny-nas-2026-11-03-brubla"):
+            self.assertTrue(any(t in slug for t in c.enter_tokens))
+            self.assertTrue(any(t in slug for t in c.hold_tokens))
         # the House popular vote markets: the winner pair and the margin buckets
         for slug in ("vmc-housepop-2026-11-03-dem0-2", "pvwc-housepopw-2026-11-03-dem"):
             self.assertTrue(any(t in slug for t in c.hold_tokens))
@@ -143,6 +150,55 @@ class TestHeldGround(unittest.TestCase):
         for tok in ("usmayor", "usterr"):
             self.assertNotIn(tok, c.hold_tokens)
             self.assertNotIn(tok, c.enter_tokens)
+
+
+class TestCountyGround(unittest.TestCase):
+    """Owner, 2026-09-10: "The model is buying in new markets that I
+    didn't approve" — the county winner markets carry usgub/usse and
+    read as governor and senate ground; their prefix holds them."""
+
+    def test_the_engine_pulls_its_own_orders_but_keeps_the_exits(self):
+        from v3.family import FamilyOrder
+        from v3.intents import BUY_LONG, BUY_SHORT, SELL_LONG
+        r = Rig(cfg=cfg())
+        r.add_market(C, book=politics_book(r.now), event="Arizona Governor: Maricopa County")
+        r.cycle()
+        self.assertTrue(r.fam.enterable(C))        # carries usgub: governor ground
+        self.assertTrue(r.fam.held_ground(C))      # but the prefix holds it
+        self.assertFalse(r.fam.may_enter(C))
+        # orders the engine rested before the hold: a bid, a short, a
+        # probe, and the exit of 5 shares it holds
+        r.positions[C] = (5.0, 2.5)
+        live = r.exchange.live
+        for oid, side, px, q, intent, purpose in (
+                ("E1", "BUY", 0.42, 5.0, BUY_LONG, "earn"),
+                ("E2", "SELL", 0.50, 1.0, BUY_SHORT, "earn"),
+                ("P1", "BUY", 0.41, 1.0, BUY_LONG, "probe"),
+                ("X1", "SELL", 0.48, 5.0, SELL_LONG, "sell")):
+            live[oid] = {"id": oid, "market": C, "side": side, "price": px,
+                         "size": q, "intent": intent}
+            r.fam.orders[oid] = FamilyOrder(id=oid, market=C, side=side, price=px, qty=q,
+                                            intent=intent, placed_ts=r.now, purpose=purpose)
+        # the maintenance pass alone: the bid, the short and the probe
+        # come off, the exit stays
+        n0 = len(r.fam.log)
+        r.fam._maintain(r.now + 1, 10)
+        left = [o for o in r.fam.orders.values() if o.market == C]
+        self.assertEqual([(o.id, o.purpose) for o in left], [("X1", "sell")])
+        for oid in ("E1", "E2", "P1"):
+            self.assertNotIn(oid, live)
+        self.assertIn("X1", live)
+        pulls = [e for e in r.fam.log[n0:] if e.get("event") == "pull" and e.get("market") == C]
+        self.assertEqual(len(pulls), 3)
+        for e in pulls:
+            self.assertIn("held ground", e["why"])
+        # and whole cycles rest nothing new there; the exit works on
+        r.cycle()
+        # and nothing new rests there on later cycles
+        for _ in range(3):
+            r.cycle()
+        left = [o for o in r.fam.orders.values() if o.market == C]
+        self.assertEqual([o.purpose for o in left], ["sell"])
 
 
 if __name__ == "__main__":

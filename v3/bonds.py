@@ -172,6 +172,26 @@ REPAIRS = {
         ("usgubewc-usgub-mn-2026-11-03-dem", "YES", 104.0, 97.6573, 98.70, 0.07),
         ("usgubewc-usgub-al-2026-11-03-dem", "NO", 83.97, 74.0171, 75.62, 0.48),
     ],
+    # the same fault between 18:56Z and 19:24Z, before the fix booted:
+    # seven more lots booked sold through the amplifier with no trade
+    # behind them. Those lots were already counted back in from the
+    # exchange's record at their real cost, so only the phantom
+    # proceeds and gain come off (shares 0: no lot is booked).
+    "amp-phantom-2026-09-09b": [
+        ("scc-senate-gop-2026-11-03-56", "NO", 0.0, 0.0, 6.08, 0.02),
+        ("scc-hrep-rep-2026-11-03-gte235", "NO", 0.0, 0.0, 59.17, 0.32),
+        ("ussewc-usse-co-2026-11-03-dem", "YES", 0.0, 0.0, 136.92, 1.28),
+        ("ussewc-usse-ky-2026-11-03-rep", "YES", 0.0, 0.0, 88.59, 0.03),
+        ("ussewc-usse-ma-2026-11-03-dem", "YES", 0.0, 0.0, 67.20, 9.30),
+        ("ussewc-usse-tn-2026-11-03-dem", "NO", 0.0, 0.0, 23.58, 0.02),
+        ("usgubewc-usgub-il-2026-11-03-rep", "NO", 0.0, 0.0, 14.10, -0.03),
+    ],
+    # the money model (owner, 2026-09-10: "The only money to deploy
+    # automatically for bonds is the budget"): buys had been paid from
+    # sale proceeds first, so "spent" read 0 while $2,214 was held. Once,
+    # spent becomes what is held at cost and the budget what is left of
+    # the ceiling; the ceiling itself does not move.
+    "budget-model-2026-09-10": "rebase_spent",
 }
 BAIT_QTY = 1.0              # the bait: one share a tick inside their best on the buy side
 BAIT_WAIT_S = 2 * 3600.0    # nobody followed in this long: the bait comes off
@@ -539,8 +559,12 @@ class Bonds:
         return usd
 
     def _money(self) -> float:
+        """What the engine may still put into bonds: the room under the
+        budget (owner, 2026-09-10: "The only money to deploy
+        automatically for bonds is the budget"). Proceeds are not in
+        it."""
         self._follow_tax()
-        return self.cash + self.budget
+        return self.budget_room()
 
     def _follow_tax(self) -> None:
         """In tax mode the budget is what he owes, less what this engine
@@ -558,15 +582,30 @@ class Bonds:
         return self.budget
 
     def _pay(self, usd: float) -> float:
-        """Proceeds first, then the budget. Returns what came from the
-        budget."""
-        from_cash = min(self.cash, usd)
-        self.cash = round(self.cash - from_cash, 4)
-        from_budget = round(usd - from_cash, 4)
-        self.budget = round(max(self.budget - from_budget, 0.0), 4)
-        self.spent = round(self.spent + from_budget, 4)
-        self.money_in = round(self.money_in + from_budget, 4)
-        return from_budget
+        """The budget pays (owner, 2026-09-10: "The only money to deploy
+        automatically for bonds is the budget"). Proceeds are money
+        returned to him — recorded in cash, never the engine's to
+        spend. Returns what came from the budget."""
+        usd = round(max(usd, 0.0), 4)
+        self.budget = round(max(self.budget - usd, 0.0), 4)
+        self.spent = round(self.spent + usd, 4)
+        self.money_in = round(self.money_in + usd, 4)
+        return usd
+
+    def _refund_cost(self, cost: float) -> None:
+        """A sale returns the lot's cost to the budget: what was spent is
+        spent no more and the room reopens. The proceeds themselves stay
+        his (cash), never redeployed by the engine."""
+        # only what the budget paid comes back: a lot the budget never
+        # paid for (booked from the exchange's record) returns nothing,
+        # so the ceiling he set never drifts up
+        back = round(min(max(cost, 0.0), self.spent), 4)
+        if back <= 0:
+            return
+        self.spent = round(self.spent - back, 4)
+        if self.budget_mode != "tax":
+            self.budget = round(self.budget + back, 4)
+        self._follow_tax()
 
     def _ping_maybe(self, usd: float) -> None:
         """One ping per PING_EVERY_USD bought, not per purchase."""
@@ -575,7 +614,7 @@ class Bonds:
             self.alert("Bond engine bought",
                        f"${self.unpinged:,.2f} of bonds since the last note; "
                        f"${self.budget:,.2f} of the deploy budget left, "
-                       f"${self.cash:,.2f} of proceeds waiting")
+                       f"${self.cash:,.2f} of proceeds returned (his, not redeployed)")
             self.unpinged = 0.0
 
     def _reconfirm(self, now: float) -> None:
@@ -998,6 +1037,7 @@ class Bonds:
             proceeds, fee, src = self._record_exit(slug, side, sold, rec, sold_cost)
             gain = round(proceeds - fee - sold_cost, 4)
             self.cash = round(self.cash + proceeds - fee, 4)
+            self._refund_cost(sold_cost)
             self.realized = round(self.realized + gain, 4)
             self.sold_usd = round(self.sold_usd + proceeds, 4)
         self._follow_tax()
@@ -1181,6 +1221,27 @@ class Bonds:
 
     # ------------------------------------------------------------ the list
 
+    def _held(self, slug: str) -> bool:
+        """The family's held ground (owner, 2026-09-10 "The model is
+        buying in new markets that I didn't approve"): no order rests
+        there until he opens the market from the page — the bonds
+        included."""
+        fn = getattr(self.fam, "held_ground", None)
+        return bool(fn is not None and fn(slug))
+
+    def _drop_held(self) -> None:
+        """A listing on held ground comes off (2026-09-10: the county
+        winner markets were listed while the ground was still open);
+        a lot already held there keeps its place and its exit."""
+        for slug in list(self.approved):
+            if self._held(slug) and abs(float((self.lots.get(slug) or {}).get("qty") or 0.0)) < 0.005:
+                del self.approved[slug]
+                self._log(event="held_ground", market=slug,
+                          note="off the bond list — held ground until he opens the market")
+        for slug in list(self.proposed):
+            if self._held(slug):
+                self.proposed.pop(slug, None)
+
     def scan(self, now: float, force: bool = False) -> list[str]:
         """Once a night (or on the page's button): Silver's odds propose
         new markets and drop listed ones that left the band. Silent."""
@@ -1192,6 +1253,8 @@ class Bonds:
         new: list[str] = []
         pool = set(self.fam.universe) | set(self.fam.inventory) | set(self.approved)
         for slug in sorted(pool):
+            if slug not in self.approved and self._held(slug):
+                continue                  # held ground: never proposed
             p = self.fair(slug)
             s = side_for(p)
             if slug in self.approved:
@@ -1621,6 +1684,7 @@ class Bonds:
             proceeds = round(filled * per, 4)
             cost = self._unbook_lot(slug, side, filled)
             self.cash = round(self.cash + proceeds - fee, 4)
+            self._refund_cost(cost)
             self.realized = round(self.realized + proceeds - fee - cost, 4)
             self.sold_usd = round(self.sold_usd + proceeds, 4)
             self._booked_out[slug] = round(self._booked_out.get(slug, 0.0) + filled, 4)
@@ -1670,7 +1734,7 @@ class Bonds:
         return ask({"ok": True,
                     "note": f"sold {sold:g} {side} in {lots} lot{'s' if lots != 1 else ''} for "
                             f"${usd:,.2f} ({usd / sold * 100:.1f}c a share, ${fees:,.2f} "
-                            f"commission); {left:g} left, ${self.cash:,.2f} of proceeds waiting"
+                            f"commission); {left:g} left, ${self.cash:,.2f} of proceeds returned (his, not redeployed)"
                             + (f" — stopped: {stop}" if (stop and left >= 1.0 and sold < want) else "")})
 
     def set_budget(self, amount) -> dict:
@@ -1719,6 +1783,7 @@ class Bonds:
         every held bond earning, work the minnows, enter new ground.
         Places nothing unless the bonds switch is on."""
         self._apply_repairs()
+        self._drop_held()
         self.scan(now)
         self._follow_tax()
         self._mark_engine()
@@ -1742,6 +1807,7 @@ class Bonds:
                     proceeds = sold * (px if side == "YES" else (1.0 - px))
                     cost = self._unbook_lot(slug, side, sold)
                     self.cash = round(self.cash + proceeds, 4)
+                    self._refund_cost(cost)
                     self.realized = round(self.realized + proceeds - cost, 4)
                     self.sold_usd = round(self.sold_usd + proceeds, 4)
                     self._booked_out[slug] = round(self._booked_out.get(slug, 0.0) + sold, 4)
@@ -2606,24 +2672,39 @@ class Bonds:
         for key, rows in REPAIRS.items():
             if key in self.repairs_done:
                 continue
+            if rows == "rebase_spent":
+                total = self.budget_total()
+                inv = self.invested()
+                self.spent = round(inv, 4)
+                if self.budget_mode != "tax":
+                    self.budget = round(max(total - inv, 0.0), 4)
+                self._follow_tax()
+                self._log(event="repaired", market="-", note=(
+                    f"{key}: spent rebased to what is held at cost (${inv:,.2f}); "
+                    f"budget ${self.budget_total():,.2f}, room ${self.budget_room():,.2f}; "
+                    f"proceeds ${self.cash:,.2f} are money returned, not deployed"))
+                self.repairs_done.append(key)
+                continue
             for slug, side, qty, cost, proceeds, gain in rows:
-                self._book_lot(slug, side, qty, cost, ref=f"repair:{key}")
                 self.cash = round(self.cash - proceeds, 4)
                 self.realized = round(self.realized - gain, 4)
                 self.sold_usd = round(self.sold_usd - proceeds, 4)
                 self._amp_booked.pop(slug, None)
                 self._amp_seen.pop(slug, None)
-                bs, _ = self.earn(side)
-                for o in list(self.fam.orders.values()):
-                    if o.market == slug and o.side == bs and o.purpose == "sell":
-                        # the family's exit rested while the lot was gone:
-                        # it is the bond's exit again
-                        o.purpose = "bond"
-                        o.why = "bond: resting — the bond's exit, claimed back after the ledger repair"
+                if qty > 0.005:
+                    self._book_lot(slug, side, qty, cost, ref=f"repair:{key}")
+                    bs, _ = self.earn(side)
+                    for o in list(self.fam.orders.values()):
+                        if o.market == slug and o.side == bs and o.purpose == "sell":
+                            # the family's exit rested while the lot was gone:
+                            # it is the bond's exit again
+                            o.purpose = "bond"
+                            o.why = "bond: resting — the bond's exit, claimed back after the ledger repair"
                 self._log(event="repaired", market=slug, side=side, qty=qty, cost=round(cost, 2),
                           proceeds=proceeds, gain=gain,
-                          note=(f"{key}: the lot is back at its real cost; ${proceeds:.2f} of "
-                                f"phantom proceeds and ${gain:.2f} of gain reversed"))
+                          note=(f"{key}: " + (f"the lot is back at its real cost; " if qty > 0.005
+                                              else "the lot was already counted back in; ")
+                                + f"${proceeds:.2f} of phantom proceeds and ${gain:.2f} of gain reversed"))
             self.repairs_done.append(key)
 
     def _amp_pull(self, slug: str, why: str) -> int:
@@ -2699,6 +2780,7 @@ class Bonds:
                     proceeds = sold * (px_a if side == "YES" else (1.0 - px_a))
                     cost = self._unbook_lot(slug, side, sold)
                     self.cash = round(self.cash + proceeds, 4)
+                    self._refund_cost(cost)
                     self.realized = round(self.realized + proceeds - cost, 4)
                     self.sold_usd = round(self.sold_usd + proceeds, 4)
                     self._booked_out[slug] = round(self._booked_out.get(slug, 0.0) + sold, 4)
@@ -2753,6 +2835,10 @@ class Bonds:
                 a_cur = self.amp.get(slug) or {}
                 grow_wait = (qty > cur.qty + 1e-9
                              and now - float(a_cur.get("trimmed_at") or 0.0) < AMP_GROW_S)
+                # a resize the exchange refused outright is not tried
+                # again every cycle (2026-09-10: four markets placed and
+                # pulled a 3,000-share order every two minutes)
+                refused_wait = now - float(a_cur.get("refused_at") or 0.0) < AMP_COOLDOWN_S
                 # hysteresis: the size grid steps by a third to a half, so
                 # a plan that flickers between neighbours must not move
                 # the order every cycle; and one the exchange trimmed is
@@ -2760,19 +2846,30 @@ class Bonds:
                 same = (abs(cur.price - px) < 1e-9
                         and (abs(cur.qty - qty) <= max(1.0, AMP_RESIZE_FRAC * cur.qty)
                              or grow_wait))
-                if same and len(amps) == 1:
+                if (same or refused_wait) and len(amps) == 1:
                     exp_loss = round(plan["pf"] * plan["loss_ps"] * cur.qty, 4)
                     self.amp[slug] = dict(a_cur, qty=cur.qty, px=cur.price,
                                           exp_loss=exp_loss, gain=plan["gain"], pf=plan["pf"])
                     self._amp_seen[slug] = sum(o.qty for o in amps)
                     self.amp_note.pop(slug, None)
                     continue
+                # what the exchange funds of the replacement is what
+                # rests (owner: "What the exchange funds of it is what
+                # rests") — the resize used to demand the full size,
+                # the exchange funded a tenth, and the order was placed
+                # and pulled again every cycle (2026-09-10)
                 r = self.fam.desk.reprice({"id": cur.id, "market": slug, "side": bs,
                                            "price": cur.price, "size": cur.qty,
                                            "intent": cur.intent}, px, qty,
-                                          initiator="owner")
+                                          initiator="owner", keep_trimmed=True)
                 if not (r.ok and r.order_id):
+                    # nothing of it rested: the resting amplifier stays
+                    # as it is and the next try waits out the cooldown
                     self.amp_note[slug] = f"resize refused: {r.note[:80]}"
+                    self.amp[slug] = dict(a_cur, refused_at=round(now, 1))
+                    self._log(event="amp_resize_refused", market=slug, price=px, qty=qty,
+                              note=f"{r.note[:100]} — the resting amplifier stays; "
+                                   f"next try in {AMP_COOLDOWN_S / 60:.0f} minutes")
                     continue
                 if r.two_orders:
                     self._two_orders(slug, cur.id, r)
@@ -2786,6 +2883,9 @@ class Bonds:
                 use_intent = cur.intent
                 rested_q = qty
                 trimmed = ""
+                if 1.0 <= float(r.resting_qty or 0.0) < qty - 1e-9:
+                    rested_q = round(float(r.resting_qty), 2)
+                    trimmed = f" — the exchange funded {rested_q:g} of {qty:g}"
             else:
                 why_not = self._can_spend(plan["collateral"], now, slug)
                 if why_not:
@@ -3805,8 +3905,8 @@ class Bonds:
             st["last_px"] = minnow[0]
             st["last_q"] = round(minnow[1], 2)
             st["last_seen"] = round(now, 1)
-        if self._money() < MONEY_MIN_USD:
-            return None                            # nothing to snap with
+        if self.budget_total() < MONEY_MIN_USD:
+            return None                            # no budget set: nothing to snap with
         m_px, m_q = minnow
         moved = st is not None and abs(m_px - st["px"]) > tick / 2
         moves = (st["moves"] + 1 if (st and moved) else (st["moves"] if st else 0))
@@ -4245,7 +4345,7 @@ class Bonds:
             return {"ok": False, "note": "which price?"}
         if not (0.001 <= limit_px <= 0.999):
             return {"ok": False, "note": "price must be 0.1c to 99.9c"}
-        if self._money() < MONEY_MIN_USD:
+        if self.budget_total() < MONEY_MIN_USD:
             return {"ok": False, "note": "no money to buy with — set the deploy "
                                          "budget first"}
         if self.market_room(slug) < MONEY_MIN_USD:
