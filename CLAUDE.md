@@ -140,6 +140,32 @@ long and accreted, so search it rather than reading it through.
   it) and the older rows are data/survey.csv. v3/survey.py stays only
   for the shared math (walls, collateral, live-event checks). Do not
   bring the survey back without the owner's yes.
+- The focus tender (owner, 2026-09-10 "With the dramatic rise in the
+  rewards pools of some of the markets, we need to put our focus on
+  them"): every politics market whose program pays $250 a day per
+  event or more (the midterms tiers and the elections boost) is the
+  focus tender's — v3/focus.py, its own thread every 15 s, its own
+  switch, the /focus page. The engine treats that ground as frozen
+  (places, pulls and reprices nothing) and it charges no family
+  ceiling; the bonds hand those markets over (a lot already held keeps
+  its place in the ledger, the record books its sale). The list is
+  sorted by the expected value of an entry of 10% of his buying power
+  at the best price ("expected value with fill odds and considering
+  the cost of capital tie up"). Every order in a focus market — his,
+  the engine's, the tender's — is his to place, cancel, move and
+  resize from the page. The tender rests one order a side ONLY where
+  he has set a fair for that market, never past it, and keeps the
+  expected loss (collateral x fill odds) under $1,000 across its
+  orders ("For 6 expected loss of 1000"); a market without a fair is
+  shown with Silver's number as a suggestion and nothing is tended
+  ("Yes for 5"). The fill cost never reads under 2c a share ("The fill
+  cost for politics has been high recently. Keep that in mind").
+  Alaska governor is on the tender's ground ("Add Alaska gov") while
+  the engine still avoids it; the balance-of-power books stay his
+  hand's; held ground stays held until he opens it. The old engine
+  keeps cfb, NFL and the unboosted politics markets on $250 of
+  expected loss in total (politics $150, cfb $60, NFL $40) and 40 of
+  the stream's 200 subscriptions; the focus markets seat first.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

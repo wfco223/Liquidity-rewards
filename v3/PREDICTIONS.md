@@ -966,3 +966,27 @@ daily-pool claim.
 **Resolves:** when 2026-09-10 posts to data/rewards.csv (rows for
 ewc-usse-nc-2026-11-03-rep, ewc-usse-oh-2026-11-03-dem/rep,
 ewc-usse-tx-2026-11-03-rep and the scc-senate-gop brackets).
+
+### P20 — written 2026-09-10 ~12:00Z, BEFORE the focus tender rests anything
+**Claim:** on the boosted markets, an order the focus tender rests by
+expected value (reward claim − fill odds × fill cost − cost of capital,
+never past the owner's fair, one a side) earns at least half of its
+claimed $/day on the exchange's market-day postings, over its first
+three settled days, across the markets it works — and its fills cost
+under 3c a share on average.
+**Why:** the claim is the same join estimate the politics family's
+payouts have tracked at ~0.4–0.9x since the tier era ended; the fair
+bound and the fill-cost floor (2c a share, "The fill cost for politics
+has been high recently") keep the tender off the prices where the
+family's fills came from. If the postings come in under half, the
+boosted books are more contested than the level reading of the window
+says (EXP-1's queue reading) and the tender should size to the queue.
+**Falsified if:** the posted market-days for the tender's markets, over
+its first three settled days, total under half of the summed live
+claims logged for its resting orders; or its round-trip fill cost
+(fillmodel trip_cost for the politics groups it works) reads over 3c a
+share after ten fills.
+**Resolves:** three market-days after the focus switch first goes on
+(data/rewards.csv rows for the focus markets; the focus log's `rested`
+and `moved` rows carry each order's est; the fill model's trip_cost).
+

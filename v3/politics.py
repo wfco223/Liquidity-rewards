@@ -107,7 +107,13 @@ def config() -> FamilyConfig:
         # worst-correlated-day nominal bound moves to $2,500. The
         # expected-risk cap stays at $250 — that is still the primary
         # budget; gross is the belt over it.
-        capital_usd=250.0, gross_cap_usd=2500.0,
+        # owner, 2026-09-10 ("Leave the existing engine to handle the
+        # other parts cfb, nfl, and unboosted politics as it has been
+        # but with a total budget of 250 in expected loss"): the
+        # boosted markets are the focus tender's now (v3/focus.py) and
+        # the three families share $250 — politics $150, cfb $60, NFL
+        # $40 (my split; his to change)
+        capital_usd=150.0, gross_cap_usd=2500.0,
         per_market_usd=20.0, per_market_gross_usd=60.0,
         revive_max_usd=20.0,
         share_hi=0.10,

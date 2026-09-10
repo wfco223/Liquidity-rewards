@@ -61,7 +61,7 @@ def authed(get_header, query_string: str, password: str) -> bool:
 # routes still answer for a bookmark, but they are off the bar. Fills
 # and watch became sub-pages of quick look.
 NAV = (("quick look", "."), ("status", "status"), ("orders", "orders"),
-       ("pay", "pay"), ("bonds", "bonds"),
+       ("pay", "pay"), ("bonds", "bonds"), ("focus", "focus"),
        ("log", "log"), ("switch", "switch"))
 SUBNAV = {"quick": (("meter", "."), ("fills", "fills"), ("watch", "watch")),
           "orders": (("orders", "orders"),)}
@@ -1062,7 +1062,7 @@ function bAmp(r){
 }
 function bTop(r,L,held){
  var mk=r.mark;var black=!!(mk&&mk.black);
- var h='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+(black?' <span class="pill on">in the black</span>':'')+(r.odds_changed?' <span class="pill" style="border-color:#c9a227;color:#e8c547">odds changed · Silver '+bOdds(r)+'</span>':'')+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
+ var h='<div class="name">'+esc(L[r.market]||r.market)+' '+bPill(r.bond)+(r.focus?' <span class="pill">focus tender\u2019s</span>':'')+(black?' <span class="pill on">in the black</span>':'')+(r.odds_changed?' <span class="pill" style="border-color:#c9a227;color:#e8c547">odds changed · Silver '+bOdds(r)+'</span>':'')+(r.stale?' <span class="warn">stale</span>':'')+'</div>';
  if(held){
   if(r.odds_changed)h+='<div class="sub warn">No longer in the '+bBand((window._d&&window._d.bonds&&window._d.bonds.high)||0.985)+' band: the exit keeps working, nothing new is bought here. It leaves the page once you are out, and comes back if the odds return.</div>';
   if(r.unconfirmed)h+='<div class="sub warn">The exchange shows '+r.unconfirmed.exch+' of '+r.unconfirmed.ledger+' here but the transaction record shows no sale (it puts you at '+r.unconfirmed.record+'). Kept until the record explains it, or until you say you sold them: '+bBtn('Sold by hand — book it','if(confirm(\'Book the '+(r.unconfirmed.ledger-r.unconfirmed.exch)+' shares the exchange no longer shows as a bond sale? Priced from the record where it has the sale, else at your cost. The proceeds join the cash at once.\'))bOp(\'bonds_book_sale\',\''+esc(r.market)+'\')','off')+'</div>';
@@ -1967,6 +1967,95 @@ function render(d){
 # their routes for a bookmark but are off the bar (owner, 2026-08-31).
 # The survey page is gone with the survey (owner, 2026-09-10).
 
+FOCUS_JS = r"""
+// The focus page (owner, 2026-09-10): the boosted markets, sorted by the
+// expected value of an entry of 10% of buying power at the best price,
+// every order here with place, cancel, move and resize, his fair per
+// market. Polls /focus.json every 5s — the tender's own frozen view,
+// nothing rebuilt on the web thread.
+function fSay(h){window._fNote=h;var el=document.getElementById('fmsg');if(el)el.innerHTML=h;}
+function fOp(op,m,v){var body={op:op,market:m};if(v!=null)body.value=v;post(body,function(j){fSay('<div class="'+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>');fPollNow();});}
+function fKeep(id){var e=document.getElementById(id);return e&&e.value?e.value:'';}
+function fField(id,val,w,ph){return '<input id="'+id+'" type="number" inputmode="decimal" step="0.01" placeholder="'+esc(ph||'')+'" style="width:'+w+';font-size:16px;padding:6px;margin:2px" value="'+esc(val)+'" onfocus="window._liveOpen=true" onblur="window._liveOpen=false">';}
+function fBtn(label,onclick,cls){return '<button class="'+(cls||'')+'" style="margin:2px 4px 2px 0" onclick="'+onclick+'">'+label+'</button>';}
+function fFair(m){var x=parseFloat(fKeep('ff-'+m));if(!(x>0)){fSay('<div class="bad">type the fair in cents first</div>');return;}fOp('focus_fair',m,x);}
+function fStake(m){var x=parseFloat(fKeep('fs-'+m));if(!(x>=0)){fSay('<div class="bad">dollars, please</div>');return;}fOp('focus_stake',m,x);}
+function fNum(k){var x=parseFloat(fKeep('fn-'+k));if(isNaN(x)){fSay('<div class="bad">a number, please</div>');return;}fOp('focus_'+k,'-',x);}
+function fPlace(m){var s=document.getElementById('fps-'+m);var sd=s?s.value:'BUY';var p=parseFloat(fKeep('fpp-'+m));var q=parseFloat(fKeep('fpq-'+m));if(!(p>0)||!(q>=0.01)){fSay('<div class="bad">price in cents and how many shares?</div>');return;}if(confirm('Rest a '+(sd==='BUY'?'bid':'ask')+' for '+q+' shares at '+p+'¢?'))fOp('focus_place',m,{side:sd,px:p,qty:q});}
+function fMove(m,id){var p=fKeep('fmp-'+id);var q=fKeep('fmq-'+id);if(!p&&!q){fSay('<div class="bad">type a new price (¢) or a new size first</div>');return;}var v={order_id:id};if(p)v.px=parseFloat(p);if(q)v.qty=parseFloat(q);fOp('focus_move',m,v);}
+function fCancel(m,id,what){if(confirm('Cancel the order '+what+'?'))fOp('focus_cancel',m,{order_id:id});}
+function fTog(el,m){window._fOpen=window._fOpen||{};window._fOpen[m]=!!el.open;}
+function fSign(x){return (x>=0?'+':'−')+usd(Math.abs(x||0));}
+function fWhenD(t){if(!t)return '–';var d=new Date(t*1000);return (d.getMonth()+1)+'/'+d.getDate()+' '+when(t);}
+function fPollNow(){fetch('/focus.json',{headers:hdrs(),cache:'no-store'}).then(function(r){if(r.status===401)return null;return r.json();}).then(function(j){if(!j)return;window._f=j;window._fAt=Date.now();fApply(false);}).catch(function(){});}
+function fApply(force){var f=window._f;if(!f)return;var v=document.getElementById('view');if(!v)return;
+ // an input with focus, or a page scrolled into, holds the redraw (the
+ // reading protection every page keeps); a tap's answer redraws anyway
+ if(window._liveOpen)return;if(!force&&(window.scrollY||0)>120)return;
+ var y=window.scrollY||0;v.innerHTML=fRender(f);if(y>0)window.scrollTo(0,y);}
+function render(d){if(!window._fTimer){window._fTimer=setInterval(fPollNow,5000);fPollNow();}var f=window._f;if(!f)return '<div class="card muted">reading the focus markets…</div>';return fRender(f);}
+function fRender(f){
+ if(!f.ok)return '<div class="card muted">'+esc(f.note||'not ready')+'</div>';
+ var o=fHead(f);var rows=f.rows||[];
+ if(!rows.length)o+='<div class="card muted">no boosted market read yet — the terms come in over the first minutes</div>';
+ rows.forEach(function(r){o+=fCard(r,f);});
+ var lg=f.log||[];
+ if(lg.length){o+='<div class="card"><details class="how"><summary class="muted">what the tender did</summary>';
+  lg.slice(0,30).forEach(function(e){o+='<div class="muted">'+when(e.ts)+' '+esc(e.event)+(e.market?' '+esc(e.market):'')+(e.price!=null?' '+(e.qty!=null?e.qty+' @ ':'')+pc(e.price):'')+(e.was!=null?' (was '+pc(e.was)+')':'')+(e.why||e.note?' — '+esc(e.why||e.note):'')+(e.ev!=null?' EV '+fSign(e.ev)+'/day':'')+'</div>';});
+  o+='</details></div>';}
+ return o;
+}
+function fHead(f){
+ var o='<div class="card"><b>Focus</b> '+(f.on?'<span class="pill on">switch ON</span>':'<span class="pill">switch off — showing, not tending</span>')
+ +'<div class="sub">'+f.n+' boosted market'+(f.n!==1?'s':'')+' (programs paying '+usd(f.pool_min)+'/day or more) · '+f.tended+' tended · '+f.mine+' tender order'+(f.mine!==1?'s':'')+' · expected loss <b>'+usd(f.risk_used)+'</b> of '+usd(f.loss_cap)+'</div>'
+ +'<div class="sub">buying power '+(f.bp!=null?usd(f.bp):'<span class="warn">unknown</span>')+' → entry stake <b>'+usd(f.stake)+'</b> ('+esc(f.stake_src)+') · pass '+f.pass_s+'s, '+f.books_read+' books re-read'+(f.at?' · '+when(f.at):'')+'</div>'
+ +(f.note?'<div class="warn">'+esc(f.note)+'</div>':'')
+ +'<div id="fmsg">'+(window._fNote||'')+'</div>'
+ +'<details class="how"><summary class="muted">the numbers the tender runs on</summary>'
+ +'<div class="sub">cost of capital <b>'+(f.coc_day*100).toFixed(2)+'%/day</b> '+fField('fn-coc','','5em','%')+fBtn('Set','fNum(\'coc\')','small')+'</div>'
+ +'<div class="sub">fill cost floor <b>'+(f.fill_floor*100).toFixed(1)+'¢/share</b> '+fField('fn-floor','','5em','¢')+fBtn('Set','fNum(\'floor\')','small')+'</div>'
+ +'<div class="sub">expected loss cap <b>'+usd(f.loss_cap)+'</b> '+fField('fn-cap','','6em','$')+fBtn('Set','fNum(\'cap\')','small')+'</div>'
+ +'<div class="sub">'+fBtn('Re-read the terms now','fOp(\'focus_scan\',\'-\')','small')+'</div>'
+ +'<div class="hint">Sorted by the expected value of an entry of the stake at the best price on either side: the reward claim a day, less the fill\'s expected cost (fill odds × the measured cost a share, never under the floor), less the cost of the capital tied up. The tender rests one order a side only where you have set a fair — a bid at most a tick under it, an ask at least a tick over — and keeps the expected loss (collateral × fill odds) under the cap. Your own orders are never touched; move or cancel them here yourself.</div>'
+ +'</details></div>';
+ var ev=f.events||[];
+ if(ev.length){o+='<div class="card"><b>New boosted markets</b> <span class="muted">— as the program watch found them</span>';
+  ev.slice(0,12).forEach(function(e){o+='<div class="sub">'+esc(e.name||e.market)+' — '+usd(e.pool_day||0)+'/day <span class="muted">'+fWhenD(e.ts)+'</span></div>';});
+  o+='</div>';}
+ return o;
+}
+function fCard(r,f){
+ var o=[];var L=r.name||r.market;var p=r.prog||{};var b=r.book||{};var m=esc(r.market);
+ var pid=(p.pid||'').replace(/_20\d{6}$/,'').replace(/^midterms_/,'').replace(/_/g,' ');
+ o.push('<div class="card">');
+ o.push('<div class="name"><b>'+esc(L)+'</b> <span class="pill">'+usd(p.pool_day||0)+'/day'+(p.n>1?' ÷ '+p.n:'')+'</span>'+(r.held?' <span class="pill" style="border-color:#c9a227;color:#e8c547">held</span>':'')+(r.paused?' <span class="pill">paused</span>':'')+(r.ev!=null?' <span class="'+(r.ev>0?'ok':'muted')+'">EV '+fSign(r.ev)+'/day</span>':'')+'</div>');
+ if(b.bid!=null||b.ask!=null)o.push('<div class="sub">bid <b>'+pc(b.bid)+'</b> ×'+fmtsz(b.bid_q||0)+' · ask <b>'+pc(b.ask)+'</b> ×'+fmtsz(b.ask_q||0)+(b.age_s!=null?' <span class="muted">· book '+Math.round(b.age_s)+'s old</span>':'')+'</div>');
+ else o.push('<div class="muted">'+esc(r.note||'no book yet')+'</div>');
+ var fairTxt=r.fair!=null?'<b>'+pc(r.fair)+'</b> yours'+(r.silver!=null?' <span class="muted">(Silver '+pc(r.silver)+')</span>':''):(r.silver!=null?'<span class="muted">none — Silver says '+pc(r.silver)+'</span>':'<span class="muted">none</span>');
+ o.push('<div class="sub">fair: '+fairTxt+(r.not_tended?' · <span class="warn">'+esc(r.not_tended)+'</span>':' · <span class="ok">tended</span>')+'</div>');
+ var s=r.sides||{};
+ ['BUY','SELL'].forEach(function(sd){var x=s[sd];if(!x)return;
+  if(x.px==null){o.push('<div class="muted">'+(sd==='BUY'?'bid':'ask')+' entry: '+esc(x.note||'')+'</div>');return;}
+  o.push('<div class="sub">'+(sd==='BUY'?'bid':'ask')+' '+usd(r.stake)+': <b>'+x.qty+' @ '+pc(x.px)+'</b> → ~'+usd(x.est)+'/day, fill odds '+Math.round(x.pf*100)+'%/day costing '+usd(x.loss)+', capital '+usd(x.coc)+' → <b class="'+(x.ev>0?'ok':'bad')+'">EV '+fSign(x.ev)+'/day</b>'+(x.fair_used==='silver'?' <span class="muted">(vs Silver)</span>':x.fair_used==='none'?' <span class="muted">(no fair)</span>':'')+'</div>');});
+ if(r.position){o.push('<div class="sub"><b>'+r.position.qty+' held @ '+pc(r.position.cost_px)+'</b>'+(r.exit?(r.exit.px!=null?' · exit plan '+r.exit.qty+' @ '+pc(r.exit.px)+' → ~'+usd(r.exit.est)+'/day, odds '+Math.round(r.exit.pf*100)+'%/day':' · <span class="warn">'+esc(r.exit.note||'')+'</span>'):(r.fair==null?' · <span class="warn">no exit tended — set a fair or rest one yourself</span>':''))+'</div>');}
+ var od=r.orders||[];
+ if(od.length){o.push('<div class="sub"><b>'+od.length+' order'+(od.length!==1?'s':'')+' here</b></div>');
+  od.forEach(function(x){var who=x.who==='you'?'<span class="pill on">you</span>':x.who==='tender'?'<span class="pill">tender</span>':'<span class="pill">'+esc(x.who)+'</span>';
+   o.push('<div class="sub">'+who+' '+(x.side==='BUY'?'bid':'ask')+' <b>'+x.qty+' @ '+pc(x.price)+'</b>'+(x.est!=null?' → ~'+usd(x.est)+'/day, odds '+Math.round((x.pf||0)*100)+'%'+(x.ev!=null&&!x.exit?', EV '+fSign(x.ev)+'/day':''):'')
+    +'<div style="white-space:nowrap">'+fField('fmp-'+x.id,'','5em','¢')+fField('fmq-'+x.id,'','5em','shares')+fBtn('Move','fMove(\''+m+'\',\''+esc(x.id)+'\')','small')+fBtn('Cancel','fCancel(\''+m+'\',\''+esc(x.id)+'\',\''+esc(x.qty+' @ '+pc(x.price))+'\')','small off')+'</div>'
+    +(x.why?'<div class="muted">'+esc(x.why)+'</div>':'')+'</div>');});}
+ var open=!!(window._fOpen||{})[r.market];
+ o.push('<details'+(open?' open':'')+' ontoggle="fTog(this,\''+m+'\')"><summary class="muted">set the fair, the stake, or rest an order</summary>');
+ o.push('<div class="sub">fair '+fField('ff-'+r.market,'','6em','¢')+fBtn('Set','fFair(\''+m+'\')','small')+(r.fair!=null?fBtn('Clear','fOp(\'focus_fair\',\''+m+'\',\'\')','small off'):'')+'</div>');
+ o.push('<div class="sub">stake a side '+fField('fs-'+r.market,'','6em','$')+fBtn('Set','fStake(\''+m+'\')','small')+' <span class="muted">'+usd(r.stake)+' now ('+esc(r.stake_src)+')</span>'+(r.stake_src==='set by you'?fBtn('Back to 10%','fOp(\'focus_stake\',\''+m+'\',\'\')','small off'):'')+'</div>');
+ o.push('<div class="sub">rest <select id="fps-'+r.market+'" style="font-size:16px;padding:6px"><option value="BUY">a bid</option><option value="SELL">an ask</option></select> '+fField('fpp-'+r.market,'','5em','¢')+fField('fpq-'+r.market,'','5em','shares')+fBtn('Place','fPlace(\''+m+'\')','small')+'</div>');
+ o.push('<div class="sub">'+(r.paused?fBtn('Resume the tender here','fOp(\'focus_resume\',\''+m+'\')','small'):fBtn('Pause the tender here','fOp(\'focus_pause\',\''+m+'\')','small off'))+fBtn('Pull the tender\'s orders','fOp(\'focus_pull\',\''+m+'\')','small off')+'</div>');
+ o.push('<div class="muted"><code>'+m+'</code>'+(p.pid?' · '+esc(pid)+' · target '+fmtsz(p.target||0)+' · df '+p.df:'')+(p.side_pool?' · '+usd(p.side_pool)+'/day a side':'')+'</div>');
+ o.push('</details></div>');
+ return o.join('');
+}
+"""
+
 PAGES = {
     "/": ("Quick look", "meter", GRAPH_JS, "quick"),
     "/graph": ("Quick look", "meter", GRAPH_JS, "quick"),
@@ -1977,6 +2066,7 @@ PAGES = {
     "/pay": ("Pay", "pay", PAY_JS, ""),
     "/grades": ("Pay", "pay", PAY_JS, ""),
     "/bonds": ("Bonds", "bonds", BONDS_JS, ""),
+    "/focus": ("Focus", "focus", FOCUS_JS, ""),
     "/switch": ("Switches", "switch", SWITCH_JS, ""),
     "/log": ("Log", "log", LOG_JS, ""),
     "/plan": ("Plan", "", PLAN_JS, ""),
@@ -2140,6 +2230,9 @@ class WebServer:
             return self.monitor.set_owner_fair(
                 str(body.get("market") or ""),
                 float(f) if f not in (None, "") else None)
+        if op.startswith("focus_"):
+            return self.monitor.focus_op(op, str(body.get("market") or ""),
+                                         body.get("value"))
         return {"ok": False, "note": f"unknown op {op}"}
 
     def start(self) -> None:
@@ -2222,6 +2315,17 @@ class WebServer:
                         return
                     self._send(200, "application/json",
                                json.dumps(server.monitor.fills_view()).encode())
+                    return
+                if route == "/focus.json":
+                    # the focus tender's own frozen view: bytes built on
+                    # its thread at the end of each pass, never a live
+                    # dict serialized here
+                    if not authed(self.headers.get, u.query, server.password):
+                        self._send(401, "application/json", b'{"error":"key required"}')
+                        return
+                    fj = getattr(server.monitor, "focus_json", None)
+                    self._send(200, "application/json",
+                               fj() if fj is not None else b'{"ok":false}')
                     return
                 if route == "/data.json":
                     if not authed(self.headers.get, u.query, server.password):
