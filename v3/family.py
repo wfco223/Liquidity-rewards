@@ -844,6 +844,7 @@ class Family:
                     for o in list(self.orders.values())
                     if o.market not in self.proven
                     and o.market not in self.bond_markets
+                    and o.market not in self.freeze_dyn   # the focus tender's ground
                     and not self._owner_exit(o))
         if self.cfg.holdings_in_ceiling:
             spent += self.holdings_value()
@@ -855,7 +856,8 @@ class Family:
         the fill model believes."""
         g = risk.book_risk(risk.order_legs(
             o for o in list(self.orders.values())
-            if not self._owner_exit(o) and o.market not in self.bond_markets))
+            if not self._owner_exit(o) and o.market not in self.bond_markets
+            and o.market not in self.freeze_dyn))
         if self.cfg.holdings_in_ceiling:
             g += self.holdings_value()
         return g

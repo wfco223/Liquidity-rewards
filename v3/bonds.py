@@ -400,6 +400,11 @@ class Bonds:
         # a sale by his hand the position feed has not shown yet: the
         # sync must not hand the sold shares back meanwhile
         self._await_drop: dict[str, tuple] = {}   # slug -> (qty sold, since)
+        # the boosted markets are the focus tender's (owner, 2026-09-10
+        # "Take any boosted markets out of bonds"): nothing is proposed,
+        # tended or bought there; a lot already held keeps its place in
+        # the ledger (the budget's money) and the record books its sale
+        self.focus_out: set[str] = set()
 
     # ------------------------------------------------------------ helpers
 
@@ -703,6 +708,23 @@ class Bonds:
         out.update(s for s, l in self.lots.items()
                    if abs(float(l.get("qty") or 0.0)) > 0.005)
         return sorted(out)
+
+    def _tending(self) -> list[str]:
+        """The working markets this module still tends: everything the
+        focus tender has not taken (owner, 2026-09-10)."""
+        return [s for s in self._working() if s not in self.focus_out]
+
+    def _drop_focus(self) -> None:
+        """A listing the focus tender took comes off the list; a lot held
+        there stays in the ledger, shown as handed over."""
+        for slug in list(self.approved):
+            if slug in self.focus_out and abs(float((self.lots.get(slug) or {}).get("qty") or 0.0)) < 0.005:
+                del self.approved[slug]
+                self._log(event="focus_out", market=slug,
+                          note="off the bond list — a boosted market, the focus tender's")
+        for slug in list(self.proposed):
+            if slug in self.focus_out:
+                self.proposed.pop(slug, None)
 
     def _side_of(self, slug: str) -> str:
         m = self.approved.get(slug) or self.dropped.get(slug) or {}
@@ -1262,8 +1284,8 @@ class Bonds:
         new: list[str] = []
         pool = set(self.fam.universe) | set(self.fam.inventory) | set(self.approved)
         for slug in sorted(pool):
-            if slug not in self.approved and self._held(slug):
-                continue                  # held ground: never proposed
+            if slug not in self.approved and (self._held(slug) or slug in self.focus_out):
+                continue                  # held ground, or the focus tender's: never proposed
             p = self.fair(slug)
             s = side_for(p)
             if slug in self.approved:
@@ -1793,13 +1815,14 @@ class Bonds:
         Places nothing unless the bonds switch is on."""
         self._apply_repairs()
         self._drop_held()
+        self._drop_focus()
         self.scan(now)
         self._follow_tax()
         self._mark_engine()
         self._refresh_books(now)             # fresh books BEFORE acting on them
         placed: list[dict] = []
         # sales: our earning order gave up shares and the ledger shrinks
-        for slug in self._working():
+        for slug in self._tending():
             side = self._side_of(slug)
             bs, _ = self.earn(side)
             seen = self._earn_seen.get(slug, 0.0)
@@ -1840,7 +1863,7 @@ class Bonds:
         self._money_gate(self._buying_power(now), now, act=on,
                          walls=self._wall_held(), reserve=self.budget_room())
         if on:
-            for slug in self._working():
+            for slug in self._tending():
                 side = self._side_of(slug)
                 r = self._keep_earning(slug, side, positions, now)
                 if r:
@@ -1867,7 +1890,7 @@ class Bonds:
                                            + [s for s in self._working() if self._amp_orders(s)])):
                 if self._amp_orders(slug):
                     self._amp_pull(slug, why)
-        for slug in self._working():
+        for slug in self._tending():
             self._watch_bait(slug, self._side_of(slug), now)
         rate = sum(o.live_est or 0.0 for o in list(self.fam.orders.values())
                    if o.purpose == "bond")
@@ -3086,7 +3109,7 @@ class Bonds:
         again, oldest first — so what the pass acts on is seconds old
         and what it pulls it can put back."""
         due = []
-        for slug in sorted(set(self._working()) | set(self.approved)):
+        for slug in sorted((set(self._working()) | set(self.approved)) - set(self.focus_out)):
             age = self.fam.cache.age(slug, now) if hasattr(self.fam.cache, "age") else None
             if age is None:
                 b = self.fam.cache.any_age(slug)
@@ -4621,6 +4644,8 @@ class Bonds:
     def view(self, now: float, positions: dict | None = None) -> dict:
         rows = [self._row(slug, meta, now, positions)
                 for slug, meta in self._metas()]
+        for r in rows:
+            r["focus"] = r.get("market") in self.focus_out
         # the markets he is in first, largest at cost first; then the
         # rest cheapest per dollar (owner, 2026-09-03: "take the markets
         # I'm actually in and put them at the top")

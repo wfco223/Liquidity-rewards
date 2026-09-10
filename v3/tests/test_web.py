@@ -211,9 +211,12 @@ class TestRedesign(unittest.TestCase):
         # bonds is its own tab (owner, 2026-09-02: "on a separate page
         # in the app"); the survey tab is gone with the survey (owner,
         # 2026-09-10: "Take off the survey entirely")
+        # the focus tab (owner, 2026-09-10: "I need very high
+        # visibility into the new markets")
         self.assertEqual(labels,
                          ["quick look", "status", "orders", "pay", "bonds",
-                          "log", "switch"])
+                          "focus", "log", "switch"])
+        self.assertEqual(web.PAGES["/focus"][1], "focus")
         self.assertEqual(web.PAGES["/bonds"][3], "")
         self.assertNotIn("/survey", web.PAGES)
         self.assertNotIn("svCard", web.ORDERS_JS)

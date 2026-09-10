@@ -159,7 +159,8 @@ class TestTheNflIsTheExplorer(unittest.TestCase):
         self.assertTrue(c.explore)
         self.assertEqual(c.explore_usd, 1.0)
         self.assertEqual(c.explore_hours, 48.0)
-        self.assertEqual(c.capital_usd, 50.0)
+        # owner, 2026-09-10: NFL's share of the families' $250 is $40
+        self.assertEqual(c.capital_usd, 40.0)
         self.assertFalse(football.cfb().explore)
 
     def test_the_status_card_shows_the_exploration(self):
