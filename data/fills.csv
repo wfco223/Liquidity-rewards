@@ -3693,3 +3693,22 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1788999956.8,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,0.12,0.09,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD5DPD2FESX0
 1788999956.8,politics,scc-hrep-rep-2026-11-03-gte225,BUY,2,0.09,backfill,,9.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCXTBVM8GSJR
 1788999956.8,politics,ussewc-usse-ma-2026-11-03-dem,SELL,33.62,0.93,backfill,,0.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD5QERBQ2SX0
+1789000414.0,politics,ussewc-usse-or-2026-11-03-dem,BUY,20,0.95,earn,5.2993,0.04,0.99865,96,99,0.451,0.93,0.96,-0.0486,20,2 ticks in front of the touch — we would hold 85% of the bid side,CD64N5P8PSJH
+1789000550.8,politics,ussewc-usse-wv-2026-11-03-rep,BUY,2,0.97,earn,0.0715,0.16,0.9999,96,99,0.772,0.97,0.98,-0.0299,2,4 ticks in front of the touch — we would hold 100% of the bid side,CD61S9D1YSX4
+1789000574.1,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,8,0.06,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD626GSR4T3P
+1789000812.7,politics,usgubewc-usgub-me-2026-11-03-rep,SELL,17,0.05,bond,0,0.04,0.0093,5,9,0,0.05,0.06,-0.0407,-39,bond: took 17 NO at 5c — it was in the way of our resting order,CD67JWDN0T75
+1789000950.7,politics,ussewc-usse-wv-2026-11-03-rep,SELL,2,0.98,sell,0.0179,0.11,0.9999,95,98,0.802,0.97,0.98,0.0199,0,selling filled stock — it earns while it waits,CD66FRTZPSK5
+1789000950.7,politics,usgubewc-usgub-me-2026-11-03-rep,SELL,3,0.05,bond,0,0.04,0.0093,5,10,0.454,0.03,0.06,-0.0407,-42,bond: took 3 NO at 5c — it was in the way of our resting order,CD68W0038SK5
+1789001057.7,politics,ussewc-usse-ky-2026-11-03-rep,SELL,0.63,0.94,backfill,,1.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD5564S4AT6S
+1789001201.4,politics,ussewc-usse-ky-2026-11-03-rep,SELL,60,0.94,bond,2.6048,1.38,0.996425,89,93,0.758,0.93,0.94,0.0564,45,bond: moved up to keep 80% of the best reward,CD5564S4AT6S
+1789001734.8,politics,usgubewc-usgub-wy-2026-11-03-dem,SELL,19.73,0.02,earn,2.8102,0.49,0.00015,1,2,0.071,0.01,0.02,-0.0198,-39.73,1 tick in front of the touch — we would hold 79% of the ask side,CD61RN824T6S
+1789001777.5,politics,ussewc-usse-ky-2026-11-03-dem,SELL,12,0.06,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6CJMFVRSJR
+1789001934.2,politics,pvwc-usgub-ny-nas-2026-11-03-kathoc,BUY,5,0.5,earn,5.531,0.55,0.989025,43,55,0,0.01,0.51,-0.489,5,at the touch — a fill here is 49 ticks inside value (Silver + evidence),CD61XYNEWSJ1
+1789002970.8,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,2.47,0.06,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6NKYECJT75
+1789003288.0,politics,ussewc-usse-sd-2026-11-03-rep,BUY,2,0.92,bond,0,0.06,0.991425,89,94,0.439,0.91,0.93,-0.0714,52,bond: took 2 YES at 92c — it was in the way of our resting order,CD6TKZB1AT6S
+1789003645.1,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,45,0.08,void,0.8303,0.48,0.010975,10,14,0.762,0.08,0.09,0.069,-558,voided: the exchange has no trade for order CD59HQX5TSJH — the row of 09-10 00:0,CD59HQX5TSJH
+1789003645.1,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,3,0.17,void,0,0.17,0.010975,9,12,0.83,0.08,0.1,-0.159,-651,voided: the exchange has no trade for order CD5KQR6H0SK5 — the row of 09-10 00:0,CD5KQR6H0SK5
+1789003645.1,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,8,0.06,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD626GSR4T3P
+1789003645.1,politics,ussewc-usse-ky-2026-11-03-rep,SELL,0.63,0.94,backfill,,1.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD5564S4AT6S
+1789003645.1,politics,ussewc-usse-ky-2026-11-03-dem,SELL,12,0.06,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6CJMFVRSJR
+1789003645.1,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,2.47,0.06,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD6NKYECJT75
