@@ -2045,7 +2045,7 @@ function fCard(r,f){
  var s=r.sides||{};
  ['BUY','SELL'].forEach(function(sd){var x=s[sd];if(!x)return;
   if(x.px==null){o.push('<div class="muted">'+(sd==='BUY'?'bid':'ask')+' entry: '+esc(x.note||'')+'</div>');return;}
-  o.push('<div class="sub">'+(sd==='BUY'?'bid':'ask')+' '+usd(r.stake)+': <b>'+x.qty+' @ '+pc(x.px)+'</b> → ~'+usd(x.est)+'/day, fill odds '+Math.round(x.pf*100)+'%/day costing '+usd(x.loss)+', capital '+usd(x.coc)+' → <b class="'+(x.ev>0?'ok':'bad')+'">EV '+fSign(x.ev)+'/day</b>'+(x.fair_used==='silver'?' <span class="muted">(vs Silver)</span>':x.fair_used==='none'?' <span class="muted">(no fair)</span>':'')+'</div>');});
+  o.push('<div class="sub">'+(sd==='BUY'?'bid':'ask')+' '+usd(r.stake)+': <b>'+x.qty+' @ '+pc(x.px)+'</b> → ~'+usd(x.est)+'/day, fill odds '+Math.round(x.pf*100)+'%/day costing '+usd(x.loss)+(x.conc>0?' ('+pc(x.conc)+' past your fair)':'')+', capital '+usd(x.coc)+' → <b class="'+(x.ev>0?'ok':'bad')+'">EV '+fSign(x.ev)+'/day</b>'+(x.fair_used==='silver'?' <span class="muted">(vs Silver)</span>':x.fair_used==='none'?' <span class="muted">(no fair)</span>':'')+'</div>');});
  if(r.position){o.push('<div class="sub"><b>'+r.position.qty+' held @ '+pc(r.position.cost_px)+'</b>'+(r.exit?(r.exit.px!=null?' · exit plan '+r.exit.qty+' @ '+pc(r.exit.px)+' → ~'+usd(r.exit.est)+'/day, odds '+Math.round(r.exit.pf*100)+'%/day':' · <span class="warn">'+esc(r.exit.note||'')+'</span>'):(r.fair==null?' · <span class="warn">no exit tended — set a fair or rest one yourself</span>':''))+'</div>');}
  var od=r.orders||[];
  if(od.length){o.push('<div class="sub"><b>'+od.length+' order'+(od.length!==1?'s':'')+' here</b></div>');

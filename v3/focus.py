@@ -73,6 +73,12 @@ FOCUS_FILL_COST_MAX = 0.25      # ...nor over (a broken measure must not read as
 FOCUS_PF_FLOOR = 0.05           # fill odds never charge the cap under this
 FOCUS_BEHIND_MAX = 6            # candidate slots out to this many ticks behind the touch
 FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much of the best EV
+# the sizes tried at each price, as fractions of the stake (owner,
+# 2026-09-10: "A bid over fair value is fine as long as it is
+# appropriately sized for the risk and rewards it can earn"): the reward
+# claim saturates with size, the fill's cost does not, so past fair the
+# best order is often a smaller one
+FOCUS_SIZE_FRACS = (1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1)
 FOCUS_MOVE_COOLDOWN_S = 300.0   # an order moves at most this often
 FOCUS_BP_EVERY_S = 60.0
 FOCUS_ACTIONS_PER_PASS = 8      # places, moves and pulls a pass
@@ -396,8 +402,17 @@ class Focus:
         closer = sum(q for p, q in levels
                      if ((p > px + 1e-9) if side == "BUY" else (p < px - 1e-9)))
         fm = getattr(self.fam, "fillmodel", None)
+        # past his fair (an entry only): the concession is a certain
+        # cost at fill, charged in full on top of the measured markdown,
+        # and a mispriced order is assumed to fill faster (the fill
+        # model's bait) until its own record says otherwise
+        conc = 0.0
+        if not is_exit and fair is not None:
+            conc = max((px - fair) if side == "BUY" else (fair - px), 0.0)
+        conc_ticks = int(round(conc / tick)) if conc > 0 else 0
         try:
-            pf = float(fm.p_fill(slug, side, ticks, shield=closer, target=float(prog.target)))
+            pf = float(fm.p_fill(slug, side, ticks, shield=closer, target=float(prog.target),
+                                 bait=float(conc_ticks)))
         except Exception:  # noqa: BLE001 — the prior stands in
             pf = {0: 0.5, 1: 0.3, 2: 0.15}.get(ticks, 0.08)
         pf = min(max(pf, 0.0), 1.0)
@@ -410,10 +425,10 @@ class Focus:
             cost_ps = px if side == "BUY" else 1.0 - px
             coll = cost_ps * qty
             try:
-                fc = float(fm.fill_cost(slug, side, px, fair))
+                base = float(fm.fill_cost(slug, side, px, None))
             except Exception:  # noqa: BLE001
-                fc = self.fill_floor
-            fc = min(max(fc, self.fill_floor), FOCUS_FILL_COST_MAX)
+                base = self.fill_floor
+            fc = min(max(base, self.fill_floor), FOCUS_FILL_COST_MAX) + conc
             loss = pf * qty * fc
             coc = coll * self.coc_day
             risk = coll * max(pf, FOCUS_PF_FLOOR)
@@ -421,13 +436,19 @@ class Focus:
         return {"px": _r4(px), "qty": round(qty, 2), "est": round(est, 4),
                 "pf": round(pf, 4), "fc": round(fc, 4), "loss": round(loss, 4),
                 "coll": round(coll, 2), "coc": round(coc, 4), "ev": round(ev, 4),
-                "risk": round(risk, 2), "ticks": ticks, "share": round(float(j.share), 4)}
+                "risk": round(risk, 2), "ticks": ticks, "share": round(float(j.share), 4),
+                "conc": round(conc, 4)}
 
-    def _cands(self, side: str, book, fair: float | None) -> list[float]:
+    def _cands(self, side: str, book, fair: float | None,
+               bound: bool = False) -> list[float]:
         """Candidate prices, nearest first: a tick inside the touch when
-        the spread allows, the touch, and out to FOCUS_BEHIND_MAX behind
-        it — never past his fair (a bid at most a tick under it, an ask
-        at least a tick over)."""
+        the spread allows, the touch, out to FOCUS_BEHIND_MAX behind it,
+        and the slot a tick inside his fair. With `bound` (an exit)
+        nothing past his fair; an entry may sit past it (owner,
+        2026-09-10: "A bid over fair value is fine as long as it is
+        appropriately sized for the risk and rewards it can earn") —
+        the concession is charged in _score and the size chosen with
+        the price."""
         tick = book.tick or 0.01
         own = book.side(side)
         other = book.side("SELL" if side == "BUY" else "BUY")
@@ -444,11 +465,12 @@ class Focus:
             out.append(start - k * sign * tick)
         out = [round(p, 4) for p in out]
         if fair is not None:
-            bound = fair - tick if side == "BUY" else fair + tick
-            out = [p for p in out
-                   if ((p <= bound + 1e-9) if side == "BUY" else (p >= bound - 1e-9))]
-            # the bound itself is a candidate when the touch sits past it
-            b = round(bound, 4)
+            edge = fair - tick if side == "BUY" else fair + tick
+            if bound:
+                out = [p for p in out
+                       if ((p <= edge + 1e-9) if side == "BUY" else (p >= edge - 1e-9))]
+            # the slot a tick inside his fair is always a candidate
+            b = round(edge, 4)
             if 0.001 <= b <= 0.999 and b not in out and (
                     (opp is None) or ((b < opp - 1e-9) if side == "BUY" else (b > opp + 1e-9))):
                 out.append(b)
@@ -468,12 +490,15 @@ class Focus:
             cost_ps = px if side == "BUY" else 1.0 - px
             if cost_ps <= 0:
                 continue
-            qty = float(math.floor(stake / cost_ps))
-            if qty < 1.0:
-                continue
-            s = self._score(slug, side, book, prog, pool, fair, px, qty, levels)
-            if best is None or s["ev"] > best["ev"] + 1e-9:
-                best = s
+            tried: set[float] = set()
+            for frac in FOCUS_SIZE_FRACS:
+                qty = float(math.floor(stake * frac / cost_ps))
+                if qty < 1.0 or qty in tried:
+                    continue
+                tried.add(qty)
+                s = self._score(slug, side, book, prog, pool, fair, px, qty, levels)
+                if best is None or s["ev"] > best["ev"] + 1e-9:
+                    best = s
         return best
 
     def _exit_plan(self, slug: str, side: str, book, prog, pool: float,
@@ -484,7 +509,7 @@ class Focus:
             return None
         levels = self._levels_net(slug, side, book)
         best = None
-        for px in self._cands(side, book, fair):
+        for px in self._cands(side, book, fair, bound=True):
             s = self._score(slug, side, book, prog, pool, fair, px, qty, levels, is_exit=True)
             if best is None or s["ev"] > best["ev"] + 1e-9:
                 best = s
