@@ -4536,3 +4536,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789087583.0,politics,ussewc-usse-sc-2026-11-03-dem,BUY,1.76,0.13,backfill,,2.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDRNK8360SK5
 1789087583.0,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,11.23,0.41,backfill,,2.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDRW2GCYMT75
 1789087583.0,politics,scc-senate-gop-2026-11-03-54,BUY,5.82,0.04,backfill,,1.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSA8A324SX4
+1789088055.6,politics,ussewc-usse-id-2026-11-03-todach,SELL,67,0.06,hand,,15.5,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCAE6S682R3Y

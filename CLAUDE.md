@@ -205,9 +205,19 @@ long and accreted, so search it rather than reading it through.
   the cap's room goes by value (owner, 2026-09-11 "Yes to value
   ranked cap allocation"): entries rank by expected value a day per
   dollar of expected loss, and a plan that does not fit displaces the
-  weakest resting entries only when it beats each of them by a
-  quarter or more, at most three at once, none rested inside the
-  grace; the displaced side waits out the cooldown before re-entry;
+  weakest resting entries only when it beats each of them by double
+  or more, at most three at once, none rested in the last half hour;
+  a displaced side waits out the cooldown before re-entry and
+  displaces nothing itself for an hour (01:00-01:38Z, 2026-09-11, at
+  a quarter's margin and a five-minute grace: 39 displaced and 49
+  rested in the hour — a plan is valued on a book without it, a
+  resting order on the book as it turns out, so every plan looked
+  better than every resting order and they rotated); the tender
+  judges a resting order by ITS OWN reading of it, never by the
+  live_ev/live_pf the family's rescoring writes on the same record
+  every minute (01:38Z, 2026-09-11: a bid the tender rested at +$168 a
+  day read −$697 a minute later, a 62c fill cost a share, and the
+  weak-order pull and the cap's ranking had been reading that);
   an id the tender itself cancelled or replaced is remembered for
   ten minutes and never adopted back when the open list shows it
   late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
