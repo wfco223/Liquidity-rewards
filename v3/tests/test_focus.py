@@ -1369,6 +1369,41 @@ class TestABareSideGetsNoConcession(Base):
         self.assertTrue("moved" in evs or "pull" in evs, evs)
 
 
+class TestTheBuyingPowerRead(Base):
+    def test_the_view_carries_the_reads_age_and_flags_a_failing_read(self):
+        # owner, 2026-09-11: "The buying power number is out of date"
+        self.tick()
+        v = self.f.view(self.r.now, self.f.buying_power(self.r.now), True)
+        self.assertEqual(v["bp"], 2000.0)
+        self.assertLessEqual(v["bp_age_s"], focus_mod.FOCUS_BP_EVERY_S)
+        self.assertEqual(v["bp_note"], "")
+        self.assertEqual(v["stake_bp"], 2000.0 + self.f.walls_held())
+        self.assertAlmostEqual(v["stake"], 0.1 * v["stake_bp"], places=2)
+        # the exchange stops answering: the last read stands, aged and flagged
+        def down():
+            raise RuntimeError("HTTP 503")
+        self.f._bp_fn = down
+        self.r.now += focus_mod.FOCUS_BP_EVERY_S + 1
+        self.tick()
+        self.r.now += 300.0
+        self.tick()
+        v = self.f.view(self.r.now, self.f.buying_power(self.r.now), True)
+        self.assertEqual(v["bp"], 2000.0)
+        self.assertGreater(v["bp_age_s"], 300)
+        self.assertIn("reads failing since", v["bp_note"])
+        self.assertIn("HTTP 503", v["bp_note"])
+        # and it clears the pass a read comes back
+        self.f._bp_fn = lambda: 1500.0
+        self.r.now += focus_mod.FOCUS_BP_EVERY_S + 1
+        self.tick()
+        v = self.f.view(self.r.now, self.f.buying_power(self.r.now), True)
+        self.assertEqual(v["bp"], 1500.0)
+        self.assertEqual(v["bp_note"], "")
+        self.assertLessEqual(v["bp_age_s"], focus_mod.FOCUS_BP_EVERY_S)
+        # the stake still follows the half-hour high
+        self.assertEqual(v["bp_high"], 2000.0)
+
+
 class TestTheWebPage(unittest.TestCase):
     def test_the_page_and_its_ops_are_wired(self):
         from v3 import web
