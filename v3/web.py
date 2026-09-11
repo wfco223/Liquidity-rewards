@@ -2026,7 +2026,7 @@ function fRender(f){
 function fHead(f){
  var o='<div class="card"><b>Focus</b> '+(f.on?'<span class="pill on">switch ON</span>':'<span class="pill">switch off — showing, not tending</span>')
  +'<div class="sub">'+f.n+' boosted market'+(f.n!==1?'s':'')+' (programs paying '+usd(f.pool_min)+'/day or more) · '+f.tended+' tended · '+f.mine+' tender order'+(f.mine!==1?'s':'')+' · expected loss <b>'+usd(f.risk_used)+'</b> of '+usd(f.loss_cap)+'</div>'
- +'<div class="sub">buying power '+(f.bp!=null?usd(f.bp):'<span class="warn">unknown</span>')+(f.bp_age_s!=null?' <span class="'+(f.bp_age_s>120?'warn':'muted')+'">read '+fAge(f.bp_age_s)+' ago</span>':'')+(f.bp_note?' <span class="warn">'+esc(f.bp_note)+'</span>':'')
+ +'<div class="sub">buying power '+(f.bp!=null?usd(f.bp):'<span class="warn">unknown</span>')+(f.bp_age_s!=null?' <span class="'+(f.bp_age_s>120?'warn':'muted')+'">read '+fAge(f.bp_age_s)+' ago</span>':'')+(f.bp_note?' <span class="warn">'+esc(f.bp_note)+'</span>':'')+fCashLine(f)+(f.waiting_money?' <span class="warn">· '+f.waiting_money+' order'+(f.waiting_money!==1?'s':'')+' wait for money</span>':'')
  +' → entry stake <b>'+usd(f.stake)+'</b>'+(f.stake_bp!=null&&f.stake_src!=='set by you'?' <span class="muted">('+esc(f.stake_src)+': '+usd(f.stake_bp)+' = the highest read of the last 30 min'+(f.walls_held>0.5?' '+usd(f.bp_high)+' + '+usd(f.walls_held)+' your walls hold':'')+')</span>':' ('+esc(f.stake_src)+')')+' · pass '+f.pass_s+'s, '+f.books_read+' books re-read'+(f.at?' · '+when(f.at):'')+'</div>'
  +(f.note?'<div class="'+(f.blocked?'bad':'warn')+'">'+(f.blocked?'<b>Nothing can rest from this server.</b> ':'')+esc(f.note)+'</div>':'')
  +'<div id="fmsg">'+(window._fNote||'')+'</div>'
@@ -2054,6 +2054,11 @@ function fBook(r){var b=r.book||{};var bids=b.bids||[],asks=b.asks||[];if(!bids.
  for(var i=0;i<n;i++){var bd=bids[i],ak=asks[i];h+='<tr><td>'+(bd?'<b>'+pc(bd[0])+'</b> \u00d7'+fmtsz(bd[1])+mark('BUY',bd[0]):'')+'</td><td>'+(ak?'<b>'+pc(ak[0])+'</b> \u00d7'+fmtsz(ak[1])+mark('SELL',ak[0]):'')+'</td></tr>';}
  return h+'</table></div>';}
 function fShort(t){return esc((t||'').split(' — ')[0]);}
+// the exchange's own arithmetic behind the buying power (its balances row):
+// cash less the margin its orders and shorts hold
+function fCashLine(f){var b=f.balances;if(!b||!b.rows||!b.rows.length)return '';var r=b.rows[0];b.rows.forEach(function(x){if((+x.buyingPower||0)>(+r.buyingPower||0))r=x;});
+ if(r.currentBalance==null||r.marginRequirement==null)return '';
+ return ' <span class="muted">= cash '+usd(+r.currentBalance)+' − '+usd(+r.marginRequirement)+' held by your orders and shorts'+(+r.openOrders?' − '+usd(+r.openOrders)+' open orders':'')+'</span>';}
 function fAge(s){s=Math.round(s||0);if(s<90)return s+'s';if(s<5400)return Math.round(s/60)+' min';return (s/3600).toFixed(1)+' h';}
 // what rests on each side against the program's target: a side under it pays nothing
 function fQual(r){var q=r.qual;if(!q)return '';function one(s){var x=q[s];return s+'s '+fmtsz(x[0])+' of '+fmtsz(x[1])+(x[2]?' ✓':' <span class="warn">✗ unqualified</span>');}

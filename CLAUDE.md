@@ -201,7 +201,16 @@ long and accreted, so search it rather than reading it through.
   with its age; a failing read keeps the last number and says so,
   and the stake line shows its basis — the highest read of the last
   thirty minutes plus what the walls hold (owner, 2026-09-11 "The
-  buying power number is out of date").
+  buying power number is out of date"), and beside it the exchange's
+  own arithmetic from its balances row: cash less the margin its
+  orders and shorts hold (12:11Z: cash $3,085, held $2,950, free
+  $122 — the app's "available" is the same figure). An entry or a
+  move of one is not sent when its collateral is more than the
+  buying power free (a move needs the replacement's while the
+  original still rests): 126 placements were rejected "placed but
+  not resting" in the hour the account sat fully deployed; the side
+  is logged "no_money" once a cooldown and the page counts the
+  orders waiting. Exits are never held back.
   Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where

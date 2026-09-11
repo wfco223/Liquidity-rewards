@@ -248,6 +248,10 @@ class Focus:
         # automatically qualify the ask side"
         self.wall_note = None
         self.balances_fn = None      # the exchange's raw balance rows of the last read
+        # sides whose entry waits for money (owner, 2026-09-11, the
+        # exchange app at $177 available while the tender kept placing:
+        # 126 placements rejected in an hour) — slug|side -> last noted
+        self.no_money_at: dict[str, float] = {}
         self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
         self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
         self._feed_prev_at: float = 0.0           # when it was last taken (0 = never)
@@ -1302,6 +1306,13 @@ class Focus:
         binds across markets, best EV first."""
         actions = FOCUS_ACTIONS_PER_PASS
         blocked = self._blocked()
+        # the money there is for a new order: the exchange's own buying
+        # power (read within FOCUS_BP_EVERY_S), spent down as the pass
+        # places. An entry that does not fit is not sent — the exchange
+        # had been refusing 126 placements an hour ("placed but not
+        # resting") with the account fully deployed, a move needing the
+        # replacement's collateral while the original still rests.
+        free = self.buying_power(now)
         # over the cap: the weakest tender orders come off first — past
         # the slack only, and an order just rested stays unless the cap
         # is far over (the readings that put it under the cap a pass ago
@@ -1419,6 +1430,10 @@ class Focus:
                 n_mine = sum(1 for o in list(self.fam.orders.values()) if o.purpose == PURPOSE)
                 if n_mine >= FOCUS_MAX_ORDERS and not is_exit:
                     continue                      # an exit is never held back
+                need = self._need(plan, side, is_exit)
+                if free is not None and need > free + 0.5:
+                    self._no_money(key, slug, side, need, free, now)
+                    continue
                 r = self.fam.desk.place_resting(slug, side, plan["px"], plan["qty"],
                                                 net_position=float((positions.get(slug) or (0.0,))[0] or 0.0),
                                                 # a cover buys the short back: it
@@ -1439,6 +1454,9 @@ class Focus:
                         live_est=plan["est"], live_pf=plan["pf"], live_ev=plan["ev"])
                     self.moved_at[key] = now
                     self._last_mine[r.order_id] = (slug, side, rested, is_exit)
+                    self.no_money_at.pop(key, None)
+                    if free is not None:
+                        free -= self._need({"px": (r.price or plan["px"]), "qty": rested}, side, is_exit)
                     if not is_exit:
                         used += plan["risk"]
                     self._log(event="rested", market=slug, side=side, price=(r.price or plan["px"]),
@@ -1489,6 +1507,10 @@ class Focus:
                     actions -= room[1]
                     if actions <= 0:
                         break
+            need = self._need(plan, side, is_exit)
+            if free is not None and need > free + 0.5:
+                self._no_money(key, slug, side, need, free, now)   # the original stays
+                continue
             intent = SELL_SHORT if wrong_intent else cur.intent
             r = self.fam.desk.reprice(
                 {"id": cur.id, "market": slug, "side": side, "price": cur.price,
@@ -1526,6 +1548,24 @@ class Focus:
                       qty=rested, was=cur.price, est=plan["est"], pf=plan["pf"], ev=plan["ev"],
                       exit=is_exit)
         return FOCUS_ACTIONS_PER_PASS - actions
+
+    @staticmethod
+    def _need(plan: dict, side: str, is_exit: bool) -> float:
+        """The buying power a placement of this plan takes: an exit
+        takes none (it sells what is held or closes a short); a bid
+        holds its price a share, a short ask one less its price."""
+        if is_exit:
+            return 0.0
+        px, qty = float(plan["px"]), float(plan["qty"])
+        return capital_at_risk(BUY_LONG if side == "BUY" else BUY_SHORT, px, qty)
+
+    def _no_money(self, key: str, slug: str, side: str, need: float, free: float, now: float) -> None:
+        """Note a side waiting for money — once per cooldown, not every pass."""
+        last = self.no_money_at.get(key, 0.0)
+        self.no_money_at[key] = now
+        if now - last >= FOCUS_MOVE_COOLDOWN_S:
+            self._log(event="no_money", market=slug, side=side, qty=None, price=None,
+                      why=f"${free:,.0f} of buying power free, the order needs ${need:,.0f}")
 
     @staticmethod
     def _why(plan: dict, is_exit: bool) -> str:
@@ -1772,6 +1812,8 @@ class Focus:
                             f" — {self._bp_err[1]}" if self._bp_err else ""),
                 "bp_high": high, "walls_held": walls, "stake_bp": basis,
                 "balances": (self.balances_fn() if self.balances_fn is not None else None),
+                "waiting_money": sum(1 for t in self.no_money_at.values()
+                                     if now - t < 2 * FOCUS_MOVE_COOLDOWN_S),
                 "loss_cap": self.loss_cap, "risk_used": self.risk_used(),
                 "coc_day": self.coc_day, "fill_floor": self.fill_floor,
                 "on": bool(on), "note": self.note, "blocked": self._blocked(),
