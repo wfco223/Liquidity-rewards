@@ -605,7 +605,21 @@ class Focus:
     def _claim_id(self, oid: str) -> None:
         if oid and oid not in self.mine_ids:
             self.mine_ids.append(oid)
-            del self.mine_ids[:-MINE_IDS_KEEP]
+            self._trim_ids()
+
+    def _trim_ids(self) -> None:
+        """The id list keeps the newest MINE_IDS_KEEP and every id still
+        resting. Trimming by age alone lost the tender's own long-lived
+        exits (20:37Z, 2026-09-11: an Ohio Senate dem cover rested at
+        11:12 read as his eleven hours later, and when the open list
+        dropped it for a read the tender rested a second cover — two
+        covers of 84 against a short of 84, the shape that flips a
+        position)."""
+        if len(self.mine_ids) <= MINE_IDS_KEEP:
+            return
+        resting = {o.id for o in list(self.fam.orders.values())}
+        old, new = self.mine_ids[:-MINE_IDS_KEEP], self.mine_ids[-MINE_IDS_KEEP:]
+        self.mine_ids = [i for i in old if i in resting] + new
 
     def _mine(self, slug: str, side: str | None = None) -> list[FamilyOrder]:
         return [o for o in self._orders(slug, side) if self._is_mine(o)]
@@ -1267,9 +1281,15 @@ class Focus:
                 q = float(math.floor(abs(net) - others))
                 xp = (self._exit_plan(slug, xs, book, prog, pool, fair, q, basis)
                       if q >= 1.0 else None)
-                row["exit"] = ({"side": xs, **xp} if xp else
-                               {"side": xs, "note": ("your own orders already offer the lot"
-                                                     if q < 1.0 else "no price at or past your fair or the cost on this book")})
+                if xp:
+                    row["exit"] = {"side": xs, **xp}
+                elif q < 1.0:
+                    # shares are never offered twice: the tender's own exit
+                    # here comes off (a hold pulls it)
+                    row["exit"] = {"side": xs, "note": "your own orders already offer the lot",
+                                   "hold": True}
+                else:
+                    row["exit"] = {"side": xs, "note": "no price for the exit on this book"}
                 row["tend"][xs] = dict(row["exit"], exit=True) if xp else row["exit"]
         elif book is None:
             row["note"] = "no book read yet"
@@ -2018,7 +2038,7 @@ class Focus:
                 "coc_day": self.coc_day,
                 "fill_floor": self.fill_floor, "loss_cap": self.loss_cap,
                 "first_seen": dict(self.first_seen), "moved_at": dict(self.moved_at),
-                "filled_at": dict(self.filled_at), "mine_ids": list(self.mine_ids[-MINE_IDS_KEEP:]),
+                "filled_at": dict(self.filled_at), "mine_ids": list(self.mine_ids),
                 "silver_seeded": sorted(self.silver_seeded),
                 "mid_seeded": sorted(self.mid_seeded),
                 "displaced_at": dict(self.displaced_at),
@@ -2039,7 +2059,7 @@ class Focus:
         self.first_seen = {str(k): float(v) for k, v in (d.get("first_seen") or {}).items()}
         self.moved_at = {str(k): float(v) for k, v in (d.get("moved_at") or {}).items()}
         self.filled_at = {str(k): float(v) for k, v in (d.get("filled_at") or {}).items()}
-        self.mine_ids = [str(x) for x in (d.get("mine_ids") or [])][-MINE_IDS_KEEP:]
+        self.mine_ids = [str(x) for x in (d.get("mine_ids") or [])][-4 * MINE_IDS_KEEP:]
         self.silver_seeded = {str(s) for s in (d.get("silver_seeded") or [])}
         self.mid_seeded = {str(s) for s in (d.get("mid_seeded") or [])}
         self.displaced_at = {str(k): float(v) for k, v in (d.get("displaced_at") or {}).items()}
