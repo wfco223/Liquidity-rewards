@@ -1083,7 +1083,8 @@ class Focus:
                 bare = False
                 if not is_exit and s["conc"] > 0 and stake >= 1.0:
                     cost_ps = o.price if o.side == "BUY" else 1.0 - o.price
-                    full = float(math.floor(stake / cost_ps)) if cost_ps > 0 else 0.0
+                    room = self._entry_room(f"{slug}|{o.side}", o.side, stake, net, cost, now)
+                    full = float(math.floor(room / cost_ps)) if cost_ps > 0 else 0.0
                     bare = full >= 1.0 and self._bare(levels, book.tick or 0.01, full)
                 self.scores[o.id] = (s["est"], s["pf"], s["ev"], bare, s["conc"])
             row["orders"].append(d)
@@ -1137,25 +1138,18 @@ class Focus:
                                                  f"this side for {wait / 60:.0f} min more",
                                          "hold": True}
                     continue
-                room = stake
                 adds = (side == "BUY" and net > 0.005) or (side == "SELL" and net < -0.005)
-                if adds:
-                    held_coll = cost                  # the exchange's collateral held here
-                    room = stake - held_coll
-                    if room < 1.0:
-                        row["tend"][side] = {"note": f"holding ${held_coll:,.0f} here already "
-                                                     f"— no entry that adds to it", "hold": True}
-                        continue
-                scale = 1.0
-                if since_fill < FOCUS_REFILL_SCALE_S:
-                    # back in at a quarter of the stake, ramping to the
-                    # full size by two hours after the fill — applied to
-                    # the room the position bound leaves, not the whole stake
-                    ramp = (since_fill - FOCUS_REFILL_WAIT_S) / max(
-                        FOCUS_REFILL_SCALE_S - FOCUS_REFILL_WAIT_S, 1.0)
-                    scale = min(max(FOCUS_REFILL_FLOOR + (1.0 - FOCUS_REFILL_FLOOR) * ramp,
-                                    FOCUS_REFILL_FLOOR), 1.0)
-                    room = room * scale
+                if adds and stake - cost < 1.0:
+                    row["tend"][side] = {"note": f"holding ${cost:,.0f} here already "
+                                                 f"— no entry that adds to it", "hold": True}
+                    continue
+                # back in at a quarter of the stake after a fill, ramping to
+                # the full size by two hours — applied to the room the
+                # position bound leaves, not the whole stake (_entry_room,
+                # the one arithmetic the resting order's bare test shares)
+                room = self._entry_room(key, side, stake, net, cost, now)
+                scale = (room / (stake - cost if adds else stake)) if room > 0 else 1.0
+                scale = min(max(scale, FOCUS_REFILL_FLOOR), 1.0)
                 if fair is None:
                     row["tend"][side] = {"note": "no fair set", "hold": True}
                     continue
@@ -1213,6 +1207,34 @@ class Focus:
         if sc is not None:
             return float(sc[2])
         return float(o.live_ev) if o.live_ev is not None else None
+
+    def _entry_room(self, key: str, side: str, stake: float, net: float, cost: float,
+                    now: float) -> float:
+        """The stake an entry on this side may use right now — the same
+        arithmetic the plan runs: nothing inside the standoff after a
+        fill, the stake less the collateral a position it adds to
+        already holds, scaled by the refill ramp. The bare-side test
+        of a resting order must size itself by THIS, as the plan does
+        (15:08-15:20Z, 2026-09-11: a Texas governor dem bid rested at
+        21c against a 15c fair and was pulled "no company" fifteen
+        times in twelve minutes — the plan had sized the test by the
+        ramped room, the pull by the whole stake)."""
+        since_fill = now - self.filled_at.get(key, 0.0)
+        if since_fill < FOCUS_REFILL_WAIT_S:
+            return 0.0
+        room = stake
+        adds = (side == "BUY" and net > 0.005) or (side == "SELL" and net < -0.005)
+        if adds:
+            room = stake - cost
+            if room < 1.0:
+                return 0.0
+        if since_fill < FOCUS_REFILL_SCALE_S:
+            ramp = (since_fill - FOCUS_REFILL_WAIT_S) / max(
+                FOCUS_REFILL_SCALE_S - FOCUS_REFILL_WAIT_S, 1.0)
+            scale = min(max(FOCUS_REFILL_FLOOR + (1.0 - FOCUS_REFILL_FLOOR) * ramp,
+                            FOCUS_REFILL_FLOOR), 1.0)
+            room *= scale
+        return room
 
     @staticmethod
     def _bare(levels: list, tick: float, full: float) -> bool:
