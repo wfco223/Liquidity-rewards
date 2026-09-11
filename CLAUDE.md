@@ -210,7 +210,13 @@ long and accreted, so search it rather than reading it through.
   original still rests): 126 placements were rejected "placed but
   not resting" in the hour the account sat fully deployed; the side
   is logged "no_money" once a cooldown and the page counts the
-  orders waiting. Exits are never held back.
+  orders waiting. Exits are never held back. His taps on the page
+  (place, move, cancel, pull) call the exchange OUTSIDE the tender's
+  lock and take it only to record the result, and the page's
+  re-freeze after a tap gives up after three seconds rather than
+  wait out a pass (owner, 2026-09-11 "No answer from the server in
+  time" on a placement — the pass was placing and verifying orders
+  of its own for a minute and his tap waited behind it).
   Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
