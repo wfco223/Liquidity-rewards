@@ -62,6 +62,17 @@ FOCUS_POOL_MIN_USD = 250.0      # a program paying this a day per event is boost
 # fair to Nate Silvers, the silver bulletins model". Each gets Silver's
 # number as its fair ONCE, the first pass the model has one; from then
 # on the fair is his to move or clear like any other.
+# the 2028 books (owner, 2026-09-11, "2028 markets got boosted" and then
+# "That sounds good" to: seed fairs from the midpoint for the party
+# pair and the candidates priced 5c or more; nothing on the penny
+# candidates, whose 1c bid walls are his hand's): a two-sided book on
+# this ground gets its midpoint as its fair once, the first pass the
+# book shows a bid and an ask within FOCUS_MID_FAIR_SPREAD of each
+# other and a mid inside [FOCUS_MID_FAIR_MIN, 1 - FOCUS_MID_FAIR_MIN];
+# a fair he clears stays cleared
+FOCUS_MID_FAIR_TOKENS = ("uspres-nom-", "ewc-usp-2028", "ewc-usp-party-2028")
+FOCUS_MID_FAIR_MIN = 0.05
+FOCUS_MID_FAIR_SPREAD = 0.06
 FOCUS_SILVER_FAIRS = (
     "paccc-usse-midterms-2026-11-03-dem",
     "ewc-usse-mi-2026-11-03-dem",
@@ -234,6 +245,7 @@ class Focus:
         self.filled_at: dict[str, float] = {}     # slug|side -> when an entry last filled
         self.weak_since: dict[str, float] = {}    # slug|side -> reading under zero since
         self.silver_seeded: set[str] = set()      # FOCUS_SILVER_FAIRS already given a fair
+        self.mid_seeded: set[str] = set()         # 2028 books given the midpoint, or cleared by him
         self.displaced_at: dict[str, float] = {}  # slug|side -> when the cap's ranking pulled it
         # the tender's OWN reading of each resting order (est, fill odds,
         # expected value): the family rescores the same records every
@@ -421,6 +433,32 @@ class Focus:
             self.silver_seeded.add(slug)
             self._log(event="fair_set", market=slug, fair=px,
                       note="Silver's number, as you asked (2026-09-10)")
+
+    def _seed_mid_fairs(self) -> None:
+        """The 2028 two-sided books get their midpoint as their fair once
+        (owner, 2026-09-11): the first pass the book shows a bid and an
+        ask close together with a mid of FOCUS_MID_FAIR_MIN or more. A
+        penny candidate waits — its 1c bid wall is his hand's — and a
+        fair he clears stays cleared."""
+        for slug in list(self.markets):
+            if slug in self.mid_seeded or slug in self.fairs:
+                continue
+            if not any(t in slug for t in FOCUS_MID_FAIR_TOKENS):
+                continue
+            book = self.fam.cache.any_age(slug)
+            if book is None or not book.bids or not book.asks:
+                continue
+            bid, ask = float(book.bids[0][0]), float(book.asks[0][0])
+            if ask - bid > FOCUS_MID_FAIR_SPREAD + 1e-9:
+                continue                          # no mid worth the name
+            tick = book.tick or 0.01
+            mid = round(round((bid + ask) / 2.0 / tick) * tick, 4)
+            if not (FOCUS_MID_FAIR_MIN <= mid <= 1.0 - FOCUS_MID_FAIR_MIN):
+                continue                          # a penny book: nothing to seed
+            self.fairs[slug] = mid
+            self.mid_seeded.add(slug)
+            self._log(event="fair_set", market=slug, fair=mid,
+                      note="the midpoint, as you asked (2026-09-11)")
 
     def refresh_markets(self, now: float, quiet: bool = False) -> list[str]:
         out = []
@@ -943,6 +981,7 @@ class Focus:
             positions = positions or {}
             self._note_fills(now, positions)  # before the plans: a fill holds its side
             self._refresh_books(now)
+            self._seed_mid_fairs()
             bp = self.stake_bp(now)
             feed = positions
             positions = self._positions_view(positions, now)
@@ -1637,6 +1676,7 @@ class Focus:
                 return {"ok": False, "note": "not a market the focus knows"}
             if cents in (None, "", "-"):
                 had = self.fairs.pop(slug, None)
+                self.mid_seeded.add(slug)         # a fair he clears is never re-seeded
                 self._log(event="fair_cleared", market=slug)
                 return {"ok": True, "note": ("fair cleared — shown only now" if had is not None
                                              else "no fair was set")}
@@ -1920,6 +1960,7 @@ class Focus:
                 "first_seen": dict(self.first_seen), "moved_at": dict(self.moved_at),
                 "filled_at": dict(self.filled_at), "mine_ids": list(self.mine_ids[-MINE_IDS_KEEP:]),
                 "silver_seeded": sorted(self.silver_seeded),
+                "mid_seeded": sorted(self.mid_seeded),
                 "displaced_at": dict(self.displaced_at),
                 "rate_hist": {k: dict(v) for k, v in self.rate_hist.items() if k in self.markets},
                 "events": self.events[-EVENTS_KEEP:], "log": self.log[-LOG_KEEP:]}
@@ -1940,6 +1981,7 @@ class Focus:
         self.filled_at = {str(k): float(v) for k, v in (d.get("filled_at") or {}).items()}
         self.mine_ids = [str(x) for x in (d.get("mine_ids") or [])][-MINE_IDS_KEEP:]
         self.silver_seeded = {str(s) for s in (d.get("silver_seeded") or [])}
+        self.mid_seeded = {str(s) for s in (d.get("mid_seeded") or [])}
         self.displaced_at = {str(k): float(v) for k, v in (d.get("displaced_at") or {}).items()}
         self.rate_hist = {str(k): {str(b): float(x) for b, x in (v or {}).items()}
                           for k, v in (d.get("rate_hist") or {}).items()}

@@ -4924,3 +4924,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789147587.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,9,0.831,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8HWXR4GTN1
 1789147671.6,politics,ewc-usgub-ga-2026-11-03-rep,SELL,26,0.39,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE947847ETMX
 1789147671.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,9,0.831,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8HWXR4GTN1
+1789147881.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,160,0.493,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE97MAHDGTMQ
+1789147973.6,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,29,0.91,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE99S6TZPTMM
+1789148544.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,160,0.493,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE97MAHDGTMQ
+1789148544.4,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,29,0.91,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE99S6TZPTMM
+1789148913.4,politics,ussewc-usse-ma-2026-11-03-dem,BUY,5,0.97,manual,3.906,3.25,0.9997,95,99,0.724,0.97,0.99,-0.0297,5,the owner's own order — the engine leaves it alone,CE6NW3VW2TMQ
+1789149067.3,politics,paccc-usho-midterms-2026-11-03-dem,BUY,73,0.831,focus,18.0202,0.15,0.8618,84,85,0.941,0.831,0.832,-0.0308,73,yours — the tender tends it like its own,CE9CTZTYWTN2
+1789149675.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,187,0.177,backfill,,1.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8QFS4HATMM
+1789149710.1,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,11,0.91,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE9PH8KJPTMQ
+1789149721.3,politics,scc-senate-gop-2026-11-03-54,SELL,7,0.05,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9C73KX4TMQ
+1789149808.2,politics,scc-senate-gop-2026-11-03-54,SELL,4,0.05,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE9PT2CDATN0
+1789149889.0,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,-29,0.91,fix,56.6406,0.16,0.924025,87,91,0.764,0.91,0.92,-0.014,87,size trimmed by 29 to the exchange's count (order CE99S6TZPTMM),CE99S6TZPTMM
+1789149889.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,187,0.177,backfill,,1.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8QFS4HATMM
+1789149889.0,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,11,0.91,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE9PH8KJPTMQ
+1789149889.0,politics,scc-senate-gop-2026-11-03-54,SELL,7,0.05,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9C73KX4TMQ
+1789149889.0,politics,scc-senate-gop-2026-11-03-54,SELL,4,0.05,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE9PT2CDATN0
