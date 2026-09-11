@@ -368,7 +368,13 @@ long and accreted, so search it rather than reading it through.
   control and 50 House control exits rested eight minutes after the
   whole position had sold — the feed-short guard had kept the sold-out
   rows for five minutes; the one-order-a-side and orphan-exit guards
-  caught both, neither filled); an id the tender itself
+  caught both, neither filled); the tender's id list
+  keeps every id still resting, however old (20:37Z, 2026-09-11: an
+  Ohio Senate dem cover rested at 11:12 had been trimmed by age,
+  read as his, and when the open list dropped it for a read a second
+  cover of 84 rested against the short of 84), and an exit side his
+  orders already cover pulls the tender's own exit there — shares
+  are never offered twice; an id the tender itself
   cancelled or replaced is remembered for ten minutes and never
   adopted back when the open list shows it late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
   times in an hour, each a ghost of its own move); a cover of a short is
