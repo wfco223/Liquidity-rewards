@@ -343,7 +343,13 @@ long and accreted, so search it rather than reading it through.
   2026-09-11: the House rep control exit of 68 filled, the feed still
   showed the lot, a second exit of 68 rested within the minute and
   filled: flat became short 68, the same shape that flipped positions
-  at 15:38Z and 21:05Z the day before); an id the tender itself
+  at 15:38Z and 21:05Z the day before); a market the position feed
+  drops whose newest journal fill closed the position is flat at once,
+  never "kept at its last value" (18:34Z, 2026-09-11: 158 Senate
+  control and 50 House control exits rested eight minutes after the
+  whole position had sold — the feed-short guard had kept the sold-out
+  rows for five minutes; the one-order-a-side and orphan-exit guards
+  caught both, neither filled); an id the tender itself
   cancelled or replaced is remembered for ten minutes and never
   adopted back when the open list shows it late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
   times in an hour, each a ghost of its own move); a cover of a short is
