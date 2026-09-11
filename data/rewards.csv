@@ -9074,6 +9074,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,usgubewc-usgub-sd-2026-11-03-dem,liquidityProgram,1.65,PENDING
 2026-09-08,ussewc-usse-co-2026-11-03-rep,liquidityProgram,0.97,PENDING
 2026-09-08,ussewc-usse-fl-2026-11-03-dem,liquidityProgram,0.16,PENDING
+2026-09-08,ussewc-usse-fl-2026-11-03-rep,liquidityProgram,0.53,PENDING
 2026-09-08,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.16,PENDING
 2026-09-08,ussewc-usse-ma-2026-11-03-dem,liquidityProgram,0.74,PENDING
 2026-09-08,ussewc-usse-ms-2026-11-03-rep,liquidityProgram,0.2,PENDING
@@ -9087,6 +9088,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,ussewc-usse-sd-2026-11-03-briben,liquidityProgram,0.08,PENDING
 2026-09-08,ussewc-usse-tn-2026-11-03-dem,liquidityProgram,2.08,PENDING
 2026-09-08,ussewc-usse-va-2026-11-03-dem,liquidityProgram,0.04,PENDING
+2026-09-09,aachc-cfb-wins-2026-11-28-ark-1pt5wins,liquidityProgram,0.02,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-arzst-4pt5wins,liquidityProgram,0.12,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-arzst-6pt5wins,liquidityProgram,0.16,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-bayl-5pt5wins,liquidityProgram,0.04,PENDING
@@ -9141,6 +9143,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-no,liquidityProgram,0.01,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-sf,liquidityProgram,0.15,PENDING
 2026-09-09,enwc-usgubp-ri-2026-09-09-dem-greste,liquidityProgram,0.21,PENDING
+2026-09-09,enwc-uspres-nom-rep-2028-elomus,liquidityProgram,0.03,PENDING
 2026-09-09,enwc-uspres-nom-rep-2028-marrub,liquidityProgram,0.07,PENDING
 2026-09-09,ewc-usgub-ks-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-09,ewc-usgub-oh-2026-11-03-dem,liquidityProgram,0.88,PENDING
@@ -9187,6 +9190,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,fptc-nfl-wrfpou-2027-01-10-trahun,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-car,liquidityProgram,0.08,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-cin,liquidityProgram,0.02,PENDING
+2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-ind,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-nyj,liquidityProgram,0.06,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-phi,liquidityProgram,0.01,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-w1-2026-09-14-nyj,liquidityProgram,0.01,PENDING
