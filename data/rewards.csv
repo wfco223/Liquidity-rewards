@@ -8971,12 +8971,15 @@ date,market,program_type,reward_usd,status
 2026-09-08,aachc-cfb-wins-2026-11-28-mst-4pt5wins,liquidityProgram,0.38,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-smu-7pt5wins,liquidityProgram,0.01,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-tcu-6pt5wins,liquidityProgram,0.01,PENDING
+2026-09-08,aachc-cfb-wins-2026-11-28-txst-5pt5wins,liquidityProgram,0.03,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-txst-8pt5wins,liquidityProgram,0.01,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-usc-9pt5wins,liquidityProgram,0.46,PENDING
+2026-09-08,aachc-cfb-wins-2026-11-28-vtech-6pt5wins,liquidityProgram,0.02,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-wvir-3pt5wins,liquidityProgram,0.04,PENDING
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-ala,liquidityProgram,0.02,PENDING
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-duke,liquidityProgram,0.03,PENDING
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-okl,liquidityProgram,0.08,PENDING
+2026-09-08,ewc-usp-2028-11-07-rokha,liquidityProgram,0.07,PENDING
 2026-09-08,ewc-usp-2028-11-07-thomas,liquidityProgram,0.17,PENDING
 2026-09-08,ewc-usse-mn-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-08,ewc-usse-tx-2026-11-03-rep,liquidityProgram,0.1,PENDING
@@ -8994,10 +8997,12 @@ date,market,program_type,reward_usd,status
 2026-09-09,aachc-cfb-wins-2026-11-28-mia-7pt5wins,liquidityProgram,0.13,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-minnst-4pt5wins,liquidityProgram,0.2,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-mspst-5pt5wins,liquidityProgram,0.14,PENDING
+2026-09-09,aachc-cfb-wins-2026-11-28-sdst-8pt5wins,liquidityProgram,0.73,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-vand-7pt5wins,liquidityProgram,0.1,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-washst-5pt5wins,liquidityProgram,1.14,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,liquidityProgram,0.74,PENDING
 2026-09-09,aachc-cfb-wins-ou-2026-11-28-stan,liquidityProgram,0.09,PENDING
+2026-09-09,aqc-nfl-afc-2027-01-24-champq-pit,liquidityProgram,0.29,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-gb,liquidityProgram,0.86,PENDING
 2026-09-09,ewc-usgub-ks-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-09,ewc-usgub-oh-2026-11-03-dem,liquidityProgram,0.88,PENDING
@@ -9009,6 +9014,8 @@ date,market,program_type,reward_usd,status
 2026-09-09,fptc-nfl-wrfpou-2027-01-10-teehig,liquidityProgram,0.01,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-cin,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-qbmostfp-w1-2026-09-14-joebur,liquidityProgram,0.01,PENDING
+2026-09-09,ftsc-nfl-wrtop12fp-2027-01-10-rasric,liquidityProgram,0.01,PENDING
+2026-09-09,paccc-usho-midterms-2026-11-03-rep,liquidityProgram,0.31,PENDING
 2026-09-09,pvwc-usgub-az-mar-2026-11-03-andbig,liquidityProgram,1.66,PENDING
 2026-09-09,tec-nfl-coty-2027-02-11-w-mikmcc,liquidityProgram,0.01,PENDING
 2026-09-09,tec-nfl-droy-2027-02-11-w-emmmcn,liquidityProgram,0.01,PENDING
