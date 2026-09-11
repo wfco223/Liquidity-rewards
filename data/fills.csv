@@ -5050,3 +5050,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789162562.6,politics,ewc-usse-tx-2026-11-03-dem,SELL,9,0.47,hand,,10.91,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7VQA77RSX0
 1789162562.6,politics,scc-senate-gop-2026-11-03-50,SELL,7.01,0.16,hand,,18.5,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7MF4KMYSJZ
 1789162562.6,politics,enwc-uspres-nom-dem-2028-markel,SELL,19,0.04,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CECPB9890TN0
+1789162663.4,politics,ewc-usp-2028-11-07-gavnew,BUY,107,0.13,focus,0,0.13,,10,17,0.064,0.1,0.15,0,107,focus entry: ~$13.38/day; fill odds 20%/day; EV +10.44/day,CECPA19PYTMX
+1789162663.4,politics,ewc-usp-2028-11-07-dontru,BUY,40,0.07,focus,0,0.03,,5,9,0.678,0.03,0.08,0,82,focus entry: ~$4.38/day; fill odds 56%/day; EV +1.40/day,CECR6XBECTMX
+1789162723.4,politics,ussewc-usse-va-2026-11-03-rep,SELL,23.97,0.04,focus,56.6968,0.01,0.0043,2,6,0.475,0.03,0.04,-0.0357,-43.97,focus entry: ~$56.70/day; fill odds 53%/day; EV +54.77/day,CECRPJE6TTN0
+1789163807.7,politics,ewc-usse-ia-2026-11-03-dem,SELL,386,0.33,sell,140.601,1.93,0.40955,34,39,0.166,0.32,0.33,0.0795,731,an exit — its fill reduces the position it sits on,CEBDD4EDYTMX
+1789163930.2,politics,ewc-usp-2028-11-07-andbes,SELL,56,0.06,sell,0.1768,2.24,,3,7,0.711,0.05,0.06,-0.01,0,an exit — its fill reduces the position it sits on,CEB6980T8TMX
+1789164437.5,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,0.27,0.24,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CECQYT3T8TMM
+1789164459.7,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,10.59,0.94,bond,1.5082,10.65,0.9959,93,95,0.423,0.93,0.94,0.0559,97.41,bond: moved up to keep 80% of the best reward,CE4357DFATMY
+1789164459.7,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,24,0.24,sell,43.9955,0.51,0.292825,20,23,0.731,0.23,0.24,0.0528,32,an exit — its fill reduces the position it sits on,CECQYT3T8TMM
+1789164519.7,politics,ewc-usse-ia-2026-11-03-dem,SELL,67,0.33,sell,94.7859,2.13,0.40955,35,40,0.507,0.32,0.33,0.0795,664,an exit — its fill reduces the position it sits on,CEBDD4EDYTMX
+1789164519.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,56,0.176,focus,167.638,0.05,0.1382,19,21,0.936,0.175,0.176,0.0378,302,focus entry: ~$57.31/day; fill odds 87%/day; EV +55.51/day,CED69PTH6TN5
+1789164579.7,politics,paccc-usse-midterms-2026-11-03-rep,SELL,27,0.533,sell,1.3312,0.77,0.4344,52,54,0.652,0.532,0.533,-0.0986,0,an exit — its fill reduces the position it sits on,CECKZJ1MMTMM
+1789164610.8,politics,paccc-usho-midterms-2026-11-03-dem,BUY,279,0.831,backfill,,0.81,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CECK9H32TTN0
+1789164807.2,politics,enwc-uspres-nom-dem-2028-markel,SELL,-19,0.04,fix,2.7214,0.11,,3,9,0.023,0.03,0.04,0.02,-19,size trimmed by 19 to the exchange's count (order CECPB9890TN0),CECPB9890TN0
+1789164807.2,politics,paccc-usho-midterms-2026-11-03-dem,SELL,211,0.832,void,240.14,0.09,0.8618,84,85,0.947,0.831,0.832,0.0298,-211,voided: the exchange has no trade for order CEC6YM3P4TMX — the row of 09-11 21:0,CEC6YM3P4TMX
+1789164807.2,politics,paccc-usho-midterms-2026-11-03-dem,SELL,68,0.832,void,143.351,0.11,0.8618,84,86,0.95,0.831,0.832,0.0298,-279,voided: the exchange has no trade for order CECAEW8KYTMX — the row of 09-11 21:1,CECAEW8KYTMX
+1789164807.2,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,0.27,0.24,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CECQYT3T8TMM
+1789164807.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,279,0.831,backfill,,0.81,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CECK9H32TTN0
+1789164807.2,cfb,aachc-cfb-wins-ou-2026-11-28-ncst,BUY,-0.09,0.47,fix,,2.64,,,,,,,,,size trimmed by 0.09 to the exchange's count (order CB86655FJQ3R),CB86655FJQ3R
