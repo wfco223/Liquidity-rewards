@@ -187,6 +187,9 @@ class OrderResult:
     withdrawn_id: str = ""        # a reprice's replacement that never showed
                                   # resting and was cancelled: the caller may
                                   # still own a fill of it
+    unverified: bool = False      # accepted by the exchange, never seen in an
+                                  # open list that was CAPPED — left resting,
+                                  # the caller records it as its own
 
 
 class OrderDesk:
@@ -445,6 +448,17 @@ class OrderDesk:
             # 2xx that never rests happens (and post-only rejections land
             # here too). Report it; the order id, if any, lets the caller
             # clean up. Never re-post: the first may still land late.
+            rd = getattr(self.client, "open_read", None) or {}
+            if (order_id and seen <= 0.0 and rd.get("capped")
+                    and "not seen" in note and not execs):
+                # the list was cut by the exchange, not empty of it: the
+                # order was accepted with no execution and is most likely
+                # resting past the cut (2026-09-11: four markets' orders
+                # were withdrawn 80 times a day for this)
+                return OrderResult(ok=False, unverified=True,
+                                   note=(f"accepted, not seen — the open list is capped at "
+                                         f"{rd.get('n')} rows; left resting unverified{said}"),
+                                   order_id=order_id, intent=intent, price=price)
             return OrderResult(ok=False, note=f"placed but not resting: {note}{said}",
                                order_id=order_id, intent=intent, price=price,
                                resting_qty=seen)
