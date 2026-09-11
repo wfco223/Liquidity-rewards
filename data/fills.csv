@@ -4649,3 +4649,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789106210.6,cfb,aachc-cfb-wins-2026-11-28-cah-6pt5wins,SELL,0.1,0.42,backfill,,12.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDKQPJS92SX4
 1789106210.6,nfl,ftsc-nfl-flexmostfp-2027-01-10-jamcoo,BUY,-0.26,0.2,fix,0.752,0.41,,14,26,0,0.2,0.22,0,0.26,size trimmed by 0.26 to the exchange's count (order CDMAY25M2SJH),CDMAY25M2SJH
 1789106210.6,nfl,ftsc-nfl-flexmostfp-2027-01-10-jamcoo,BUY,-0.04,0.2,fix,,0.4,,,,,,,,,size trimmed by 0.04 to the exchange's count (order CDMAY25M2SJH),CDMAY25M2SJH
+1789106330.0,politics,paccc-usho-midterms-2026-11-03-rep,BUY,2,0.174,backfill,,1.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDY28RDHMT6S
+1789106330.0,politics,usgubewc-usgub-id-2026-11-03-dem,BUY,0.98,0.05,backfill,,41.43,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVH384ARSJ1
+1789106330.0,cfb,aachc-cfb-wins-2026-11-28-cah-6pt5wins,SELL,0.1,0.42,backfill,,12.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDKQPJS92SX4
