@@ -590,6 +590,30 @@ class TestAfterAFill(Base):
         self.tick()
         self.assertEqual([o.qty for o in exits()], [300.0])
 
+    def test_a_fresh_position_the_feed_already_shows_is_not_doubled(self):
+        # 03:57Z, 2026-09-11: a market with no row in the feed (flat)
+        # opened a short of 337 and the feed showed it at once; the
+        # tender read 674 and sized the cover to it
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ask = self.mine(NC, "SELL")[0]                # an entry: it opens a short
+        self.r.positions.pop(NC, None)                # no row while flat
+        self.tick()
+        self.r.exchange.live.pop(ask.id, None)        # the whole ask sells
+        self.r.fam.orders.pop(ask.id, None)
+        self.r.fam.fills.append({"ts": self.r.now, "market": NC, "side": "SELL", "qty": ask.qty,
+                                 "px": ask.price, "oid": ask.id, "purpose": ask.purpose})
+        self.r.positions[NC] = (-ask.qty, ask.qty * (1.0 - ask.price))   # the feed shows it
+        self.r.fam.positions_seen[NC] = -ask.qty
+        self.r.fam.inventory[NC] = {"qty": -ask.qty, "cost": ask.qty * (1.0 - ask.price)}
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["position"]["qty"], -ask.qty)
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["position"]["qty"], -ask.qty)
+        covers = [o for o in self.mine(NC, "BUY") if self.f._exit_order(o)]
+        self.assertEqual([o.qty for o in covers], [ask.qty])
+
     def test_a_fill_the_feed_already_shows_is_not_counted_twice(self):
         self.r.positions[NC] = (200.0, 200.0 * 0.40)
         self.r.fam.positions_seen[NC] = 200.0
