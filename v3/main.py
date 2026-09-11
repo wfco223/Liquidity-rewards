@@ -3452,12 +3452,19 @@ class Monitor:
     def _mark_posting(self, agg: dict, now: float) -> None:
         """Remember when each day last gained a new row (a market-day
         the last check had not seen, or whose amount changed)."""
+        from .estimator import et_day
         seen = self.rewards_seen
+        floor = et_day(now - 14 * 86400.0)
         for key, a in agg.items():
+            d = str(a.get("date") or "")
+            if not d or d < floor:
+                # the seen list keeps 12,000 market-days and older rows
+                # drop off it, so every check reads them as new again
+                # (22:00Z, 2026-09-11: twenty-five July days marked
+                # "posting" by the strays the check absorbs)
+                continue
             if abs(seen.get(key, -1.0) - round(float(a.get("usd") or 0.0), 2)) > 0.005:
-                d = a.get("date")
-                if d:
-                    self.posting_last[d] = now
+                self.posting_last[d] = now
         if len(self.posting_last) > 40:
             for k in sorted(self.posting_last)[:len(self.posting_last) - 40]:
                 del self.posting_last[k]

@@ -90,6 +90,13 @@ class TestPostingProgress(unittest.TestCase):
         self.mon.posting_last = {}
         self.mon._mark_posting(agg, now + 60.0)
         self.assertEqual(self.mon.posting_last, {})                  # nothing new: no mark
+        # an old day's rows, dropped from the seen list and read as new
+        # again: never a mark (22:00Z, 2026-09-11: twenty-five July days)
+        old = et_day(now - 40 * 86400.0)
+        self.mon.rewards_seen = {}
+        self.mon._mark_posting({f"{old}|m1": {"date": old, "market": "m1", "usd": 1.0,
+                                              "paid": 1.0, "status": {"PAID"}}}, now)
+        self.assertEqual(self.mon.posting_last, {})
 
     def test_nothing_estimated_and_nothing_posted_is_no_bar(self):
         self.mon.mkt_claim_day = {}
