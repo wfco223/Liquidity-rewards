@@ -198,7 +198,13 @@ long and accreted, so search it rather than reading it through.
   sit past his fair only on a side with company, where what others
   rest within six ticks of the side's best adds up to the full stake
   or more; on a bare side it rests at his fair or better, and one
-  resting past fair there comes off at once. Each open market
+  resting past fair there comes off at once — the resting order's
+  test sized by the same room the plan uses (the stake less the
+  collateral a position it adds to holds, scaled by the refill
+  ramp), never the whole stake (15:08-15:20Z: a Texas governor dem
+  bid rested at 21c against a 15c fair and was pulled "no company"
+  fifteen times in twelve minutes because the two tests sized
+  themselves differently). Each open market
   carries the bonds page's qualify button for a side under 125% of
   the target (owner, 2026-09-11 "Give me a button similar to the
   one on the bonds page that lets me automatically qualify the ask
