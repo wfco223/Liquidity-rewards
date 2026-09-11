@@ -190,7 +190,13 @@ long and accreted, so search it rather than reading it through.
   sit past his fair only on a side with company, where what others
   rest within six ticks of the side's best adds up to the full stake
   or more; on a bare side it rests at his fair or better, and one
-  resting past fair there comes off at once.
+  resting past fair there comes off at once. Each open market
+  carries the bonds page's qualify button for a side under 125% of
+  the target (owner, 2026-09-11 "Give me a button similar to the
+  one on the bonds page that lets me automatically qualify the ask
+  side"; the bid side has its own beside it): the same wall run,
+  his hand's orders at the far edge of the book, which the tender
+  leaves alone and counts back into the stake's buying power.
   Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
