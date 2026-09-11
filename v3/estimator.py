@@ -110,11 +110,13 @@ class Estimator:
         # day closes. Written ONLY by the independent sampler clock —
         # orders can never touch it.
         self.dots: list = []
+        self.repairs: list[str] = []          # one-time corrections already applied
+        self.adjustments: list[dict] = []     # today's corrections: {day, amount, why}
 
     # -- the one entry point -------------------------------------------------
 
     def sample(self, now: float, orders: list[dict], books: BookCache,
-               terms: TermsStore, side_pool=None) -> dict:
+               terms: TermsStore, side_pool=None, verified_at: float | None = None) -> dict:
         """Score the resting book and advance the integral. `orders` is the
         normalized open-order list; `side_pool(slug, prog)` supplies the
         divisor-confirmed daily side pool (None = hold the estimate, the
@@ -146,6 +148,25 @@ class Estimator:
             else:
                 dt_s = gap
         self.last_ts = now
+
+        # the exchange out of reach: the orders in hand are unverified
+        # for longer than one sample may bill for (`verified_at` is the
+        # last time the open list was read back). Nothing is earned on
+        # orders the exchange may have cancelled — its maintenance of
+        # 2026-09-11 cancelled every one, the records stood, the books
+        # read fresh, and $111 was billed across the outage (owner:
+        # "the estimate of earnings of today still includes the period
+        # of maintenance"). The interval banks as unmeasured, the graph
+        # reads zero.
+        if verified_at is not None and now - verified_at > MAX_GAP_S:
+            if dt_s:
+                self.stale_s += dt_s
+            self.market_rates, self.market_shares, self.market_pools = {}, {}, {}
+            self.rate = 0.0
+            self.dots.append([round(now, 1), 0.0, 0])
+            del self.dots[:-2880]
+            self.samples += 1
+            return self.snapshot(now)
 
         by_market: dict[str, list[dict]] = {}
         for o in orders:
@@ -223,6 +244,36 @@ class Estimator:
                               + self.market_pools.get(m, 0.0) * dt_s)
             self.live_s[m] = self.live_s.get(m, 0.0) + dt_s
 
+    def repair_blackout(self, lo: float, hi: float, key: str, why: str) -> float:
+        """One-time: take a blackout the meter billed back out of the day
+        — what the graph shows earned between `lo` and `hi` comes off
+        the day's total (the per-market split scaled with it), the graph
+        reads zero across it, and the span banks as unmeasured. Applied
+        once per `key`; the correction is recorded for the page."""
+        if key in self.repairs:
+            return 0.0
+        self.repairs.append(key)
+        billed = 0.0
+        for a, b in zip(self.dots, self.dots[1:]):
+            t0, t1 = float(a[0]), float(b[0])
+            if t1 <= lo or t0 >= hi or t1 - t0 > MAX_GAP_S:
+                continue
+            billed += float(a[1]) * (min(t1, hi) - max(t0, lo)) / 86400.0
+        billed = min(billed, self.earned)
+        if billed < 0.005:                       # nothing worth a line on the page
+            return 0.0
+        scale = (self.earned - billed) / self.earned if self.earned > 0 else 0.0
+        self.earned -= billed
+        self.per_market = {m: v * scale for m, v in self.per_market.items()}
+        for d in self.dots:
+            if lo <= float(d[0]) <= hi:
+                d[1], d[2] = 0.0, 0
+        span = hi - lo
+        self.covered_s = max(self.covered_s - span, 0.0)
+        self.stale_s += span
+        self.adjustments.append({"day": self.day, "amount": round(billed, 2), "why": why})
+        return billed
+
     def calibration(self) -> dict[str, dict]:
         """Per market: the share we computed, time-weighted, and the pool
         it was measured against. Paired with what the exchange actually
@@ -255,7 +306,9 @@ class Estimator:
             # lands five days later can still be graded against what we
             # actually computed while the day was running
             "calibration": self.calibration(),
+            "adjustments": list(self.adjustments),
         })
+        self.adjustments = []
         del self.history[:-HISTORY_DAYS]
         self.earned = 0.0
         self.per_market = {}
@@ -274,6 +327,7 @@ class Estimator:
             "per_market": {m: round(v, 4) for m, v in self.per_market.items()},
             "samples": self.samples, "covered_s": round(self.covered_s, 1),
             "stale_s": round(self.stale_s, 1), "ts": now,
+            "adjustments": list(self.adjustments),
         }
 
     # -- persistence --------------------------------------------------------------
@@ -289,6 +343,7 @@ class Estimator:
         d["share_s"] = {m: round(v, 4) for m, v in self.share_s.items()}
         d["pool_s"] = {m: round(v, 4) for m, v in self.pool_s.items()}
         d["live_s"] = {m: round(v, 1) for m, v in self.live_s.items()}
+        d["repairs"] = list(self.repairs)
         return d
 
     @classmethod
@@ -308,4 +363,6 @@ class Estimator:
         e.share_s = dict(d.get("share_s") or {})
         e.pool_s = dict(d.get("pool_s") or {})
         e.live_s = dict(d.get("live_s") or {})
+        e.repairs = list(d.get("repairs") or [])
+        e.adjustments = list(d.get("adjustments") or [])
         return e

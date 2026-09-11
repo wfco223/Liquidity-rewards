@@ -145,7 +145,15 @@ long and accreted, so search it rather than reading it through.
   the graph had plateaued at the last reading across the exchange's
   maintenance): the gap counts as stale time, the graph reads zero
   across it, and a series carries a reading forward for three
-  minutes at most.
+  minutes at most. The same while the exchange is out of reach: past
+  five minutes without a full cycle the orders in hand are
+  unverified and the meter bills nothing on them (the maintenance of
+  2026-09-11 had cancelled every order while the records stood and
+  the books read fresh, and $111 was billed across it — owner: "the
+  estimate of earnings of today still includes the period of
+  maintenance where it seems unlikely the earnings will actually
+  show up"); that span was taken back out of the day once, and the
+  page shows such a correction under "earned today".
 - The market survey is GONE (owner, 2026-09-10 "Take off the survey
   entirely. Save the data on GitHub but i don't need it"): nothing
   samples, nothing enumerates the exchange's programs, no survey tab,
