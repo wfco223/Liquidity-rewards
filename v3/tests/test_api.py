@@ -84,6 +84,35 @@ class TestRetry(unittest.TestCase):
                                 f"{ts}GET/v1/orders/open".encode())
 
 
+class TestOpenListPages(unittest.TestCase):
+    def test_the_open_list_is_read_to_its_end(self):
+        # 2026-09-11: orders placed, never seen in the list within twelve
+        # seconds, found by their withdrawal — a read that stopped at
+        # page one would explain exactly that
+        page1 = {"orders": [{"id": "a1", "state": "ORDER_STATE_NEW", "marketSlug": "m1",
+                             "side": "SIDE_BUY", "price": {"value": "0.10"}, "quantity": "5"}],
+                 "nextCursor": "c2", "eof": False}
+        page2 = {"orders": [{"id": "a2", "state": "ORDER_STATE_NEW", "marketSlug": "m2",
+                             "side": "SIDE_SELL", "price": {"value": "0.90"}, "quantity": "7"}],
+                 "eof": True}
+        c = client(FakeResponse(200, page1), FakeResponse(200, page2))
+        rows = c.open_orders()
+        self.assertEqual([r["id"] for r in rows], ["a1", "a2"])
+        self.assertEqual(len(c.session.calls), 2)
+        _, _, kw = c.session.calls[1]
+        self.assertEqual((kw.get("params") or {}).get("cursor"), "c2")
+        self.assertEqual(c.open_read, {"pages": 2, "n": 2, "eof": True,
+                                       "keys": ["eof", "nextCursor"]})
+        # one page with no cursor: one call, as before
+        c = client(FakeResponse(200, {"orders": []}))
+        self.assertEqual(c.open_orders(), [])
+        self.assertEqual(len(c.session.calls), 1)
+        self.assertEqual(c.open_read["pages"], 1)
+        # the state lookup reads every page too
+        c = client(FakeResponse(200, page1), FakeResponse(200, page2))
+        self.assertEqual(c.order_state("a2"), "ORDER_STATE_NEW")
+
+
 class TestParsing(unittest.TestCase):
     def test_open_orders_filters_dead_states_and_parses_shapes(self):
         payload = {"orders": [

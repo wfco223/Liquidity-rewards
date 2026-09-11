@@ -4757,3 +4757,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789131012.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,27,0.175,backfill,,1.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3TSKJMYTN1
 1789131391.8,politics,paccc-usse-midterms-2026-11-03-dem,SELL,39,0.467,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE53P8GT6TN1
 1789131391.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,27,0.175,backfill,,1.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3TSKJMYTN1
+1789131751.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,27,0.175,sell,261.042,1.85,0.1637,18,19,0.934,0.174,0.175,-0.0113,383,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
+1789131871.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,54,0.175,sell,268.799,1.89,0.1637,18,19,0.937,0.174,0.175,-0.0113,329,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
+1789132387.1,politics,ewc-usse-me-2026-11-03-dem,SELL,175,0.66,sell,101.58,1.83,0.651875,63,67,0.578,0.65,0.66,-0.0081,0,an exit — its fill reduces the position it sits on,CE402GQKTTMQ
+1789132613.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,54,0.175,sell,256.277,2.09,0.1637,18,20,0.94,0.174,0.175,-0.0113,275,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
+1789132973.8,politics,ussewc-usse-wv-2026-11-03-rep,SELL,6,0.97,sell,0,0,0.999975,94,97,0.779,0.97,0.98,0.03,34,taker dump — sold into the bid (the carved exception),CE5PCDW2MTN0
+1789134652.7,politics,ewc-usgub-mi-2026-11-03-rep,BUY,379,0.12,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE617N7QGTN2
+1789134665.1,politics,ewc-usgub-mi-2026-11-03-rep,SELL,10,0.08,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE63GRXWPTN2
+1789135334.9,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,8,0.05,bond,0,0.02,0.000125,6,9,0.689,0.04,0.08,-0.0499,-254,bond: took 8 NO at 5c — it was in the way of our resting order,CE696F2V2TN0
+1789135754.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,259,0.175,sell,106.966,2.97,0.1637,18,20,0.942,0.174,0.175,-0.0113,16,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
+1789135837.6,politics,paccc-usse-midterms-2026-11-03-dem,BUY,75,0.493,backfill,,1.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5ATC8M6TN5
+1789136101.3,politics,ewc-usgub-mi-2026-11-03-rep,BUY,379,0.12,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE617N7QGTN2
+1789136101.3,politics,ewc-usgub-mi-2026-11-03-rep,SELL,10,0.08,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE63GRXWPTN2
+1789136101.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,75,0.493,backfill,,1.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5ATC8M6TN5
