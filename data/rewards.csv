@@ -9018,6 +9018,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,aachc-cfb-wins-2026-11-28-gtech-7pt5wins,liquidityProgram,0.48,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-hou-10pt5wins,liquidityProgram,0.13,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-hou-6pt5wins,liquidityProgram,0.21,PENDING
+2026-09-08,aachc-cfb-wins-2026-11-28-ill-6pt5wins,liquidityProgram,0.22,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-ill-7pt5wins,liquidityProgram,0.14,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-ill-8pt5wins,liquidityProgram,0.14,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-ind-10pt5wins,liquidityProgram,0.09,PENDING
@@ -9259,6 +9260,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,usgubewc-usgub-ar-2026-11-03-dem,liquidityProgram,2.17,PENDING
 2026-09-08,usgubewc-usgub-co-2026-11-03-dem,liquidityProgram,0.14,PENDING
 2026-09-08,usgubewc-usgub-co-2026-11-03-rep,liquidityProgram,0.57,PENDING
+2026-09-08,usgubewc-usgub-ct-2026-11-03-dem,liquidityProgram,0.03,PENDING
 2026-09-08,usgubewc-usgub-ct-2026-11-03-rep,liquidityProgram,0.38,PENDING
 2026-09-08,usgubewc-usgub-fl-2026-11-03-dem,liquidityProgram,0.31,PENDING
 2026-09-08,usgubewc-usgub-fl-2026-11-03-rep,liquidityProgram,1.97,PENDING
@@ -9506,6 +9508,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,aqc-nfl-afc-2027-01-24-champq-pit,liquidityProgram,0.29,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-car,liquidityProgram,0.05,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-chi,liquidityProgram,0.02,PENDING
+2026-09-09,aqc-nfl-nfc-2027-01-24-champq-dal,liquidityProgram,0.14,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-det,liquidityProgram,0.13,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-gb,liquidityProgram,0.86,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-lar,liquidityProgram,0.05,PENDING
@@ -9515,7 +9518,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-sea,liquidityProgram,0.1,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-sf,liquidityProgram,0.15,PENDING
 2026-09-09,aqc-nfl-nfc-2027-01-24-champq-tb,liquidityProgram,0.09,PENDING
-2026-09-09,enwc-usgubp-ri-2026-09-09-dem-greste,liquidityProgram,0.25,PENDING
+2026-09-09,enwc-usgubp-ri-2026-09-09-dem-greste,liquidityProgram,0.82,PENDING
 2026-09-09,enwc-uspres-nom-dem-2028-andbes,liquidityProgram,0.03,PENDING
 2026-09-09,enwc-uspres-nom-dem-2028-dwajoh,liquidityProgram,0.19,PENDING
 2026-09-09,enwc-uspres-nom-dem-2028-jonoss,liquidityProgram,0.2,PENDING
