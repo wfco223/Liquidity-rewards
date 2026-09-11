@@ -4500,3 +4500,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789083270.8,politics,ussewc-usse-nm-2026-11-03-dem,SELL,0.1,0.97,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSA9JJ4ASK5
 1789083270.8,politics,ussewc-usse-nm-2026-11-03-dem,SELL,0.05,0.97,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSMH9PFTT3P
 1789083270.8,cfb,aachc-cfb-wins-2026-11-28-mich-10pt5wins,SELL,0.05,0.06,backfill,,8.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDJC5QPN4SJZ
+1789083392.4,politics,paccc-balpow-2026-11-03-dsweep,BUY,19.41,0.5,manual,109.842,13.37,,48,51,0.731,0.5,0.51,0,2.41,the owner's own order — the engine leaves it alone,CDECXDD6MSJ1
+1789083494.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,13,0.174,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSVYK9KMSJZ
+1789083870.4,politics,ussewc-usse-nm-2026-11-03-rep,SELL,20,0.06,backfill,,3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDQFCVGQ2SJR
+1789083902.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,13,0.174,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSVYK9KMSJZ
+1789083902.2,politics,ussewc-usse-nm-2026-11-03-rep,SELL,20,0.06,backfill,,3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDQFCVGQ2SJR
