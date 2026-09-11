@@ -550,6 +550,77 @@ class TestAfterAFill(Base):
         self.assertEqual(len(ex2), 1)
         self.assertEqual(ex2[0].qty, 400.0)
 
+    def vanish(self, order, qty, journal=True):
+        """The order leaves the book (a fill the feed has not shown yet):
+        the family's record goes, the journal books it, the feed stands."""
+        self.r.exchange.live.pop(order.id, None)
+        self.r.fam.orders.pop(order.id, None)
+        if journal:
+            self.r.fam.fills.append({"ts": self.r.now, "market": order.market, "side": order.side,
+                                     "qty": qty, "px": order.price, "oid": order.id,
+                                     "purpose": order.purpose})
+
+    def test_a_filled_exit_is_not_rested_again_on_a_stale_position_read(self):
+        # 02:57-02:59Z, 2026-09-11: the exit of 68 filled, the feed still
+        # showed the lot, a second exit of 68 rested within the minute
+        # and filled — flat became short 68
+        self.r.positions[NC] = (200.0, 200.0 * 0.40)
+        self.r.fam.positions_seen[NC] = 200.0
+        self.r.fam.inventory[NC] = {"qty": 200.0, "cost": 80.0}
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ex = self.mine(NC, "SELL")[0]
+        self.vanish(ex, 200.0)                        # the whole lot sold; the feed lags
+        exits = lambda: [o for o in self.mine(NC, "SELL") if self.f._exit_order(o)]
+        for _ in range(4):
+            self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+            self.tick()
+            self.assertFalse(exits(), "a second exit on a stale read")
+            self.assertIsNone(self.f.rows[NC]["position"])
+        self.assertTrue(any(e.get("event") == "exit_filled" for e in self.f.log))
+        # the feed catches up to flat: still nothing to exit (a fresh
+        # entry may rest on that side — the lot is gone, not the side)
+        self.r.positions[NC] = (0.0, 0.0)
+        self.tick()
+        self.assertFalse(exits())
+        self.assertIsNone(self.f.rows[NC]["position"])
+        # a new lot the feed shows is exited as usual
+        self.r.positions[NC] = (300.0, 120.0)
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        self.assertEqual([o.qty for o in exits()], [300.0])
+
+    def test_a_fill_the_feed_already_shows_is_not_counted_twice(self):
+        self.r.positions[NC] = (200.0, 200.0 * 0.40)
+        self.r.fam.positions_seen[NC] = 200.0
+        self.r.fam.inventory[NC] = {"qty": 200.0, "cost": 80.0}
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ex = self.mine(NC, "SELL")[0]
+        self.fill(ex, 200.0)                          # the rig's feed moves at once
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        self.assertIsNone(self.f.rows[NC]["position"])
+        self.assertFalse([o for o in self.mine(NC, "BUY") if self.f._exit_order(o)])
+
+    def test_a_vanished_order_the_journal_never_books_stops_adjusting_the_position(self):
+        # his hand cancel of an exit: the lot reads as gone for a short
+        # while, then the feed is the truth again and the exit is re-laid
+        self.r.positions[NC] = (200.0, 200.0 * 0.40)
+        self.r.fam.positions_seen[NC] = 200.0
+        self.r.fam.inventory[NC] = {"qty": 200.0, "cost": 80.0}
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ex = self.mine(NC, "SELL")[0]
+        self.vanish(ex, 200.0, journal=False)         # cancelled by his hand, no fill
+        exits = lambda: [o for o in self.mine(NC, "SELL") if self.f._exit_order(o)]
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        self.assertFalse(exits())                      # taken as filled for now
+        self.r.now += focus_mod.FOCUS_POS_PENDING_S
+        self.tick()
+        self.assertEqual([o.qty for o in exits()], [200.0])   # the feed stands: re-laid
+
     def test_the_exit_joins_the_touch_when_either_his_fair_or_the_cost_allows(self):
         # short 200 opened at 47c: cost a share 53c of collateral, the
         # break-even YES price 47c; the bid touch is 44c, under it —

@@ -218,9 +218,17 @@ long and accreted, so search it rather than reading it through.
   every minute (01:38Z, 2026-09-11: a bid the tender rested at +$168 a
   day read −$697 a minute later, a 62c fill cost a share, and the
   weak-order pull and the cap's ranking had been reading that);
-  an id the tender itself cancelled or replaced is remembered for
-  ten minutes and never adopted back when the open list shows it
-  late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
+  the position feed lags a fill by a read or more, so an order of
+  the tender's that vanished counts as filled for the position's
+  sake — for two and a half minutes unconfirmed, five once the
+  journal books it, or until the feed itself moves — and a fill the
+  feed already shows is never counted twice (02:57-02:59Z,
+  2026-09-11: the House rep control exit of 68 filled, the feed still
+  showed the lot, a second exit of 68 rested within the minute and
+  filled: flat became short 68, the same shape that flipped positions
+  at 15:38Z and 21:05Z the day before); an id the tender itself
+  cancelled or replaced is remembered for ten minutes and never
+  adopted back when the open list shows it late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
   times in an hour, each a ghost of its own move); a cover of a short is
   placed as the close it is (SELL_SHORT), never as a fresh long. A
   refused placement or resize waits out the cooldown before another
