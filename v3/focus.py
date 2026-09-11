@@ -856,7 +856,9 @@ class Focus:
         # and a mispriced order is assumed to fill faster (the fill
         # model's bait) until its own record says otherwise
         conc = 0.0
-        if not is_exit and fair is not None:
+        if fair is not None:
+            # an entry past his fair, or an exit under it (a sale under
+            # fair, a cover over it): the concession, charged in full
             conc = max((px - fair) if side == "BUY" else (fair - px), 0.0)
         conc_ticks = int(round(conc / tick)) if conc > 0 else 0
         try:
@@ -895,12 +897,12 @@ class Focus:
         behind it, the side's own resting levels out to FOCUS_BEHIND_C
         behind it (the reward share falls by the discount a tick, so
         past the first ticks only a level with company is worth a
-        look), and the slot a tick inside his fair. With `bound` (an exit)
-        nothing past his fair; an entry may sit past it (owner,
-        2026-09-10: "A bid over fair value is fine as long as it is
-        appropriately sized for the risk and rewards it can earn") —
-        the concession is charged in _score and the size chosen with
-        the price."""
+        look), and the slot a tick inside his fair. With `bound` nothing
+        past the price given (the exits' floor until 2026-09-11); an
+        entry may sit past his fair (owner, 2026-09-10: "A bid over fair
+        value is fine as long as it is appropriately sized for the risk
+        and rewards it can earn") — the concession is charged in _score
+        and the size chosen with the price."""
         tick = book.tick or 0.01
         own = book.side(side)
         other = book.side("SELL" if side == "BUY" else "BUY")
@@ -969,31 +971,58 @@ class Focus:
 
     def _exit_plan(self, slug: str, side: str, book, prog, pool: float,
                    fair: float | None, qty: float, basis: float | None) -> dict | None:
-        """Where `qty` held shares exit on this side: at the touch, or
-        the nearest slot behind it that is not under BOTH his fair and
-        the position's cost. Exits join the touch and never sit inside
-        it. A price at or past either measure is a good exit — past
-        fair by his own number, past cost as a locked gain — so the
-        bound is whichever of the two lets the exit nearer the touch
-        (owner, 2026-09-10: "if an exit is not earning, then it should
-        be placed closer to the touch" — an exit held at its 59c cost
-        with his fair at 49c and the market at 53c earned nothing).
-        His fair alone can bring an exit to the touch; the cost alone
-        never keeps it away."""
+        """Where `qty` held shares exit on this side: the slot with the
+        best expected value from the touch back, as an entry is placed
+        (owner, 2026-09-11, Iowa Senate rep: 201 held at 68.6c, his
+        fair 63c, the ask touch 61c — the exit had sat at his fair two
+        ticks back earning $19 a day where the touch was worth about
+        $140; "Yes" to exits treated as entries are). An exit may sit
+        under his fair (a sale under it, a cover over it) where the
+        earnings beat the concession charged in full, and only on a
+        side with company — what others rest within FOCUS_BEHIND_C of
+        the side's best adding up to the exit's size or more; on a bare
+        side it rests at his fair or better. A slot past his fair is a
+        gain and needs no company. The position's cost never holds an
+        exit (owner, 2026-09-10: "if an exit is not earning, then it
+        should be placed closer to the touch" — an exit held at its 59c
+        cost with his fair at 49c and the market at 53c earned nothing);
+        it is carried as `basis` for the page. Exits never sit inside
+        the touch."""
         if qty < 1.0:
             return None
         levels = self._levels_net(slug, side, book)
-        bounds = [b for b in (fair, basis) if b is not None]
-        bound = None
-        if bounds:
-            bound = min(bounds) if side == "SELL" else max(bounds)
-        cands = self._cands(side, book, bound, bound=bound is not None, improve=False)
+        tick = book.tick or 0.01
+        other = book.side("SELL" if side == "BUY" else "BUY")
+        opp = float(other[0][0]) if other else None
+        # the touch, less our own orders: an exit joins it, never sits
+        # inside it (a slot inside the spread reads as the new best
+        # price and would win every EV comparison)
+        touch = float(levels[0][0]) if levels else (
+            None if opp is None else opp + (tick if side == "SELL" else -tick))
+        cands = self._cands(side, book, None, improve=False)
+        if fair is not None:
+            # the slot at his fair itself is always a candidate
+            f = round(fair, 4)
+            if 0.001 <= f <= 0.999 and f not in cands and (
+                    opp is None or ((f < opp - 1e-9) if side == "BUY" else (f > opp + 1e-9))):
+                cands.append(f)
         if not cands:
             return None
-        px = cands[0]                             # nearest the touch first
-        out = self._score(slug, side, book, prog, pool, fair, px, qty, levels, is_exit=True)
-        out["basis"] = basis
-        return out
+        bare = fair is not None and self._bare(levels, tick, float(qty))
+        best = None
+        for px in cands:                          # nearest the touch first: a tie keeps the nearer
+            if touch is not None and ((px < touch - 1e-9) if side == "SELL" else (px > touch + 1e-9)):
+                continue                          # inside the touch: never
+            past = fair is not None and ((px < fair - 1e-9) if side == "SELL" else (px > fair + 1e-9))
+            if past and bare:
+                continue                          # under his fair with no company: no
+            s = self._score(slug, side, book, prog, pool, fair, px, qty, levels, is_exit=True)
+            if best is None or s["ev"] > best["ev"] + 1e-9:
+                best = s
+        if best is None:
+            return None
+        best["basis"] = basis
+        return best
 
     # -- the pass ----------------------------------------------------------------
 
@@ -1151,6 +1180,10 @@ class Focus:
                     room = self._entry_room(f"{slug}|{o.side}", o.side, stake, net, cost, now)
                     full = float(math.floor(room / cost_ps)) if cost_ps > 0 else 0.0
                     bare = full >= 1.0 and self._bare(levels, book.tick or 0.01, full)
+                elif is_exit and s["conc"] > 0:
+                    # an exit under his fair: its company is measured
+                    # against its own size (see _exit_plan)
+                    bare = self._bare(levels, book.tick or 0.01, float(o.qty))
                 self.scores[o.id] = (s["est"], s["pf"], s["ev"], bare, s["conc"])
             row["orders"].append(d)
         row["orders"].sort(key=lambda d: (d["side"], -d["price"]))
@@ -1610,7 +1643,7 @@ class Focus:
                 continue
             cur_ev = float(self._own_ev(cur) or 0.0)
             keeps = same_px or cur_ev >= FOCUS_KEEP * plan["ev"] - 1e-9
-            if not is_exit and self._own_bare(cur):
+            if self._own_bare(cur):
                 keeps = False                     # past fair with no company: to the plan
             if keeps and size_ok and not wrong_intent:
                 continue
