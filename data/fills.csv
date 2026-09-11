@@ -4924,3 +4924,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789147587.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,9,0.831,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8HWXR4GTN1
 1789147671.6,politics,ewc-usgub-ga-2026-11-03-rep,SELL,26,0.39,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE947847ETMX
 1789147671.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,9,0.831,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8HWXR4GTN1
+1789147881.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,160,0.493,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE97MAHDGTMQ
+1789147973.6,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,29,0.91,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE99S6TZPTMM
+1789148544.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,160,0.493,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE97MAHDGTMQ
+1789148544.4,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,29,0.91,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE99S6TZPTMM
