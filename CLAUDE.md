@@ -254,7 +254,17 @@ long and accreted, so search it rather than reading it through.
   list cannot show is kept "resting unverified") stays in the code
   with its hint switched off — a complete list read as capped would
   keep every absent record on the books and never book their fills.
-  Every order in a focus market — his,
+  The 2028 books were boosted at 16:48Z ("presidential_election_20260911",
+  $1,000 a day per event, target 20,000, discount 0.2 — a tick back
+  keeps 20%): 60 markets on the tender's ground. Owner, 2026-09-11
+  ("2028 markets got boosted" ... "That sounds good"): the party pair
+  and the candidates priced 5c or more get their midpoint as their
+  fair once, the first pass the book shows a bid and an ask within 6c
+  with a mid of 5c or more (FOCUS_MID_FAIR_TOKENS), and the tender
+  works from it; the penny candidates (1c bid, 2c ask) get no fair —
+  their play is his 1c bid wall from the qualify button, which is the
+  touch and the whole bid-side window at once; a fair he clears stays
+  cleared. Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
   he has set a fair for that market and keeps the expected loss

@@ -193,6 +193,41 @@ class TestTheProgramWatch(Base):
         self.assertTrue(any(e["market"] == new for e in self.f.events))
         self.assertTrue(any("new boosted" in t for t, _m in self.pings))
 
+    def test_a_two_sided_2028_book_gets_the_midpoint_as_its_fair_once(self):
+        # owner, 2026-09-11: "2028 markets got boosted" ... "That sounds
+        # good" — the midpoint for the party pair and the candidates at
+        # 5c or more, nothing on the penny candidates
+        party = "ewc-usp-party-2028-11-07-dem"
+        penny = "enwc-uspres-nom-dem-2028-nobody"
+        wide = "ewc-usp-2028-11-07-someone"
+        self.r.add_market(party, wide_book(self.r.now, bid=0.51, ask=0.53), event="party", prog=T1)
+        self.r.add_market(penny, Book(bids=((0.01, 5000.0), (0.02, 60000.0)),
+                                      asks=((0.02, 300.0), (0.98, 60000.0)),
+                                      tick=0.01, fetched_at=self.r.now), event="nom", prog=T1)
+        self.r.add_market(wide, Book(bids=((0.10, 300.0), (0.02, 60000.0)),
+                                     asks=((0.30, 300.0), (0.98, 60000.0)),
+                                     tick=0.01, fetched_at=self.r.now), event="usp", prog=T1)
+        for m in (party, penny, wide):
+            self.r.fam.universe[m] = {"event_n": 2, "name": m}
+        self.f.last_terms_own = 0.0
+        self.f._rotor = 0
+        for _ in range(4):
+            self.tick()
+        self.assertIn(party, self.f.markets)
+        self.assertEqual(self.f.fairs.get(party), 0.52)
+        self.assertNotIn(penny, self.f.fairs)             # a penny book: his walls' ground
+        self.assertNotIn(wide, self.f.fairs)              # no mid worth the name
+        seeded = [e for e in self.f.log if e.get("event") == "fair_set" and e.get("market") == party]
+        self.assertEqual(len(seeded), 1)
+        self.assertIn("midpoint", seeded[0].get("note") or "")
+        # his clear stands: no re-seed, and the record survives a restart
+        self.f.set_fair(party, None)
+        self.tick()
+        self.tick()
+        self.assertNotIn(party, self.f.fairs)
+        d = json.loads(json.dumps(self.f.to_dict()))
+        self.assertIn(party, d["mid_seeded"])
+
     def test_the_seed_is_quiet(self):
         self.assertEqual(self.pings, [])
         self.assertEqual(self.f.events, [])
