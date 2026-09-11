@@ -52,7 +52,7 @@ from .family import FamilyOrder, is_wall
 from .intents import BUY_LONG, BUY_SHORT, SELL_SHORT, capital_at_risk
 from .programs import pool_days
 from .scoring import estimate_join
-from .survey import wall_collateral
+from .survey import QUALIFY_TARGET_MULT, wall_collateral, wall_price
 from .terms import TermsStore
 
 FOCUS_POOL_MIN_USD = 250.0      # a program paying this a day per event is boosted
@@ -241,6 +241,11 @@ class Focus:
         # fill cost a share), and the tender must judge by its own numbers
         self.scores: dict[str, tuple[float, float, float]] = {}
         self.rate_hist: dict[str, dict[str, float]] = {}   # slug -> bucket -> max rate
+        # the qualify button's run note, slug -> one line (set by the
+        # monitor, which owns the wall runs); owner, 2026-09-11 "Give me
+        # a button similar to the one on the bonds page that lets me
+        # automatically qualify the ask side"
+        self.wall_note = None
         self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
         self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
         self._feed_prev_at: float = 0.0           # when it was last taken (0 = never)
@@ -1025,6 +1030,20 @@ class Focus:
             row["qual"] = {"bid": [round(bq), tgt, tgt <= 0 or bq >= tgt],
                            "ask": [round(aq), tgt, tgt <= 0 or aq >= tgt]}
             row["unqualified"] = sum(1 for s in ("bid", "ask") if not row["qual"][s][2])
+            # the qualify button (owner, 2026-09-11 "a button similar to
+            # the one on the bonds page that lets me automatically
+            # qualify the ask side"): the same wall the bonds page
+            # builds, to 125% of the target at the far edge of the book
+            if tgt > 0:
+                goal = tgt * QUALIFY_TARGET_MULT
+                tick = book.tick or 0.01
+                row["wall"] = {}
+                for s, bs, total in (("bid", "BUY", bq), ("ask", "SELL", aq)):
+                    gap = max(goal - total, 0.0)
+                    px = wall_price(bs, tick)
+                    row["wall"][s] = {"goal": round(goal), "gap": round(gap),
+                                      "px": px, "usd": round(wall_collateral(bs, px, gap), 2),
+                                      "room": total >= goal}
         # every order here, with what it measures on this book
         for o in self._orders(slug):
             d = {"id": o.id, "side": o.side, "price": o.price, "qty": o.qty,
@@ -1715,6 +1734,16 @@ class Focus:
     def view(self, now: float, bp: float | None, on: bool) -> dict:
         rows = sorted(self.rows.values(),
                       key=lambda r: (-(r["ev"] if r.get("ev") is not None else -1e9), r["name"]))
+        if self.wall_note is not None:
+            for r in rows:
+                try:
+                    n = self.wall_note(r["market"])
+                except Exception:  # noqa: BLE001
+                    n = None
+                if n:
+                    r["qualify"] = n
+                else:
+                    r.pop("qualify", None)
         stake, src = self.stake("-", bp)
         return {"ok": True, "at": round(now, 1), "pass_s": self.pass_s,
                 "n": len(self.markets), "bp": bp, "stake": stake, "stake_src": src,

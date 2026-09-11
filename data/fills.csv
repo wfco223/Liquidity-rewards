@@ -4703,3 +4703,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789124167.0,gameday,aec-cfb-ala-uk-2026-09-12,BUY,50,0.78,hand,,4.88,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CBMHZA9JRQ3R
 1789124167.0,gameday,aec-cfb-ala-uk-2026-09-12,SELL,50,0.785,hand,,1.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD3DSPBPRSK5
 1789124167.0,gameday,aec-cfb-ala-uk-2026-09-12,BUY,50,0.78,hand,,2.27,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD5QXTFC0T6S
+1789124314.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,60,0.844,sell,29.1643,0.55,0.8363,83,85,0.951,0.843,0.844,-0.0077,371,an exit — its fill reduces the position it sits on,CE2B0AAC8TMQ
+1789124374.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,67,0.844,sell,25.2745,0.56,0.8363,84,85,0.951,0.843,0.844,-0.0077,304,an exit — its fill reduces the position it sits on,CE2B0AAC8TMQ
+1789124494.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,73,0.844,sell,20.8053,0.6,0.8363,84,85,0.952,0.843,0.844,-0.0077,231,an exit — its fill reduces the position it sits on,CE2B0AAC8TMQ
+1789124692.2,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,24,0.99,void,0.0001,46.02,0.9989,90,94,0.693,,,0.0089,-48,voided: the exchange has no trade for order CCVPTABACT3P — the row of 09-11 10:2,CCVPTABACT3P
+1789124692.2,politics,ussewc-usse-sd-2026-11-03-rep,SELL,1,0.95,void,0.006,32.14,0.991925,90,93,0.773,0.91,0.92,0.0419,-2,voided: the exchange has no trade for order CD7MJC75ASK5 — the row of 09-11 10:2,CD7MJC75ASK5
+1789124692.2,politics,paccc-balpow-2026-11-03-rsweep,BUY,150,0.17,void,97.4353,2.25,,13,17,0.812,,0.99,0.02,300,voided: the exchange has no trade for order CE15SA7PJSJ1 — the row of 09-11 10:2,CE15SA7PJSJ1
+1789124692.2,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,24,0.99,void,0.0001,46.01,0.9989,91,95,0.756,,,0.0089,-72,voided: the exchange has no trade for order CCVPPTF8RSJR — the row of 09-11 10:2,CCVPPTF8RSJR

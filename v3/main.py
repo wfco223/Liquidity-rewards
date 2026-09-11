@@ -1035,6 +1035,7 @@ class Monitor:
                            switch_on=lambda: (self.master.on
                                               and self.switches["focus"].on),
                            buying_power=self.client.buying_power)
+        self.focus.wall_note = self._wall_note      # the qualify button's run line
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
@@ -2223,6 +2224,11 @@ class Monitor:
                                     getattr(self, "_bond_positions", None))
         self._note_walls(rows.values())
         return rows
+
+    def _wall_note(self, market: str) -> str | None:
+        """The focus page's line for a wall run here, or None."""
+        job = (getattr(self, "_qualify_jobs", None) or {}).get(market)
+        return self._qualify_note(job) if job else None
 
     def _note_walls(self, rows) -> None:
         """A wall run's one-line standing on the bond rows it concerns,
@@ -4417,6 +4423,15 @@ class Monitor:
         elif op == "focus_scan":
             r = self.focus.scan_now(now)
             market = market or "-"
+        elif op == "focus_qualify":
+            # the bonds page's wall on a focus market (owner, 2026-09-11
+            # "a button similar to the one on the bonds page that lets
+            # me automatically qualify the ask side"): his hand's order,
+            # at the far edge, which the tender leaves alone
+            side = str(value or "ask").lower()
+            if side not in ("ask", "bid"):
+                return {"ok": False, "note": f"no such side: {side}"}
+            r = self.qualify_side(market, "SELL" if side == "ask" else "BUY")
         else:
             return {"ok": False, "note": f"unknown op {op}"}
         self._audit({"op": op, "market": market, "initiator": "owner",
