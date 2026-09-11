@@ -4972,3 +4972,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789153111.4,politics,ussewc-usse-ma-2026-11-03-rep,BUY,5.47,0.04,backfill,,8.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EVK0B2TN3
 1789153111.4,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,7,0.12,backfill,,8.43,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2HGFK3PTN2
 1789153111.4,politics,enwc-uspres-nom-dem-2028-andbes,SELL,8.07,0.03,backfill,,6.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE51MYM22TMP
+1789153679.5,politics,ewc-usse-nc-2026-11-03-rep,BUY,127,0.12,focus,95.8169,0.02,0.115825,11,14,0.735,0.12,0.13,0.0042,1024,focus entry: ~$50.23/day; fill odds 55%/day; EV +48.77/day,CEANK92M6TN5
+1789153808.9,politics,ewc-usp-2028-11-07-marrub,SELL,22,0.1,backfill,,0.45,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEA9Y8KE4TN1
+1789153827.7,politics,ewc-usp-2028-11-07-andbes,BUY,0.13,0.06,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAFYZ13TTMY
+1789153859.5,politics,ewc-usp-2028-11-07-andbes,BUY,2,0.06,focus,13.8667,0.24,,4,8,0.478,0.06,0.07,0,2,focus entry: ~$8.71/day; fill odds 47%/day; EV +4.60/day,CEAFYZ13TTMY
+1789153895.7,politics,enwc-uspres-nom-dem-2028-gavnew,SELL,0.04,0.22,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAMQATZMTN3
+1789153919.5,politics,enwc-uspres-nom-dem-2028-gavnew,SELL,13,0.22,focus,28.3852,0.11,,16,25,0.207,0.21,0.22,-0.01,-13,focus entry: ~$27.21/day; fill odds 26%/day; EV +26.56/day,CEAMQATZMTN3
+1789153979.5,politics,enwc-uspres-nom-dem-2028-kamhar,SELL,19,0.1,sell,0.0161,2.55,,8,12,0,0.09,0.1,0,0,selling filled stock — it earns while it waits,CE8JD3MGWTN1
+1789153979.5,politics,ewc-usse-ia-2026-11-03-rep,BUY,26,0.68,focus,231.492,0.13,0.59045,58,65,0.417,0.64,0.65,0.0896,201,focus entry: ~$3.26/day; fill odds 55%/day; EV +2.18/day,CEAMHFXQRTMP
+1789154544.2,politics,usgubewc-usgub-fl-2026-11-03-rep,SELL,50,0.8,focus,37.3486,0.15,0.707175,70,78,0,0.79,0.8,-0.0928,-187,focus entry: ~$56.72/day; fill odds 47%/day; EV +50.18/day,CEARE3T1JTMQ
+1789154742.7,politics,enwc-uspres-nom-dem-2028-gavnew,BUY,5.43,0.22,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEATT4YT0TN3
+1789154951.8,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,-7,0.12,fix,1.9698,8.45,0.09645,,,0.282,,,0.0236,0,size trimmed by 7 to the exchange's count (order CE2HGFK3PTN2),CE2HGFK3PTN2
+1789154951.8,politics,enwc-uspres-nom-dem-2028-andbes,SELL,-8,0.03,fix,1.285,6.29,0.09,2,5,0.434,0.02,0.03,0.06,205,size trimmed by 8 to the exchange's count (order CE51MYM22TMP),CE51MYM22TMP
+1789154951.8,politics,ewc-usp-2028-11-07-marrub,SELL,22,0.1,backfill,,0.45,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEA9Y8KE4TN1
+1789154951.8,politics,ewc-usp-2028-11-07-andbes,BUY,0.13,0.06,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAFYZ13TTMY
+1789154951.8,politics,enwc-uspres-nom-dem-2028-gavnew,SELL,0.04,0.22,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAMQATZMTN3
+1789154951.8,politics,enwc-uspres-nom-dem-2028-gavnew,BUY,5.43,0.22,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEATT4YT0TN3
