@@ -886,6 +886,26 @@ class TestTheCapHasSlack(Base):
         self.assertFalse([o for o in self.mine() if not self.f._exit_order(o)])
 
 
+class TestTheTenderJudgesByItsOwnNumbers(Base):
+    def test_the_familys_rescoring_of_a_tender_order_changes_nothing(self):
+        # 01:38Z, 2026-09-11: a bid rested at +$168 a day read −$697 a
+        # minute later — the family's own model rescoring the same record
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        o = self.mine(NC, "BUY")[0]
+        self.assertGreater(self.f._own_ev(o), 0.0)
+        for _ in range(3):
+            o.live_ev = -697.0                      # the family's reading
+            o.live_pf = 0.99
+            self.r.now += focus_mod.FOCUS_WEAK_DWELL_S
+            self.tick()
+        self.assertIn(o.id, self.r.exchange.live)   # never pulled as weak
+        self.assertGreater(self.f._own_ev(o), 0.0)  # the tender's own score stands
+        self.assertNotIn(f"{NC}|BUY", self.f.weak_since)
+        # and the cap's accounting uses the tender's fill odds, not 0.99
+        self.assertLess(self.f._own_pf(o), 0.99)
+
+
 class TestTheCapGoesByValue(Base):
     """Owner, 2026-09-11: "Yes to value ranked cap allocation"."""
 
@@ -901,7 +921,7 @@ class TestTheCapGoesByValue(Base):
         ak = self.entries(AK)
         self.assertTrue(ak)
         self.f.loss_cap = self.f.risk_used()          # full
-        self.r.now += focus_mod.FOCUS_CAP_GRACE_S       # past the grace
+        self.r.now += focus_mod.FOCUS_DISPLACE_GRACE_S  # past the grace
         self.f.set_fair(NC, 45.0)
         self.tick()
         self.assertTrue(self.entries(NC))
@@ -920,20 +940,27 @@ class TestTheCapGoesByValue(Base):
         val = self.f._value(float(o.live_ev), risk)
         used = self.f.risk_used()
         self.f.loss_cap = used
-        plan = {"ev": val * 1.2 * risk, "risk": risk}
+        plan = {"ev": val * 1.9 * risk, "risk": risk}
         # inside the grace: nothing is displaced however good the plan
         self.assertIsNone(self.f._make_room(self.r.now, OH, "BUY",
                                             {"ev": val * 5 * risk, "risk": risk}, used, 8))
-        self.r.now += focus_mod.FOCUS_CAP_GRACE_S
-        # not a quarter better: no displacement
+        self.r.now += focus_mod.FOCUS_DISPLACE_GRACE_S
+        # not double: no displacement
         self.assertIsNone(self.f._make_room(self.r.now, OH, "BUY", plan, used, 8))
         self.assertIn(o.id, self.r.exchange.live)
-        # a quarter better and more: the weaker order comes off
-        room = self.f._make_room(self.r.now, OH, "BUY", {"ev": val * 1.3 * risk, "risk": risk}, used, 8)
+        # double and more: the weaker order comes off, and its side may
+        # displace nothing for an hour
+        room = self.f._make_room(self.r.now, OH, "BUY", {"ev": val * 2.1 * risk, "risk": risk}, used, 8)
         self.assertIsNotNone(room)
         self.assertAlmostEqual(room[0], risk, places=6)
         self.assertNotIn(o.id, self.r.exchange.live)
         self.assertGreater(self.f.moved_at.get(f"{NC}|{o.side}", 0.0), 0.0)
+        self.assertIsNone(self.f._make_room(self.r.now, NC, o.side,
+                                            {"ev": val * 9 * risk, "risk": risk}, used, 8))
+        d = json.loads(json.dumps(self.f.to_dict()))
+        g = Focus(self.r.fam, self.r.exchange, self.b, clock=lambda: self.r.now)
+        g.restore(d)
+        self.assertIn(f"{NC}|{o.side}", g.displaced_at)
 
 
 class TestSilverSeedsTheFairsHeNamed(Base):
