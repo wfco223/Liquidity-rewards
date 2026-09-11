@@ -718,9 +718,15 @@ class Focus:
                 # (03:57Z, 2026-09-11: a fresh short of 337 read as 674 and
                 # the cover was sized to it — the absent row had been taken
                 # as "unchanged")
-                before = (self._feed_prev.get(slug, 0.0) if self._feed_prev_at else feed)
+                # ...and on the first pass after a boot there is no "a
+                # pass ago": the feed is the truth and a booked fill is
+                # never added to it (21:33Z, 2026-09-11: a 742-share House
+                # rep control bid filled 192 as the build booted; the feed
+                # showed 246 and the journal's 192 was added again — the
+                # exit was sized to 438 against 246 held)
+                before = (self._feed_prev.get(slug, 0.0) if self._feed_prev_at else None)
                 self._vanish_feed[oid] = before
-                if was_exit and abs(feed - before) <= 0.005:
+                if was_exit and before is not None and abs(feed - before) <= 0.005:
                     # an EXIT that vanished counts as filled until the feed
                     # moves — toward flat, never past it. An entry does not
                     # (05:38Z, 2026-09-11: a 1,115-share ask's record went

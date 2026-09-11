@@ -357,7 +357,11 @@ long and accreted, so search it rather than reading it through.
   cover was sized to 1,252 against a short of 137) — and a fill the
   feed already shows is never counted twice, a market the feed
   carried no row for a pass ago having been flat (03:57Z, 2026-09-11:
-  a fresh short of 337 read as 674 and the cover was sized to it)
+  a fresh short of 337 read as 674 and the cover was sized to it;
+  21:33Z: a bid filled 192 as the build booted, the first pass had no
+  feed "a pass ago" and added the journal's 192 to a feed that showed
+  it — so on the first pass after a boot the feed is the truth and a
+  booked fill is never added)
   (02:57-02:59Z,
   2026-09-11: the House rep control exit of 68 filled, the feed still
   showed the lot, a second exit of 68 rested within the minute and
