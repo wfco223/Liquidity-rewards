@@ -1495,6 +1495,27 @@ class Focus:
                     self._log(event="rested", market=slug, side=side, price=(r.price or plan["px"]),
                               qty=rested, est=plan["est"], pf=plan["pf"], ev=plan["ev"],
                               exit=is_exit, note=("trimmed by the exchange" if not r.ok else ""))
+                elif r.order_id and getattr(r, "unverified", False):
+                    # accepted, never listed because the open list is capped:
+                    # the order rests past the cut — it is the tender's, on
+                    # the books at the plan's size, never withdrawn
+                    self._claim_id(r.order_id)
+                    self.fam.orders[r.order_id] = FamilyOrder(
+                        id=r.order_id, market=slug, side=side, price=(r.price or plan["px"]),
+                        qty=plan["qty"], intent=r.intent, placed_ts=now, purpose=PURPOSE,
+                        why=self._why(plan, is_exit) + " — resting unverified, the open list is capped",
+                        est_day=plan["est"], live_est=plan["est"], live_pf=plan["pf"],
+                        live_ev=plan["ev"])
+                    self.moved_at[key] = now
+                    self._last_mine[r.order_id] = (slug, side, plan["qty"], is_exit)
+                    self.no_money_at.pop(key, None)
+                    if free is not None:
+                        free -= self._need(plan, side, is_exit)
+                    if not is_exit:
+                        used += plan["risk"]
+                    self._log(event="rested", market=slug, side=side, price=(r.price or plan["px"]),
+                              qty=plan["qty"], est=plan["est"], pf=plan["pf"], ev=plan["ev"],
+                              exit=is_exit, note=r.note[:140])
                 else:
                     # a refused placement waits out the cooldown (21:05Z: a
                     # refused resize was retried every twenty seconds)

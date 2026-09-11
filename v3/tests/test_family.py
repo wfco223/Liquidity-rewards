@@ -147,6 +147,26 @@ class Rig:
                               self.positions, self.exchange, self.switch)
 
 
+class TestACappedListRulesNothingGone(unittest.TestCase):
+    def test_an_absent_record_stands_when_the_read_was_capped(self):
+        # 2026-09-11: the open list came back cut at ~250 rows with no
+        # paging field while more rested; absences on such a read had
+        # been sending live orders to limbo and off the books
+        from v3.family import FamilyOrder
+        from v3.intents import BUY_LONG
+        r = Rig()
+        rec = FamilyOrder(id="live9", market="scc-x", side="BUY", price=0.08, qty=45.0,
+                          intent=BUY_LONG, placed_ts=r.now, purpose="earn", why="t")
+        r.fam.orders["live9"] = rec
+        r.fam.reconcile([], {}, r.now + 60.0, capped=True)
+        self.assertIn("live9", r.fam.orders)
+        self.assertNotIn("live9", r.fam.gone_pending)
+        # a complete read that lacks it: limbo, as before
+        r.fam.reconcile([], {}, r.now + 120.0, capped=False)
+        self.assertNotIn("live9", r.fam.orders)
+        self.assertIn("live9", r.fam.gone_pending)
+
+
 class TestDiscovery(unittest.TestCase):
     def test_universe_carries_divisor_and_names(self):
         r = Rig()

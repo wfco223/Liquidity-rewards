@@ -102,7 +102,7 @@ class TestOpenListPages(unittest.TestCase):
         _, _, kw = c.session.calls[1]
         self.assertEqual((kw.get("params") or {}).get("cursor"), "c2")
         self.assertEqual(c.open_read, {"pages": 2, "n": 2, "eof": True,
-                                       "keys": ["eof", "nextCursor"]})
+                                       "keys": ["eof", "nextCursor"], "capped": False})
         # one page with no cursor: one call, as before
         c = client(FakeResponse(200, {"orders": []}))
         self.assertEqual(c.open_orders(), [])
@@ -111,6 +111,23 @@ class TestOpenListPages(unittest.TestCase):
         # the state lookup reads every page too
         c = client(FakeResponse(200, page1), FakeResponse(200, page2))
         self.assertEqual(c.order_state("a2"), "ORDER_STATE_NEW")
+
+    def test_a_long_one_page_list_with_no_paging_field_reads_as_capped(self):
+        from v3.api import OPEN_LIST_CAP_HINT
+        rows = [{"id": f"o{i}", "state": "ORDER_STATE_NEW", "marketSlug": "m",
+                 "side": "SIDE_BUY", "price": {"value": "0.10"}, "quantity": "5"}
+                for i in range(OPEN_LIST_CAP_HINT + 9)]
+        c = client(FakeResponse(200, {"orders": rows}))
+        c.open_orders()
+        self.assertTrue(c.open_read["capped"])
+        # the same length with an eof flag is a complete read
+        c = client(FakeResponse(200, {"orders": rows, "eof": True}))
+        c.open_orders()
+        self.assertFalse(c.open_read["capped"])
+        # a short list is complete
+        c = client(FakeResponse(200, {"orders": rows[:10]}))
+        c.open_orders()
+        self.assertFalse(c.open_read["capped"])
 
 
 class TestParsing(unittest.TestCase):

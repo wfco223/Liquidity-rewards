@@ -411,5 +411,34 @@ class TestCancel(unittest.TestCase):
         self.assertTrue(urls[1].endswith("/v1/orders/open/cancel"))
 
 
+class TestACappedListLeavesAnAcceptedOrderResting(unittest.TestCase):
+    def test_not_seen_on_a_capped_list_is_unverified_not_withdrawn(self):
+        # 2026-09-11: the open list came back cut at ~250 rows with no
+        # paging field; orders accepted with no execution were never
+        # listed and were withdrawn 80 times a day
+        desk, client, _ = make_desk()
+        client.post_responses["/v1/orders"] = {"id": "new1", "executions": []}
+        client.open_orders_script = [[]]                      # never listed
+        client.open_read = {"pages": 1, "n": 249, "eof": None, "keys": [], "capped": True}
+        r = desk.place_resting("scc-x", "BUY", 0.08, 45)
+        self.assertFalse(r.ok)
+        self.assertTrue(r.unverified, r)
+        self.assertEqual(r.order_id, "new1")
+        self.assertIn("capped at 249 rows", r.note)
+        self.assertFalse([u for u, _ in client.posts if "cancel" in u])   # nothing withdrawn here
+        # a complete list that lacks it reads as before
+        client.open_read = {"pages": 1, "n": 12, "eof": None, "keys": [], "capped": False}
+        r = desk.place_resting("scc-x", "BUY", 0.09, 45)
+        self.assertFalse(r.ok)
+        self.assertFalse(r.unverified)
+        self.assertIn("placed but not resting", r.note)
+        # and an execution at once is never "unverified": it filled
+        client.post_responses["/v1/orders"] = {"id": "new2", "executions": [{"quantity": 45}]}
+        client.open_read = {"pages": 1, "n": 249, "eof": None, "keys": [], "capped": True}
+        r = desk.place_resting("scc-x", "BUY", 0.08, 45)
+        self.assertFalse(r.unverified)
+        self.assertIn("execution", r.note)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -43,6 +43,10 @@ DEAD_ORDER_STATES = frozenset({
 })
 
 RETRYABLE_STATUSES = (429, 500, 502, 503, 504)
+# a one-page open list this long with no paging field is taken as
+# CAPPED — the exchange cut it (2026-09-11, 15:36Z: 249 rows in one
+# page, no fields, an order of ours accepted and never listed)
+OPEN_LIST_CAP_HINT = 240
 
 
 def auth_headers(key_id: str, secret_key: str, method: str, path: str,
@@ -296,8 +300,40 @@ class Client:
             eof = j.get("eof")
             if eof or not (cursor or token):
                 break
-        self.open_read = {"pages": pages, "n": len(rows), "eof": eof, "keys": sorted(keys)}
+        self.open_read = {"pages": pages, "n": len(rows), "eof": eof, "keys": sorted(keys),
+                          "capped": bool(pages == 1 and not keys and len(rows) >= OPEN_LIST_CAP_HINT)}
         return rows
+
+    def probe_open_list(self, slug: str | None = None) -> dict:
+        """READ-ONLY, once a boot: what /v1/orders/open answers to the
+        paging parameters the exchange might honour, and the response
+        headers that might carry a cursor — the endpoint once returned
+        4,620 rows (data/health.txt) and now stops at ~250 with no
+        paging field in the body. Nothing here touches an order."""
+        out: dict = {}
+        path = "/v1/orders/open"
+        variants = [("plain", None), ("limit", {"limit": 1000}), ("pageSize", {"pageSize": 1000}),
+                    ("page_size", {"page_size": 1000}), ("offset", {"offset": 250})]
+        if slug:
+            variants.append(("marketSlug", {"marketSlug": slug}))
+        for name, params in variants:
+            try:
+                resp = self.session.request("GET", TRADE_API + path, params=params,
+                                            headers=self._headers("GET", path),
+                                            timeout=self.timeout)
+                if resp.status_code >= 400:
+                    out[name] = f"HTTP {resp.status_code}"
+                    continue
+                j = resp.json() or {}
+                out[name] = len(j.get("orders") or [])
+                if name == "plain":
+                    out["fields"] = sorted(k for k in j.keys() if k != "orders")
+                    out["headers"] = {k: v[:80] for k, v in resp.headers.items()
+                                      if any(w in k.lower() for w in
+                                             ("cursor", "page", "next", "link", "total", "count", "limit"))}
+            except Exception as e:  # noqa: BLE001 — a probe never breaks the cycle
+                out[name] = f"{type(e).__name__}: {e}"[:80]
+        return out
 
     def open_orders(self) -> list[dict]:
         """Live resting orders, normalized, dead states filtered."""

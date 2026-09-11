@@ -877,6 +877,25 @@ class TestTheRecordOfTheOrders(Base):
                             for e in self.f.log))
         self.assertFalse(self.mine(NC, side))
 
+    def test_an_accepted_order_the_capped_list_cannot_show_is_kept(self):
+        # 2026-09-11: the open list came back cut at ~250 rows with no
+        # paging field; four markets' orders were accepted, never listed,
+        # and withdrawn 80 times a day
+        hidden, _ = self.hide_next_placement()
+        self.r.exchange.open_read = {"pages": 1, "n": 249, "eof": None, "keys": [], "capped": True}
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        self.assertEqual(len(hidden), 1)
+        hid = next(iter(hidden))
+        self.assertIn(hid, self.r.exchange.live)             # never withdrawn
+        self.assertIn(hid, self.r.fam.orders)                # on the books as the tender's
+        self.assertEqual(self.r.fam.orders[hid].purpose, focus_mod.PURPOSE)
+        self.assertIn("unverified", self.r.fam.orders[hid].why)
+        rested = [e for e in self.f.log if e.get("event") == "rested" and "capped" in (e.get("note") or "")]
+        self.assertEqual(len(rested), 1, [e for e in self.f.log if e.get("market") == NC][-3:])
+        self.assertFalse([e for e in self.f.log if e.get("event") == "refused"])
+        self.assertIn(hid, self.f.mine_ids)
+
     def test_a_refused_placement_waits_out_the_cooldown(self):
         # 12:29-12:34Z, 2026-09-11: four orders refused every pass, 13 in
         # four minutes — the cooldown was set but never asked on this path
