@@ -2054,7 +2054,17 @@ function fBook(r){var b=r.book||{};var bids=b.bids||[],asks=b.asks||[];if(!bids.
 function fShort(t){return esc((t||'').split(' — ')[0]);}
 // what rests on each side against the program's target: a side under it pays nothing
 function fQual(r){var q=r.qual;if(!q)return '';function one(s){var x=q[s];return s+'s '+fmtsz(x[0])+' of '+fmtsz(x[1])+(x[2]?' ✓':' <span class="warn">✗ unqualified</span>');}
- return '<div class="muted" style="font-size:12px">resting '+one('bid')+' · '+one('ask')+'</div>';}
+ return '<div class="muted" style="font-size:12px">resting '+one('bid')+' · '+one('ask')+'</div>'+fWallBtns(r);}
+// the qualify button (owner, 2026-09-11: "a button similar to the one on
+// the bonds page that lets me automatically qualify the ask side"): the
+// same wall, to 125% of Target Size at the far edge of the book, on a
+// side under that line; the ask side first, the bid side beside it
+function fWallBtns(r){var w=r.wall;if(!w)return '';var o='';var q=r.qual||{};
+ ['ask','bid'].forEach(function(s){var x=w[s];if(!x||x.room)return;var ok=q[s]&&q[s][2];
+  o+=fBtn((ok?'Top up the '+s+' side to 125%':'Qualify the '+s+' side'),'fQualify(\''+esc(r.market)+'\',\''+s+'\','+Math.ceil(x.gap||0)+','+(x.px||0)+','+(x.usd||0)+')','small');});
+ if(r.qualify)o+='<div class="muted" style="font-size:12px">wall: '+esc(r.qualify)+'</div>';
+ return o?'<div style="margin-top:4px">'+o+'</div>':'';}
+function fQualify(m,side,gap,px,col){if(confirm('Build the '+side+' wall to 125% of Target Size? '+gap.toLocaleString()+' shares to go at '+pc(px)+' (~'+usd(col)+' of buying power held). It rests at the far edge of the book and never trades; the tender leaves it alone. Placed in the background in as many orders as it takes — tap again for progress.'))fOp('focus_qualify',m,side);}
 function fGlance(r){
  // the at-a-glance numbers (owner, 2026-09-11): what every order here
  // earns a day, and how far under its eight-hour peak that sits

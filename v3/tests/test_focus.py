@@ -1282,6 +1282,23 @@ class TestTheGlance(Base):
         self.assertFalse(row["qual"]["bid"][2])
         self.assertEqual(row["qual"]["bid"][0], 800)
         self.assertTrue(row["qual"]["ask"][2])
+        # the qualify button's figures: the bonds page's wall, to 125%
+        # of the target at the far edge (owner, 2026-09-11 "a button
+        # similar to the one on the bonds page that lets me
+        # automatically qualify the ask side")
+        w = row["wall"]
+        self.assertEqual(w["bid"]["goal"], 31250)
+        self.assertEqual(w["bid"]["gap"], 31250 - 800)
+        self.assertEqual(w["bid"]["px"], 0.01)
+        self.assertAlmostEqual(w["bid"]["usd"], (31250 - 800) * 0.01, places=2)
+        self.assertFalse(w["bid"]["room"])
+        self.assertTrue(w["ask"]["room"])
+        self.assertEqual(w["ask"]["gap"], 0)
+        # the run's note rides on the view when the monitor has one
+        self.f.wall_note = lambda slug: "3 orders, 900 shares" if slug == NC else None
+        v = self.f.view(self.r.now, 2000.0, True)
+        self.assertEqual([r.get("qualify") for r in v["rows"] if r["market"] == NC],
+                         ["3 orders, 900 shares"])
         # nothing on the unqualified side reads as earning
         self.assertEqual(sum(d["est"] for d in row["orders"] if d["side"] == "BUY"), 0.0)
 
@@ -1366,8 +1383,10 @@ class TestTheWebPage(unittest.TestCase):
         srv = web.WebServer(M(), port=0)
         srv.handle_op({"op": "focus_fair", "market": NC, "value": 45})
         srv.handle_op({"op": "focus_move", "market": NC, "value": {"order_id": "o1", "px": 40}})
+        srv.handle_op({"op": "focus_qualify", "market": NC, "value": "ask"})
         self.assertEqual(calls[0], ("focus_fair", NC, 45))
         self.assertEqual(calls[1][2]["order_id"], "o1")
+        self.assertEqual(calls[2], ("focus_qualify", NC, "ask"))
 
     def test_the_websocket_seats_the_focus_first_and_caps_the_engine(self):
         self.assertEqual(focus_mod.FOCUS_WS_CAP + focus_mod.ENGINE_WS_CAP, 200)
