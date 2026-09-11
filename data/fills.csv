@@ -4710,3 +4710,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789124692.2,politics,ussewc-usse-sd-2026-11-03-rep,SELL,1,0.95,void,0.006,32.14,0.991925,90,93,0.773,0.91,0.92,0.0419,-2,voided: the exchange has no trade for order CD7MJC75ASK5 — the row of 09-11 10:2,CD7MJC75ASK5
 1789124692.2,politics,paccc-balpow-2026-11-03-rsweep,BUY,150,0.17,void,97.4353,2.25,,13,17,0.812,,0.99,0.02,300,voided: the exchange has no trade for order CE15SA7PJSJ1 — the row of 09-11 10:2,CE15SA7PJSJ1
 1789124692.2,politics,usgubewc-usgub-id-2026-11-03-rep,SELL,24,0.99,void,0.0001,46.01,0.9989,91,95,0.756,,,0.0089,-72,voided: the exchange has no trade for order CCVPPTF8RSJR — the row of 09-11 10:2,CCVPPTF8RSJR
+1789124757.8,politics,ussewc-usse-tn-2026-11-03-rep,BUY,23,0.94,bond,0,0.02,0.99965,92,96,0.257,0.93,0.99,-0.0597,43,bond: took 23 YES at 94c — it was in the way of our resting order,CE3R1SZDTTN2
+1789124817.8,politics,ewc-usse-ne-2026-11-03-rep,BUY,1,0.78,earn,4.1604,0.02,0.877525,74,83,0.189,0.73,0.87,-0.0975,13,6 ticks in front of the touch — we would hold 100% of the bid side,CE3R5VMMYTN0
+1789124915.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,707,0.174,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3PSPDMJTMP
+1789125008.6,politics,paccc-usho-midterms-2026-11-03-rep,BUY,707,0.174,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3PSPDMJTMP
