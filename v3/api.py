@@ -187,7 +187,12 @@ class Client:
         blocked the qualifier for weeks. Parse every row through to_num
         (the API nests numbers) and take the largest. The first read-only
         run logs balances_raw so the true payload shape gets confirmed."""
-        vals = [to_num(b.get("buyingPower")) for b in self.balances_raw()
+        rows = self.balances_raw()
+        # the raw rows of the last read, for the page and the state (owner,
+        # 2026-09-11 "The buying power number is out of date" — the
+        # exchange app showed $177 available while our read said more)
+        self.balances_last = {"at": time.time(), "rows": [dict(r) for r in rows][:8]}
+        vals = [to_num(b.get("buyingPower")) for b in rows
                 if b.get("buyingPower") is not None]
         return max(vals) if vals else None
 
