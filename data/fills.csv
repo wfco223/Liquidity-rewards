@@ -4952,3 +4952,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789151130.9,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,1.28,0.22,hand,,6.91,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD3DSN416SJZ
 1789151130.9,politics,scc-senate-gop-2026-11-03-lte45,BUY,118,0.08,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE9W9545RTN1
 1789151130.9,politics,ewc-usse-mn-2026-11-03-rep,BUY,200,0.13,backfill,,0.68,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9C7CFCTTN5
+1789151200.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,158,0.494,sell,9.6179,0.9,0.5,48,50,0.793,0.493,0.494,0.006,0,an exit — its fill reduces the position it sits on,CE99TNBCYTMP
+1789151200.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,23,0.832,sell,25.0159,0.41,0.8618,84,85,0.94,0.831,0.832,0.0298,50,an exit — its fill reduces the position it sits on,CE9PZNPH8TMX
+1789151260.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,50,0.832,sell,3.619,0.43,0.8618,84,85,0.943,0.831,0.832,0.0298,0,an exit — its fill reduces the position it sits on,CE9PZNPH8TMX
+1789151668.9,politics,paccc-balpow-2026-11-03-rsweep,BUY,0.4,0.14,hand,,2.07,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7MYBV5GSJ1
+1789151668.9,politics,scc-senate-gop-2026-11-03-56,SELL,0.01,0.03,hand,,12.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7FF7V7CSJR
