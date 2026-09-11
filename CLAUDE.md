@@ -222,7 +222,10 @@ long and accreted, so search it rather than reading it through.
   the tender's that vanished counts as filled for the position's
   sake — for two and a half minutes unconfirmed, five once the
   journal books it, or until the feed itself moves — and a fill the
-  feed already shows is never counted twice (02:57-02:59Z,
+  feed already shows is never counted twice, a market the feed
+  carried no row for a pass ago having been flat (03:57Z, 2026-09-11:
+  a fresh short of 337 read as 674 and the cover was sized to it)
+  (02:57-02:59Z,
   2026-09-11: the House rep control exit of 68 filled, the feed still
   showed the lot, a second exit of 68 rested within the minute and
   filled: flat became short 68, the same shape that flipped positions
