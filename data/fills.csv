@@ -4675,3 +4675,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789112416.9,politics,ussewc-usse-ks-2026-11-03-dem,BUY,1,0.2,probe,0,0.22,0.210075,20,24,0.4,0.24,0.25,-0.0101,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CE0H75KH4T75
 1789112716.9,politics,usgubewc-usgub-il-2026-11-03-dem,BUY,10,0.93,earn,0.675,10.87,0.9964,95,98,0.64,0.91,0.94,-0.0664,30,1 tick behind the touch — we would hold 11% of the bid side,CDQK0YX1ASX0
 1789113576.1,politics,ussewc-usse-sd-2026-11-03-rep,SELL,0.09,0.92,backfill,,28.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7MYBPW6SJ1
+1789113730.5,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,0.09,0.12,backfill,,1.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE03FYDYCSJZ
+1789113772.8,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,19,0.12,earn,2.2368,1.12,0.005175,5,9,0.804,0.1,0.12,-0.1148,-55,1 tick behind the touch — we would hold 10% of the ask side,CE03FYDYCSJZ
+1789114132.8,politics,usgubewc-usgub-il-2026-11-03-dem,BUY,2.4,0.93,earn,5.4282,0.38,0.9964,94,97,0.722,0.93,0.94,-0.0664,32.4,1 tick behind the touch — we would hold 22% of the bid side,CE0TR1B3RSJH
+1789122295.1,politics,ussewc-usse-mt-2026-11-03-rep,BUY,10,0.88,void,0.3444,0.02,0.98405,80,84,0.897,0.9,0.91,-0.104,10,voided: the exchange has no trade for order CE1K5WSSESK5 — the row of 09-11 08:4,CE1K5WSSESK5
+1789122295.1,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,0.09,0.12,backfill,,1.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE03FYDYCSJZ
