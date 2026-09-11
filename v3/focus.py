@@ -226,6 +226,7 @@ class Focus:
         self.scores: dict[str, tuple[float, float, float]] = {}
         self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
         self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
+        self._feed_prev_at: float = 0.0           # when it was last taken (0 = never)
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
         self._gone_by_me: dict[str, float] = {}   # ids the tender itself cancelled or replaced -> when
         self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
@@ -600,7 +601,11 @@ class Focus:
             if gone > 0.0 and oid not in self._vanished:
                 self._vanished[oid] = (slug, side, gone, now, was_exit)
                 feed = float(((positions or {}).get(slug) or (0.0,))[0] or 0.0)
-                before = self._feed_prev.get(slug, feed)
+                # a market the feed carried no row for a pass ago was flat
+                # (03:57Z, 2026-09-11: a fresh short of 337 read as 674 and
+                # the cover was sized to it — the absent row had been taken
+                # as "unchanged")
+                before = (self._feed_prev.get(slug, 0.0) if self._feed_prev_at else feed)
                 if abs(feed - before) <= 0.005:
                     # the feed has not moved since the order was last seen
                     # resting: count the fill until it does
@@ -873,6 +878,7 @@ class Focus:
             acted = self._tend(now, positions, on) if on else 0
             self._feed_prev = {k: float((v or (0.0,))[0] or 0.0) for k, v in feed.items()
                                if k in self.markets}
+            self._feed_prev_at = now
             if not on:
                 self.note = "the focus switch is off — showing, not tending"
             elif self._blocked():
