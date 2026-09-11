@@ -4186,6 +4186,23 @@ class Monitor:
         self._floor_ok = self.floor.acked(now)
         self._stage("fetching the account's resting orders", 10)
         orders = self.client.open_orders()
+        open_read = getattr(self.client, "open_read", None) or {}
+        capped = bool(open_read.get("capped"))
+        if capped and now - getattr(self, "_cap_noted", 0.0) > 600.0:
+            self._cap_noted = now
+            self._note(f"open list capped: {open_read.get('n')} rows in one page, no paging "
+                       f"field — an order's absence is not trusted; placements the list "
+                       f"cannot show are left resting unverified")
+        if not getattr(self, "_probed_open", False):
+            # once a boot, read-only: what the endpoint answers to paging
+            # parameters and what its headers carry
+            self._probed_open = True
+            try:
+                slug = next((o["market"] for o in orders if o.get("market")), None)
+                self._note("open list probe: " + json.dumps(
+                    self.client.probe_open_list(slug), sort_keys=True)[:600])
+            except Exception as e:  # noqa: BLE001
+                self._note(f"open list probe failed: {type(e).__name__}: {e}"[:200])
         self._stage("fetching positions", 18)
         positions = self._guard_positions(self.client.positions_net(), now)
         self.last_flat = None
@@ -4301,7 +4318,8 @@ class Monitor:
                                            exits_only=exits_only,
                                            trades=trades_by_oid,
                                            money_out=(getattr(self.bonds, "money_out", None)
-                                                      is not None))
+                                                      is not None),
+                                           capped=capped)
                 summaries[key]["name"] = fam.cfg.name
                 est = self.samplers[key]
                 summaries[key]["earned_today"] = round(est.earned, 2)

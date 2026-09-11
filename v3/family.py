@@ -1923,7 +1923,7 @@ class Family:
     # -------------------------------------------------------------- reconcile
 
     def reconcile(self, open_orders: list[dict], positions: dict, now: float,
-                  trades=None) -> None:
+                  trades=None, capped: bool = False) -> None:
         """Adopt reality. Fills come from position deltas, never from mere
         disappearance. Scoped to markets THIS family placed in — the
         account is shared with 1.0 and 2.0, and their fills are not ours."""
@@ -1972,6 +1972,11 @@ class Family:
                 del self.gone_pending[oid]
         for oid, rec in list(self.orders.items()):
             live = open_by_id.get(oid)
+            if live is None and capped:
+                # the list was cut by the exchange (2026-09-11: ~250 rows
+                # with no paging field while more rested): an absence
+                # says nothing — the record stands
+                continue
             if live is not None:
                 if live["size"] < rec.qty - 1e-9:
                     # a shrunken size is only a FILL if the position
@@ -2364,9 +2369,9 @@ class Family:
     def cycle(self, now: float, open_orders: list[dict], positions: dict,
               client, switch_on: bool, foreign_ids=(),
               exits_only: bool = False, trades=None,
-              money_out: bool = False) -> dict:
+              money_out: bool = False, capped: bool = False) -> dict:
         self._client = client
-        self.reconcile(open_orders, positions, now, trades=trades)
+        self.reconcile(open_orders, positions, now, trades=trades, capped=capped)
         killed = self._kill_zombies()
         if killed:
             foreign_ids = set(foreign_ids) | killed
