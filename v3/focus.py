@@ -96,6 +96,13 @@ FOCUS_LOSS_CAP_USD = 1000.0     # expected loss resting, all the tender's orders
 FOCUS_CAP_SLACK = 1.10
 FOCUS_CAP_FAR = 1.25
 FOCUS_CAP_GRACE_S = 300.0
+# the cap's room goes by value (owner, 2026-09-11 "Yes to value ranked
+# cap allocation"): entries are ranked by expected value per dollar of
+# expected loss, and a plan that does not fit displaces the weakest
+# resting entries only when it beats each of them by this margin, at
+# most this many at once, never one rested inside the grace
+FOCUS_DISPLACE_MARGIN = 1.25
+FOCUS_DISPLACE_MAX = 3
 FOCUS_STAKE_FRAC = 0.10         # the list's entry: 10% of his buying power
 FOCUS_COC_DAY = 0.005           # cost of capital: per dollar tied up, a day
 FOCUS_FILL_COST_MIN = 0.02      # $/share a fill's cost never reads under
@@ -989,6 +996,66 @@ class Focus:
             tot += capital_at_risk(o.intent, o.price, o.qty) * max(pf, FOCUS_PF_FLOOR)
         return round(tot, 2)
 
+    @staticmethod
+    def _entry_risk(o: FamilyOrder) -> float:
+        pf = float(o.live_pf) if o.live_pf is not None else 1.0
+        return capital_at_risk(o.intent, o.price, o.qty) * max(pf, FOCUS_PF_FLOOR)
+
+    @staticmethod
+    def _value(ev: float, risk: float) -> float:
+        """Expected value a day per dollar of expected loss — the cap's
+        ranking (owner, 2026-09-11)."""
+        return ev / risk if risk > 1e-9 else float("inf")
+
+    def _make_room(self, now: float, slug: str, side: str, plan: dict, used: float,
+                   actions: int) -> tuple[float, int] | None:
+        """A plan that does not fit under the cap: the weakest resting
+        entries by value come off to make room, each only if the plan
+        beats it by FOCUS_DISPLACE_MARGIN, at most FOCUS_DISPLACE_MAX,
+        none rested inside FOCUS_CAP_GRACE_S. Returns (risk freed,
+        actions spent), or None when the room cannot be made."""
+        need = used + float(plan["risk"]) - self.loss_cap
+        if need <= 1e-9:
+            return 0.0, 0
+        mine_val = self._value(float(plan["ev"]), float(plan["risk"]))
+        cands = []
+        for o in list(self.fam.orders.values()):
+            if (o.purpose != PURPOSE or o.market not in self.markets or self._exit_order(o)
+                    or (o.market == slug and o.side == side)):
+                continue
+            if now - float(o.placed_ts or 0.0) < FOCUS_CAP_GRACE_S:
+                continue
+            risk = self._entry_risk(o)
+            val = self._value(float(o.live_ev if o.live_ev is not None else 0.0), risk)
+            if val * FOCUS_DISPLACE_MARGIN <= mine_val and risk > 1e-9:
+                cands.append((val, risk, o))
+        cands.sort(key=lambda t: t[0])
+        take, freed = [], 0.0
+        for val, risk, o in cands[:FOCUS_DISPLACE_MAX]:
+            take.append((val, risk, o))
+            freed += risk
+            if freed >= need - 1e-9:
+                break
+        if freed < need - 1e-9 or len(take) > actions:
+            return None
+        spent = 0
+        got = 0.0
+        for val, risk, o in take:
+            r = self.fam.desk.cancel(o.id, o.market, initiator="auto")
+            spent += 1
+            if not r.ok:
+                continue
+            self.fam.orders.pop(o.id, None)
+            self._forget(o.id)
+            self.moved_at[f"{o.market}|{o.side}"] = now
+            got += risk
+            self._log(event="pull", market=o.market, side=o.side, price=o.price, qty=o.qty,
+                      why=(f"displaced — {self._label(slug)[:30]} {side} earns "
+                           f"${mine_val:.2f} a day per $ of expected loss, this ${val:.2f}"))
+        if got < need - 1e-9:
+            return None
+        return got, spent
+
     def _blocked(self) -> bool:
         """The desk's placement breaker: the exchange refused the last
         placement from this address as a VPN."""
@@ -1015,7 +1082,8 @@ class Focus:
             mine = sorted((o for o in list(self.fam.orders.values())
                            if o.purpose == PURPOSE and o.market in self.markets
                            and not self._exit_order(o)),
-                          key=lambda o: (o.live_ev if o.live_ev is not None else 0.0))
+                          key=lambda o: self._value(float(o.live_ev if o.live_ev is not None else 0.0),
+                                                    self._entry_risk(o)))
             for o in mine:
                 if used <= self.loss_cap or actions <= 0:
                     break
@@ -1108,7 +1176,13 @@ class Focus:
             self.weak_since.pop(key, None)
             if cur is None:
                 if not is_exit and used + plan["risk"] > self.loss_cap + 1e-9:
-                    continue                      # the cap: the best EV got in first
+                    room = self._make_room(now, slug, side, plan, used, actions)
+                    if room is None:
+                        continue                  # the cap: nothing weaker enough to displace
+                    used -= room[0]
+                    actions -= room[1]
+                    if actions <= 0:
+                        break
                 n_mine = sum(1 for o in list(self.fam.orders.values()) if o.purpose == PURPOSE)
                 if n_mine >= FOCUS_MAX_ORDERS and not is_exit:
                     continue                      # an exit is never held back
@@ -1174,7 +1248,13 @@ class Focus:
                 cur_risk = capital_at_risk(cur.intent, cur.price, cur.qty) * max(
                     float(cur.live_pf if cur.live_pf is not None else 1.0), FOCUS_PF_FLOOR)
                 if used - cur_risk + plan["risk"] > self.loss_cap + 1e-9:
-                    continue
+                    room = self._make_room(now, slug, side, plan, used - cur_risk, actions)
+                    if room is None:
+                        continue
+                    used -= room[0]
+                    actions -= room[1]
+                    if actions <= 0:
+                        break
             intent = SELL_SHORT if wrong_intent else cur.intent
             r = self.fam.desk.reprice(
                 {"id": cur.id, "market": slug, "side": side, "price": cur.price,
