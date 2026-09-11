@@ -1661,8 +1661,10 @@ function render(d){
    +'<div class="kpi" style="margin:2px 0 4px">'
    +'<div><div class="v">'+(r.actual==null?'\u2014':usd(r.actual))+'</div><div class="l">paid</div></div>'
    +'<div><div class="v muted">'+(r.est==null?'\u2014':usd(r.est))+'</div><div class="l">estimate</div></div>'
-   +(r.actual!=null&&r.est?'<div><div class="v">'+(r.actual/r.est).toFixed(2)+'x</div><div class="l">paid/est</div></div>':'')
+   +(r.ratio_posted!=null?'<div><div class="v">'+r.ratio_posted.toFixed(2)+'x</div><div class="l">paid/est, posted markets</div></div>'
+     :(r.actual!=null&&r.est?'<div><div class="v">'+(r.actual/r.est).toFixed(2)+'x</div><div class="l">paid/est</div></div>':''))
    +'</div>';
+  if(r.ratio_posted!=null||r.posted_n){body+='<div class="sub muted">'+(r.posted_n||0)+' of '+(r.est_n||0)+' markets we estimated have posted: paid '+usd(r.posted_paid||0)+' against '+usd(r.posted_est||0)+' estimated for them'+(r.extra_paid?' \u00b7 '+usd(r.extra_paid)+' paid on markets we did not estimate':'')+'</div>';}
   if(r.est!=null){body+='<div class="mtrack"><div class="mfill" style="width:'+(100*(r.est||0)/mx)+'%"></div></div>';}
   if(r.actual!=null){body+='<div class="mtrack"><div class="mfill" style="width:'+(100*(r.actual||0)/mx)+'%;background:#8a7a2f"></div></div>';}
   body+='</div>';

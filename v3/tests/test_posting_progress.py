@@ -69,5 +69,53 @@ class TestPostingProgress(unittest.TestCase):
         self.assertEqual(p[0]["extra"], 1)
 
 
+class TestTheRunningGrade(unittest.TestCase):
+    """owner, 2026-09-11: "For the paid/estimated number can you only
+    consider the rows for markets that have been posted already? So I
+    get a sense as I'm going how high or low I'm running"."""
+
+    def setUp(self):
+        self.dir = tempfile.TemporaryDirectory()
+        os.environ["V3_STATE_PATH"] = os.path.join(self.dir.name, "s.json")
+        os.environ["V3_FLOOR_PATH"] = os.path.join(self.dir.name, "f.json")
+        os.environ["GITHUB_TOKEN"] = ""
+        os.environ["V3_FLATTEN"] = "0"
+        self.mon = Monitor()
+
+    def tearDown(self):
+        for k in ("V3_STATE_PATH", "V3_FLOOR_PATH", "V3_FLATTEN"):
+            os.environ.pop(k, None)
+        self.dir.cleanup()
+
+    def test_the_ratio_counts_only_the_markets_posted_so_far(self):
+        day = "2026-09-10"
+        # four markets estimated, two posted so far (one of them paid
+        # under its claim), one posted that we never estimated
+        self.mon.mkt_claim_day = {f"{day}|m1": 10.0, f"{day}|m2": 5.0, f"{day}|m3": 20.0,
+                                  f"{day}|m4": 0.0}
+        self.mon.paid_seen = {f"{day}|m1": 12.0, f"{day}|m2": 3.0, f"{day}|m9": 0.7}
+        self.mon._rebuild_paid_by_day()
+        self.mon.actuals_by_day = {day: 15.7}
+        rows = {r["day"]: r for r in self.mon._grades()}
+        g = rows[day]
+        self.assertEqual(g["actual"], 15.7)                     # the whole day's postings
+        self.assertEqual((g["posted_n"], g["est_n"]), (2, 3))    # m4 claimed nothing
+        self.assertEqual((g["posted_paid"], g["posted_est"]), (15.0, 15.0))
+        self.assertEqual(g["ratio_posted"], 1.0)                 # not 15.7 / 35
+        self.assertEqual(g["extra_paid"], 0.7)
+
+    def test_a_day_with_nothing_posted_carries_no_running_grade(self):
+        day = "2026-09-10"
+        self.mon.mkt_claim_day = {f"{day}|m1": 10.0}
+        self.mon.paid_seen = {}
+        self.mon._rebuild_paid_by_day()
+        self.mon.actuals_by_day = {}
+        rows = [r for r in self.mon._grades() if r["day"] == day]
+        self.assertEqual(rows, [])                               # no estimate history, nothing posted
+        self.mon.actuals_by_day = {"2026-09-09": 4.0}            # a posted day we never claimed
+        g = [r for r in self.mon._grades() if r["day"] == "2026-09-09"][0]
+        self.assertNotIn("ratio_posted", g)
+
+
 if __name__ == "__main__":
     unittest.main()

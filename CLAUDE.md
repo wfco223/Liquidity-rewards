@@ -398,6 +398,15 @@ long and accreted, so search it rather than reading it through.
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
+- The pay page grades a day as it posts (owner, 2026-09-11 "For the
+  paid/estimated number can you only consider the rows for markets
+  that have been posted already? So I get a sense as I'm going how
+  high or low I'm running"): the exchange posts a day market by
+  market over hours, so beside the whole day's paid and estimate the
+  ratio shown is paid over the estimate for the markets posted so
+  far (the per-market claims in mkt_claim_day), with the count of
+  estimated markets posted and what was paid on markets never
+  estimated.
 - Write predictions down in v3/PREDICTIONS.md BEFORE the data lands:
   the claim, why, and what would falsify it. Grade them against the
   exchange's own files. Wrong ones stay on the page with what they
