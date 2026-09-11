@@ -732,6 +732,27 @@ def build_hash() -> str:
     return h.hexdigest()[:8]
 
 
+def _record_flat(families, market: str) -> bool:
+    """The transaction record says this position left: the newest
+    journal fill in the market, across the families, closed it
+    (pos_after 0). A row without pos_after (a hand fill recovered from
+    the record) says nothing."""
+    newest = None
+    for fam in (families or {}).values():
+        for r in reversed(getattr(fam, "fills", None) or []):
+            if r.get("market") != market:
+                continue
+            if newest is None or float(r.get("ts") or 0.0) > float(newest.get("ts") or 0.0):
+                newest = r
+            break
+    if newest is None or newest.get("pos_after") is None:
+        return False
+    try:
+        return abs(float(newest["pos_after"])) < 0.5
+    except (TypeError, ValueError):
+        return False
+
+
 class CacheRouter:
     """The stream writes here; frames route to the family that owns the
     market (politics is the fallback). One socket, every family fed."""
@@ -4127,6 +4148,8 @@ class Monitor:
     POS_GONE_S = 300.0
 
     def _guard_positions(self, fresh: dict, now: float) -> dict:
+        """See _record_flat for the one case a missing market is taken
+        as gone at once."""
         last = getattr(self, "_pos_last", None) or {}
         fresh = dict(fresh or {})
         missing = {m for m, v in last.items()
@@ -4147,7 +4170,21 @@ class Monitor:
                 pend.pop(m, None)
         merged = dict(fresh)
         gone = []
+        sold = []
         for m in sorted(missing):
+            if _record_flat(getattr(self, "families", None), m):
+                # the transaction record says the position left: the
+                # newest journal fill here closed it. Not "missing" —
+                # keeping it at its last value had the focus tender
+                # resting fresh exits on positions already sold out
+                # (18:34Z, 2026-09-11: 158 Senate control @52.1c and 50
+                # House control @83.2c rested eight minutes after their
+                # exits filled; caught by the one-order-a-side and
+                # orphan-exit guards, neither filled)
+                gone.append(m)
+                sold.append(m)
+                pend.pop(m, None)
+                continue
             cnt, since = pend.get(m, (0, now))
             cnt += 1
             pend[m] = (cnt, since)
@@ -4160,12 +4197,19 @@ class Monitor:
         if missing:
             rd = getattr(self.client, "positions_read", None)
             kept = len(missing) - len(gone)
+            timed = [m for m in gone if m not in sold]
+            parts = []
+            if kept:
+                parts.append(f"{kept} kept at their last value")
+            if sold:
+                parts.append(f"{len(sold)} sold out in the record, taken as gone now: "
+                             f"{', '.join(sold[:4])}")
+            if timed:
+                parts.append(f"{len(timed)} missing {self.POS_GONE_READS} reads over "
+                             f"{self.POS_GONE_S / 60:.0f} min, now taken as gone: "
+                             f"{', '.join(timed[:4])}")
             self._note(f"positions feed short: {len(missing)} of {len(last)} held "
-                       f"markets missing (read: {rd}); "
-                       + (f"{kept} kept at their last value" if kept else "")
-                       + (f"; {len(gone)} missing {self.POS_GONE_READS} reads over "
-                          f"{self.POS_GONE_S / 60:.0f} min, now taken as gone: "
-                          f"{', '.join(gone[:4])}" if gone else ""))
+                       f"markets missing (read: {rd}); " + "; ".join(parts))
         self._pos_last = merged
         self._pos_last_at = now
         return merged
