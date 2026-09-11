@@ -119,6 +119,16 @@ FOCUS_FILL_COST_MAX = 0.25      # ...nor over (a broken measure must not read as
 FOCUS_PF_FLOOR = 0.05           # fill odds never charge the cap under this
 FOCUS_BEHIND_MAX = 6            # candidate slots out to this many ticks behind the touch
 FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much of the best EV
+# a concession past his fair needs company (owner, 2026-09-11 after the
+# exchange's maintenance wiped the books: "Be careful of placing orders
+# after the maintenance. Don't sell everything for pennies there might
+# not be any orders resting"; at 10:47Z the tender had sold 84 shares of
+# Ohio Senate dem at 46c against his 62c fair, 13 seconds after resting
+# them — a bare ask side had made the order read $360 a day): an entry
+# may sit past fair only on a side with company — where what others
+# rest within FOCUS_BEHIND_MAX ticks of the side's best adds up to the
+# full stake or more; on a bare side it rests at his fair or better
+# (see _bare)
 # the sizes tried at each price, as fractions of the stake (owner,
 # 2026-09-10: "A bid over fair value is fine as long as it is
 # appropriately sized for the risk and rewards it can earn"): the reward
@@ -850,6 +860,13 @@ class Focus:
             cost_ps = px if side == "BUY" else 1.0 - px
             if cost_ps <= 0:
                 continue
+            full = float(math.floor(stake / cost_ps))
+            if full < 1.0:
+                continue
+            # past his fair on a bare side: no, at any size
+            if fair is not None and ((px > fair) if side == "BUY" else (px < fair)):
+                if self._bare(levels, book.tick or 0.01, full):
+                    continue
             tried: set[float] = set()
             for frac in FOCUS_SIZE_FRACS:
                 qty = float(math.floor(stake * frac / cost_ps))
@@ -1024,7 +1041,12 @@ class Focus:
                 o.live_est = s["est"]
                 o.live_pf = s["pf"]
                 o.live_ev = s["ev"]
-                self.scores[o.id] = (s["est"], s["pf"], s["ev"])
+                bare = False
+                if not is_exit and s["conc"] > 0 and stake >= 1.0:
+                    cost_ps = o.price if o.side == "BUY" else 1.0 - o.price
+                    full = float(math.floor(stake / cost_ps)) if cost_ps > 0 else 0.0
+                    bare = full >= 1.0 and self._bare(levels, book.tick or 0.01, full)
+                self.scores[o.id] = (s["est"], s["pf"], s["ev"], bare, s["conc"])
             row["orders"].append(d)
         row["orders"].sort(key=lambda d: (d["side"], -d["price"]))
         # at a glance: what every order here earns a day, the shares held,
@@ -1152,6 +1174,24 @@ class Focus:
         if sc is not None:
             return float(sc[2])
         return float(o.live_ev) if o.live_ev is not None else None
+
+    @staticmethod
+    def _bare(levels: list, tick: float, full: float) -> bool:
+        """A side with no company for a concession: what others rest
+        within FOCUS_BEHIND_MAX ticks of its best adds up to less than
+        the full stake in shares (`levels` is the side less our own)."""
+        if not levels:
+            return True
+        best = float(levels[0][0])
+        near = sum(float(q) for p, q in levels
+                   if abs(float(p) - best) <= FOCUS_BEHIND_MAX * tick + 1e-9)
+        return near < full
+
+    def _own_bare(self, o: FamilyOrder) -> bool:
+        """A resting entry past his fair on a bare side: the concession
+        has no company."""
+        sc = self.scores.get(o.id)
+        return bool(sc is not None and len(sc) >= 5 and sc[4] > 0 and sc[3])
 
     def _entry_risk(self, o: FamilyOrder) -> float:
         return capital_at_risk(o.intent, o.price, o.qty) * max(self._own_pf(o), FOCUS_PF_FLOOR)
@@ -1302,11 +1342,14 @@ class Focus:
                 # a position past the stake, no fair — always pulls it
                 own_ev = self._own_ev(cur) if cur is not None else None
                 key = f"{slug}|{side}"
-                if (cur is not None and not (plan or {}).get("hold")
+                # past his fair with no company on the side: off at once,
+                # whatever its own paper reading (owner, 2026-09-11)
+                bare = cur is not None and not is_exit and self._own_bare(cur)
+                if (cur is not None and not (plan or {}).get("hold") and not bare
                         and own_ev is not None and own_ev > 0.0):
                     self.weak_since.pop(key, None)
                     continue
-                if cur is not None and not (plan or {}).get("hold"):
+                if cur is not None and not (plan or {}).get("hold") and not bare:
                     # under zero: only a reading that has held for the
                     # dwell pulls it (a tenth-cent flicker does not)
                     since = self.weak_since.setdefault(key, now)
@@ -1321,7 +1364,8 @@ class Focus:
                         actions -= 1
                         self._log(event="pull", market=slug, side=side, price=cur.price,
                                   qty=cur.qty,
-                                  why=(plan.get("note") or "nothing earns on this side"
+                                  why=("past your fair with no company on the side" if bare
+                                       else plan.get("note") or "nothing earns on this side"
                                        if not plan or not plan.get("px")
                                        else f"expected value {plan['ev']:+.2f}/day for "
                                             f"{FOCUS_WEAK_DWELL_S / 60:.0f} min"))
@@ -1394,6 +1438,8 @@ class Focus:
                 continue
             cur_ev = float(self._own_ev(cur) or 0.0)
             keeps = same_px or cur_ev >= FOCUS_KEEP * plan["ev"] - 1e-9
+            if not is_exit and self._own_bare(cur):
+                keeps = False                     # past fair with no company: to the plan
             if keeps and size_ok and not wrong_intent:
                 continue
             cooldown = FOCUS_EXIT_COOLDOWN_S if is_exit else FOCUS_MOVE_COOLDOWN_S
