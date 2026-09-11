@@ -196,7 +196,12 @@ long and accreted, so search it rather than reading it through.
   one on the bonds page that lets me automatically qualify the ask
   side"; the bid side has its own beside it): the same wall run,
   his hand's orders at the far edge of the book, which the tender
-  leaves alone and counts back into the stake's buying power.
+  leaves alone and counts back into the stake's buying power. The
+  buying power on the page is read every twenty seconds and shown
+  with its age; a failing read keeps the last number and says so,
+  and the stake line shows its basis — the highest read of the last
+  thirty minutes plus what the walls hold (owner, 2026-09-11 "The
+  buying power number is out of date").
   Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where

@@ -156,7 +156,8 @@ FOCUS_WEAK_DWELL_S = 300.0
 FOCUS_REFILL_WAIT_S = 15 * 60.0
 FOCUS_REFILL_SCALE_S = 2 * 3600.0
 FOCUS_REFILL_FLOOR = 0.25
-FOCUS_BP_EVERY_S = 60.0
+FOCUS_BP_EVERY_S = 20.0         # the buying-power read's age at most (owner, 2026-09-11
+                                # "The buying power number is out of date")
 FOCUS_BP_WINDOW_S = 1800.0      # the stake follows the HIGHEST buying-power read of
                                 # the last half hour: a fill's dip must not pull every
                                 # order and re-rest it a minute later (13:43-13:46Z)
@@ -261,6 +262,8 @@ class Focus:
         self.last_terms_own = 0.0
         self._rotor = 0
         self._bp: tuple[float, float] | None = None
+        self._bp_err: tuple[float, str] | None = None   # (since, why) while reads fail
+        self._stake_bp: tuple[float, float, float] | None = None   # (30-min high, walls, at)
         self.last_pass = 0.0
         self.pass_s = 0.0
         self.books_read = 0
@@ -288,14 +291,21 @@ class Focus:
             return None
         try:
             v = self._bp_fn()
-        except Exception:  # noqa: BLE001 — unknown, not zero
+        except Exception as e:  # noqa: BLE001 — unknown, not zero
+            # the last read stands, and the page says so (owner,
+            # 2026-09-11 "The buying power number is out of date")
+            if self._bp_err is None:
+                self._bp_err = (now, f"{type(e).__name__}: {e}"[:120])
             return self._bp[0] if self._bp is not None else None
         try:
             val = float(v) if v is not None else None
         except (TypeError, ValueError):
             val = None
         if val is None:
+            if self._bp_err is None:
+                self._bp_err = (now, "the exchange returned no buying power")
             return self._bp[0] if self._bp is not None else None
+        self._bp_err = None
         self._bp = (val, now)
         self._bp_reads = [(ts, v) for ts, v in self._bp_reads
                           if now - ts <= FOCUS_BP_WINDOW_S] + [(now, val)]
@@ -322,7 +332,9 @@ class Focus:
             vals.append(bp)
         if not vals:
             return None
-        return max(vals) + self.walls_held()
+        walls = self.walls_held()
+        self._stake_bp = (max(vals), walls, now)
+        return max(vals) + walls
 
     def stake(self, slug: str, bp: float | None) -> tuple[float, str]:
         s = self.stakes.get(slug)
@@ -1744,9 +1756,20 @@ class Focus:
                     r["qualify"] = n
                 else:
                     r.pop("qualify", None)
-        stake, src = self.stake("-", bp)
+        # the stake as the tender sizes it: the highest read of the last
+        # thirty minutes plus what his walls hold — and the read's age, so
+        # a stale number reads as stale (owner, 2026-09-11 "The buying
+        # power number is out of date")
+        high, walls = (self._stake_bp[0], self._stake_bp[1]) if self._stake_bp else (bp, 0.0)
+        basis = (high + walls) if high is not None else None
+        stake, src = self.stake("-", basis)
+        bp_at = self._bp[1] if self._bp else None
         return {"ok": True, "at": round(now, 1), "pass_s": self.pass_s,
                 "n": len(self.markets), "bp": bp, "stake": stake, "stake_src": src,
+                "bp_at": bp_at, "bp_age_s": (round(now - bp_at) if bp_at is not None else None),
+                "bp_note": (f"reads failing since {time.strftime('%H:%M', time.gmtime(self._bp_err[0]))}Z"
+                            f" — {self._bp_err[1]}" if self._bp_err else ""),
+                "bp_high": high, "walls_held": walls, "stake_bp": basis,
                 "loss_cap": self.loss_cap, "risk_used": self.risk_used(),
                 "coc_day": self.coc_day, "fill_floor": self.fill_floor,
                 "on": bool(on), "note": self.note, "blocked": self._blocked(),
