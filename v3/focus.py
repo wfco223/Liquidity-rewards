@@ -101,8 +101,17 @@ FOCUS_CAP_GRACE_S = 300.0
 # expected loss, and a plan that does not fit displaces the weakest
 # resting entries only when it beats each of them by this margin, at
 # most this many at once, never one rested inside the grace
-FOCUS_DISPLACE_MARGIN = 1.25
+# 01:00-01:38Z, 2026-09-11, the first hour of value ranking: 39 orders
+# displaced and 49 rested — a plan is valued on a book without it, a
+# resting order on the book as it turns out, so every market's plan
+# looked better than every market's resting order and they rotated.
+# Now an order earns for half an hour before it can be displaced, the
+# newcomer must be worth double, and a side that was itself displaced
+# in the last hour displaces nothing
+FOCUS_DISPLACE_MARGIN = 2.0
 FOCUS_DISPLACE_MAX = 3
+FOCUS_DISPLACE_GRACE_S = 1800.0
+FOCUS_DISPLACED_REST_S = 3600.0
 FOCUS_STAKE_FRAC = 0.10         # the list's entry: 10% of his buying power
 FOCUS_COC_DAY = 0.005           # cost of capital: per dollar tied up, a day
 FOCUS_FILL_COST_MIN = 0.02      # $/share a fill's cost never reads under
@@ -198,6 +207,13 @@ class Focus:
         self.filled_at: dict[str, float] = {}     # slug|side -> when an entry last filled
         self.weak_since: dict[str, float] = {}    # slug|side -> reading under zero since
         self.silver_seeded: set[str] = set()      # FOCUS_SILVER_FAIRS already given a fair
+        self.displaced_at: dict[str, float] = {}  # slug|side -> when the cap's ranking pulled it
+        # the tender's OWN reading of each resting order (est, fill odds,
+        # expected value): the family rescores the same records every
+        # minute with its own model (01:38Z, 2026-09-11: a bid the tender
+        # had just rested at +$168 a day read −$697 a minute later, a 62c
+        # fill cost a share), and the tender must judge by its own numbers
+        self.scores: dict[str, tuple[float, float, float]] = {}
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
         self._gone_by_me: dict[str, float] = {}   # ids the tender itself cancelled or replaced -> when
         self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
@@ -572,6 +588,8 @@ class Focus:
                 self._vanished.pop(oid, None)     # gone for good, unbooked: not a fill
         self._last_mine = {oid: (o.market, o.side, o.qty, self._exit_order(o))
                            for oid, o in cur.items()}
+        live = set(self.fam.orders)
+        self.scores = {k: v for k, v in self.scores.items() if k in live}
         # an id the tender cancelled is remembered for a while: the open
         # list lags a cancel by a read or more, the family adopts the
         # ghost as his, and the tender must neither adopt it back nor
@@ -892,6 +910,7 @@ class Focus:
                 o.live_est = s["est"]
                 o.live_pf = s["pf"]
                 o.live_ev = s["ev"]
+                self.scores[o.id] = (s["est"], s["pf"], s["ev"])
             row["orders"].append(d)
         row["orders"].sort(key=lambda d: (d["side"], -d["price"]))
         # the entry of 10% of buying power at the optimal price, each side
@@ -992,14 +1011,23 @@ class Focus:
         for o in list(self.fam.orders.values()):
             if o.purpose != PURPOSE or o.market not in self.markets or self._exit_order(o):
                 continue
-            pf = float(o.live_pf) if o.live_pf is not None else 1.0
-            tot += capital_at_risk(o.intent, o.price, o.qty) * max(pf, FOCUS_PF_FLOOR)
+            tot += self._entry_risk(o)
         return round(tot, 2)
 
-    @staticmethod
-    def _entry_risk(o: FamilyOrder) -> float:
-        pf = float(o.live_pf) if o.live_pf is not None else 1.0
-        return capital_at_risk(o.intent, o.price, o.qty) * max(pf, FOCUS_PF_FLOOR)
+    def _own_pf(self, o: FamilyOrder) -> float:
+        sc = self.scores.get(o.id)
+        if sc is not None:
+            return float(sc[1])
+        return float(o.live_pf) if o.live_pf is not None else 1.0
+
+    def _own_ev(self, o: FamilyOrder) -> float | None:
+        sc = self.scores.get(o.id)
+        if sc is not None:
+            return float(sc[2])
+        return float(o.live_ev) if o.live_ev is not None else None
+
+    def _entry_risk(self, o: FamilyOrder) -> float:
+        return capital_at_risk(o.intent, o.price, o.qty) * max(self._own_pf(o), FOCUS_PF_FLOOR)
 
     @staticmethod
     def _value(ev: float, risk: float) -> float:
@@ -1017,16 +1045,18 @@ class Focus:
         need = used + float(plan["risk"]) - self.loss_cap
         if need <= 1e-9:
             return 0.0, 0
+        if now - self.displaced_at.get(f"{slug}|{side}", 0.0) < FOCUS_DISPLACED_REST_S:
+            return None                          # displaced itself lately: it waits its turn
         mine_val = self._value(float(plan["ev"]), float(plan["risk"]))
         cands = []
         for o in list(self.fam.orders.values()):
             if (o.purpose != PURPOSE or o.market not in self.markets or self._exit_order(o)
                     or (o.market == slug and o.side == side)):
                 continue
-            if now - float(o.placed_ts or 0.0) < FOCUS_CAP_GRACE_S:
+            if now - float(o.placed_ts or 0.0) < FOCUS_DISPLACE_GRACE_S:
                 continue
             risk = self._entry_risk(o)
-            val = self._value(float(o.live_ev if o.live_ev is not None else 0.0), risk)
+            val = self._value(float(self._own_ev(o) or 0.0), risk)
             if val * FOCUS_DISPLACE_MARGIN <= mine_val and risk > 1e-9:
                 cands.append((val, risk, o))
         cands.sort(key=lambda t: t[0])
@@ -1048,6 +1078,7 @@ class Focus:
             self.fam.orders.pop(o.id, None)
             self._forget(o.id)
             self.moved_at[f"{o.market}|{o.side}"] = now
+            self.displaced_at[f"{o.market}|{o.side}"] = now
             got += risk
             self._log(event="pull", market=o.market, side=o.side, price=o.price, qty=o.qty,
                       why=(f"displaced — {self._label(slug)[:30]} {side} earns "
@@ -1082,7 +1113,7 @@ class Focus:
             mine = sorted((o for o in list(self.fam.orders.values())
                            if o.purpose == PURPOSE and o.market in self.markets
                            and not self._exit_order(o)),
-                          key=lambda o: self._value(float(o.live_ev if o.live_ev is not None else 0.0),
+                          key=lambda o: self._value(float(self._own_ev(o) or 0.0),
                                                     self._entry_risk(o)))
             for o in mine:
                 if used <= self.loss_cap or actions <= 0:
@@ -1093,8 +1124,7 @@ class Focus:
                 if r.ok:
                     self.fam.orders.pop(o.id, None)
                     self._forget(o.id)
-                    used -= capital_at_risk(o.intent, o.price, o.qty) * max(
-                        float(o.live_pf if o.live_pf is not None else 1.0), FOCUS_PF_FLOOR)
+                    used -= self._entry_risk(o)
                     actions -= 1
                     self._log(event="pull", market=o.market, side=o.side, price=o.price,
                               qty=o.qty, why=f"over the ${self.loss_cap:,.0f} loss cap")
@@ -1143,7 +1173,7 @@ class Focus:
                 # balance-of-power ask was pulled and re-rested three times
                 # in three minutes on buying-power dips); a hold — a fill,
                 # a position past the stake, no fair — always pulls it
-                own_ev = float(cur.live_ev) if (cur is not None and cur.live_ev is not None) else None
+                own_ev = self._own_ev(cur) if cur is not None else None
                 key = f"{slug}|{side}"
                 if (cur is not None and not (plan or {}).get("hold")
                         and own_ev is not None and own_ev > 0.0):
@@ -1235,7 +1265,7 @@ class Focus:
             wrong_intent = is_exit and side == "BUY" and cur.intent != SELL_SHORT
             if same_px and size_ok and not wrong_intent:
                 continue
-            cur_ev = float(cur.live_ev if cur.live_ev is not None else 0.0)
+            cur_ev = float(self._own_ev(cur) or 0.0)
             keeps = same_px or cur_ev >= FOCUS_KEEP * plan["ev"] - 1e-9
             if keeps and size_ok and not wrong_intent:
                 continue
@@ -1245,8 +1275,7 @@ class Focus:
             cur_risk = 0.0
             if not is_exit:
                 # a resize up is new money at risk: the cap binds it too
-                cur_risk = capital_at_risk(cur.intent, cur.price, cur.qty) * max(
-                    float(cur.live_pf if cur.live_pf is not None else 1.0), FOCUS_PF_FLOOR)
+                cur_risk = self._entry_risk(cur)
                 if used - cur_risk + plan["risk"] > self.loss_cap + 1e-9:
                     room = self._make_room(now, slug, side, plan, used - cur_risk, actions)
                     if room is None:
@@ -1549,6 +1578,7 @@ class Focus:
                 "first_seen": dict(self.first_seen), "moved_at": dict(self.moved_at),
                 "filled_at": dict(self.filled_at), "mine_ids": list(self.mine_ids[-MINE_IDS_KEEP:]),
                 "silver_seeded": sorted(self.silver_seeded),
+                "displaced_at": dict(self.displaced_at),
                 "events": self.events[-EVENTS_KEEP:], "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -1567,5 +1597,6 @@ class Focus:
         self.filled_at = {str(k): float(v) for k, v in (d.get("filled_at") or {}).items()}
         self.mine_ids = [str(x) for x in (d.get("mine_ids") or [])][-MINE_IDS_KEEP:]
         self.silver_seeded = {str(s) for s in (d.get("silver_seeded") or [])}
+        self.displaced_at = {str(k): float(v) for k, v in (d.get("displaced_at") or {}).items()}
         self.events = list(d.get("events") or [])[-EVENTS_KEEP:]
         self.log = list(d.get("log") or [])[-LOG_KEEP:]
