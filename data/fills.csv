@@ -4957,3 +4957,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789151260.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,50,0.832,sell,3.619,0.43,0.8618,84,85,0.943,0.831,0.832,0.0298,0,an exit — its fill reduces the position it sits on,CE9PZNPH8TMX
 1789151668.9,politics,paccc-balpow-2026-11-03-rsweep,BUY,0.4,0.14,hand,,2.07,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7MYBV5GSJ1
 1789151668.9,politics,scc-senate-gop-2026-11-03-56,SELL,0.01,0.03,hand,,12.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7FF7V7CSJR
+1789151925.6,politics,paccc-usho-midterms-2026-11-03-rep,BUY,54,0.176,backfill,,0.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9X920VCTMY
+1789151972.8,politics,usgubewc-usgub-pa-2026-11-03-rep,SELL,10,0.05,earn,0.0414,0.56,0.001025,2,6,0.667,0.01,0.07,-0.049,-10,1 tick behind the touch — we would hold 39% of the ask side,CE9RAEWN6TN3
+1789152711.8,politics,paccc-usho-midterms-2026-11-03-dem,BUY,9,0.831,focus,1.4154,0.44,0.8618,84,86,0.945,0.831,0.832,-0.0308,9,focus entry: ~$1.62/day; fill odds 85%/day; EV +1.43/day,CEA2H5VGPTMY
+1789152797.3,politics,ussewc-usse-ma-2026-11-03-dem,BUY,5,0.97,manual,2.506,4.33,0.9997,94,98,0.772,0.97,0.99,-0.0297,10,the owner's own order — the engine leaves it alone,CE6NW3VW2TMQ
+1789152797.3,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,12,0.06,sell,2.1104,3.48,0.0016,2,5,0.668,0.06,0.07,0.0584,0,buying back the short at or under what it sold for — the bid earns while it wait,CE7FKM222TN2
+1789152797.3,politics,usgubewc-usgub-pa-2026-11-03-dem,BUY,6.91,0.96,earn,1.5269,1.59,0.998975,95,98,0.717,0.96,0.97,-0.039,6.91,1 tick behind the touch — we would hold 24% of the bid side,CE934A0JMTMP
+1789152797.3,politics,usgubewc-usgub-pa-2026-11-03-rep,BUY,10,0.06,sell,6.0561,0.23,0.001025,3,6,0.738,0.01,0.07,0.059,0,buying back the short at or under what it sold for — the bid earns while it wait,CEA8W4JE4TMY
+1789152797.3,politics,usgubewc-usgub-co-2026-11-03-dem,BUY,5,0.96,earn,0.6068,0.02,0.9984,95,99,0.725,0.91,0.98,-0.0384,17,1 tick behind the touch — we would hold 10% of the bid side,CEAE693TETMX
+1789152814.7,politics,ussewc-usse-ma-2026-11-03-rep,BUY,5.47,0.04,backfill,,8.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EVK0B2TN3
+1789153021.0,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,7,0.12,backfill,,8.43,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2HGFK3PTN2
+1789153103.2,politics,enwc-uspres-nom-dem-2028-andbes,SELL,8.07,0.03,backfill,,6.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE51MYM22TMP
+1789153111.4,politics,paccc-usho-midterms-2026-11-03-rep,BUY,54,0.176,backfill,,0.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9X920VCTMY
+1789153111.4,politics,ussewc-usse-ma-2026-11-03-rep,BUY,5.47,0.04,backfill,,8.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EVK0B2TN3
+1789153111.4,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,7,0.12,backfill,,8.43,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2HGFK3PTN2
+1789153111.4,politics,enwc-uspres-nom-dem-2028-andbes,SELL,8.07,0.03,backfill,,6.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE51MYM22TMP

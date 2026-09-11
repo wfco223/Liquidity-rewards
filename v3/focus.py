@@ -134,7 +134,16 @@ FOCUS_COC_DAY = 0.005           # cost of capital: per dollar tied up, a day
 FOCUS_FILL_COST_MIN = 0.02      # $/share a fill's cost never reads under
 FOCUS_FILL_COST_MAX = 0.25      # ...nor over (a broken measure must not read as $2)
 FOCUS_PF_FLOOR = 0.05           # fill odds never charge the cap under this
-FOCUS_BEHIND_MAX = 6            # candidate slots out to this many ticks behind the touch
+FOCUS_BEHIND_MAX = 6            # candidate slots at every tick out to this many behind the touch
+# the window behind a side's best, in PRICE: six cents. Six ticks had
+# been the measure, and on a 0.1c-tick book that is 0.6c (owner,
+# 2026-09-11, the House rep control book: 50 shares at the 17.6c touch
+# and 577 at 17.4c read as a bare side against a $139 stake while
+# 13,400 shares sat 1.5c back, and the bid was held at his 16c fair
+# earning nothing — "the tender seems unwilling to consider anything
+# beyond fair and seems to be leaving money on the table"; "Good" to
+# six cents). On a 1c-tick book nothing changes.
+FOCUS_BEHIND_C = 0.06
 FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much of the best EV
 # a concession past his fair needs company (owner, 2026-09-11 after the
 # exchange's maintenance wiped the books: "Be careful of placing orders
@@ -143,9 +152,9 @@ FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much
 # Ohio Senate dem at 46c against his 62c fair, 13 seconds after resting
 # them — a bare ask side had made the order read $360 a day): an entry
 # may sit past fair only on a side with company — where what others
-# rest within FOCUS_BEHIND_MAX ticks of the side's best adds up to the
-# full stake or more; on a bare side it rests at his fair or better
-# (see _bare)
+# rest within FOCUS_BEHIND_C of the side's best adds up to the full
+# stake or more; on a bare side it rests at his fair or better (see
+# _bare)
 # the sizes tried at each price, as fractions of the stake (owner,
 # 2026-09-10: "A bid over fair value is fine as long as it is
 # appropriately sized for the risk and rewards it can earn"): the reward
@@ -882,8 +891,11 @@ class Focus:
     def _cands(self, side: str, book, fair: float | None,
                bound: bool = False, improve: bool = True) -> list[float]:
         """Candidate prices, nearest first: a tick inside the touch when
-        the spread allows, the touch, out to FOCUS_BEHIND_MAX behind it,
-        and the slot a tick inside his fair. With `bound` (an exit)
+        the spread allows, the touch, every tick out to FOCUS_BEHIND_MAX
+        behind it, the side's own resting levels out to FOCUS_BEHIND_C
+        behind it (the reward share falls by the discount a tick, so
+        past the first ticks only a level with company is worth a
+        look), and the slot a tick inside his fair. With `bound` (an exit)
         nothing past his fair; an entry may sit past it (owner,
         2026-09-10: "A bid over fair value is fine as long as it is
         appropriately sized for the risk and rewards it can earn") —
@@ -903,6 +915,11 @@ class Focus:
             out.append(touch + sign * tick)       # improve by a tick, never cross
         for k in range(0, FOCUS_BEHIND_MAX + 1):
             out.append(start - k * sign * tick)
+        near = FOCUS_BEHIND_MAX * tick
+        for p, _q in own:
+            back = (start - float(p)) * sign
+            if near + 1e-9 < back <= FOCUS_BEHIND_C + 1e-9:
+                out.append(float(p))
         out = [round(p, 4) for p in out]
         if fair is not None:
             edge = fair - tick if side == "BUY" else fair + tick
@@ -1287,13 +1304,14 @@ class Focus:
     @staticmethod
     def _bare(levels: list, tick: float, full: float) -> bool:
         """A side with no company for a concession: what others rest
-        within FOCUS_BEHIND_MAX ticks of its best adds up to less than
-        the full stake in shares (`levels` is the side less our own)."""
+        within FOCUS_BEHIND_C (six cents, whatever the tick) of its best
+        adds up to less than the full stake in shares (`levels` is the
+        side less our own)."""
         if not levels:
             return True
         best = float(levels[0][0])
         near = sum(float(q) for p, q in levels
-                   if abs(float(p) - best) <= FOCUS_BEHIND_MAX * tick + 1e-9)
+                   if abs(float(p) - best) <= FOCUS_BEHIND_C + 1e-9)
         return near < full
 
     def _own_bare(self, o: FamilyOrder) -> bool:
