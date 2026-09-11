@@ -4669,3 +4669,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789109971.6,politics,paccc-balpow-2026-11-03-rsweep,BUY,150,0.17,void,64.374,0.02,,15,18,0.75,0.18,0.19,0,150,voided: the exchange has no trade for order CDVMZHFV2T6S — the row of 09-11 05:3,CDVMZHFV2T6S
 1789109971.6,politics,usgubewc-usgub-id-2026-11-03-dem,SELL,1,0.05,void,0,0,0.0011,3,7,0.38,0.05,0.06,-0.0489,-3,voided: the exchange has no trade for order CDZ3AK56ESX0 — the row of 09-11 05:4,CDZ3AK56ESX0
 1789109971.6,politics,ussewc-usse-fl-2026-11-03-dem,BUY,8,0.13,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDZVB3YGWSK5
+1789110162.4,politics,ussewc-usse-sd-2026-11-03-rep,SELL,0.09,0.92,backfill,,28.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7MYBPW6SJ1
+1789110271.6,politics,ussewc-usse-sd-2026-11-03-rep,SELL,1,0.92,manual,0.0003,28.76,0.991925,88,92,0.656,0.88,0.91,0.0719,0,the owner's own order — the engine leaves it alone,CD7KY4DV2T3P
+1789112416.9,politics,ussewc-usse-ar-2026-11-03-rep,BUY,1.81,0.9,manual,0.007,3.76,0.984225,91,94,0.772,0.92,0.93,-0.0842,5.81,the owner's own order — the engine leaves it alone,CDXJ5804MSJ1
+1789112416.9,politics,ussewc-usse-ks-2026-11-03-dem,BUY,1,0.2,probe,0,0.22,0.210075,20,24,0.4,0.24,0.25,-0.0101,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CE0H75KH4T75
+1789112716.9,politics,usgubewc-usgub-il-2026-11-03-dem,BUY,10,0.93,earn,0.675,10.87,0.9964,95,98,0.64,0.91,0.94,-0.0664,30,1 tick behind the touch — we would hold 11% of the bid side,CDQK0YX1ASX0
+1789113576.1,politics,ussewc-usse-sd-2026-11-03-rep,SELL,0.09,0.92,backfill,,28.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CD7MYBPW6SJ1
