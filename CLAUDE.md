@@ -218,10 +218,14 @@ long and accreted, so search it rather than reading it through.
   every minute (01:38Z, 2026-09-11: a bid the tender rested at +$168 a
   day read −$697 a minute later, a 62c fill cost a share, and the
   weak-order pull and the cap's ranking had been reading that);
-  the position feed lags a fill by a read or more, so an order of
+  the position feed lags a fill by a read or more, so an EXIT of
   the tender's that vanished counts as filled for the position's
-  sake — for two and a half minutes unconfirmed, five once the
-  journal books it, or until the feed itself moves — and a fill the
+  sake, toward flat and never past it — for two and a half minutes
+  unconfirmed, five once the journal books it, or until the feed
+  itself moves; an entry that vanished counts only once the journal
+  books it (05:38Z, 2026-09-11, Florida governor rep: a 1,115-share
+  ask's record went missing for a read, was taken as filled, and the
+  cover was sized to 1,252 against a short of 137) — and a fill the
   feed already shows is never counted twice, a market the feed
   carried no row for a pass ago having been flat (03:57Z, 2026-09-11:
   a fresh short of 337 read as 674 and the cover was sized to it)

@@ -614,6 +614,33 @@ class TestAfterAFill(Base):
         covers = [o for o in self.mine(NC, "BUY") if self.f._exit_order(o)]
         self.assertEqual([o.qty for o in covers], [ask.qty])
 
+    def test_an_entry_whose_record_vanishes_unbooked_does_not_grow_the_exit(self):
+        # 05:38Z, 2026-09-11, Florida governor rep: short 137 with the
+        # cover resting; a 1,115-share ask's record went missing for a
+        # read, was taken as filled, and the cover was sized to 1,252
+        self.r.positions[NC] = (-137.0, 137.0 * 0.23)
+        self.r.fam.positions_seen[NC] = -137.0
+        self.r.fam.inventory[NC] = {"qty": -137.0, "cost": 137.0 * 0.23}
+        self.f.set_fair(NC, 77.0)
+        self.r.exchange.books[NC] = wide_book(self.r.now, bid=0.77, ask=0.84)
+        self.tick()
+        covers = lambda: [o for o in self.mine(NC, "BUY") if self.f._exit_order(o)]
+        self.assertEqual([o.qty for o in covers()], [137.0])
+        ask = self.mine(NC, "SELL")[0]                # the entry on the other side
+        self.r.fam.orders.pop(ask.id)                 # the record goes; no fill anywhere
+        for _ in range(3):
+            self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+            self.tick()
+            self.assertEqual(self.f.rows[NC]["position"]["qty"], -137.0)
+            self.assertEqual([o.qty for o in covers()], [137.0])
+        # the journal books it after all: now it counts, until the feed moves
+        self.r.fam.fills.append({"ts": self.r.now, "market": NC, "side": "SELL", "qty": ask.qty,
+                                 "px": ask.price, "oid": ask.id, "purpose": ask.purpose})
+        self.r.exchange.live.pop(ask.id, None)
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["position"]["qty"], -137.0 - ask.qty)
+
     def test_a_fill_the_feed_already_shows_is_not_counted_twice(self):
         self.r.positions[NC] = (200.0, 200.0 * 0.40)
         self.r.fam.positions_seen[NC] = 200.0

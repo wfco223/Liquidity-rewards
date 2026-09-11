@@ -227,6 +227,7 @@ class Focus:
         self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
         self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
         self._feed_prev_at: float = 0.0           # when it was last taken (0 = never)
+        self._vanish_feed: dict[str, float] = {}  # oid -> the feed's net when it vanished
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
         self._gone_by_me: dict[str, float] = {}   # ids the tender itself cancelled or replaced -> when
         self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
@@ -606,19 +607,39 @@ class Focus:
                 # the cover was sized to it — the absent row had been taken
                 # as "unchanged")
                 before = (self._feed_prev.get(slug, 0.0) if self._feed_prev_at else feed)
-                if abs(feed - before) <= 0.005:
-                    # the feed has not moved since the order was last seen
-                    # resting: count the fill until it does
-                    self._pos_adj[oid] = {"slug": slug, "delta": (gone if side == "BUY" else -gone),
-                                          "feed": before, "ts": now, "confirmed": False}
+                self._vanish_feed[oid] = before
+                if was_exit and abs(feed - before) <= 0.005:
+                    # an EXIT that vanished counts as filled until the feed
+                    # moves — toward flat, never past it. An entry does not
+                    # (05:38Z, 2026-09-11: a 1,115-share ask's record went
+                    # missing for a read, was taken as filled, and the cover
+                    # was sized to 1,252 against a short of 137); an entry
+                    # counts only once the journal books it
+                    delta = gone if side == "BUY" else -gone
+                    if feed > 0.005:
+                        delta = max(delta, -feed) if delta < 0 else 0.0
+                    elif feed < -0.005:
+                        delta = min(delta, -feed) if delta > 0 else 0.0
+                    else:
+                        delta = 0.0
+                    if abs(delta) > 0.005:
+                        self._pos_adj[oid] = {"slug": slug, "delta": delta, "feed": before,
+                                              "ts": now, "confirmed": False}
         for oid, rec in list(self._vanished.items()):
             slug, side, qty, since = rec[0], rec[1], rec[2], rec[3]
             was_exit = bool(rec[4]) if len(rec) > 4 else False
             got = self._journal_fills(oid, since)
             if got >= 0.5:
+                delta = got if side == "BUY" else -got
                 a = self._pos_adj.get(oid)
+                before = self._vanish_feed.pop(oid, None)
+                feed_now = float(((positions or {}).get(slug) or (0.0,))[0] or 0.0)
                 if a is not None:
-                    a.update(delta=(got if side == "BUY" else -got), ts=now, confirmed=True)
+                    a.update(delta=delta, ts=now, confirmed=True)
+                elif before is not None and abs(feed_now - before) <= 0.005:
+                    # booked, and the feed has not moved since: count it
+                    self._pos_adj[oid] = {"slug": slug, "delta": delta, "feed": before,
+                                          "ts": now, "confirmed": True}
                 if was_exit:
                     self._log(event="exit_filled", market=slug, side=side, qty=round(got, 2),
                               note="the position left — the side is not held")
@@ -632,9 +653,11 @@ class Focus:
                 # back at full size: the list had left it out for a read
                 self._vanished.pop(oid, None)
                 self._pos_adj.pop(oid, None)
+                self._vanish_feed.pop(oid, None)
             elif now - since > FOCUS_VANISH_WAIT_S:
                 self._vanished.pop(oid, None)     # gone for good, unbooked: not a fill
                 self._pos_adj.pop(oid, None)
+                self._vanish_feed.pop(oid, None)
         self._last_mine = {oid: (o.market, o.side, o.qty, self._exit_order(o))
                            for oid, o in cur.items()}
         live = set(self.fam.orders)
