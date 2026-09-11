@@ -1575,9 +1575,12 @@ function stacked(d,win){
  series.forEach(function(ds){ds.forEach(function(x){stamps[Math.round(x[0]/20)*20]=1;});});
  var ts=Object.keys(stamps).map(Number).sort(function(a,b){return a-b;});
  if(ts.length<2)return '<div class="card muted">not enough samples yet</div>';
+ // a family's last value carries forward only across a short gap: a
+ // family with no sample for three minutes reads zero (owner,
+ // 2026-09-11: the graph had plateaued across the exchange's maintenance)
  var vals=series.map(function(ds){
   var m={};ds.forEach(function(x){m[Math.round(x[0]/20)*20]=x[1];});
-  var last=0;return ts.map(function(t){if(m[t]!=null)last=m[t];return last;});
+  var last=0,lt=-1e12;return ts.map(function(t){if(m[t]!=null){last=m[t];lt=t;}return (t-lt>180)?0:last;});
  });
  // bonds are politics orders too (owner, 2026-09-03: "separate out
  // earnings from bonds, in blue, vs politics"): their rate comes out
@@ -1994,11 +1997,26 @@ function fApply(force){var f=window._f;if(!f)return;var v=document.getElementByI
  if(window._liveOpen)return;if(!force&&(window.scrollY||0)>120)return;
  var y=window.scrollY||0;v.innerHTML=fRender(f);if(y>0)window.scrollTo(0,y);}
 function render(d){if(!window._fTimer){window._fTimer=setInterval(fPollNow,5000);fPollNow();}var f=window._f;if(!f)return '<div class="card muted">reading the focus markets…</div>';return fRender(f);}
+function fSortGet(){if(window._fSort)return window._fSort;try{window._fSort=localStorage.getItem('fsort')||'ev';}catch(e){window._fSort='ev';}return window._fSort;}
+function fSortSet(k){window._fSort=k;try{localStorage.setItem('fsort',k);}catch(e){}fApply(true);}
+// the sorts (owner, 2026-09-11: "sort the markets by alphabetical by
+// name, earning, size of holding, drop in earning rate, and unqualified")
+var F_SORTS=[['ev','entry EV'],['name','name'],['rate','earning'],['shares','holding'],['drop','drop from peak'],['unq','unqualified']];
+var F_SORT_FN={name:function(a,b){return String(a.name||a.market).localeCompare(String(b.name||b.market));},
+ rate:function(a,b){return ((b.rate||0)-(a.rate||0))||((b.ev||0)-(a.ev||0));},
+ shares:function(a,b){return (Math.abs(b.shares||0)-Math.abs(a.shares||0))||((b.rate||0)-(a.rate||0));},
+ drop:function(a,b){return ((b.drop||0)-(a.drop||0))||((b.rate||0)-(a.rate||0));},
+ unq:function(a,b){return ((b.unqualified||0)-(a.unqualified||0))||((b.rate||0)-(a.rate||0));}};
+function fOpenM(m){window._fOpen=window._fOpen||{};window._fOpen[m]=!window._fOpen[m];fApply(true);}
 function fRender(f){
  if(!f.ok)return '<div class="card muted">'+esc(f.note||'not ready')+'</div>';
- var o=fHead(f);var rows=f.rows||[];
+ var o=fHead(f);var rows=(f.rows||[]).slice();var srt=fSortGet();
+ if(F_SORT_FN[srt])rows.sort(F_SORT_FN[srt]);
  if(!rows.length)o+='<div class="card muted">no boosted market read yet — the terms come in over the first minutes</div>';
- rows.forEach(function(r){o+=fCard(r,f);});
+ else{var tot=0,nOrd=0,nOpen=0;rows.forEach(function(r){tot+=(r.rate||0);nOrd+=(r.orders||[]).length;if((window._fOpen||{})[r.market])nOpen++;});
+  o+='<div class="card" style="padding:8px 12px"><div class="sub">earning <b>'+usd(tot)+'/day</b> across '+nOrd+' order'+(nOrd!==1?'s':'')+' in '+rows.length+' markets <span class="muted">· tap a market to open it</span></div>'
+   +'<div class="sub">sort by '+F_SORTS.map(function(x){return srt===x[0]?'<b>'+x[1]+'</b>':fBtn(x[1],'fSortSet(\''+x[0]+'\')','small');}).join(' ')+(nOpen?' '+fBtn('close all','window._fOpen={};fApply(true)','small off'):'')+'</div></div>';}
+ rows.forEach(function(r){o+=fRow(r,f);});
  var lg=f.log||[];
  if(lg.length){o+='<div class="card"><details class="how"><summary class="muted">what the tender did</summary>';
   lg.slice(0,30).forEach(function(e){o+='<div class="muted">'+when(e.ts)+' '+esc(e.event)+(e.market?' '+esc(e.market):'')+(e.price!=null?' '+(e.qty!=null?e.qty+' @ ':'')+pc(e.price):'')+(e.was!=null?' (was '+pc(e.was)+')':'')+(e.why||e.note?' — '+esc(e.why||e.note):'')+(e.ev!=null?' EV '+fSign(e.ev)+'/day':'')+'</div>';});
@@ -2016,7 +2034,7 @@ function fHead(f){
  +'<div class="sub">fill cost floor <b>'+(f.fill_floor*100).toFixed(1)+'¢/share</b> '+fField('fn-floor','','5em','¢')+fBtn('Set','fNum(\'floor\')','small')+'</div>'
  +'<div class="sub">expected loss cap <b>'+usd(f.loss_cap)+'</b> '+fField('fn-cap','','6em','$')+fBtn('Set','fNum(\'cap\')','small')+'</div>'
  +'<div class="sub">'+fBtn('Re-read the terms now','fOp(\'focus_scan\',\'-\')','small')+'</div>'
- +'<div class="hint">Sorted by the expected value of an entry of the stake at the best price on either side: the reward claim a day, less the fill\'s expected cost (fill odds × the measured cost a share, never under the floor), less the cost of the capital tied up. The tender rests one order a side only where you have set a fair and keeps the expected loss (collateral × fill odds) under the cap, whose room goes by value: entries rank by expected value a day per dollar of expected loss, and a plan that does not fit displaces the weakest resting entries only when it beats each by a quarter or more; an entry may sit past your fair when the concession is worth the reward, sized to the risk. An exit of what is held joins the touch and never sits under both your fair and the position\'s cost — whichever of the two lets it nearer the touch is its floor, so lowering the fair brings it to the touch. In a market you have given a fair, your own orders are the tender\'s to move and resize like its own (your 1¢ and 99¢ walls excepted); where no fair is set they stay as you left them. Your qualifying walls neither offer the lot nor shrink the stake.</div>'
+ +'<div class="hint">One line a market: what every order there earns a day, the shares held, and how far the rate sits under its eight-hour peak; tap a market to see the book with your orders marked, each order\'s earnings, and every control; the tender\'s arithmetic is folded under "the tender\'s math". A side is unqualified while what rests on it is under the program\'s target — it pays nothing until it fills back up, as after the exchange\'s maintenance. Sort by name, earning, holding, drop from the eight-hour peak, unqualified sides first, or by entry EV — the expected value of an entry of the stake at the best price on either side: the reward claim a day, less the fill\'s expected cost (fill odds × the measured cost a share, never under the floor), less the cost of the capital tied up. The tender rests one order a side only where you have set a fair and keeps the expected loss (collateral × fill odds) under the cap, whose room goes by value: entries rank by expected value a day per dollar of expected loss, and a plan that does not fit displaces the weakest resting entries only when it beats each by double or more; an entry may sit past your fair when the concession is worth the reward, sized to the risk. An exit of what is held joins the touch and never sits under both your fair and the position\'s cost — whichever of the two lets it nearer the touch is its floor, so lowering the fair brings it to the touch. In a market you have given a fair, your own orders are the tender\'s to move and resize like its own (your 1¢ and 99¢ walls excepted); where no fair is set they stay as you left them. Your qualifying walls neither offer the lot nor shrink the stake.</div>'
  +'</details></div>';
  var ev=f.events||[];
  if(ev.length){o+='<div class="card"><b>New boosted markets</b> <span class="muted">— as the program watch found them</span>';
@@ -2033,41 +2051,76 @@ function fBook(r){var b=r.book||{};var bids=b.bids||[],asks=b.asks||[];if(!bids.
  var n=Math.max(bids.length,asks.length);var h='<div style="overflow-x:auto"><table style="font-size:13px;margin:4px 0"><tr><th>bids</th><th>asks</th></tr>';
  for(var i=0;i<n;i++){var bd=bids[i],ak=asks[i];h+='<tr><td>'+(bd?'<b>'+pc(bd[0])+'</b> \u00d7'+fmtsz(bd[1])+mark('BUY',bd[0]):'')+'</td><td>'+(ak?'<b>'+pc(ak[0])+'</b> \u00d7'+fmtsz(ak[1])+mark('SELL',ak[0]):'')+'</td></tr>';}
  return h+'</table></div>';}
-function fCard(r,f){
- var o=[];var L=r.name||r.market;var p=r.prog||{};var b=r.book||{};var m=esc(r.market);
- var pid=(p.pid||'').replace(/_20\d{6}$/,'').replace(/^midterms_/,'').replace(/_/g,' ');
- o.push('<div class="card">');
- o.push('<div class="name"><b>'+esc(L)+'</b> <span class="pill">'+usd(p.pool_day||0)+'/day'+(p.n>1?' ÷ '+p.n:'')+'</span>'+(r.held?' <span class="pill" style="border-color:#c9a227;color:#e8c547">held</span>':'')+(r.paused?' <span class="pill">paused</span>':'')+(r.ev!=null?' <span class="'+(r.ev>0?'ok':'muted')+'">EV '+fSign(r.ev)+'/day</span>':'')+'</div>');
- if(b.bid!=null||b.ask!=null)o.push('<div class="sub">bid <b>'+pc(b.bid)+'</b> ×'+fmtsz(b.bid_q||0)+' · ask <b>'+pc(b.ask)+'</b> ×'+fmtsz(b.ask_q||0)+(b.age_s!=null?' <span class="muted">· book '+Math.round(b.age_s)+'s old</span>':'')+'</div>'+fBook(r));
+function fShort(t){return esc((t||'').split(' — ')[0]);}
+// what rests on each side against the program's target: a side under it pays nothing
+function fQual(r){var q=r.qual;if(!q)return '';function one(s){var x=q[s];return s+'s '+fmtsz(x[0])+' of '+fmtsz(x[1])+(x[2]?' ✓':' <span class="warn">✗ unqualified</span>');}
+ return '<div class="muted" style="font-size:12px">resting '+one('bid')+' · '+one('ask')+'</div>';}
+function fGlance(r){
+ // the at-a-glance numbers (owner, 2026-09-11): what every order here
+ // earns a day, and how far under its eight-hour peak that sits
+ var rate=r.rate,peak=r.peak8||0,drop=r.drop||0;
+ var t=(rate==null?'<span class="muted">no read</span>':'<b>'+usd(rate)+'/day</b>');
+ var d='';
+ if(rate!=null&&peak>0.5)d=(drop>0.5?'<span class="warn">▼ '+usd(drop)+' ('+Math.round(drop/peak*100)+'%) off 8h peak</span>':'<span class="ok">at 8h peak</span>');
+ return t+'<div class="muted" style="font-size:12px">'+d+'</div>';
+}
+function fRow(r,f){
+ var m=esc(r.market);var open=!!(window._fOpen||{})[r.market];var od=r.orders||[];var sh=r.shares||0;
+ var pills=[];
+ pills.push(r.not_tended?'<span class="pill">'+fShort(r.not_tended)+'</span>':'<span class="pill on">tended</span>');
+ pills.push(od.length?'<span class="pill">'+od.length+' order'+(od.length!==1?'s':'')+'</span>':'<span class="pill" style="border-color:#c9a227;color:#e8c547">no orders</span>');
+ if(Math.abs(sh)>0.005)pills.push('<span class="pill">'+(sh>0?'+':'')+Math.round(sh)+' shares</span>');
+ if(r.held)pills.push('<span class="pill" style="border-color:#c9a227;color:#e8c547">held</span>');
+ if(r.unqualified){var q=r.qual||{};var un=[];['bid','ask'].forEach(function(s){var x=q[s];if(x&&!x[2])un.push(s+'s '+fmtsz(x[0])+' of '+fmtsz(x[1]));});pills.push('<span class="pill" style="border-color:#c9a227;color:#e8c547">unqualified: '+un.join(', ')+'</span>');}
+ if(r.paused)pills.push('<span class="pill">paused</span>');
+ var head='<div onclick="fOpenM(\''+m+'\')" style="cursor:pointer;display:flex;justify-content:space-between;gap:10px;align-items:flex-start">'
+  +'<div style="flex:1;min-width:0"><b>'+esc(r.name||r.market)+'</b><div style="font-size:12px;margin-top:3px">'+pills.join(' ')+'</div></div>'
+  +'<div style="text-align:right;white-space:nowrap">'+fGlance(r)+'</div></div>';
+ return '<div class="card" style="padding:8px 12px">'+head+(open?fDetail(r,f):'')+'</div>';
+}
+function fDetail(r,f){
+ // the first zoom: where the orders rest, what each earns, the position
+ // and its exit, and every control — the tender's math folded away
+ var o=[];var m=esc(r.market);var b=r.book||{};var od=r.orders||[];var p=r.prog||{};
+ o.push('<div style="border-top:1px solid #2c3527;margin-top:8px;padding-top:6px">');
+ if(b.bid!=null||b.ask!=null)o.push('<div class="sub">bid <b>'+pc(b.bid)+'</b> ×'+fmtsz(b.bid_q||0)+' · ask <b>'+pc(b.ask)+'</b> ×'+fmtsz(b.ask_q||0)+(b.age_s!=null?' <span class="muted">· book '+Math.round(b.age_s)+'s old</span>':'')+' <span class="pill">'+usd(p.pool_day||0)+'/day'+(p.n>1?' ÷ '+p.n:'')+'</span>'+fQual(r)+'</div>'+fBook(r));
  else o.push('<div class="muted">'+esc(r.note||'no book yet')+'</div>');
- var fairTxt=r.fair!=null?'<b>'+pc(r.fair)+'</b> yours'+(r.silver!=null?' <span class="muted">(Silver '+pc(r.silver)+')</span>':''):(r.silver!=null?'<span class="muted">none — Silver says '+pc(r.silver)+'</span>':'<span class="muted">none</span>');
- o.push('<div class="sub">fair: '+fairTxt+(r.not_tended?' · <span class="warn">'+esc(r.not_tended)+'</span>':' · <span class="ok">tended</span>')+'</div>');
- var s=r.sides||{};
- ['BUY','SELL'].forEach(function(sd){var x=s[sd];if(!x)return;
-  if(x.px==null){o.push('<div class="muted">'+(sd==='BUY'?'bid':'ask')+' entry: '+esc(x.note||'')+'</div>');return;}
-  o.push('<div class="sub">'+(sd==='BUY'?'bid':'ask')+' '+usd(r.stake)+': <b>'+x.qty+' @ '+pc(x.px)+'</b> → ~'+usd(x.est)+'/day, fill odds '+Math.round(x.pf*100)+'%/day costing '+usd(x.loss)+(x.conc>0?' ('+pc(x.conc)+' past your fair)':'')+', capital '+usd(x.coc)+' → <b class="'+(x.ev>0?'ok':'bad')+'">EV '+fSign(x.ev)+'/day</b>'+(x.fair_used==='silver'?' <span class="muted">(vs Silver)</span>':x.fair_used==='none'?' <span class="muted">(no fair)</span>':'')+'</div>');});
- // what the tender itself will rest here, under its own rules (the refill wait, the position bound, the exit at the touch, never under both fair and cost)
- var td=r.tend||{};['BUY','SELL'].forEach(function(sd){var x=td[sd];if(!x)return;var lab=(sd==='BUY'?'bid':'ask');
-  if(x.px==null){if(x.note)o.push('<div class="muted">tender '+lab+': holding off — '+esc(x.note)+'</div>');return;}
-  o.push('<div class="muted">tender '+lab+(x.exit?' (exit)':'')+': '+x.qty+' @ '+pc(x.px)+(x.exit&&x.basis!=null?' · cost '+pc(x.basis):'')+' → ~'+usd(x.est)+'/day, odds '+Math.round(x.pf*100)+'%'+(!x.exit?', EV '+fSign(x.ev)+'/day':'')+(x.scale_note?' · '+esc(x.scale_note):'')+'</div>');});
- if(r.position){o.push('<div class="sub"><b>'+r.position.qty+' held @ '+pc(r.position.cost_px)+'</b>'+(r.exit?(r.exit.px!=null?' · exit plan '+r.exit.qty+' @ '+pc(r.exit.px)+' → ~'+usd(r.exit.est)+'/day, odds '+Math.round(r.exit.pf*100)+'%/day':' · <span class="warn">'+esc(r.exit.note||'')+'</span>'):(r.fair==null?' · <span class="warn">no exit tended — set a fair or rest one yourself</span>':''))+'</div>');}
- var od=r.orders||[];
- if(od.length){o.push('<div class="sub"><b>'+od.length+' order'+(od.length!==1?'s':'')+' here</b></div>');
+ if(r.position){var ex=null;od.forEach(function(x){if(x.exit&&!ex)ex=x;});
+  o.push('<div class="sub"><b>'+(r.position.qty>0?'+':'')+r.position.qty+' held @ '+pc(r.position.cost_px)+'</b>'+(ex?' · exit resting '+ex.qty+' @ '+pc(ex.price)+' → ~'+usd(ex.est||0)+'/day':(r.exit&&r.exit.px!=null?' · <span class="warn">exit planned '+r.exit.qty+' @ '+pc(r.exit.px)+', not resting yet</span>':(r.exit&&r.exit.note?' · <span class="warn">'+esc(r.exit.note)+'</span>':(r.fair==null?' · <span class="warn">no exit tended — set a fair or rest one yourself</span>':''))))+'</div>');}
+ if(od.length){o.push('<div class="sub"><b>'+od.length+' order'+(od.length!==1?'s':'')+' resting</b> <span class="muted">— marked ◀ on the book above</span></div>');
   od.forEach(function(x){var who=x.who==='you'?'<span class="pill on">you</span>':x.who==='tender'?'<span class="pill">tender</span>':'<span class="pill">'+esc(x.who)+'</span>';
-   o.push('<div class="sub">'+who+' '+(x.side==='BUY'?'bid':'ask')+' <b>'+x.qty+' @ '+pc(x.price)+'</b>'+(x.est!=null?' → ~'+usd(x.est)+'/day, odds '+Math.round((x.pf||0)*100)+'%'+(x.ev!=null&&!x.exit?', EV '+fSign(x.ev)+'/day':''):'')
-    +'<div style="white-space:nowrap">'+fField('fmp-'+x.id,'','5em','¢')+fField('fmq-'+x.id,'','5em','shares')+fBtn('Move','fMove(\''+m+'\',\''+esc(x.id)+'\')','small')+fBtn('Cancel','fCancel(\''+m+'\',\''+esc(x.id)+'\',\''+esc(x.qty+' @ '+pc(x.price))+'\')','small off')+'</div>'
-    +(x.why?'<div class="muted">'+esc(x.why)+'</div>':'')+'</div>');});}
- var open=!!(window._fOpen||{})[r.market];
- o.push('<details'+(open?' open':'')+' ontoggle="fTog(this,\''+m+'\')"><summary class="muted">set the fair, the stake, or rest an order</summary>');
- o.push('<div class="sub">fair '+fField('ff-'+r.market,'','6em','¢')+fBtn('Set','fFair(\''+m+'\')','small')+(r.fair!=null?fBtn('Clear','fOp(\'focus_fair\',\''+m+'\',\'\')','small off'):'')+'</div>');
- o.push('<div class="sub">stake a side '+fField('fs-'+r.market,'','6em','$')+fBtn('Set','fStake(\''+m+'\')','small')+' <span class="muted">'+usd(r.stake)+' now ('+esc(r.stake_src)+')</span>'+(r.stake_src==='set by you'?fBtn('Back to 10%','fOp(\'focus_stake\',\''+m+'\',\'\')','small off'):'')+'</div>');
+   o.push('<div class="sub">'+who+' '+(x.side==='BUY'?'bid':'ask')+' <b>'+x.qty+' @ '+pc(x.price)+'</b>'+(x.exit?' <span class="muted">exit</span>':'')+(x.est!=null?' → <b>~'+usd(x.est)+'/day</b>'+(x.ticks?' <span class="muted">'+x.ticks+' tick'+(x.ticks>1?'s':'')+' back</span>':' <span class="muted">at the touch</span>'):'')
+    +'<div style="white-space:nowrap">'+fField('fmp-'+x.id,'','5em','¢')+fField('fmq-'+x.id,'','5em','shares')+fBtn('Move','fMove(\''+m+'\',\''+esc(x.id)+'\')','small')+fBtn('Cancel','fCancel(\''+m+'\',\''+esc(x.id)+'\',\''+esc(x.qty+' @ '+pc(x.price))+'\')','small off')+'</div></div>');});}
+ else o.push('<div class="sub"><span class="warn">nothing resting here</span>'+(r.not_tended?' <span class="muted">— '+esc(r.not_tended)+'</span>':' <span class="muted">— the tender has no room or nothing earns; its plan is in the math below</span>')+'</div>');
+ var fairTxt=r.fair!=null?'<b>'+pc(r.fair)+'</b> yours'+(r.silver!=null?' <span class="muted">(Silver '+pc(r.silver)+')</span>':''):(r.silver!=null?'<span class="muted">none — Silver says '+pc(r.silver)+'</span>':'<span class="muted">none</span>');
+ o.push('<div class="sub">fair: '+fairTxt+(r.not_tended?' · <span class="warn">'+esc(r.not_tended)+'</span>':' · <span class="ok">tended</span>')+' '+fField('ff-'+r.market,'','5em','¢')+fBtn('Set','fFair(\''+m+'\')','small')+(r.fair!=null?fBtn('Clear','fOp(\'focus_fair\',\''+m+'\',\'\')','small off'):'')+'</div>');
+ o.push('<div class="sub">stake a side <span class="muted">'+usd(r.stake)+' ('+esc(r.stake_src)+')</span> '+fField('fs-'+r.market,'','5em','$')+fBtn('Set','fStake(\''+m+'\')','small')+(r.stake_src==='set by you'?fBtn('Back to 10%','fOp(\'focus_stake\',\''+m+'\',\'\')','small off'):'')+'</div>');
  o.push('<div class="sub">rest <select id="fps-'+r.market+'" style="font-size:16px;padding:6px"><option value="BUY">a bid</option><option value="SELL">an ask</option></select> '+fField('fpp-'+r.market,'','5em','¢')+fField('fpq-'+r.market,'','5em','shares')+fBtn('Place','fPlace(\''+m+'\')','small')+'</div>');
  o.push('<div class="sub">'+(r.paused?fBtn('Resume the tender here','fOp(\'focus_resume\',\''+m+'\')','small'):fBtn('Pause the tender here','fOp(\'focus_pause\',\''+m+'\')','small off'))+fBtn('Pull the tender\'s orders','fOp(\'focus_pull\',\''+m+'\')','small off')+'</div>');
  // his hand's list (owner, 2026-09-10: "Give me a button to take a market off of the hand tended list")
- if(r.by_hand)o.push('<div class="sub">'+fBtn('Take off my hand\'s list \u2014 let the tender work it','if(confirm(\'Let the tender rest orders here from your fair? Your own orders stay yours.\'))fOp(\'focus_release\',\''+m+'\')','small')+'</div>');
+ if(r.by_hand)o.push('<div class="sub">'+fBtn('Take off my hand\'s list — let the tender work it','if(confirm(\'Let the tender rest orders here from your fair? Your own orders stay yours.\'))fOp(\'focus_release\',\''+m+'\')','small')+'</div>');
  else if(r.released)o.push('<div class="sub"><span class="pill on">off your hand\'s list</span> '+fBtn('Back to my hand','fOp(\'focus_unrelease\',\''+m+'\')','small off')+'</div>');
- o.push('<div class="muted"><code>'+m+'</code>'+(p.pid?' · '+esc(pid)+' · target '+fmtsz(p.target||0)+' · df '+p.df:'')+(p.side_pool?' · '+usd(p.side_pool)+'/day a side':'')+'</div>');
- o.push('</details></div>');
+ o.push(fMath(r,f));
+ o.push('</div>');
+ return o.join('');
+}
+function fMath(r,f){
+ // the tender's arithmetic, folded (owner, 2026-09-11: "I'm less
+ // interested in the ev calculation. Hide all that info and let me
+ // click to see more")
+ var o=[];var p=r.prog||{};var s=r.sides||{};var td=r.tend||{};var od=r.orders||[];
+ var pid=(p.pid||'').replace(/_20\d{6}$/,'').replace(/^midterms_/,'').replace(/_/g,' ');
+ o.push('<details class="how"><summary class="muted">the tender\'s math'+(r.ev!=null?' — entry EV '+fSign(r.ev)+'/day':'')+(r.peak8?' · 8h peak '+usd(r.peak8)+'/day':'')+'</summary>');
+ ['BUY','SELL'].forEach(function(sd){var x=s[sd];if(!x)return;
+  if(x.px==null){o.push('<div class="muted">'+(sd==='BUY'?'bid':'ask')+' entry: '+esc(x.note||'')+'</div>');return;}
+  o.push('<div class="sub">'+(sd==='BUY'?'bid':'ask')+' '+usd(r.stake)+': <b>'+x.qty+' @ '+pc(x.px)+'</b> → ~'+usd(x.est)+'/day, fill odds '+Math.round(x.pf*100)+'%/day costing '+usd(x.loss)+(x.conc>0?' ('+pc(x.conc)+' past your fair)':'')+', capital '+usd(x.coc)+' → <b class="'+(x.ev>0?'ok':'bad')+'">EV '+fSign(x.ev)+'/day</b>'+(x.fair_used==='silver'?' <span class="muted">(vs Silver)</span>':x.fair_used==='none'?' <span class="muted">(no fair)</span>':'')+'</div>');});
+ ['BUY','SELL'].forEach(function(sd){var x=td[sd];if(!x)return;var lab=(sd==='BUY'?'bid':'ask');
+  if(x.px==null){if(x.note)o.push('<div class="muted">tender '+lab+': holding off — '+esc(x.note)+'</div>');return;}
+  o.push('<div class="muted">tender '+lab+(x.exit?' (exit)':'')+': '+x.qty+' @ '+pc(x.px)+(x.exit&&x.basis!=null?' · cost '+pc(x.basis):'')+' → ~'+usd(x.est)+'/day, odds '+Math.round(x.pf*100)+'%'+(!x.exit?', EV '+fSign(x.ev)+'/day':'')+(x.scale_note?' · '+esc(x.scale_note):'')+'</div>');});
+ if(r.exit&&r.exit.px!=null)o.push('<div class="muted">exit plan '+r.exit.qty+' @ '+pc(r.exit.px)+' → ~'+usd(r.exit.est)+'/day, odds '+Math.round(r.exit.pf*100)+'%/day'+(r.exit.basis!=null?' · cost '+pc(r.exit.basis):'')+'</div>');
+ od.forEach(function(x){if(x.est==null)return;o.push('<div class="muted">'+(x.who==='you'?'you':x.who)+' '+(x.side==='BUY'?'bid':'ask')+' '+x.qty+' @ '+pc(x.price)+': ~'+usd(x.est)+'/day, odds '+Math.round((x.pf||0)*100)+'%'+(x.ev!=null&&!x.exit?', EV '+fSign(x.ev)+'/day':'')+(x.why?' — '+esc(x.why):'')+'</div>');});
+ o.push('<div class="muted"><code>'+esc(r.market)+'</code>'+(p.pid?' · '+esc(pid)+' · target '+fmtsz(p.target||0)+' · df '+p.df:'')+(p.side_pool?' · '+usd(p.side_pool)+'/day a side':'')+'</div>');
+ o.push('</details>');
  return o.join('');
 }
 """
