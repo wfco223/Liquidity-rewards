@@ -4870,3 +4870,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789141763.1,politics,usgubewc-usgub-nh-2026-11-03-rep,SELL,5,0.93,backfill,,3.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE538EYRMTN3
 1789141763.1,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,10,0.92,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7TM22NATN0
 1789141764.7,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,10,0.92,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7TM22NATN0
+1789141810.4,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,10,0.92,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE7V03QBTTMX
+1789141844.2,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,15,0.8,manual,61.8589,0.02,0.924025,89,94,0.454,0.83,0.97,-0.124,30,the owner's own order — the engine leaves it alone,CE70ZQ3RATN3
+1789141880.6,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,0.12,0.08,backfill,,0.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7424KAPTMX
+1789141904.2,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,15,0.08,earn,0.1465,0.85,0.001025,4,7,0.827,0.06,0.08,-0.079,-50,1 tick behind the touch — we would hold 12% of the ask side,CE7424KAPTMX
+1789141904.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,27,0.843,focus,375,0.03,0.8618,84,85,0.946,0.811,0.83,-0.0188,33,focus entry: ~$26.21/day; fill odds 84%/day; EV +25.46/day,CE7TV5WGPTN0
+1789142033.0,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,0.05,0.96,backfill,,0.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7G9CHF6TN3
+1789142084.2,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,9,0.96,manual,2.258,0.46,0.99865,89,94,0.763,0.87,0.97,-0.0386,12,the owner's own order — the engine leaves it alone,CE7G9CHF6TN3
+1789142368.5,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,11,0.12,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7PHE3XMTN3
+1789142467.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-41,0.192,fix,25.2111,0.02,0.1382,19,20,0.948,0.191,0.192,-0.0538,-126,size trimmed by 41 to the exchange's count (order CE7P2RD48TMQ),CE7P2RD48TMQ
+1789142467.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-41,0.192,fix,51.6217,0.18,0.1382,19,20,0.946,0.191,0.192,-0.0538,-85,size trimmed by 41 to the exchange's count (order CE7P2RD48TMQ),CE7P2RD48TMQ
+1789142467.6,politics,usgubewc-usgub-nh-2026-11-03-rep,SELL,-5,0.93,fix,43.0994,3.09,0.924025,86,92,0,0.8,0.97,-0.006,0,size trimmed by 5 to the exchange's count (order CE538EYRMTN3),CE538EYRMTN3
+1789142467.6,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,-10,0.92,fix,62.5,0.02,0.924025,89,94,0.454,0.83,0.97,-0.004,15,size trimmed by 10 to the exchange's count (order CE7TM22NATN0),CE7TM22NATN0
+1789142467.6,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,10,0.92,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE7V03QBTTMX
+1789142467.6,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,0.12,0.08,backfill,,0.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7424KAPTMX
+1789142467.6,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,0.05,0.96,backfill,,0.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7G9CHF6TN3
+1789142467.6,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,11,0.12,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7PHE3XMTN3
