@@ -9000,6 +9000,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-cin,liquidityProgram,0.03,PENDING
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-duke,liquidityProgram,0.03,PENDING
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-kanst,liquidityProgram,0.05,PENDING
+2026-09-08,aachc-cfb-wins-ou-2026-11-28-mst,liquidityProgram,0.01,PENDING
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-okl,liquidityProgram,0.08,PENDING
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-rutger,liquidityProgram,0.01,PENDING
 2026-09-08,aachc-cfb-wins-ou-2026-11-28-utahst,liquidityProgram,0.04,PENDING
@@ -9023,16 +9024,20 @@ date,market,program_type,reward_usd,status
 2026-09-08,usgubewc-usgub-co-2026-11-03-dem,liquidityProgram,0.14,PENDING
 2026-09-08,usgubewc-usgub-ma-2026-11-03-rep,liquidityProgram,3.14,PENDING
 2026-09-08,usgubewc-usgub-me-2026-11-03-rep,liquidityProgram,2.26,PENDING
+2026-09-08,usgubewc-usgub-nm-2026-11-03-dem,liquidityProgram,0.52,PENDING
 2026-09-08,usgubewc-usgub-nm-2026-11-03-rep,liquidityProgram,1.15,PENDING
 2026-09-08,usgubewc-usgub-ri-2026-11-03-dem,liquidityProgram,3.97,PENDING
 2026-09-08,usgubewc-usgub-ri-2026-11-03-rep,liquidityProgram,0.9,PENDING
 2026-09-08,ussewc-usse-fl-2026-11-03-dem,liquidityProgram,0.16,PENDING
 2026-09-08,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.16,PENDING
 2026-09-08,ussewc-usse-ma-2026-11-03-dem,liquidityProgram,0.74,PENDING
+2026-09-08,ussewc-usse-ms-2026-11-03-rep,liquidityProgram,0.2,PENDING
 2026-09-08,ussewc-usse-mt-2026-11-03-rep,liquidityProgram,1.99,PENDING
+2026-09-08,ussewc-usse-mt-2026-11-03-setbod,liquidityProgram,2.66,PENDING
 2026-09-08,ussewc-usse-nm-2026-11-03-rep,liquidityProgram,2.02,PENDING
 2026-09-08,ussewc-usse-tn-2026-11-03-dem,liquidityProgram,2.08,PENDING
 2026-09-08,ussewc-usse-va-2026-11-03-dem,liquidityProgram,0.04,PENDING
+2026-09-09,aachc-cfb-wins-2026-11-28-arzst-4pt5wins,liquidityProgram,0.12,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-arzst-6pt5wins,liquidityProgram,0.16,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-bayl-5pt5wins,liquidityProgram,0.04,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-boise-8pt5wins,liquidityProgram,0.07,PENDING
@@ -9073,6 +9078,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,ewc-usp-2028-11-07-micoba,liquidityProgram,0.05,PENDING
 2026-09-09,ewc-usp-party-2028-11-07-dem,liquidityProgram,2.04,PENDING
 2026-09-09,ewc-usse-me-2026-11-03-rep,liquidityProgram,0.23,PENDING
+2026-09-09,ewc-usse-nc-2026-11-03-rep,liquidityProgram,0.75,PENDING
 2026-09-09,fptc-nfl-qbfpou-2027-01-10-camwar,liquidityProgram,0.01,PENDING
 2026-09-09,fptc-nfl-qbfpou-2027-01-10-jaxdar,liquidityProgram,0.03,PENDING
 2026-09-09,fptc-nfl-qbfpou-2027-01-10-malwil,liquidityProgram,0.1,PENDING
@@ -9084,6 +9090,8 @@ date,market,program_type,reward_usd,status
 2026-09-09,fptc-nfl-tefpou-2027-01-10-dalsch,liquidityProgram,0.11,PENDING
 2026-09-09,fptc-nfl-tefpou-2027-01-10-harfan,liquidityProgram,0.11,PENDING
 2026-09-09,fptc-nfl-tefpou-2027-01-10-patfre,liquidityProgram,0.06,PENDING
+2026-09-09,fptc-nfl-wrfpou-2027-01-10-ceelam,liquidityProgram,0.01,PENDING
+2026-09-09,fptc-nfl-wrfpou-2027-01-10-emeegb,liquidityProgram,0.11,PENDING
 2026-09-09,fptc-nfl-wrfpou-2027-01-10-teehig,liquidityProgram,0.01,PENDING
 2026-09-09,fptc-nfl-wrfpou-2027-01-10-trahun,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-car,liquidityProgram,0.08,PENDING
@@ -9126,7 +9134,9 @@ date,market,program_type,reward_usd,status
 2026-09-09,ussewc-usse-nj-2026-11-03-dem,liquidityProgram,0.12,PENDING
 2026-09-09,ussewc-usse-nj-2026-11-03-rep,liquidityProgram,0.04,PENDING
 2026-09-09,ussewc-usse-nm-2026-11-03-rep,liquidityProgram,0.33,PENDING
+2026-09-09,ussewc-usse-or-2026-11-03-rep,liquidityProgram,0.3,PENDING
 2026-09-09,ussewc-usse-ri-2026-11-03-dem,liquidityProgram,1.79,PENDING
+2026-09-09,ussewc-usse-sc-2026-11-03-rep,liquidityProgram,0.48,PENDING
 2026-09-09,ussewc-usse-va-2026-11-03-dem,liquidityProgram,0.83,PENDING
 2026-09-09,ussewc-usse-wv-2026-11-03-dem,liquidityProgram,0.42,PENDING
 2026-09-09,ussewc-usse-wv-2026-11-03-rep,liquidityProgram,0.07,PENDING
