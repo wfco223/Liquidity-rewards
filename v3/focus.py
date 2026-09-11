@@ -150,6 +150,16 @@ FOCUS_BP_EVERY_S = 60.0
 FOCUS_BP_WINDOW_S = 1800.0      # the stake follows the HIGHEST buying-power read of
                                 # the last half hour: a fill's dip must not pull every
                                 # order and re-rest it a minute later (13:43-13:46Z)
+# the position feed lags a fill by a read or more (02:57-02:59Z,
+# 2026-09-11: the House rep control exit of 68 filled, the feed still
+# showed the lot, the tender rested a second exit of 68 within the
+# minute and it filled — flat became short 68; the same shape flipped
+# the position at 15:38Z and 21:05Z the day before). An order of the
+# tender's that vanished is taken as filled for the position's sake
+# for FOCUS_POS_PENDING_S until the journal confirms it, then for
+# FOCUS_POS_ADJ_S more — or until the feed itself moves
+FOCUS_POS_PENDING_S = 150.0
+FOCUS_POS_ADJ_S = 300.0
 FOCUS_VANISH_WAIT_S = 600.0     # an order gone from the open list is a fill only when
                                 # the family's journal says so; the list left the TX
                                 # governor bid out for one read (13:35Z) and the tender
@@ -214,6 +224,8 @@ class Focus:
         # had just rested at +$168 a day read −$697 a minute later, a 62c
         # fill cost a share), and the tender must judge by its own numbers
         self.scores: dict[str, tuple[float, float, float]] = {}
+        self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
+        self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
         self._gone_by_me: dict[str, float] = {}   # ids the tender itself cancelled or replaced -> when
         self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
@@ -547,7 +559,28 @@ class Focus:
     def _exit_order(o: FamilyOrder) -> bool:
         return o.purpose == "sell" or str(o.why or "").startswith("focus exit")
 
-    def _note_fills(self, now: float) -> None:
+    def _positions_view(self, positions: dict, now: float) -> dict:
+        """The feed's positions, corrected for the tender's own fills
+        the feed has not shown yet: a vanished order counts as filled
+        until the feed moves (then the feed is the truth), for at most
+        FOCUS_POS_PENDING_S unconfirmed or FOCUS_POS_ADJ_S confirmed."""
+        out = dict(positions)
+        for oid, a in list(self._pos_adj.items()):
+            slug = a["slug"]
+            row = positions.get(slug) or (0.0, 0.0)
+            net = float(row[0] or 0.0)
+            cost = float(row[1] or 0.0) if len(row) > 1 else 0.0
+            limit = FOCUS_POS_ADJ_S if a["confirmed"] else FOCUS_POS_PENDING_S
+            if abs(net - a["feed"]) > 0.005 or now - a["ts"] > limit:
+                self._pos_adj.pop(oid, None)      # the feed moved, or the window closed
+                continue
+            cur = out.get(slug) or (net, cost)
+            new_net = float(cur[0] or 0.0) + a["delta"]
+            new_cost = (abs(cost) * abs(new_net) / abs(net)) if abs(net) > 0.005 else cost
+            out[slug] = (round(new_net, 4), round(new_cost, 4))
+        return out
+
+    def _note_fills(self, now: float, positions: dict | None = None) -> None:
         """A tender entry that shrank or vanished is a FILL only when the
         family's journal books shares to it; then the side waits
         FOCUS_REFILL_WAIT_S before any new entry. An exit's fill is
@@ -563,15 +596,24 @@ class Focus:
             if oid in self._gone_by_me:
                 continue
             o = cur.get(oid)
-            if o is None:
-                self._vanished.setdefault(oid, (slug, side, qty, now, was_exit))
-            elif o.qty < qty - 0.5:
-                self._vanished.setdefault(oid, (slug, side, qty - o.qty, now, was_exit))
+            gone = qty if o is None else (qty - o.qty if o.qty < qty - 0.5 else 0.0)
+            if gone > 0.0 and oid not in self._vanished:
+                self._vanished[oid] = (slug, side, gone, now, was_exit)
+                feed = float(((positions or {}).get(slug) or (0.0,))[0] or 0.0)
+                before = self._feed_prev.get(slug, feed)
+                if abs(feed - before) <= 0.005:
+                    # the feed has not moved since the order was last seen
+                    # resting: count the fill until it does
+                    self._pos_adj[oid] = {"slug": slug, "delta": (gone if side == "BUY" else -gone),
+                                          "feed": before, "ts": now, "confirmed": False}
         for oid, rec in list(self._vanished.items()):
             slug, side, qty, since = rec[0], rec[1], rec[2], rec[3]
             was_exit = bool(rec[4]) if len(rec) > 4 else False
             got = self._journal_fills(oid, since)
             if got >= 0.5:
+                a = self._pos_adj.get(oid)
+                if a is not None:
+                    a.update(delta=(got if side == "BUY" else -got), ts=now, confirmed=True)
                 if was_exit:
                     self._log(event="exit_filled", market=slug, side=side, qty=round(got, 2),
                               note="the position left — the side is not held")
@@ -584,8 +626,10 @@ class Focus:
             elif oid in cur and cur[oid].qty >= qty - 0.5 and now - since < FOCUS_VANISH_WAIT_S:
                 # back at full size: the list had left it out for a read
                 self._vanished.pop(oid, None)
+                self._pos_adj.pop(oid, None)
             elif now - since > FOCUS_VANISH_WAIT_S:
                 self._vanished.pop(oid, None)     # gone for good, unbooked: not a fill
+                self._pos_adj.pop(oid, None)
         self._last_mine = {oid: (o.market, o.side, o.qty, self._exit_order(o))
                            for oid, o in cur.items()}
         live = set(self.fam.orders)
@@ -819,12 +863,16 @@ class Focus:
             self.refresh_markets(now)
             self._seed_silver_fairs()
             self._claim_orders()
-            self._note_fills(now)            # before the plans: a fill holds its side
+            positions = positions or {}
+            self._note_fills(now, positions)  # before the plans: a fill holds its side
             self._refresh_books(now)
             bp = self.stake_bp(now)
-            positions = positions or {}
+            feed = positions
+            positions = self._positions_view(positions, now)
             self._plan_all(now, positions, bp)
             acted = self._tend(now, positions, on) if on else 0
+            self._feed_prev = {k: float((v or (0.0,))[0] or 0.0) for k, v in feed.items()
+                               if k in self.markets}
             if not on:
                 self.note = "the focus switch is off — showing, not tending"
             elif self._blocked():
