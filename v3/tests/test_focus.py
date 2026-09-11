@@ -749,12 +749,17 @@ class TestAfterAFill(Base):
         bids = self.mine(NC, "BUY")
         self.assertEqual(len(bids), 1)
         self.assertEqual((bids[0].price, bids[0].qty), (0.44, 200.0))
-        # the touch past both his fair and the cost: the exit sits at
-        # the nearer of the two, not past it
+        # the touch past both his fair and the cost: the earnings beat
+        # the concession charged in full, with company on the side, so
+        # the exit joins the touch (owner, 2026-09-11 "Yes" to exits
+        # treated as entries are)
         self.r.exchange.books[NC] = wide_book(self.r.now, bid=0.48, ask=0.51)
         self.f.moved_at.clear()
         self.tick()
-        self.assertEqual(self.f.rows[NC]["exit"]["px"], 0.47)
+        ex = self.f.rows[NC]["exit"]
+        self.assertEqual(ex["px"], 0.48)
+        self.assertGreater(ex["conc"], 0.0)                     # 8c over his fair, charged
+        self.assertGreater(ex["est"], ex["loss"])
         # his fair raised past the cost: the fair alone brings the exit
         # to the touch (owner, 2026-09-10: "if an exit is not earning,
         # then it should be placed closer to the touch")
@@ -777,11 +782,12 @@ class TestAfterAFill(Base):
         self.assertAlmostEqual(ex["basis"], 0.59, places=4)
         asks = self.mine(NC, "SELL")
         self.assertEqual((asks[0].price, asks[0].qty), (0.53, 195.0))
-        # the touch under both: the exit rests at his fair, the nearer
+        # the touch under both: with company on the side the earnings
+        # beat the 2c concession and the exit joins the touch
         self.r.exchange.books[NC] = wide_book(self.r.now, bid=0.44, ask=0.47)
         self.f.moved_at.clear()
         self.tick()
-        self.assertEqual(self.f.rows[NC]["exit"]["px"], 0.49)
+        self.assertEqual(self.f.rows[NC]["exit"]["px"], 0.47)
 
     def test_his_qualifying_wall_offers_none_of_the_lot_and_widens_the_stake(self):
         # owner, 2026-09-10: "My qualifying orders (1c or 99c) should not
@@ -1023,8 +1029,13 @@ class TestHisWallCarriesTheSide(Base):
         # The model had stripped his wall with every order of ours and
         # read the bid side as earning nothing — the exit at the touch
         # showed $0.00 a day
-        thin = Book(bids=((0.41, 2.0), (0.32, 70.0), (0.25, 100.0), (0.23, 215.0),
-                          (0.02, 429.0), (0.01, 37500.0)),
+        # (2026-09-11: an exit is placed as an entry is, and the 10c
+        # concession of a cover at 41c against his 31c fair needs
+        # company within six cents — 300 shares at 40c and 200 at 38c
+        # stand in here; on the bare book of that night the cover would
+        # rest at his fair)
+        thin = Book(bids=((0.41, 2.0), (0.40, 300.0), (0.38, 200.0), (0.32, 70.0),
+                          (0.25, 100.0), (0.23, 215.0), (0.02, 429.0), (0.01, 37500.0)),
                     asks=((0.42, 87.0), (0.43, 36.0), (0.48, 70.0), (0.99, 27100.0)),
                     tick=0.01, fetched_at=self.r.now)
         self.r.exchange.books[NC] = thin
@@ -1044,6 +1055,15 @@ class TestHisWallCarriesTheSide(Base):
         # his wall itself earns nothing (forty ticks back) and is shown so
         wall = [d for d in row["orders"] if d["id"] == "wall"][0]
         self.assertLess(wall["est"], 1.0)
+        # the bare book of that night: two shares at the touch, the
+        # next bid 9c back — the cover rests at his fair, no concession
+        bare = Book(bids=((0.41, 2.0), (0.32, 70.0), (0.25, 100.0), (0.23, 215.0),
+                          (0.02, 429.0), (0.01, 37500.0)),
+                    asks=thin.asks, tick=0.01, fetched_at=self.r.now)
+        prog = self.f.terms.get(NC)
+        pool = self.f.fam._side_pool(NC, prog)
+        ex = self.f._exit_plan(NC, "BUY", bare, prog, pool, 0.31, 299.0, 0.417)
+        self.assertEqual(ex["px"], 0.31)
         # without the wall the side is short of the target: nothing earns
         self.r.fam.orders.pop("wall")
         self.r.exchange.live.pop("wall")
@@ -1455,6 +1475,65 @@ class TestTheCompanyWindowIsSixCents(Base):
         self.assertGreater(plan["px"], 0.16 + 1e-9)              # past his fair, with company
         self.assertGreater(plan["conc"], 0.0)                    # the concession charged
         self.assertGreater(plan["est"], 20.0)                    # and it earns
+
+
+class TestAnExitIsPlacedAsAnEntryIs(Base):
+    # the Iowa Senate rep book of 2026-09-11 19:35Z: 201 held at 68.6c,
+    # his fair 63c, the ask touch 61c. The exit had sat at his fair, two
+    # ticks back, earning $19 a day where the touch was worth about $140
+    # (owner: "This is another one where it seems it's not going below
+    # fair" ... "Yes")
+    IOWA = Book(bids=((0.60, 4200.0), (0.58, 26.0), (0.54, 76.0), (0.52, 18.0), (0.51, 100.0),
+                      (0.02, 167.0), (0.01, 38500.0)),
+                asks=((0.61, 132.0), (0.62, 303.0), (0.63, 1000.0), (0.64, 804.0), (0.68, 83.0),
+                      (0.69, 10500.0), (0.77, 230.0), (0.99, 40000.0)),
+                tick=0.01, fetched_at=0.0)
+    BARE = Book(bids=((0.60, 4200.0), (0.01, 38500.0)),
+                asks=((0.61, 5.0), (0.62, 3.0), (0.99, 40000.0)),
+                tick=0.01, fetched_at=0.0)
+
+    def test_the_exit_goes_under_his_fair_where_the_earnings_beat_the_concession(self):
+        self.f.set_fair(NC, 63.0)
+        prog = self.f.terms.get(NC)
+        pool = self.f.fam._side_pool(NC, prog)
+        ex = self.f._exit_plan(NC, "SELL", self.IOWA, prog, pool, 0.63, 201.0, 0.686)
+        self.assertIsNotNone(ex)
+        self.assertLess(ex["px"], 0.63 - 1e-9)                 # under his fair
+        self.assertIn(ex["px"], (0.61, 0.62))
+        self.assertGreater(ex["conc"], 0.0)                     # the concession charged
+        self.assertGreater(ex["est"], 5 * ex["loss"])           # and the earnings beat it
+        at_fair = self.f._score(NC, "SELL", self.IOWA, prog, pool, 0.63, 0.63, 201.0,
+                                self.f._levels_net(NC, "SELL", self.IOWA), is_exit=True)
+        self.assertGreater(ex["ev"], at_fair["ev"])
+        self.assertAlmostEqual(ex["basis"], 0.686, places=4)   # the cost carried, never a floor
+
+    def test_on_a_bare_side_the_exit_rests_at_his_fair(self):
+        self.f.set_fair(NC, 63.0)
+        prog = self.f.terms.get(NC)
+        pool = self.f.fam._side_pool(NC, prog)
+        ex = self.f._exit_plan(NC, "SELL", self.BARE, prog, pool, 0.63, 201.0, 0.686)
+        self.assertIsNotNone(ex)
+        self.assertGreaterEqual(ex["px"], 0.63 - 1e-9)
+        self.assertEqual(ex["conc"], 0.0)
+
+    def test_an_exit_under_fair_that_lost_its_company_is_moved_back(self):
+        self.r.positions[NC] = (201.0, 201.0 * 0.686)
+        self.f.set_fair(NC, 63.0)
+        self.r.exchange.books[NC] = Book(bids=self.IOWA.bids, asks=self.IOWA.asks, tick=0.01,
+                                         fetched_at=self.r.now)
+        self.tick()
+        self.tick()
+        asks = [o for o in self.mine(NC, "SELL") if self.f._exit_order(o)]
+        self.assertEqual(len(asks), 1)
+        self.assertLess(asks[0].price, 0.63 - 1e-9)
+        self.r.exchange.books[NC] = Book(bids=self.BARE.bids, asks=self.BARE.asks, tick=0.01,
+                                         fetched_at=self.r.now)
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S + 1.0
+        self.tick()
+        self.tick()
+        asks = [o for o in self.mine(NC, "SELL") if self.f._exit_order(o)]
+        self.assertEqual(len(asks), 1)
+        self.assertGreaterEqual(asks[0].price, 0.63 - 1e-9)
 
 
 class TestABareSideGetsNoConcession(Base):

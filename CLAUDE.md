@@ -293,12 +293,23 @@ long and accreted, so search it rather than reading it through.
   an entry never adds to a position past the stake (2026-09-10: an
   ask at the touch of the House dem control market filled eleven
   times in fifteen minutes while the tender re-rested it). An exit
-  joins the touch and never sits under BOTH his fair and the
-  position's cost: whichever of the two lets it nearer the touch is
-  its floor, so his fair alone brings it to the touch and the cost
-  alone never keeps it away ("if an exit is not earning, then it
-  should be placed closer to the touch" — an exit held at its 59c
-  cost with his fair at 49c and the market at 53c earned nothing);
+  is placed as an entry is (owner, 2026-09-11 "This is another one
+  where it seems it's not going below fair" ... "Yes" — Iowa Senate
+  rep: 201 held at 68.6c, his fair 63c, the ask touch 61c, and the
+  exit sat at his fair two ticks back earning $19 a day where the
+  touch was worth about $140): its price is the slot with the best
+  EV from the touch back, it may sit under his fair (a sale under it,
+  a cover over it) where the earnings beat the concession charged in
+  full and only on a side with company within six cents of the
+  side's best adding up to the exit's size, and on a bare side it
+  rests at his fair or better (one under fair that lost its company
+  moves back after the exit cooldown); it never sits inside the
+  touch; the position's cost never holds it and never permits a
+  concession either — until that day the floor had been whichever of
+  his fair and the cost let the exit nearer the touch ("if an exit is
+  not earning, then it should be placed closer to the touch" — an
+  exit held at its 59c cost with his fair at 49c and the market at
+  53c earned nothing), and the cost is still shown beside the exit;
   exits are never held, never scaled and follow the lot within a
   minute ("Exit orders should never be held and don't need to ramp
   up. They can always be placed"); his cancelling one by hand does
