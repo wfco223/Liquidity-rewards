@@ -1286,6 +1286,72 @@ class TestTheGlance(Base):
         self.assertEqual(sum(d["est"] for d in row["orders"] if d["side"] == "BUY"), 0.0)
 
 
+class TestABareSideGetsNoConcession(Base):
+    def test_past_fair_needs_company(self):
+        # owner, 2026-09-11, after the maintenance wiped the books: "Be
+        # careful of placing orders after the maintenance. Don't sell
+        # everything for pennies there might not be any orders resting"
+        # — the Ohio Senate dem short sold 16c under his fair on a bare
+        # ask side that made 84 shares read $360 a day
+        self.f.set_fair(NC, 62.0)
+        bare = Book(bids=((0.44, 300.0), (0.43, 500.0), (0.02, 60000.0)),
+                    asks=((0.46, 20.0), (0.47, 30.0), (0.98, 60000.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.r.exchange.books[NC] = bare
+        self.tick()
+        self.tick()
+        # nothing rests under his fair — and with the at-fair slot far
+        # behind the touch earning nothing, nothing at all
+        for o in self.mine(NC, "SELL"):
+            self.assertGreaterEqual(o.price, 0.62 - 1e-9)
+        # the plan itself: on the bare side nothing past fair is a candidate
+        book = self.r.cache.any_age(NC)
+        prog = self.f.terms.get(NC)
+        pool = self.f.fam._side_pool(NC, prog)
+        plan = self.f._entry_plan(NC, "SELL", book, prog, pool, 0.62, 200.0)
+        self.assertIsNotNone(plan)
+        self.assertGreaterEqual(plan["px"], 0.62 - 1e-9)
+        self.assertEqual(plan["conc"], 0.0)
+        # with company at the touch the same concession is on the table
+        deep = Book(bids=((0.44, 300.0), (0.43, 500.0), (0.02, 60000.0)),
+                    asks=((0.46, 4000.0), (0.47, 6000.0), (0.98, 60000.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.assertFalse(self.f._bare(self.f._levels_net(NC, "SELL", deep), 0.01, 370.0))
+        self.assertTrue(self.f._bare(self.f._levels_net(NC, "SELL", bare), 0.01, 370.0))
+        plan = self.f._entry_plan(NC, "SELL", deep, prog, pool, 0.62, 200.0)
+        self.assertIsNotNone(plan)
+        s_bare = self.f._score(NC, "SELL", bare, prog, pool, 0.62, 0.46, 84.0,
+                               self.f._levels_net(NC, "SELL", bare))
+        self.assertGreater(s_bare["conc"], 0.15)
+
+    def test_one_resting_past_fair_on_a_bare_side_is_moved(self):
+        self.f.set_fair(NC, 62.0)
+        deep = Book(bids=((0.44, 300.0), (0.43, 500.0), (0.02, 60000.0)),
+                    asks=((0.46, 4000.0), (0.47, 6000.0), (0.98, 60000.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.r.exchange.books[NC] = deep
+        self.tick()
+        self.tick()
+        # the tender's own ask is re-laid past fair by hand of the test:
+        # the shape of an order rested with company that lost it
+        asks = self.mine(NC, "SELL")
+        self.assertTrue(asks)
+        o = asks[0]
+        o.price = 0.46
+        self.r.exchange.live[o.id]["price"] = 0.46
+        bare = Book(bids=((0.44, 300.0), (0.43, 500.0), (0.02, 60000.0)),
+                    asks=((0.46, 20.0), (0.47, 30.0), (0.98, 60000.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.r.exchange.books[NC] = bare
+        self.r.now += focus_mod.FOCUS_MOVE_COOLDOWN_S
+        self.tick()
+        self.tick()
+        for x in self.mine(NC, "SELL"):
+            self.assertGreaterEqual(x.price, 0.62 - 1e-9)
+        evs = [e["event"] for e in self.f.log if e.get("market") == NC and e.get("side") == "SELL"]
+        self.assertTrue("moved" in evs or "pull" in evs, evs)
+
+
 class TestTheWebPage(unittest.TestCase):
     def test_the_page_and_its_ops_are_wired(self):
         from v3 import web
