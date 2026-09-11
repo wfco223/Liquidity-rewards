@@ -44,6 +44,7 @@ class TestPostingProgress(unittest.TestCase):
             f"{yday}|m5": {"date": yday, "market": "m5", "usd": 0.2, "paid": 0.2,
                            "status": {"PAID", "SKIPPED"}},
         }
+        self.mon.posting_last = {today: now - 600.0, yday: now - 600.0}
         p = self.mon._posting_progress(agg, now)
         self.assertEqual([x["day"] for x in p], [today])       # yesterday is fully posted: no bar
         t = p[0]
@@ -68,9 +69,27 @@ class TestPostingProgress(unittest.TestCase):
             f"{d4}|m1": {"date": d4, "market": "m1", "usd": 1.0, "paid": 1.0, "status": {"PAID"}},
             f"{d4}|m2": {"date": d4, "market": "m2", "usd": 1.0, "paid": 1.0, "status": {"PAID"}},
         }
+        self.mon.posting_last = {d3: now - 3600.0, d4: now - 60.0}
         p = self.mon._posting_progress(agg, now)
         self.assertEqual([x["day"] for x in p], [d3])
         self.assertEqual((p[0]["expected"], p[0]["appeared"], p[0]["pct"]), (3, 1, 33))
+        # the same day with its last new row two days ago: the exchange
+        # never posts every market we claimed, so time says it is done
+        self.mon.posting_last = {d3: now - 2 * 86400.0}
+        self.assertEqual(self.mon._posting_progress(agg, now), [])
+
+    def test_a_new_row_marks_its_day_as_posting(self):
+        now = 1_788_600_000.0
+        d3 = et_day(now - 3 * 86400.0)
+        self.mon.rewards_seen = {f"{d3}|m1": 1.0}
+        agg = {f"{d3}|m1": {"date": d3, "market": "m1", "usd": 1.0, "paid": 1.0, "status": {"PAID"}},
+               f"{d3}|m2": {"date": d3, "market": "m2", "usd": 0.5, "paid": 0.5, "status": {"PAID"}}}
+        self.mon._mark_posting(agg, now)
+        self.assertEqual(self.mon.posting_last, {d3: now})          # m2 is new
+        self.mon.rewards_seen = {f"{d3}|m1": 1.0, f"{d3}|m2": 0.5}
+        self.mon.posting_last = {}
+        self.mon._mark_posting(agg, now + 60.0)
+        self.assertEqual(self.mon.posting_last, {})                  # nothing new: no mark
 
     def test_nothing_estimated_and_nothing_posted_is_no_bar(self):
         self.mon.mkt_claim_day = {}
