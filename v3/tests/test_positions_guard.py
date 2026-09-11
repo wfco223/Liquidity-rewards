@@ -102,6 +102,45 @@ class TestTheGuard(unittest.TestCase):
         self.assertEqual(self.guard(smaller, 60.0)[AL], (40.0, 39.2))
         self.assertEqual(self.notes, [])
 
+    def test_a_missing_market_the_record_shows_sold_out_is_gone_at_once(self):
+        # 18:34Z, 2026-09-11: the feed dropped two markets whose exits
+        # had just filled the whole position; "kept at their last
+        # value" for five minutes, the focus tender rested fresh exits
+        # on positions that no longer existed
+        self.guard(self.full, 0.0)
+        self.stub.families = {"politics": types.SimpleNamespace(fills=[
+            {"market": AL, "ts": 30.0, "side": "SELL", "qty": 100.0, "px": 0.98,
+             "pos_after": 0.0}])}
+        short = {GA: (5.0, 3.0)}                             # AL and TN both missing
+        self.client.reads.append(short)
+        got = self.guard(short, 60.0)
+        self.assertNotIn(AL, got)                            # gone now, not in five minutes
+        self.assertEqual(got[TN], (-50.0, -47.5))            # TN: no such fill, kept
+        self.assertIn("1 sold out in the record, taken as gone now", self.notes[-1])
+        self.assertIn(AL, self.notes[-1])
+        self.assertIn("1 kept at their last value", self.notes[-1])
+        self.assertNotIn(AL, self.stub._pos_missing)
+
+    def test_a_newer_fill_that_reopened_the_position_keeps_the_market(self):
+        self.guard(self.full, 0.0)
+        self.stub.families = {"politics": types.SimpleNamespace(fills=[
+            {"market": AL, "ts": 30.0, "side": "SELL", "qty": 100.0, "px": 0.98,
+             "pos_after": 0.0},
+            {"market": AL, "ts": 45.0, "side": "BUY", "qty": 100.0, "px": 0.97,
+             "pos_after": 100.0}])}
+        short = {TN: (-50.0, -47.5), GA: (5.0, 3.0)}
+        self.client.reads.append(short)
+        self.assertEqual(self.guard(short, 60.0)[AL], (100.0, 98.0))
+
+    def test_a_hand_fill_without_pos_after_says_nothing(self):
+        self.guard(self.full, 0.0)
+        self.stub.families = {"politics": types.SimpleNamespace(fills=[
+            {"market": AL, "ts": 30.0, "side": "SELL", "qty": 100.0, "px": 0.98,
+             "pos_after": None}])}
+        short = {TN: (-50.0, -47.5), GA: (5.0, 3.0)}
+        self.client.reads.append(short)
+        self.assertEqual(self.guard(short, 60.0)[AL], (100.0, 98.0))
+
 
 if __name__ == "__main__":
     unittest.main()
