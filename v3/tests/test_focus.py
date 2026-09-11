@@ -826,6 +826,34 @@ class TestHisWallCarriesTheSide(Base):
         self.assertEqual(self.f.rows[NC]["exit"]["est"], 0.0)
 
 
+class TestAGhostOfItsOwnMoveIsNotAdopted(Base):
+    def test_the_lagging_original_of_a_move_stays_out_of_the_tenders_hands(self):
+        # 00:05Z, 2026-09-11: the open list showed the original of a
+        # move for a read after its cancel; the family adopted it as his
+        # and the tender adopted it back — four times in an hour
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        bid = self.mine(NC, "BUY")[0]
+        self.f.set_stake(NC, 400.0)
+        self.f.moved_at.clear()
+        self.tick()
+        self.assertNotIn(bid.id, self.r.fam.orders)          # moved: the original is gone
+        new = self.mine(NC, "BUY")[0]
+        # the list lags: the family brings the original back as his
+        self.r.fam.orders[bid.id] = FamilyOrder(id=bid.id, market=NC, side="BUY", price=bid.price,
+                                                qty=bid.qty, intent=BUY_LONG, placed_ts=self.r.now,
+                                                purpose="manual", why="the owner's own order")
+        n_log = len(self.f.log)
+        self.tick()
+        self.assertEqual(self.r.fam.orders[bid.id].purpose, "manual")
+        self.assertFalse([e for e in self.f.log[n_log:] if e.get("event") in ("adopted", "pull")])
+        self.assertEqual(self.mine(NC, "BUY"), [new] if new.id in self.r.fam.orders else self.mine(NC, "BUY"))
+        # ten minutes on, a manual order with that id would be a new one of his
+        self.r.now += focus_mod.FOCUS_VANISH_WAIT_S
+        self.tick()
+        self.assertNotIn(bid.id, self.f._gone_by_me)
+
+
 class TestTheCapHasSlack(Base):
     def test_a_little_over_the_cap_pulls_nothing_and_a_fresh_order_waits(self):
         # 23:32-23:35Z: orders rested under the cap were pulled "over the

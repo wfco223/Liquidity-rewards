@@ -201,7 +201,11 @@ long and accreted, so search it rather than reading it through.
   five minutes is pulled only when the cap is 25% over (23:32-23:35Z:
   orders rested under the cap were pulled three minutes later as the
   readings moved, 25 such pulls in an hour); his orders the tender
-  adopts count toward the cap like its own and are logged "adopted"; a cover of a short is
+  adopts count toward the cap like its own and are logged "adopted";
+  an id the tender itself cancelled or replaced is remembered for
+  ten minutes and never adopted back when the open list shows it
+  late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
+  times in an hour, each a ghost of its own move); a cover of a short is
   placed as the close it is (SELL_SHORT), never as a fresh long. A
   refused placement or resize waits out the cooldown before another
   try (a refused resize had been retried every twenty seconds). An

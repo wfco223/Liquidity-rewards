@@ -192,7 +192,7 @@ class Focus:
         self.weak_since: dict[str, float] = {}    # slug|side -> reading under zero since
         self.silver_seeded: set[str] = set()      # FOCUS_SILVER_FAIRS already given a fair
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
-        self._gone_by_me: set[str] = set()        # ids the tender itself cancelled or replaced
+        self._gone_by_me: dict[str, float] = {}   # ids the tender itself cancelled or replaced -> when
         self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
         self._journaled: set[str] = set()         # journal rows already counted (oid|ts)
         self.mine_ids: list[str] = []             # every order id the tender ever placed (bounded)
@@ -482,7 +482,7 @@ class Focus:
         the tender's any more (the open list lags a cancel by a read
         and the family adopts the ghost as the owner's; it drops when
         the list catches up — the tender must not cancel it twice)."""
-        self._gone_by_me.add(oid)
+        self._gone_by_me[oid] = float(self._clock())
         self._last_mine.pop(oid, None)
         self._vanished.pop(oid, None)
         if oid in self.mine_ids:
@@ -565,7 +565,13 @@ class Focus:
                 self._vanished.pop(oid, None)     # gone for good, unbooked: not a fill
         self._last_mine = {oid: (o.market, o.side, o.qty, self._exit_order(o))
                            for oid, o in cur.items()}
-        self._gone_by_me = {i for i in self._gone_by_me if i in cur}
+        # an id the tender cancelled is remembered for a while: the open
+        # list lags a cancel by a read or more, the family adopts the
+        # ghost as his, and the tender must neither adopt it back nor
+        # cancel it twice (00:05Z, 2026-09-11: an Iowa governor ask was
+        # "adopted" four times in an hour, each a ghost of its own move)
+        self._gone_by_me = {i: t for i, t in self._gone_by_me.items()
+                            if now - t < FOCUS_VANISH_WAIT_S}
 
     def _claim_orders(self) -> None:
         """The engine's orders on focus ground become the tender's; the
@@ -587,6 +593,7 @@ class Focus:
                 o.purpose = "sell"
                 o.why = "inherited from the bonds — an exit"
             elif (o.purpose == "manual" and not is_wall(o)
+                  and o.id not in self._gone_by_me
                   and self.why_not_tended(o.market) is None):
                 o.purpose = PURPOSE
                 o.why = "yours — the tender tends it like its own"
