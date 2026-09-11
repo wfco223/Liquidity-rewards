@@ -10,6 +10,7 @@ import copy
 import json
 import time
 import unittest
+from unittest import mock
 
 from v3 import focus as focus_mod
 from v3 import politics
@@ -1475,6 +1476,52 @@ class TestTheCompanyWindowIsSixCents(Base):
         self.assertGreater(plan["px"], 0.16 + 1e-9)              # past his fair, with company
         self.assertGreater(plan["conc"], 0.0)                    # the concession charged
         self.assertGreater(plan["est"], 20.0)                    # and it earns
+
+
+class TestTheTenderKeepsItsOwnIds(Base):
+    def test_ids_of_orders_still_resting_survive_the_trim(self):
+        # 20:37Z, 2026-09-11: an eleven-hour-old cover's id had been
+        # trimmed by age, the cover read as his, and a second one rested
+        with mock.patch.object(focus_mod, "MINE_IDS_KEEP", 3):
+            for i in range(3):
+                oid = f"old{i}"
+                self.r.fam.orders[oid] = FamilyOrder(id=oid, market=NC, side="BUY", price=0.46,
+                                                     qty=84.0, intent=focus_mod.SELL_SHORT,
+                                                     placed_ts=self.r.now, purpose="sell",
+                                                     why="an exit — its fill reduces the position")
+                self.f._claim_id(oid)
+            self.f._claim_id("gone0")                         # a moved order, no longer resting
+            for i in range(6):
+                self.f._claim_id(f"new{i}")
+            self.assertTrue(all(f"old{i}" in self.f.mine_ids for i in range(3)))
+            self.assertNotIn("gone0", self.f.mine_ids)
+            self.assertIn("new5", self.f.mine_ids)
+
+    def test_an_exit_side_his_orders_cover_pulls_the_tenders_own_exit(self):
+        # his cover of the whole short rests; the tender's own duplicate
+        # comes off rather than offering the lot twice
+        self.r.positions[NC] = (-84.0, 84.0 * 0.54)
+        self.f.set_fair(NC, 62.0)
+        self.r.fam.orders["his"] = FamilyOrder(id="his", market=NC, side="BUY", price=0.44,
+                                               qty=84.0, intent=focus_mod.SELL_SHORT,
+                                               placed_ts=self.r.now - 3600, purpose="sell",
+                                               why="an exit — its fill reduces the position")
+        self.r.exchange.live["his"] = {"id": "his", "market": NC, "side": "BUY",
+                                       "price": 0.44, "size": 84.0, "intent": focus_mod.SELL_SHORT}
+        self.r.fam.orders["dup"] = FamilyOrder(id="dup", market=NC, side="BUY", price=0.44,
+                                               qty=84.0, intent=focus_mod.SELL_SHORT,
+                                               placed_ts=self.r.now - 60, purpose=PURPOSE,
+                                               why="focus exit: ~$1.00/day")
+        self.r.exchange.live["dup"] = {"id": "dup", "market": NC, "side": "BUY",
+                                       "price": 0.44, "size": 84.0, "intent": focus_mod.SELL_SHORT}
+        self.f._claim_id("dup")
+        self.tick()
+        self.tick()
+        self.assertNotIn("dup", self.r.exchange.live)          # the duplicate is gone
+        self.assertIn("his", self.r.exchange.live)             # his stands
+        self.assertEqual(self.f.rows[NC]["exit"]["note"], "your own orders already offer the lot")
+        self.assertTrue(any(e["event"] == "pull" and "already offer" in (e.get("why") or "")
+                            for e in self.f.log))
 
 
 class TestAnExitIsPlacedAsAnEntryIs(Base):
