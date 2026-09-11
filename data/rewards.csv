@@ -9469,6 +9469,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,enwc-usgubp-ri-2026-09-09-dem-greste,liquidityProgram,0.25,PENDING
 2026-09-09,enwc-uspres-nom-dem-2028-andbes,liquidityProgram,0.03,PENDING
 2026-09-09,enwc-uspres-nom-dem-2028-dwajoh,liquidityProgram,0.19,PENDING
+2026-09-09,enwc-uspres-nom-dem-2028-kamhar,liquidityProgram,0.04,PENDING
 2026-09-09,enwc-uspres-nom-dem-2028-petbut,liquidityProgram,0.06,PENDING
 2026-09-09,enwc-uspres-nom-dem-2028-stasmi,liquidityProgram,0.01,PENDING
 2026-09-09,enwc-uspres-nom-rep-2028-elomus,liquidityProgram,0.03,PENDING
@@ -9559,6 +9560,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,fptc-nfl-tefpou-2027-01-10-kensad,liquidityProgram,0.08,PENDING
 2026-09-09,fptc-nfl-tefpou-2027-01-10-marand,liquidityProgram,0.09,PENDING
 2026-09-09,fptc-nfl-tefpou-2027-01-10-mikges,liquidityProgram,0.07,PENDING
+2026-09-09,fptc-nfl-tefpou-2027-01-10-orogad,liquidityProgram,0.06,PENDING
 2026-09-09,fptc-nfl-tefpou-2027-01-10-patfre,liquidityProgram,0.06,PENDING
 2026-09-09,fptc-nfl-tefpou-2027-01-10-samlap,liquidityProgram,0.04,PENDING
 2026-09-09,fptc-nfl-tefpou-2027-01-10-tremcb,liquidityProgram,0.02,PENDING
@@ -9624,6 +9626,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,ftsc-nfl-qbtop5fp-2027-01-10-josall,liquidityProgram,0.09,PENDING
 2026-09-09,ftsc-nfl-qbtop5fp-2027-01-10-patmah,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-rbmostfp-2027-01-10-jamcoo,liquidityProgram,0.01,PENDING
+2026-09-09,ftsc-nfl-rbmostfp-w1-2026-09-14-ashjea,liquidityProgram,0.01,PENDING
 2026-09-09,ftsc-nfl-rbmostfp-w1-2026-09-14-chrmcc,liquidityProgram,0.04,PENDING
 2026-09-09,ftsc-nfl-rbmostfp-w1-2026-09-14-jahgib,liquidityProgram,0.03,PENDING
 2026-09-09,ftsc-nfl-rbmostfp-w1-2026-09-14-kenwal,liquidityProgram,0.01,PENDING
@@ -9653,6 +9656,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,ftsc-nfl-wrtop12fp-2027-01-10-ceelam,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-wrtop12fp-2027-01-10-dralon,liquidityProgram,0.01,PENDING
 2026-09-09,ftsc-nfl-wrtop12fp-2027-01-10-emeegb,liquidityProgram,0.04,PENDING
+2026-09-09,ftsc-nfl-wrtop12fp-2027-01-10-garrwil,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-wrtop12fp-2027-01-10-jusjef,liquidityProgram,0.04,PENDING
 2026-09-09,ftsc-nfl-wrtop12fp-2027-01-10-kccon,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-wrtop12fp-2027-01-10-lutbur,liquidityProgram,0.02,PENDING
