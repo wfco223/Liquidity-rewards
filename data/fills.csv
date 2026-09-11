@@ -4770,3 +4770,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789136101.3,politics,ewc-usgub-mi-2026-11-03-rep,BUY,379,0.12,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE617N7QGTN2
 1789136101.3,politics,ewc-usgub-mi-2026-11-03-rep,SELL,10,0.08,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE63GRXWPTN2
 1789136101.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,75,0.493,backfill,,1.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5ATC8M6TN5
+1789136221.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,75,0.493,manual,115,0.03,0.5,47,50,0.672,0.493,0.494,-0.007,0,the owner's own order — the engine leaves it alone,CE6EC3FT4TMM
+1789136608.2,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,288,0.41,sell,187.5,3.91,,39,42,0.824,0.34,0.35,0,0,an exit — its fill reduces the position it sits on,CE2EH61C2TN2
+1789136908.2,politics,ewc-usgub-mi-2026-11-03-rep,SELL,6,0.08,sell,26.6154,0.61,0.0614,8,13,0,0.07,0.08,-0.0186,363,an exit — its fill reduces the position it sits on,CE643YWW2TN3
+1789136908.2,politics,ussewc-usse-la-2026-11-03-rep,BUY,10,0.95,earn,5.9185,0.02,0.9629,92,95,0.741,0.95,0.96,-0.0129,10,joins the touch — the book has been quiet,CE6N1HDWRTMM
+1789137156.2,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,17,0.12,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE6MTVM8PTN5
+1789137211.9,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,17,0.12,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE6MTVM8PTN5
