@@ -8973,6 +8973,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,aachc-cfb-wins-2026-11-28-aubrn-6pt5wins,liquidityProgram,0.24,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-aubrn-8pt5wins,liquidityProgram,0.06,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-bayl-8pt5wins,liquidityProgram,0.16,PENDING
+2026-09-08,aachc-cfb-wins-2026-11-28-boise-8pt5wins,liquidityProgram,0.14,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-cah-5pt5wins,liquidityProgram,0.04,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-cah-7pt5wins,liquidityProgram,0.06,PENDING
 2026-09-08,aachc-cfb-wins-2026-11-28-cin-7pt5wins,liquidityProgram,0.33,PENDING
@@ -9203,6 +9204,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,aachc-cfb-wins-2026-11-28-arzst-4pt5wins,liquidityProgram,0.12,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-arzst-6pt5wins,liquidityProgram,0.16,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-bayl-5pt5wins,liquidityProgram,0.04,PENDING
+2026-09-09,aachc-cfb-wins-2026-11-28-bayl-7pt5wins,liquidityProgram,0.24,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-boise-8pt5wins,liquidityProgram,0.07,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-boise-9pt5wins,liquidityProgram,0.44,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-cah-5pt5wins,liquidityProgram,0.04,PENDING
@@ -9241,6 +9243,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,aachc-cfb-wins-2026-11-28-ore-11pt5wins,liquidityProgram,0.92,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-oregst-3pt5wins,liquidityProgram,0.14,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,liquidityProgram,0.89,PENDING
+2026-09-09,aachc-cfb-wins-2026-11-28-pennst-11pt5wins,liquidityProgram,2.42,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,liquidityProgram,0.31,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-rutger-4pt5wins,liquidityProgram,0.15,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-sc-6pt5wins,liquidityProgram,0.31,PENDING
@@ -9302,6 +9305,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,enwc-uspres-nom-rep-2028-elomus,liquidityProgram,0.03,PENDING
 2026-09-09,enwc-uspres-nom-rep-2028-jdvan,liquidityProgram,0.27,PENDING
 2026-09-09,enwc-uspres-nom-rep-2028-marrub,liquidityProgram,0.07,PENDING
+2026-09-09,enwc-uspres-nom-rep-2028-tedcru,liquidityProgram,0.19,PENDING
 2026-09-09,enwc-uspres-nom-rep-2028-tulgab,liquidityProgram,0.02,PENDING
 2026-09-09,enwc-ussep-de-2026-09-15-rep-johshu,liquidityProgram,0.03,PENDING
 2026-09-09,ewc-usgub-az-2026-11-03-rep,liquidityProgram,0.02,PENDING
