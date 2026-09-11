@@ -9321,6 +9321,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,ussewc-usse-la-2026-11-03-dem,liquidityProgram,0.39,PENDING
 2026-09-08,ussewc-usse-la-2026-11-03-rep,liquidityProgram,1.69,PENDING
 2026-09-08,ussewc-usse-ma-2026-11-03-dem,liquidityProgram,0.74,PENDING
+2026-09-08,ussewc-usse-ma-2026-11-03-rep,liquidityProgram,1.73,PENDING
 2026-09-08,ussewc-usse-ms-2026-11-03-dem,liquidityProgram,0.61,PENDING
 2026-09-08,ussewc-usse-ms-2026-11-03-rep,liquidityProgram,0.2,PENDING
 2026-09-08,ussewc-usse-mt-2026-11-03-dem,liquidityProgram,0.23,PENDING
@@ -9567,6 +9568,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,fptc-nfl-qbfpou-2027-01-10-trelaw,liquidityProgram,0.01,PENDING
 2026-09-09,fptc-nfl-qbfpou-2027-01-10-tuatag,liquidityProgram,0.04,PENDING
 2026-09-09,fptc-nfl-qbfpou-2027-01-10-tylsho,liquidityProgram,0.08,PENDING
+2026-09-09,fptc-nfl-rbfpou-2027-01-10-aarjon,liquidityProgram,0.01,PENDING
 2026-09-09,fptc-nfl-rbfpou-2027-01-10-alvkam,liquidityProgram,0.16,PENDING
 2026-09-09,fptc-nfl-rbfpou-2027-01-10-ashjea,liquidityProgram,0.04,PENDING
 2026-09-09,fptc-nfl-rbfpou-2027-01-10-bhatut,liquidityProgram,0.09,PENDING
@@ -9768,6 +9770,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,tec-nfl-nfcsouth-2027-01-10-w-no,liquidityProgram,0.07,PENDING
 2026-09-09,tec-nfl-opoy-2027-02-11-w-jahgib,liquidityProgram,0.01,PENDING
 2026-09-09,tec-nfl-opoy-2027-02-11-w-jontay,liquidityProgram,0.02,PENDING
+2026-09-09,tec-nfl-oroy-2027-02-11-w-cartat,liquidityProgram,0.28,PENDING
 2026-09-09,tec-nfl-oroy-2027-02-11-w-chrbel,liquidityProgram,0.06,PENDING
 2026-09-09,tec-nfl-oroy-2027-02-11-w-jadpri,liquidityProgram,0.36,PENDING
 2026-09-09,tec-nfl-oroy-2027-02-11-w-jerlov,liquidityProgram,0.01,PENDING
