@@ -4757,3 +4757,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789131012.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,27,0.175,backfill,,1.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3TSKJMYTN1
 1789131391.8,politics,paccc-usse-midterms-2026-11-03-dem,SELL,39,0.467,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE53P8GT6TN1
 1789131391.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,27,0.175,backfill,,1.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3TSKJMYTN1
+1789131751.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,27,0.175,sell,261.042,1.85,0.1637,18,19,0.934,0.174,0.175,-0.0113,383,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
+1789131871.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,54,0.175,sell,268.799,1.89,0.1637,18,19,0.937,0.174,0.175,-0.0113,329,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
+1789132387.1,politics,ewc-usse-me-2026-11-03-dem,SELL,175,0.66,sell,101.58,1.83,0.651875,63,67,0.578,0.65,0.66,-0.0081,0,an exit — its fill reduces the position it sits on,CE402GQKTTMQ
+1789132613.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,54,0.175,sell,256.277,2.09,0.1637,18,20,0.94,0.174,0.175,-0.0113,275,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
+1789132973.8,politics,ussewc-usse-wv-2026-11-03-rep,SELL,6,0.97,sell,0,0,0.999975,94,97,0.779,0.97,0.98,0.03,34,taker dump — sold into the bid (the carved exception),CE5PCDW2MTN0
