@@ -4652,3 +4652,20 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789106330.0,politics,paccc-usho-midterms-2026-11-03-rep,BUY,2,0.174,backfill,,1.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDY28RDHMT6S
 1789106330.0,politics,usgubewc-usgub-id-2026-11-03-dem,BUY,0.98,0.05,backfill,,41.43,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CCVH384ARSJ1
 1789106330.0,cfb,aachc-cfb-wins-2026-11-28-cah-6pt5wins,SELL,0.1,0.42,backfill,,12.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDKQPJS92SX4
+1789106630.1,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,10,0.08,earn,0.5185,4.1,0.0036,3,6,0.804,0.07,0.08,-0.0764,-26,1 tick behind the touch — we would hold 10% of the ask side,CDVYWTH8GSJH
+1789107416.1,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,10,0.08,earn,0.2592,4.31,0.0036,4,7,0.831,0.07,0.08,-0.0764,-36,1 tick behind the touch — we would hold 10% of the ask side,CDVYWTH8GSJH
+1789108344.9,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,73,0.06,bond,3.1961,1.52,0.000125,5,8,0.727,0.05,0.06,-0.0599,-238,bond more: split — 80 at 6c carry the share; never dearer than his first price,CDYJ8JENMSJR
+1789108584.9,politics,ussewc-usse-fl-2026-11-03-dem,SELL,8,0.12,earn,2.6316,1.85,0.09425,11,14,0.632,0.11,0.12,-0.0257,-20,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CDY9XP37WT3P
+1789108649.0,politics,ussewc-usse-fl-2026-11-03-dem,BUY,8,0.13,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDZVB3YGWSK5
+1789109103.8,cfb,aachc-cfb-wins-2026-11-28-minnst-8pt5wins,SELL,5.01,0.13,sell,0.0711,12.32,,21,26,0.566,0.09,0.1,0.1,0,selling filled stock — it earns while it waits,CDNG7WS02SJZ
+1789109163.8,politics,ewc-usse-ak-2026-11-03-rep,SELL,200,0.37,manual,9.8602,28.24,0.546525,36,40,0.402,0.36,0.37,0.1765,-198,the owner's own order — the engine leaves it alone,CD7V1WES6SJZ
+1789109223.8,politics,paccc-usho-midterms-2026-11-03-rep,BUY,66,0.174,sell,25.4567,2.34,0.1637,18,19,0.928,0.174,0.175,0.0103,0,an exit — its fill reduces the position it sits on,CDY28RDHMT6S
+1789109971.6,politics,scc-senate-gop-2026-11-03-50,SELL,-42.99,0.16,fix,,18.5,,,,,,,,,size trimmed by 42.99 to the exchange's count (order CD7MF4KMYSJZ),CD7MF4KMYSJZ
+1789109971.6,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,-7.01,0.17,fix,,15.14,,,,,,,,,size trimmed by 7.01 to the exchange's count (order CD9TW1WBESX0),CD9TW1WBESX0
+1789109971.6,politics,scc-senate-gop-2026-11-03-55,BUY,-5,0.06,fix,17.9834,10.83,0.0168,2,6,0.651,0.04,0.06,0.0432,0.21,size trimmed by 5 to the exchange's count (order CDH8YTYMTSJZ),CDH8YTYMTSJZ
+1789109971.6,politics,paccc-balpow-2026-11-03-dsweep,BUY,-1,0.5,fix,109.842,13.37,,48,51,0.731,0.5,0.51,0,2.41,size trimmed by 1 to the exchange's count (order CDECXDD6MSJ1),CDECXDD6MSJ1
+1789109971.6,politics,ussewc-usse-sc-2026-11-03-dem,SELL,-2,0.11,fix,4.1899,5.34,0.07555,9,12,0.614,0.1,0.11,-0.0345,-10,size trimmed by 2 to the exchange's count (order CDK4RT522SJR),CDK4RT522SJR
+1789109971.6,politics,ussewc-usse-sc-2026-11-03-dem,SELL,-2,0.11,fix,,5.33,,,,,,,,,size trimmed by 2 to the exchange's count (order CDK4RT522SJR),CDK4RT522SJR
+1789109971.6,politics,paccc-balpow-2026-11-03-rsweep,BUY,150,0.17,void,64.374,0.02,,15,18,0.75,0.18,0.19,0,150,voided: the exchange has no trade for order CDVMZHFV2T6S — the row of 09-11 05:3,CDVMZHFV2T6S
+1789109971.6,politics,usgubewc-usgub-id-2026-11-03-dem,SELL,1,0.05,void,0,0,0.0011,3,7,0.38,0.05,0.06,-0.0489,-3,voided: the exchange has no trade for order CDZ3AK56ESX0 — the row of 09-11 05:4,CDZ3AK56ESX0
+1789109971.6,politics,ussewc-usse-fl-2026-11-03-dem,BUY,8,0.13,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDZVB3YGWSK5
