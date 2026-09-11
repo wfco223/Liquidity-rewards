@@ -243,17 +243,17 @@ long and accreted, so search it rather than reading it through.
   end, following a cursor or page token when the exchange pages it
   (14:12Z: four markets' orders placed with no execution, never seen
   in the list within twelve seconds, found by their withdrawal); and
-  the list is CAPPED, not paged — 15:36Z: 249 rows in one page with
-  no paging field while ~300 rested (it had returned 4,620 rows in
-  August) — so a one-page list of 240 rows or more with no paging
-  field reads as capped: an absence on such a read rules nothing
-  gone (the family keeps the record), a new entry accepted with no
-  execution that the list cannot show is kept on the books as the
-  tender's, "resting unverified", never withdrawn, and the monitor
-  notes the cap once in ten minutes. Once a boot a read-only probe
-  logs what the endpoint answers to limit, pageSize, page_size,
-  offset and marketSlug and what its headers carry, to find the way
-  past the cut.
+  the list is neither paged nor cut: the once-a-boot read-only probe
+  (17:24Z) had every variant — plain, limit, pageSize, page_size,
+  offset, marketSlug — answer the same 260 rows with no field and no
+  header, and the count had moved from 249 an hour before, so the
+  list is complete; the four markets' orders "never seen" that day
+  were the exchange's own lag after its maintenance, and they rested
+  again on their own from 15:16Z. The capped-list machinery (an
+  absence on a capped read rules nothing gone, an accepted entry the
+  list cannot show is kept "resting unverified") stays in the code
+  with its hint switched off — a complete list read as capped would
+  keep every absent record on the books and never book their fills.
   Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
