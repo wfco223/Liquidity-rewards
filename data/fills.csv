@@ -4744,3 +4744,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789128716.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,136,0.175,sell,291.34,1.01,0.1637,17,19,0.927,0.174,0.175,-0.0113,573,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
 1789128716.6,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,21,0.97,bond,0,0.02,0.996675,92,97,0.453,0.96,0.98,-0.0267,294,bond: took 21 YES at 97c — it was in the way of our resting order,CE4NXYC5ATMX
 1789128847.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,136,0.175,sell,336.895,1.05,0.1637,18,19,0.931,0.174,0.175,-0.0113,437,an exit — its fill reduces the position it sits on,CE3TSKJMYTN1
+1789129636.0,politics,ewc-usse-ak-2026-11-03-rep,BUY,198,0.37,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE4WPXE3PTMM
+1789129648.3,politics,ewc-usse-ak-2026-11-03-dem,SELL,3,0.64,hand,,1.54,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE3JD31YCTMX
+1789129648.3,politics,ewc-usse-ak-2026-11-03-dem,SELL,5,0.64,hand,,1.99,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2CNV53ATN1
+1789129908.4,politics,ewc-usse-ak-2026-11-03-rep,BUY,198,0.37,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE4WPXE3PTMM
+1789129908.4,politics,ewc-usse-ak-2026-11-03-dem,SELL,3,0.64,hand,,1.54,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE3JD31YCTMX
+1789129908.4,politics,ewc-usse-ak-2026-11-03-dem,SELL,5,0.64,hand,,1.99,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2CNV53ATN1
