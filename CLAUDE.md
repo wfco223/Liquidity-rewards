@@ -230,8 +230,13 @@ long and accreted, so search it rather than reading it through.
   13 in four minutes, each a placement, a twelve-second verify and a
   withdrawal — the cooldown had been set but never asked there),
   an exit the shorter exit cooldown; the refusal's note carries the
-  exchange's own answer to the placement and whether the withdrawal
-  found the order.
+  exchange's own answer to the placement (its shape is {"id",
+  "executions"}: fills at once, which a post-only order never has),
+  whether the withdrawal found the order, and the shape of the open
+  list read (rows, pages, eof, fields); the open list is read to its
+  end, following a cursor or page token when the exchange pages it
+  (14:12Z: four markets' orders placed with no execution, never seen
+  in the list within twelve seconds, found by their withdrawal).
   Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where

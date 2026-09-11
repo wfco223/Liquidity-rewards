@@ -268,11 +268,41 @@ class Client:
 
     # -- orders (read only here) --------------------------------------------
 
+    def open_orders_raw(self, max_pages: int = 20) -> list[dict]:
+        """Every row of /v1/orders/open, following pages when the exchange
+        pages it (cursor/eof as positions do, or a page token), with the
+        read's shape kept for the log. 2026-09-11: four markets' orders
+        were placed, never seen in the list within twelve seconds, and
+        found by their withdrawal — a list read that stops at page one
+        would explain exactly that."""
+        rows: list[dict] = []
+        cursor = token = None
+        pages = 0
+        eof = None
+        keys: set = set()
+        for _ in range(max_pages):
+            params: dict = {}
+            if cursor:
+                params["cursor"] = cursor
+            if token:
+                params["page_token"] = token
+            j = self.get(TRADE_API + "/v1/orders/open", signed=True,
+                         params=params or None)
+            pages += 1
+            keys.update(k for k in (j or {}).keys() if k != "orders")
+            rows.extend(j.get("orders") or [])
+            cursor = j.get("nextCursor")
+            token = j.get("nextPageToken")
+            eof = j.get("eof")
+            if eof or not (cursor or token):
+                break
+        self.open_read = {"pages": pages, "n": len(rows), "eof": eof, "keys": sorted(keys)}
+        return rows
+
     def open_orders(self) -> list[dict]:
         """Live resting orders, normalized, dead states filtered."""
-        j = self.get(TRADE_API + "/v1/orders/open", signed=True)
         orders = []
-        for o in j.get("orders") or []:
+        for o in self.open_orders_raw():
             if str(o.get("state") or "") in DEAD_ORDER_STATES:
                 continue
             md = o.get("marketMetadata") or {}
@@ -297,8 +327,7 @@ class Client:
         """The exchange's state for one order, from the open list's raw
         rows (which keep finished orders for a while): the word on an
         order the verify never saw resting. "" when it is not listed."""
-        j = self.get(TRADE_API + "/v1/orders/open", signed=True)
-        for o in j.get("orders") or []:
+        for o in self.open_orders_raw():
             if str(o.get("id") or "") == str(order_id):
                 return str(o.get("state") or "")
         return ""
