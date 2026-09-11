@@ -113,19 +113,26 @@ class TestOpenListPages(unittest.TestCase):
         self.assertEqual(c.order_state("a2"), "ORDER_STATE_NEW")
 
     def test_a_long_one_page_list_with_no_paging_field_reads_as_capped(self):
-        from v3.api import OPEN_LIST_CAP_HINT
+        from unittest import mock
         rows = [{"id": f"o{i}", "state": "ORDER_STATE_NEW", "marketSlug": "m",
                  "side": "SIDE_BUY", "price": {"value": "0.10"}, "quantity": "5"}
-                for i in range(OPEN_LIST_CAP_HINT + 9)]
+                for i in range(249)]
+        # the hint is off in practice (a 260-row list read complete on
+        # 2026-09-11); with a real cut known, it would read like this
+        with mock.patch("v3.api.OPEN_LIST_CAP_HINT", 240):
+            c = client(FakeResponse(200, {"orders": rows}))
+            c.open_orders()
+            self.assertTrue(c.open_read["capped"])
+            # the same length with an eof flag is a complete read
+            c = client(FakeResponse(200, {"orders": rows, "eof": True}))
+            c.open_orders()
+            self.assertFalse(c.open_read["capped"])
+            # a short list is complete
+            c = client(FakeResponse(200, {"orders": rows[:10]}))
+            c.open_orders()
+            self.assertFalse(c.open_read["capped"])
+        # and with the hint off, the same 249 rows read complete
         c = client(FakeResponse(200, {"orders": rows}))
-        c.open_orders()
-        self.assertTrue(c.open_read["capped"])
-        # the same length with an eof flag is a complete read
-        c = client(FakeResponse(200, {"orders": rows, "eof": True}))
-        c.open_orders()
-        self.assertFalse(c.open_read["capped"])
-        # a short list is complete
-        c = client(FakeResponse(200, {"orders": rows[:10]}))
         c.open_orders()
         self.assertFalse(c.open_read["capped"])
 

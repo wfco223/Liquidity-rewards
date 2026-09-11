@@ -43,10 +43,16 @@ DEAD_ORDER_STATES = frozenset({
 })
 
 RETRYABLE_STATUSES = (429, 500, 502, 503, 504)
-# a one-page open list this long with no paging field is taken as
-# CAPPED — the exchange cut it (2026-09-11, 15:36Z: 249 rows in one
-# page, no fields, an order of ours accepted and never listed)
-OPEN_LIST_CAP_HINT = 240
+# a one-page open list this long with no paging field would be taken
+# as CAPPED — the exchange cut it. Off in practice (17:24Z, 2026-09-11,
+# the probe: every variant — plain, limit, pageSize, page_size, offset,
+# marketSlug — answered the same 260 rows with no field and no header,
+# and the count had moved from 249 an hour before: a complete list,
+# not a cut; the four markets' orders "never seen" that day were the
+# exchange's own lag after its maintenance). The machinery stays for
+# the day a real cut shows; a complete list read as capped would keep
+# every absent record on the books and never book their fills.
+OPEN_LIST_CAP_HINT = 100_000
 
 
 def auth_headers(key_id: str, secret_key: str, method: str, path: str,
