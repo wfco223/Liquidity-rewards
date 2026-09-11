@@ -4561,3 +4561,25 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789091518.3,politics,ussewc-usse-ar-2026-11-03-rep,SELL,20,0.91,backfill,,0.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDVMPHWX0SJR
 1789091518.3,politics,ussewc-usse-ar-2026-11-03-dem,SELL,10,0.06,backfill,,8.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDMR8WEZ6SJZ
 1789091518.3,politics,ussewc-usse-ky-2026-11-03-dem,SELL,20,0.06,backfill,,1.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDTFN0SQ2SJZ
+1789091643.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,204,0.174,sell,33.0033,0.13,0.1637,17,18,0.921,0.173,0.174,-0.0103,84,an exit — its fill reduces the position it sits on,CDVSXFSCPSJH
+1789092003.5,politics,ussewc-usse-ar-2026-11-03-dem,SELL,2.13,0.14,earn,3.02,0.12,0.015775,5,7,0.783,0.07,0.13,-0.1242,-51.13,1 tick behind the touch — we would hold 56% of the ask side,CDVVZKQ3GT75
+1789092003.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,16,0.174,sell,11.3118,0.08,0.1637,17,18,0.926,0.173,0.174,-0.0103,68,an exit — its fill reduces the position it sits on,CDVXRBZR2SJH
+1789092625.8,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,20,0.92,manual,7.6467,14.02,0.99945,92,94,0.898,0.91,0.94,-0.0795,20,the owner's own order — the engine leaves it alone,CDG0RDJ50SJZ
+1789093537.3,politics,usgubewc-usgub-co-2026-11-03-rep,SELL,0.07,0.04,backfill,,8.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDMP3QMVJSX4
+1789093556.0,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,10,0.95,sell,1.4809,9.3,0.9977,95,98,0.739,0.88,0.99,0.0477,12,selling filled stock — it earns while it waits,CDMCPG2NJSJ1
+1789093556.0,politics,usgubewc-usgub-co-2026-11-03-rep,SELL,4,0.04,earn,2.8373,8.94,0.0023,2,4,0.681,0.03,0.04,-0.0377,-13,1 tick behind the touch — we would hold 11% of the ask side,CDMP3QMVJSX4
+1789093856.0,politics,scc-senate-gop-2026-11-03-51,BUY,200,0.13,manual,19.2056,24.06,0.12225,12,14,0.596,0.1,0.13,0.0078,200,the owner's own order — the engine leaves it alone,CD7RP9N5PSX0
+1789093856.0,politics,ussewc-usse-mt-2026-11-03-rep,SELL,19,0.88,bond,0.8796,20.89,0.98405,79,83,0.895,0.87,0.88,0.104,-19,bond: resting 2 ticks behind the touch; keeping 97% of the best reward,CDAEZ3278SX4
+1789095177.7,politics,scc-senate-gop-2026-11-03-50,SELL,-42.99,0.16,fix,,18.5,,,,,,,,,size trimmed by 42.99 to the exchange's count (order CD7MF4KMYSJZ),CD7MF4KMYSJZ
+1789095177.7,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,-7,0.17,fix,,15.14,,,,,,,,,size trimmed by 7 to the exchange's count (order CD9TW1WBESX0),CD9TW1WBESX0
+1789095177.7,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,-0.01,0.17,fix,,9.44,,,,,,,,,size trimmed by 0.01 to the exchange's count (order CD9TW1WBESX0),CD9TW1WBESX0
+1789095177.7,politics,scc-senate-gop-2026-11-03-55,BUY,-5,0.06,fix,17.9834,10.83,0.0168,2,6,0.651,0.04,0.06,0.0432,0.21,size trimmed by 5 to the exchange's count (order CDH8YTYMTSJZ),CDH8YTYMTSJZ
+1789095177.7,politics,paccc-balpow-2026-11-03-dsweep,BUY,-1,0.5,fix,109.842,13.37,,48,51,0.731,0.5,0.51,0,2.41,size trimmed by 1 to the exchange's count (order CDECXDD6MSJ1),CDECXDD6MSJ1
+1789095177.7,politics,ussewc-usse-sc-2026-11-03-dem,SELL,-4,0.11,fix,4.1899,5.34,0.07555,9,12,0.614,0.1,0.11,-0.0345,-10,size trimmed by 4 to the exchange's count (order CDK4RT522SJR),CDK4RT522SJR
+1789095177.7,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-134,0.843,fix,,0.53,,,,,,,,,size trimmed by 134 to the exchange's count (order CDKCXN88ESJ1),CDKCXN88ESJ1
+1789095177.7,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-70,0.843,fix,225.836,0.52,0.8351,84,85,0.96,0.842,0.843,-0.0079,-137,size trimmed by 70 to the exchange's count (order CDKCXN88ESJ1),CDKCXN88ESJ1
+1789095177.7,politics,ussewc-usse-ar-2026-11-03-rep,SELL,-20,0.91,fix,4.6647,0.27,0.984225,,,0.747,,,0.0742,4,size trimmed by 20 to the exchange's count (order CDVMPHWX0SJR),CDVMPHWX0SJR
+1789095177.7,politics,ussewc-usse-ar-2026-11-03-dem,SELL,-10,0.06,fix,0.7094,8.31,0.015775,,,0.736,,,-0.0442,-49,size trimmed by 10 to the exchange's count (order CDMR8WEZ6SJZ),CDMR8WEZ6SJZ
+1789095177.7,politics,ussewc-usse-ky-2026-11-03-dem,SELL,-20,0.06,fix,3.9062,1.65,0.0036,4,7,0.746,0.05,0.06,-0.0564,-209,size trimmed by 20 to the exchange's count (order CDTFN0SQ2SJZ),CDTFN0SQ2SJZ
+1789095177.7,politics,usgubewc-usgub-co-2026-11-03-rep,SELL,0.07,0.04,backfill,,8.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDMP3QMVJSX4
+1789095177.7,nfl,aqc-nfl-afc-2027-01-24-champq-buf,BUY,-0.05,0.29,fix,0.3885,7.22,,28,36,0.306,0.29,0.3,-0.02,0,size trimmed by 0.05 to the exchange's count (order CDDMTDTXGSJH),CDDMTDTXGSJH
