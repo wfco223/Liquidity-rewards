@@ -73,6 +73,12 @@ FOCUS_POOL_MIN_USD = 250.0      # a program paying this a day per event is boost
 FOCUS_MID_FAIR_TOKENS = ("uspres-nom-", "ewc-usp-2028", "ewc-usp-party-2028")
 FOCUS_MID_FAIR_MIN = 0.05
 FOCUS_MID_FAIR_SPREAD = 0.06
+# and the money at risk there (owner, 2026-09-11: "Because there is no
+# model, keep maximum loss per market on 2028 markets to $20"): the
+# stake on a 2028 book is $20 of collateral, which bounds each entry
+# and the position an entry may add to; a stake he sets by hand on a
+# market stands as he set it
+FOCUS_2028_STAKE_USD = 20.0
 FOCUS_SILVER_FAIRS = (
     "paccc-usse-midterms-2026-11-03-dem",
     "ewc-usse-mi-2026-11-03-dem",
@@ -360,7 +366,10 @@ class Focus:
             return float(s), "set by you"
         if bp is None:
             return 0.0, "buying power unknown"
-        return round(FOCUS_STAKE_FRAC * bp, 2), f"{FOCUS_STAKE_FRAC * 100:g}% of buying power"
+        stake = round(FOCUS_STAKE_FRAC * bp, 2)
+        if any(t in slug for t in FOCUS_MID_FAIR_TOKENS) and stake > FOCUS_2028_STAKE_USD:
+            return FOCUS_2028_STAKE_USD, f"${FOCUS_2028_STAKE_USD:g} max loss — no model (2028)"
+        return stake, f"{FOCUS_STAKE_FRAC * 100:g}% of buying power"
 
     # -- the ground ------------------------------------------------------------
 

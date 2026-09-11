@@ -228,6 +228,33 @@ class TestTheProgramWatch(Base):
         d = json.loads(json.dumps(self.f.to_dict()))
         self.assertIn(party, d["mid_seeded"])
 
+    def test_a_2028_book_stakes_twenty_dollars_at_most(self):
+        # owner, 2026-09-11: "Because there is no model, keep maximum loss
+        # per market on 2028 markets to $20"
+        party = "ewc-usp-party-2028-11-07-dem"
+        self.r.add_market(party, wide_book(self.r.now, bid=0.51, ask=0.53), event="party", prog=T1)
+        self.r.fam.universe[party] = {"event_n": 2, "name": party}
+        self.f.last_terms_own = 0.0
+        self.f._rotor = 0
+        for _ in range(4):
+            self.tick()
+        stake, src = self.f.stake(party, 2000.0)
+        self.assertEqual(stake, 20.0)
+        self.assertIn("$20", src)
+        self.assertEqual(self.f.stake(NC, 2000.0)[0], 200.0)      # the midterms books as before
+        row = self.f.rows[party]
+        for side in ("BUY", "SELL"):
+            plan = (row.get("tend") or {}).get(side) or {}
+            if plan.get("px"):
+                cost_ps = plan["px"] if side == "BUY" else 1.0 - plan["px"]
+                self.assertLessEqual(plan["qty"] * cost_ps, 20.0 + 0.6)
+        for o in self.mine(party):
+            cost_ps = o.price if o.side == "BUY" else 1.0 - o.price
+            self.assertLessEqual(o.qty * cost_ps, 20.0 + 0.6)
+        # a stake he sets by hand stands as he set it
+        self.f.set_stake(party, 50.0)
+        self.assertEqual(self.f.stake(party, 2000.0), (50.0, "set by you"))
+
     def test_the_seed_is_quiet(self):
         self.assertEqual(self.pings, [])
         self.assertEqual(self.f.events, [])
