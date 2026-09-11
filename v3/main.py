@@ -980,6 +980,7 @@ class Monitor:
         self.paid_seen: dict[str, float] = {}
         self._paid_by_day: dict[str, dict[str, float]] = {}
         self.mkt_claim_day: dict[str, float] = {}
+        self.posting_last: dict[str, float] = {}   # day -> when the exchange last posted a new row for it
         self.cancel_jobs: list = []
         # the daily ladder snapshot (owner, 2026-09-02): which UTC day
         # has been written, and which markets earned recently so a
@@ -1363,6 +1364,8 @@ class Monitor:
         self.ladder_seen = {str(k): str(v) for k, v in
                             (saved.get("ladder_seen") or {}).items()}
         self.actuals_by_day = dict(saved.get("actuals_by_day") or {})
+        self.posting_last = {str(k): float(v or 0.0)
+                             for k, v in (saved.get("posting_last") or {}).items()}
         self.actuals_by_fam = dict(saved.get("actuals_by_fam") or {})
         self.owner_fairs = {k: float(v) for k, v in
                             (saved.get("owner_fairs") or {}).items()}
@@ -1501,6 +1504,7 @@ class Monitor:
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
             "actuals_by_day": self.actuals_by_day,
+            "posting_last": self.posting_last,
             "actuals_by_fam": self.actuals_by_fam,
             "owner_fairs": dict(self.owner_fairs),
             "backfilled_600": bool(self.backfilled),
@@ -3443,6 +3447,21 @@ class Monitor:
         except Exception as e:  # noqa: BLE001
             self._note(f"STATUS.md publish: {e}")
 
+    POSTING_ACTIVE_S = 24 * 3600.0     # a day is "posting" while it gained a row within this
+
+    def _mark_posting(self, agg: dict, now: float) -> None:
+        """Remember when each day last gained a new row (a market-day
+        the last check had not seen, or whose amount changed)."""
+        seen = self.rewards_seen
+        for key, a in agg.items():
+            if abs(seen.get(key, -1.0) - round(float(a.get("usd") or 0.0), 2)) > 0.005:
+                d = a.get("date")
+                if d:
+                    self.posting_last[d] = now
+        if len(self.posting_last) > 40:
+            for k in sorted(self.posting_last)[:len(self.posting_last) - 40]:
+                del self.posting_last[k]
+
     def _posting_progress(self, agg: dict, now: float) -> list[dict]:
         """How much of what we estimated has the exchange posted yet
         (owner, 2026-09-05: "a progress bar filling up as the percentage
@@ -3455,15 +3474,19 @@ class Monitor:
         from .estimator import et_day
         out = []
         # a bar for each day the exchange is actively posting: a day we
-        # estimated, with at least one row in and the markets we claimed
-        # for it not all posted yet (owner, 2026-09-11: "Only show
-        # progress bars for days that are actively being posted, where
-        # a new row has appeared") — the exchange posts a day over two
-        # or three days, market by market; a day not started or fully
-        # posted has no bar
+        # estimated that gained a new row within POSTING_ACTIVE_S and
+        # whose claimed markets are not all posted yet (owner,
+        # 2026-09-11: "Only show progress bars for days that are
+        # actively being posted, where a new row has appeared"; then
+        # "The days before September 8 ... are still posting even though
+        # they haven't had anything posted recently" — the exchange
+        # never posts a row for every market we claimed, so a day never
+        # reaches 100%; only time says it is done)
         today, yday = et_day(now), et_day(now - 86400.0)
         claim_days = {k.split("|", 1)[0] for k in self.mkt_claim_day if "|" in k}
         for day in sorted({today, yday} | claim_days, reverse=True)[:14]:
+            if now - float(self.posting_last.get(day, 0.0)) > self.POSTING_ACTIVE_S:
+                continue                          # nothing new for a day: not posting
             expected = {k.split("|", 1)[1] for k, v in self.mkt_claim_day.items()
                         if k.startswith(day + "|") and (v or 0.0) > 0.005}
             rows = {a["market"]: a for a in agg.values()
@@ -3514,6 +3537,7 @@ class Monitor:
             if r["status"] != "SKIPPED":
                 a["paid"] += r["reward_usd"]
         try:
+            self._mark_posting(agg, time.time())
             progress = self._posting_progress(agg, time.time())
         except Exception as e:  # noqa: BLE001 — a bar never breaks the check
             self._note(f"posting progress: {e}")
