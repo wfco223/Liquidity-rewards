@@ -43,7 +43,7 @@ from __future__ import annotations
 import time
 from dataclasses import dataclass
 
-from .api import TRADE_API, ApiError, Client
+from .api import TRADE_API, ApiError, Client, to_num
 from .intents import REST_SIDE, SELL_LONG, SELL_SHORT, intent_for
 
 PRICE_MIN, PRICE_MAX = 0.001, 0.999
@@ -414,16 +414,25 @@ class OrderDesk:
         # the exchange's own word in its answer, for a refusal's note
         # (2026-09-11: four orders were "placed but not resting" 80
         # times in an hour with nothing said about why)
-        ans = resp.get("order") if isinstance(resp.get("order"), dict) else {}
+        ans = resp.get("order") if isinstance(resp.get("order"), dict) else dict(resp)
         answered = str(ans.get("state") or resp.get("state") or "")
         reason = str(ans.get("orderRejectReason") or ans.get("rejectReason") or ans.get("text")
                      or resp.get("orderRejectReason") or resp.get("text") or "")
         if reason.endswith(("_UNSPECIFIED", "_UNDEFINED")):
             reason = ""
-        if answered or reason:
+        # the answer's shape is {"id", "executions": [...]} (data/test_one_ask.txt):
+        # executions are fills at once, the one thing a post-only order
+        # should never have
+        execs = resp.get("executions") if isinstance(resp.get("executions"), list) else []
+        if execs:
+            filled = sum(float(to_num(x.get("quantity")) or to_num(x.get("cumQuantity")) or 0.0)
+                         for x in execs if isinstance(x, dict))
+            said = f"; the exchange answered with {len(execs)} execution(s) at once" + (
+                f", {filled:g} shares" if filled else "")
+        elif answered or reason:
             said = f"; the exchange answered {answered or 'no state'}" + (f" ({reason})" if reason else "")
         else:
-            said = "; its answer carried " + ",".join(sorted(ans.keys()))[:100] if ans else ""
+            said = ("; its answer carried " + ",".join(sorted(ans.keys()))[:100]) if ans else ""
         self.log({"op": "place", "market": slug, "side": side, "price": price,
                   "qty": qty, "intent": intent, "id": order_id, "initiator": initiator,
                   "ts": self._clock()})
