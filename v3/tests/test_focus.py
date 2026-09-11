@@ -1428,6 +1428,40 @@ class TestTheBuyingPowerRead(Base):
         self.assertEqual(v["bp_high"], 2000.0)
 
 
+class TestTheBareTestSizesItselfAsThePlanDoes(Base):
+    def test_a_resting_entry_is_judged_by_the_ramped_room(self):
+        # 15:08-15:20Z, 2026-09-11: a Texas governor dem bid rested at 21c
+        # against a 15c fair and was pulled "no company" fifteen times in
+        # twelve minutes — the plan sized its bare test by the ramped
+        # room, the pull by the whole stake
+        self.f.set_fair(NC, 40.0)
+        self.f.set_stake(NC, 200.0)
+        self.r.positions[NC] = (200.0, 80.0)          # long: a bid adds to it
+        thin = Book(bids=((0.44, 100.0), (0.43, 50.0), (0.02, 60000.0)),
+                    asks=((0.47, 300.0), (0.48, 500.0), (0.98, 60000.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.r.exchange.books[NC] = thin
+        self.r.cache.put(NC, Book(bids=thin.bids, asks=thin.asks, tick=0.01, fetched_at=self.r.now))
+        self.f.filled_at[f"{NC}|BUY"] = self.r.now - 20 * 60.0   # past the standoff, ramping
+        r = self.f.place(NC, "BUY", 44.0, 79.0)       # 4c past fair, sized to the ramped room
+        self.assertTrue(r["ok"], r)
+        o = self.r.fam.orders[r["order_id"]]
+        room = self.f._entry_room(f"{NC}|BUY", "BUY", 200.0, 200.0, 80.0, self.r.now)
+        self.assertLess(room, 200.0 - 80.0)
+        self.assertGreater(room, 1.0)
+        # the plans and the scores, without the tend: 150 shares of company
+        # against a ramped room of ~80 shares is not bare
+        self.f._plan_all(self.r.now, dict(self.r.positions), 2000.0)
+        self.assertFalse(self.f._own_bare(o))
+        # the plan on that side sizes by the same room
+        plan = (self.f.rows[NC].get("tend") or {}).get("BUY") or {}
+        self.assertTrue(plan.get("px") is None or plan["qty"] * 0.44 <= room + 1.0, plan)
+        # with the ramp long over, the whole room applies: 150 against ~270 is bare
+        self.f.filled_at.pop(f"{NC}|BUY", None)
+        self.f._plan_all(self.r.now, dict(self.r.positions), 2000.0)
+        self.assertTrue(self.f._own_bare(o))
+
+
 class TestNoMoneyNoPlacement(Base):
     def test_an_entry_that_does_not_fit_the_buying_power_is_not_sent(self):
         # owner, 2026-09-11: the exchange app at $177 available while the
