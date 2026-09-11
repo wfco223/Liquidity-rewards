@@ -264,7 +264,11 @@ long and accreted, so search it rather than reading it through.
   works from it; the penny candidates (1c bid, 2c ask) get no fair —
   their play is his 1c bid wall from the qualify button, which is the
   touch and the whole bid-side window at once; a fair he clears stays
-  cleared. Every order in a focus market — his,
+  cleared; and the stake on a 2028 book is $20 of collateral ("Because
+  there is no model, keep maximum loss per market on 2028 markets to
+  $20"), which bounds each entry and the position an entry may add
+  to — a stake he sets by hand on a market stands as he set it.
+  Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
   he has set a fair for that market and keeps the expected loss
