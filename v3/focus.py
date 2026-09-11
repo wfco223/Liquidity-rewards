@@ -247,6 +247,7 @@ class Focus:
         # a button similar to the one on the bonds page that lets me
         # automatically qualify the ask side"
         self.wall_note = None
+        self.balances_fn = None      # the exchange's raw balance rows of the last read
         self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
         self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
         self._feed_prev_at: float = 0.0           # when it was last taken (0 = never)
@@ -1770,6 +1771,7 @@ class Focus:
                 "bp_note": (f"reads failing since {time.strftime('%H:%M', time.gmtime(self._bp_err[0]))}Z"
                             f" — {self._bp_err[1]}" if self._bp_err else ""),
                 "bp_high": high, "walls_held": walls, "stake_bp": basis,
+                "balances": (self.balances_fn() if self.balances_fn is not None else None),
                 "loss_cap": self.loss_cap, "risk_used": self.risk_used(),
                 "coc_day": self.coc_day, "fill_floor": self.fill_floor,
                 "on": bool(on), "note": self.note, "blocked": self._blocked(),

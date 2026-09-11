@@ -1036,6 +1036,7 @@ class Monitor:
                                               and self.switches["focus"].on),
                            buying_power=self.client.buying_power)
         self.focus.wall_note = self._wall_note      # the qualify button's run line
+        self.focus.balances_fn = lambda: getattr(self.client, "balances_last", None)
         # The book stream: politics markets subscribe first (its cache is
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
@@ -1404,6 +1405,7 @@ class Monitor:
     def _state(self, now: float, summaries: dict) -> dict:
         st = {
             "saved_at": now, "build": self.build, "boot_ts": self.boot_ts,
+            "balances_last": getattr(self.client, "balances_last", None),
             "boots": self.boots[-20:], "errors": self.errors,
             "deaths": getattr(self, "deaths", [])[-30:],
             "mem_trail": getattr(self, "mem_trail", [])[-360:],
