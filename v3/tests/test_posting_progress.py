@@ -45,17 +45,16 @@ class TestPostingProgress(unittest.TestCase):
                            "status": {"PAID", "SKIPPED"}},
         }
         p = self.mon._posting_progress(agg, now)
-        self.assertEqual([x["day"] for x in p], [today, yday])
+        self.assertEqual([x["day"] for x in p], [today])       # yesterday is fully posted: no bar
         t = p[0]
         self.assertEqual((t["expected"], t["appeared"], t["pct"]), (3, 2, 67))
         self.assertEqual((t["pending"], t["paid"], t["extra"]), (1, 1, 1))
-        y = p[1]
-        self.assertEqual((y["expected"], y["appeared"], y["pct"]), (2, 2, 100))
-        self.assertEqual((y["pending"], y["paid"], y["extra"]), (0, 2, 0))
 
-    def test_older_days_still_posting_get_a_bar_and_finished_ones_do_not(self):
-        # owner, 2026-09-11: "make it so the percentage bar is for every
-        # day that rewards have not yet updated"
+    def test_only_days_actively_posting_get_a_bar(self):
+        # owner, 2026-09-11: "Only show progress bars for days that are
+        # actively being posted, where a new row has appeared" — today
+        # has no row yet, four days back is fully posted: no bar for
+        # either; three days back, one of three in: a bar
         now = 1_788_600_000.0
         today = et_day(now)
         d3, d4 = et_day(now - 3 * 86400.0), et_day(now - 4 * 86400.0)
@@ -70,24 +69,20 @@ class TestPostingProgress(unittest.TestCase):
             f"{d4}|m2": {"date": d4, "market": "m2", "usd": 1.0, "paid": 1.0, "status": {"PAID"}},
         }
         p = self.mon._posting_progress(agg, now)
-        self.assertEqual([x["day"] for x in p], [today, d3])      # newest first, d4 done
-        self.assertEqual((p[1]["expected"], p[1]["appeared"], p[1]["pct"]), (3, 1, 33))
-        self.assertEqual((p[0]["expected"], p[0]["appeared"]), (1, 0))
+        self.assertEqual([x["day"] for x in p], [d3])
+        self.assertEqual((p[0]["expected"], p[0]["appeared"], p[0]["pct"]), (3, 1, 33))
 
     def test_nothing_estimated_and_nothing_posted_is_no_bar(self):
         self.mon.mkt_claim_day = {}
         self.assertEqual(self.mon._posting_progress({}, 1_788_600_000.0), [])
 
-    def test_posted_but_nothing_estimated_has_no_percentage(self):
+    def test_posted_but_nothing_estimated_has_no_bar(self):
         now = 1_788_600_000.0
         today = et_day(now)
         self.mon.mkt_claim_day = {}
         agg = {f"{today}|m9": {"date": today, "market": "m9", "usd": 0.1,
                                "paid": 0.1, "status": {"PAID"}}}
-        p = self.mon._posting_progress(agg, now)
-        self.assertEqual(len(p), 1)
-        self.assertIsNone(p[0]["pct"])
-        self.assertEqual(p[0]["extra"], 1)
+        self.assertEqual(self.mon._posting_progress(agg, now), [])   # nothing claimed: no bar
 
 
 class TestTheRunningGrade(unittest.TestCase):
