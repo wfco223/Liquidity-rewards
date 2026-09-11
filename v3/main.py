@@ -1414,13 +1414,45 @@ class Monitor:
                 row["est"] += est.earned
                 row["stale_s"] += est.stale_s
         days = sorted(set(est_by_day) | set(self.actuals_by_day))[-14:]
-        return [{"day": d,
-                 "est": round(est_by_day.get(d, {}).get("est", 0.0), 2)
-                 if d in est_by_day else None,
-                 "actual": self.actuals_by_day.get(d),
-                 "unmeasured_min": round(
-                     est_by_day.get(d, {}).get("stale_s", 0.0) / 60.0, 1)}
-                for d in days]
+        # the running grade (owner, 2026-09-11: "For the paid/estimated
+        # number can you only consider the rows for markets that have
+        # been posted already? So I get a sense as I'm going how high or
+        # low I'm running"): the exchange posts a day market by market
+        # over hours, so paid over the WHOLE day's estimate reads low
+        # until the last row lands. Per day: the markets posted so far
+        # that we estimated, what they paid against what we claimed for
+        # them, and the ratio of the two.
+        if not hasattr(self, "_paid_by_day"):
+            self._rebuild_paid_by_day()
+        claims: dict[str, dict[str, float]] = {}
+        for key, v in (getattr(self, "mkt_claim_day", None) or {}).items():
+            if "|" in key:
+                d_, m_ = key.split("|", 1)
+                claims.setdefault(d_, {})[m_] = float(v or 0.0)
+        out = []
+        for d in days:
+            row = {"day": d,
+                   "est": round(est_by_day.get(d, {}).get("est", 0.0), 2)
+                   if d in est_by_day else None,
+                   "actual": self.actuals_by_day.get(d),
+                   "unmeasured_min": round(
+                       est_by_day.get(d, {}).get("stale_s", 0.0) / 60.0, 1)}
+            posted = self._paid_by_day.get(d) or {}
+            est_m = claims.get(d) or {}
+            if posted and est_m:
+                both = [m for m in posted if m in est_m]
+                p_est = sum(est_m[m] for m in both)
+                p_paid = sum(float(posted[m] or 0.0) for m in both)
+                row.update({
+                    "posted_n": len(both),
+                    "est_n": sum(1 for v in est_m.values() if v > 0.005),
+                    "posted_est": round(p_est, 2), "posted_paid": round(p_paid, 2),
+                    "extra_paid": round(sum(float(v or 0.0) for m, v in posted.items()
+                                            if m not in est_m), 2),
+                    "ratio_posted": (round(p_paid / p_est, 3) if p_est > 0.005 else None),
+                })
+            out.append(row)
+        return out
 
     def _tax_owed(self) -> dict | None:
         """What he owes on everything paid so far, at the pay page's
