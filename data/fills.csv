@@ -5020,3 +5020,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789160604.4,politics,scc-senate-gop-2026-11-03-48,SELL,3.1,0.18,hand,,5,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7M40B3TSJH
 1789160604.4,politics,usgubewc-usgub-al-2026-11-03-dem,BUY,17,0.11,backfill,,6.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE6R5MQ4MTMX
 1789160604.4,politics,ussewc-usse-la-2026-11-03-rep,BUY,5.38,0.93,backfill,,5.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7JTDT2ETN3
+1789160932.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,211,0.832,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CECATVNP8TN0
+1789160937.6,politics,usgubewc-usgub-al-2026-11-03-dem,BUY,-17,0.11,fix,0.3965,6.5,0.017275,11,15,0.424,0.1,0.11,0.0927,-207,size trimmed by 17 to the exchange's count (order CE6R5MQ4MTMX),CE6R5MQ4MTMX
+1789160937.6,politics,ussewc-usse-la-2026-11-03-rep,BUY,-5,0.93,fix,2.1562,5.51,0.957425,,,0.764,,,-0.0274,15,size trimmed by 5 to the exchange's count (order CE7JTDT2ETN3),CE7JTDT2ETN3
+1789160937.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,211,0.832,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CECATVNP8TN0
