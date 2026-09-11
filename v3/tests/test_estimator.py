@@ -39,6 +39,61 @@ def noon_et(day="2026-08-18"):
     return d.timestamp()
 
 
+class TestTheExchangeOutOfReach(unittest.TestCase):
+    def test_unverified_orders_bill_nothing(self):
+        # owner, 2026-09-11: "the estimate of earnings of today still
+        # includes the period of maintenance" — the exchange had
+        # cancelled every order, the records stood, the books read fresh
+        e, st = Estimator(), terms_with()
+        t0 = noon_et()
+        e.sample(t0, one_order(), books_at(t0), st, side_pool=_sp, verified_at=t0)
+        e.sample(t0 + 20, one_order(), books_at(t0 + 20), st, side_pool=_sp, verified_at=t0)
+        earned = e.earned
+        self.assertGreater(earned, 0.0)
+        # the cycle has not answered for six minutes: nothing bills
+        e.sample(t0 + 40, one_order(), books_at(t0 + 40), st, side_pool=_sp, verified_at=t0 - 340)
+        self.assertEqual(e.earned, earned)
+        self.assertEqual(e.rate, 0.0)
+        self.assertEqual(e.dots[-1][1:], [0.0, 0])
+        self.assertAlmostEqual(e.stale_s, 20.0)
+        # back in reach: the first sample sets the rate, the next bills it
+        e.sample(t0 + 60, one_order(), books_at(t0 + 60), st, side_pool=_sp, verified_at=t0 + 55)
+        self.assertEqual(e.earned, earned)
+        e.sample(t0 + 80, one_order(), books_at(t0 + 80), st, side_pool=_sp, verified_at=t0 + 75)
+        self.assertAlmostEqual(e.earned, earned + e.rate * 20 / 86400, places=6)
+        # no word on the cycle at all: bills as before
+        e.sample(t0 + 100, one_order(), books_at(t0 + 100), st, side_pool=_sp)
+        self.assertAlmostEqual(e.earned, earned + 2 * e.rate * 20 / 86400, places=6)
+
+    def test_a_billed_blackout_is_taken_back_out_once(self):
+        e = Estimator()
+        t0 = noon_et()
+        e.day = et_day(t0)
+        rate = 1000.0
+        for i in range(0, 7200 + 1, 20):
+            e.dots.append([t0 + i, rate, 5])
+        e.earned = rate * 7200 / 86400.0
+        e.per_market = {"a": e.earned * 0.6, "b": e.earned * 0.4}
+        e.covered_s = 7200.0
+        lo, hi = t0 + 1800, t0 + 5400
+        amt = e.repair_blackout(lo, hi, "maintenance-test", "for the maintenance")
+        self.assertAlmostEqual(amt, rate * 3600 / 86400.0, places=4)
+        self.assertAlmostEqual(e.earned, rate * 3600 / 86400.0, places=4)
+        self.assertAlmostEqual(sum(e.per_market.values()), e.earned, places=6)
+        self.assertTrue(all(d[1] == 0.0 for d in e.dots if lo <= d[0] <= hi))
+        self.assertTrue(all(d[1] == rate for d in e.dots if d[0] < lo or d[0] > hi))
+        self.assertAlmostEqual(e.stale_s, 3600.0)
+        self.assertAlmostEqual(e.covered_s, 3600.0)
+        self.assertEqual(e.adjustments[0]["amount"], round(amt, 2))
+        # once only, and the record survives a restart
+        self.assertEqual(e.repair_blackout(lo, hi, "maintenance-test", "again"), 0.0)
+        f = Estimator.from_dict(e.to_dict())
+        self.assertEqual(f.repairs, ["maintenance-test"])
+        self.assertEqual(f.adjustments, e.adjustments)
+        self.assertEqual(f.repair_blackout(lo, hi, "maintenance-test", "again"), 0.0)
+        self.assertIn("adjustments", f.snapshot(t0 + 7200))
+
+
 class TestIntegration(unittest.TestCase):
     def test_rate_integrates_over_elapsed_time(self):
         # Alone in the window: 100% share of $100/13/2 = $3.846/day.

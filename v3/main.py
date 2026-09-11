@@ -1163,9 +1163,14 @@ class Monitor:
                         orders = [{"market": o.market, "side": o.side,
                                    "price": o.price, "size": o.qty}
                                   for o in list(fam.orders.values())]
+                        # the last time the exchange answered a full cycle:
+                        # past MAX_GAP_S the orders in hand are unverified
+                        # and the meter bills nothing on them
+                        cyc = getattr(self, "cycle_stats", None) or {}
                         self.samplers[key].sample(
                             now, orders, fam.cache, fam.terms,
-                            side_pool=lambda s, p, f=fam: f._side_pool(s, p))
+                            side_pool=lambda s, p, f=fam: f._side_pool(s, p),
+                            verified_at=cyc.get("at"))
                     except Exception:  # noqa: BLE001 — measuring never breaks
                         pass
 
@@ -1291,6 +1296,20 @@ class Monitor:
             if saved.get(f"evi_{key}"):
                 fam.evidence.restore(saved[f"evi_{key}"])
         self.errors = list(saved.get("errors") or [])
+        # one-time: the exchange's maintenance of 2026-09-11 (08:47-10:24Z)
+        # cancelled every resting order while the meter, its records
+        # standing and its books reading fresh, billed on (owner: "the
+        # estimate of earnings of today still includes the period of
+        # maintenance where it seems unlikely the earnings will actually
+        # show up") — that span comes back out of the day
+        for key, est in self.samplers.items():
+            if est.day != "2026-09-11":
+                continue
+            amt = est.repair_blackout(1789116412.0, 1789122240.0, "maintenance-2026-09-11",
+                                      "for the exchange's maintenance, 08:47-10:24Z")
+            if amt:
+                self._note(f"{key}: today's estimate less ${amt:,.2f} for the exchange's "
+                           f"maintenance 08:47-10:24Z — nothing rested then")
         self.boots = list(saved.get("boots") or [])
         self.deaths = list(saved.get("deaths") or [])[-30:]
         self.mem_trail = list(saved.get("mem_trail") or [])[-360:]
@@ -4286,6 +4305,8 @@ class Monitor:
                 summaries[key]["name"] = fam.cfg.name
                 est = self.samplers[key]
                 summaries[key]["earned_today"] = round(est.earned, 2)
+                summaries[key]["earned_note"] = "; ".join(
+                    f"less ${a['amount']:,.2f} {a['why']}" for a in est.adjustments)
                 summaries[key]["est_rate"] = round(est.rate, 2)
                 summaries[key]["unmeasured_min"] = round(est.stale_s / 60.0, 1)
                 if (self.master.on and self.switches[key].on

@@ -560,7 +560,7 @@ function render(d){
   var tri=s2.triage||{};
   out+='<div class="card"><b>'+esc(s2.name||k)+'</b> <span class="pill">'+esc(s2.mode)+'</span>'
    +'<div class="kpi">'
-   +'<div><div class="v">'+usd(s2.earned_today||0)+'</div><div class="l">earned today</div></div>'
+   +'<div><div class="v">'+usd(s2.earned_today||0)+'</div><div class="l">earned today'+(s2.earned_note?'<br>'+esc(s2.earned_note):'')+'</div></div>'
    +'<div><div class="v">'+usd(s2.est_day||0)+'</div><div class="l">rate $/day</div></div>'
    +'<div><div class="v">'+(s2.orders||[]).length+'</div><div class="l">orders</div></div>'
    +'</div>'
@@ -736,7 +736,7 @@ function ordersTab(d){
   var tot=0;gs.forEach(function(g){tot+=g.est;});
   out+='<div class="card"><b>'+esc(s.name||k)+'</b>'
    +'<div class="kpi">'
-   +'<div><div class="v">'+usd(s.earned_today||0)+'</div><div class="l">earned today</div></div>'
+   +'<div><div class="v">'+usd(s.earned_today||0)+'</div><div class="l">earned today'+(s.earned_note?'<br>'+esc(s.earned_note):'')+'</div></div>'
    +'<div><div class="v">'+usd(tot)+'</div><div class="l">rate $/day</div></div>'
    +'<div><div class="v">'+gs.length+'</div><div class="l">markets</div></div>'
    +'<div><div class="v">'+os.length+'</div><div class="l">orders</div></div>'
@@ -1631,7 +1631,7 @@ function render(d){
  out+='<div class="card"><div class="kpi">'
   +'<div><div class="v">'+usd(earned)+'</div><div class="l">earned today</div></div>';
  fams(d).forEach(function(kv){
-  out+='<div><div class="v">'+usd(kv[1].earned_today||0)+'</div><div class="l">'+esc(kv[0])+'</div></div>';});
+  out+='<div><div class="v">'+usd(kv[1].earned_today||0)+'</div><div class="l">'+esc(kv[0])+(kv[1].earned_note?'<br>'+esc(kv[1].earned_note):'')+'</div></div>';});
  out+='</div></div>';
  return out;
 }
