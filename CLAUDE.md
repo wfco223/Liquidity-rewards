@@ -183,7 +183,14 @@ long and accreted, so search it rather than reading it through.
   resting" — the floors that hold: an exit never sits under both his
   fair and the cost, an entry's concession past fair is charged in
   full, a side under the target earns nothing in the model, and the
-  old engine's exits never go under their cost-based floor.
+  old engine's exits never go under their cost-based floor. Added
+  that hour, after the tender sold 84 shares of Ohio Senate dem at
+  46c against his 62c fair thirteen seconds after resting them (a
+  bare ask side had made the order read $360 a day): an entry may
+  sit past his fair only on a side with company, where what others
+  rest within six ticks of the side's best adds up to the full stake
+  or more; on a bare side it rests at his fair or better, and one
+  resting past fair there comes off at once.
   Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
