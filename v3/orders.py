@@ -493,6 +493,14 @@ class OrderDesk:
                         state = ""
                     if state:
                         last = f"{last}; the exchange lists it as {state}"
+                    # the shape of the list read, so a list that pages or
+                    # caps shows itself (2026-09-11: four markets' orders
+                    # never seen, found by their withdrawal)
+                    rd = getattr(self.client, "open_read", None)
+                    if isinstance(rd, dict):
+                        last = (f"{last}; the list read {rd.get('n')} rows in "
+                                f"{rd.get('pages')} page(s), eof={rd.get('eof')}, "
+                                f"fields {','.join(rd.get('keys') or []) or 'none'}")
                 return False, last, seen
             if want_id and seen_n >= 2:
                 # seen twice at the smaller size: the exchange cut it to
