@@ -4919,3 +4919,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789146312.9,politics,paccc-usho-midterms-2026-11-03-dem,SELL,46,0.831,void,4.9371,-0.04,0.8618,84,85,0.948,0.83,0.831,0.0308,9,voided: the exchange has no trade for order CE8H44SAATMP — the row of 09-11 16:3,CE8H44SAATMP
 1789146312.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,160,0.177,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8MCX1ZMTMQ
 1789146977.6,politics,ewc-usgub-oh-2026-11-03-dem,BUY,194,0.58,void,39.4685,0.06,0.52745,52,56,0.707,0.58,0.59,0.0525,302,voided: the exchange has no trade for order CE8AAK4GWTN2 — the row of 09-11 16:3,CE8AAK4GWTN2
+1789147056.9,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,5,0.91,focus,59.3335,0.02,0.924025,88,92,0.709,0.91,0.92,-0.014,29,focus entry: ~$57.89/day; fill odds 50%/day; EV +53.00/day,CE92JQ2WATN5
+1789147263.3,politics,ewc-usgub-ga-2026-11-03-rep,SELL,26,0.39,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE947847ETMX
+1789147587.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,9,0.831,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8HWXR4GTN1
+1789147671.6,politics,ewc-usgub-ga-2026-11-03-rep,SELL,26,0.39,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE947847ETMX
+1789147671.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,9,0.831,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8HWXR4GTN1
