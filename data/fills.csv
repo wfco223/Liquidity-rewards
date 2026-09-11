@@ -4737,3 +4737,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789127365.4,politics,ewc-usgub-oh-2026-11-03-dem,BUY,21,0.57,backfill,,0.36,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3PVRRHTTMQ
 1789127365.4,politics,ewc-usse-nc-2026-11-03-rep,SELL,32,0.14,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE40K4FVETN3
 1789127365.4,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,0.04,0.22,backfill,,1.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789127610.1,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,21,0.97,bond,0,0.02,0.996675,93,98,0,0.96,0.99,-0.0267,273,bond: took 21 YES at 97c — it was in the way of our resting order,CE4EP2HQ6TMY
+1789127790.1,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,8,0.04,bond,0,0.02,0.000125,6,9,0.679,0.02,0.07,-0.0399,-246,bond: took 8 NO at 4c — it was in the way of our resting order,CE4G1V5NETMX
+1789127790.1,politics,ewc-usse-mn-2026-11-03-rep,BUY,56,0.13,focus,32.1806,0.04,0.067175,10,15,0,0.13,0.14,0.0628,56,focus entry: ~$32.18/day; fill odds 53%/day; EV +19.09/day,CE4G4AFRATN0
+1789127948.7,politics,ussewc-usse-tn-2026-11-03-rep,BUY,21,0.94,bond,0,0.03,0.99965,91,95,0.45,0.94,0.98,-0.0597,64,bond: took 21 YES at 94c — it was in the way of our resting order,CE4H71TC0TMX
