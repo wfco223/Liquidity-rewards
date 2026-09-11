@@ -4799,3 +4799,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789138598.4,politics,paccc-usho-midterms-2026-11-03-dem,SELL,39,0.844,backfill,,3.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3PV0THATN5
 1789138598.4,politics,paccc-usho-midterms-2026-11-03-rep,BUY,217,0.174,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE70W8GFTTN1
 1789138598.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,16,0.175,backfill,,0.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE6D2KE5MTN0
+1789138598.4,politics,paccc-usho-midterms-2026-11-03-rep,BUY,201,0.174,focus,115.709,0.57,0.1637,19,20,0.938,0.174,0.175,0.0103,217,focus entry: ~$98.13/day; fill odds 81%/day; EV +85.10/day,CE6JND9BWTN0
+1789138790.4,politics,usgubewc-usgub-tn-2026-11-03-dem,SELL,0.61,0.04,earn,6.2362,0.17,0.001325,4,7,0.716,0.02,0.04,-0.0387,-2.61,1 tick behind the touch — we would hold 77% of the ask side,CE6ZP3RE0TMP
+1789139085.3,politics,ewc-usgub-mi-2026-11-03-rep,SELL,300,0.08,backfill,,1.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE643YWW2TN3
+1789139269.3,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-60,0.844,fix,2.3321,3.9,0.8363,84,85,0.951,0.843,0.844,-0.0077,0,size trimmed by 60 to the exchange's count (order CE3PV0THATN5),CE3PV0THATN5
+1789139269.3,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-16,0.175,fix,136.156,0.75,0.1637,19,20,0.938,0.174,0.175,-0.0113,201,size trimmed by 16 to the exchange's count (order CE6D2KE5MTN0),CE6D2KE5MTN0
+1789139269.3,politics,ussewc-usse-ri-2026-11-03-dem,BUY,3.02,0.98,hand,,7.98,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CCXAMN3Y8SJH
+1789139269.3,politics,ewc-usgub-mi-2026-11-03-rep,SELL,300,0.08,backfill,,1.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE643YWW2TN3
