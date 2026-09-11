@@ -4604,3 +4604,25 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789098887.9,politics,usgubewc-usgub-al-2026-11-03-dem,SELL,0.64,0.14,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDWSEDVNESX0
 1789098887.9,politics,ewc-usse-ia-2026-11-03-dem,BUY,1117,0.36,backfill,,0.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDX6KG1H6SK5
 1789098887.9,nfl,aqc-nfl-afc-2027-01-24-champq-buf,BUY,0.05,0.29,backfill,,7.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDDMTDTXGSJH
+1789099023.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,337,0.844,focus,238.357,0.2,0.8363,84,85,0.958,0.842,0.844,-0.0077,-337,focus entry: ~$351.63/day; fill odds 87%/day; EV +328.50/day,CDXF6X0FJSJR
+1789099139.0,politics,paccc-usho-midterms-2026-11-03-dem,BUY,230,0.843,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDXMDKAXGT3P
+1789099343.7,politics,paccc-usho-midterms-2026-11-03-dem,BUY,51,0.843,backfill,,0.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDXMN3FTGSK5
+1789099545.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,10,0.843,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDXPV0EDWSJZ
+1789099637.1,politics,paccc-usho-midterms-2026-11-03-dem,BUY,46,0.843,sell,81.6418,0.05,0.8363,84,85,0.958,0.842,0.844,0.0067,0,an exit — its fill reduces the position it sits on,CDXPV0EDWSJZ
+1789100202.5,nfl,aqc-nfl-afc-2027-01-24-champq-bal,BUY,0.01,0.38,sell,0.0047,8.38,,37,41,0.671,0.38,0.39,-0.01,0.01,buying back the short at or under what it sold for — the bid earns while it wait,CDPRJVZVASJZ
+1789100510.2,nfl,aqc-nfl-afc-2027-01-24-champq-buf,BUY,0.1,0.29,backfill,,10.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDMX7FTKTSJR
+1789100871.9,politics,paccc-usho-midterms-2026-11-03-dem,BUY,431,0.843,focus,276.732,0.09,0.8363,84,85,0.958,0.843,0.844,0.0067,431,focus entry: ~$265.08/day; fill odds 76%/day; EV +254.09/day,CDXZV14B4SJR
+1789101534.9,politics,ussewc-usse-ky-2026-11-03-dem,SELL,30,0.06,bond,4.1164,2.7,0.0036,5,8,0.781,0.05,0.06,-0.0564,-239,bond more: split — 30 at 6c carry the share; never dearer than his first price,CDVY7N0MJSX4
+1789101918.6,politics,ussewc-usse-nm-2026-11-03-dem,BUY,20,0.95,earn,0.6448,0.12,0.9955,96,98,0.867,0.96,0.98,-0.0455,20,1 tick behind the touch — we would hold 10% of the bid side,CDY6YV990SJZ
+1789102134.3,politics,ussewc-usse-fl-2026-11-03-rep,BUY,7,0.86,backfill,,3.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDVHDWVXPSX0
+1789102158.6,politics,ussewc-usse-fl-2026-11-03-rep,BUY,13,0.86,earn,1.5607,3.35,0.90575,88,91,0.778,0.87,0.88,-0.0458,20,1 tick behind the touch — we would hold 66% of the bid side,CDVHDWVXPSX0
+1789102158.6,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,100,0.06,manual,1.074,2.96,0.000125,4,7,0.658,0.05,0.06,-0.0599,-165,the owner's own order — the engine leaves it alone,CDVTWXNV2T3P
+1789102218.6,politics,ussewc-usse-fl-2026-11-03-rep,SELL,7,0.88,sell,1.7686,0.41,0.90575,87,90,0.812,0.87,0.88,0.0258,13,selling filled stock — it earns while it waits,CDY1J1D2WSJZ
+1789102342.8,politics,ussewc-usse-fl-2026-11-03-rep,SELL,20,0.84,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CDYDJD38RT3P
+1789102405.6,politics,ussewc-usse-fl-2026-11-03-rep,SELL,20,0.84,sell,0,0.04,0.90575,,,0.837,,,0.0658,0,selling filled stock — it earns while it waits,CDYCYV520T6S
+1789102560.7,politics,paccc-usho-midterms-2026-11-03-dem,BUY,230,0.843,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDXMDKAXGT3P
+1789102560.7,politics,paccc-usho-midterms-2026-11-03-dem,BUY,51,0.843,backfill,,0.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDXMN3FTGSK5
+1789102560.7,politics,paccc-usho-midterms-2026-11-03-dem,BUY,10,0.843,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDXPV0EDWSJZ
+1789102560.7,politics,ussewc-usse-fl-2026-11-03-rep,BUY,7,0.86,backfill,,3.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDVHDWVXPSX0
+1789102560.7,politics,ussewc-usse-fl-2026-11-03-rep,SELL,20,0.84,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CDYDJD38RT3P
+1789102560.7,nfl,aqc-nfl-afc-2027-01-24-champq-buf,BUY,0.1,0.29,backfill,,10.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDMX7FTKTSJR
