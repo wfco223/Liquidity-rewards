@@ -202,6 +202,12 @@ long and accreted, so search it rather than reading it through.
   orders rested under the cap were pulled three minutes later as the
   readings moved, 25 such pulls in an hour); his orders the tender
   adopts count toward the cap like its own and are logged "adopted";
+  the cap's room goes by value (owner, 2026-09-11 "Yes to value
+  ranked cap allocation"): entries rank by expected value a day per
+  dollar of expected loss, and a plan that does not fit displaces the
+  weakest resting entries only when it beats each of them by a
+  quarter or more, at most three at once, none rested inside the
+  grace; the displaced side waits out the cooldown before re-entry;
   an id the tender itself cancelled or replaced is remembered for
   ten minutes and never adopted back when the open list shows it
   late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
