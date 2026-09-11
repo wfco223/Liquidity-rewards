@@ -8,6 +8,7 @@ the balance-of-power books stay his hand's.
 """
 import copy
 import json
+import time
 import unittest
 
 from v3 import focus as focus_mod
@@ -1445,6 +1446,54 @@ class TestNoMoneyNoPlacement(Base):
         asks = self.mine(NC, "SELL")
         self.assertTrue(asks)
         self.assertEqual(self.mine(NC, "BUY"), [])
+
+
+class TestHisTapNeverWaitsOnAPass(Base):
+    def test_a_placement_by_hand_reaches_the_exchange_while_the_pass_holds_the_lock(self):
+        # owner, 2026-09-11: "No answer from the server in time" on a tap
+        # — the pass was placing and verifying orders of its own for a
+        # minute, and his placement waited behind it
+        import threading
+        self.tick()
+        before = set(self.r.exchange.live)
+        out = {}
+        self.f.lock.acquire()                     # the pass, mid-placement
+        try:
+            t = threading.Thread(target=lambda: out.update(self.f.place(NC, "BUY", 40.0, 25.0)))
+            t.start()
+            deadline = time.time() + 5.0
+            while time.time() < deadline and set(self.r.exchange.live) == before:
+                time.sleep(0.05)
+            new = set(self.r.exchange.live) - before
+            self.assertTrue(new, "the tap's order never reached the exchange while the lock was held")
+            self.assertTrue(t.is_alive() or out)  # the record waits for the lock, the order does not
+        finally:
+            self.f.lock.release()
+        t.join(5.0)
+        self.assertTrue(out.get("ok"), out)
+        self.assertIn(out["order_id"], self.r.fam.orders)
+        self.assertEqual(self.r.fam.orders[out["order_id"]].purpose, "manual")
+
+    def test_refreeze_does_not_wait_out_a_pass(self):
+        import threading
+        self.tick()
+        held = threading.Event()
+        done = threading.Event()
+
+        def pass_holding_the_lock():
+            with self.f.lock:
+                held.set()
+                done.wait(8.0)
+        t = threading.Thread(target=pass_holding_the_lock)
+        t.start()
+        held.wait(2.0)
+        try:
+            t0 = time.time()
+            self.f.refreeze()                     # gives up rather than waiting out the pass
+            self.assertLess(time.time() - t0, 4.5)
+        finally:
+            done.set()
+            t.join(5.0)
 
 
 class TestTheWebPage(unittest.TestCase):

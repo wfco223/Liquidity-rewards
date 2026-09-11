@@ -1651,39 +1651,47 @@ class Focus:
                                         f"{'s' if n != 1 else ''} pulled; your own stay"}
 
     def pull(self, slug: str, why: str = "pulled by you") -> dict:
+        # his taps never wait on a pass: the exchange is called outside
+        # the lock, the books kept under it (owner, 2026-09-11: "No
+        # answer from the server in time" on a tap — the pass was
+        # placing and verifying orders of its own for a minute)
         with self.lock:
-            n = 0
-            for o in self._mine(slug):
-                r = self.fam.desk.cancel(o.id, slug, initiator="owner")
-                if r.ok:
+            mine = list(self._mine(slug))
+        n = 0
+        for o in mine:
+            r = self.fam.desk.cancel(o.id, slug, initiator="owner")
+            if r.ok:
+                with self.lock:
                     self.fam.orders.pop(o.id, None)
                     self._forget(o.id)
                     n += 1
                     self._log(event="pull", market=slug, side=o.side, price=o.price,
                               qty=o.qty, why=why)
-            return {"ok": True, "n": n, "note": f"{n} tender order{'s' if n != 1 else ''} pulled"}
+        return {"ok": True, "n": n, "note": f"{n} tender order{'s' if n != 1 else ''} pulled"}
 
     def place(self, slug: str, side: str, cents, qty, net: float = 0.0) -> dict:
         """His own order here, by his tap: bypasses the switches and
         keeps every other rail. In a market he has given a fair the
         tender tends it like its own from the next pass; elsewhere it
         stays where he put it."""
+        side = str(side or "").upper()
+        if side not in ("BUY", "SELL"):
+            return {"ok": False, "note": "side must be BUY or SELL"}
+        try:
+            px = round(float(cents) / 100.0, 4)
+            q = round(float(qty), 2)
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "price in cents and a share count, please"}
+        if q < 0.01:
+            return {"ok": False, "note": "how many shares?"}
+        if not self.fam.knows(slug):
+            return {"ok": False, "note": "not a market this family knows"}
+        # the exchange call outside the lock: his tap never waits on a
+        # pass that is placing and verifying orders of its own
+        r = self.fam.desk.place_resting(slug, side, px, q, net_position=net,
+                                        initiator="owner", verify=True)
+        rested = q if r.ok else (r.resting_qty if r.order_id and r.resting_qty >= 0.01 else 0.0)
         with self.lock:
-            side = str(side or "").upper()
-            if side not in ("BUY", "SELL"):
-                return {"ok": False, "note": "side must be BUY or SELL"}
-            try:
-                px = round(float(cents) / 100.0, 4)
-                q = round(float(qty), 2)
-            except (TypeError, ValueError):
-                return {"ok": False, "note": "price in cents and a share count, please"}
-            if q < 0.01:
-                return {"ok": False, "note": "how many shares?"}
-            if not self.fam.knows(slug):
-                return {"ok": False, "note": "not a market this family knows"}
-            r = self.fam.desk.place_resting(slug, side, px, q, net_position=net,
-                                            initiator="owner", verify=True)
-            rested = q if r.ok else (r.resting_qty if r.order_id and r.resting_qty >= 0.01 else 0.0)
             if r.order_id and rested >= 0.01:
                 self.fam.orders[r.order_id] = FamilyOrder(
                     id=r.order_id, market=slug, side=side, price=(r.price or px), qty=rested,
@@ -1699,9 +1707,10 @@ class Focus:
     def cancel(self, slug: str, order_id: str) -> dict:
         with self.lock:
             rec = self.fam.orders.get(str(order_id or ""))
-            if rec is None:
-                return {"ok": False, "note": "not an order 3.0 tracks — it may already be gone"}
-            r = self.fam.desk.cancel(rec.id, rec.market, initiator="owner")
+        if rec is None:
+            return {"ok": False, "note": "not an order 3.0 tracks — it may already be gone"}
+        r = self.fam.desk.cancel(rec.id, rec.market, initiator="owner")   # outside the lock
+        with self.lock:
             if r.ok:
                 self.fam.orders.pop(rec.id, None)
                 self._forget(rec.id)
@@ -1716,22 +1725,24 @@ class Focus:
         elsewhere it stays where he put it."""
         with self.lock:
             rec = self.fam.orders.get(str(order_id or ""))
-            if rec is None:
-                return {"ok": False, "note": "not an order 3.0 tracks — it may already be gone"}
-            try:
-                new_px = round(float(cents) / 100.0, 4) if cents not in (None, "") else rec.price
-                new_q = round(float(qty), 2) if qty not in (None, "") else rec.qty
-            except (TypeError, ValueError):
-                return {"ok": False, "note": "price in cents and a share count, please"}
-            if abs(new_px - rec.price) < 1e-9 and abs(new_q - rec.qty) < 1e-9:
-                return {"ok": False, "note": "nothing to change"}
-            r = self.fam.desk.reprice(
-                {"id": rec.id, "market": rec.market, "side": rec.side, "price": rec.price,
-                 "size": rec.qty, "intent": rec.intent},
-                new_px, new_q if abs(new_q - rec.qty) > 1e-9 else None,
-                initiator="owner", keep_trimmed=True)
-            if not (r.ok or (r.order_id and r.resting_qty >= 0.01)):
-                return {"ok": False, "note": r.note}
+        if rec is None:
+            return {"ok": False, "note": "not an order 3.0 tracks — it may already be gone"}
+        try:
+            new_px = round(float(cents) / 100.0, 4) if cents not in (None, "") else rec.price
+            new_q = round(float(qty), 2) if qty not in (None, "") else rec.qty
+        except (TypeError, ValueError):
+            return {"ok": False, "note": "price in cents and a share count, please"}
+        if abs(new_px - rec.price) < 1e-9 and abs(new_q - rec.qty) < 1e-9:
+            return {"ok": False, "note": "nothing to change"}
+        # the exchange call outside the lock: his tap never waits on a pass
+        r = self.fam.desk.reprice(
+            {"id": rec.id, "market": rec.market, "side": rec.side, "price": rec.price,
+             "size": rec.qty, "intent": rec.intent},
+            new_px, new_q if abs(new_q - rec.qty) > 1e-9 else None,
+            initiator="owner", keep_trimmed=True)
+        if not (r.ok or (r.order_id and r.resting_qty >= 0.01)):
+            return {"ok": False, "note": r.note}
+        with self.lock:
             rested = new_q if r.ok else r.resting_qty
             if r.two_orders:
                 rec.why = "cancel failed during a move — retrying"
@@ -1833,9 +1844,15 @@ class Focus:
             self.note = f"page freeze failed: {e}"
 
     def refreeze(self) -> None:
-        with self.lock:
+        """Re-freeze the page after a tap. Never waits long on a pass —
+        the pass freezes the page at its own end."""
+        if not self.lock.acquire(timeout=3.0):
+            return
+        try:
             now = self._clock()
             self._freeze(now, self._bp[0] if self._bp else None, bool(self.switch_on()))
+        finally:
+            self.lock.release()
 
     # -- persistence ---------------------------------------------------------------
 
