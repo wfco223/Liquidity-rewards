@@ -3454,8 +3454,14 @@ class Monitor:
         grades page measures the money."""
         from .estimator import et_day
         out = []
-        for back in (0, 1):
-            day = et_day(now - back * 86400.0)
+        # today and yesterday always, and every older day we estimated
+        # whose posting is still short of the markets we claimed for it
+        # (owner, 2026-09-11: "make it so the percentage bar is for
+        # every day that rewards have not yet updated") — the exchange
+        # posts a day over two or three days, market by market
+        today, yday = et_day(now), et_day(now - 86400.0)
+        claim_days = {k.split("|", 1)[0] for k in self.mkt_claim_day if "|" in k}
+        for day in sorted({today, yday} | claim_days, reverse=True)[:14]:
             expected = {k.split("|", 1)[1] for k, v in self.mkt_claim_day.items()
                         if k.startswith(day + "|") and (v or 0.0) > 0.005}
             rows = {a["market"]: a for a in agg.values()
@@ -3463,6 +3469,8 @@ class Monitor:
             if not expected and not rows:
                 continue
             hit = expected & set(rows)
+            if day not in (today, yday) and (not expected or len(hit) >= len(expected)):
+                continue                          # an older day fully posted: no bar
 
             def has(m: str, word: str) -> bool:
                 return any(word in str(s) for s in rows[m].get("status") or ())
