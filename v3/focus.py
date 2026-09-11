@@ -160,6 +160,12 @@ FOCUS_BP_WINDOW_S = 1800.0      # the stake follows the HIGHEST buying-power rea
 # FOCUS_POS_ADJ_S more — or until the feed itself moves
 FOCUS_POS_PENDING_S = 150.0
 FOCUS_POS_ADJ_S = 300.0
+# the page's at-a-glance numbers (owner, 2026-09-11: "the name, the
+# earning rate summed for all orders on that market, how many shares I
+# own, and the drop in earning rate from its 8 hr peak"): a market's
+# rate is kept as a ten-minute-bucket maximum over eight hours
+FOCUS_PEAK_WINDOW_S = 8 * 3600.0
+FOCUS_PEAK_BUCKET_S = 600.0
 FOCUS_VANISH_WAIT_S = 600.0     # an order gone from the open list is a fill only when
                                 # the family's journal says so; the list left the TX
                                 # governor bid out for one read (13:35Z) and the tender
@@ -224,6 +230,7 @@ class Focus:
         # had just rested at +$168 a day read −$697 a minute later, a 62c
         # fill cost a share), and the tender must judge by its own numbers
         self.scores: dict[str, tuple[float, float, float]] = {}
+        self.rate_hist: dict[str, dict[str, float]] = {}   # slug -> bucket -> max rate
         self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
         self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
         self._feed_prev_at: float = 0.0           # when it was last taken (0 = never)
@@ -928,6 +935,22 @@ class Focus:
             rows[slug] = self._row(slug, now, positions, bp)
         self.rows = rows
 
+    def _note_rate(self, slug: str, rate: float, now: float) -> float:
+        """Remember this market's earning rate (every order here, his
+        and the tender's) as a ten-minute maximum and return its
+        eight-hour peak."""
+        h = self.rate_hist.setdefault(slug, {})
+        key = str(int(now // FOCUS_PEAK_BUCKET_S))
+        h[key] = max(float(h.get(key, 0.0)), float(rate))
+        floor = now - FOCUS_PEAK_WINDOW_S
+        for k in list(h):
+            try:
+                if int(k) * FOCUS_PEAK_BUCKET_S < floor:
+                    del h[k]
+            except ValueError:
+                del h[k]
+        return round(max(h.values()) if h else 0.0, 2)
+
     def _row(self, slug: str, now: float, positions: dict, bp: float | None) -> dict:
         prog = self.terms.get(slug)
         fair = self.fairs.get(slug)
@@ -971,6 +994,20 @@ class Focus:
                            # be able to see the book on focus markets")
                            "bids": [[p, round(q, 1)] for p, q in book.bids[:8]],
                            "asks": [[p, round(q, 1)] for p, q in book.asks[:8]]}
+        # the qualification (owner, 2026-09-11 "Maintenance may also
+        # result in many markets being unqualified for a while" — the
+        # exchange's maintenance cancelled every resting order, his
+        # qualifying walls included): a side pays only when what rests
+        # on it reaches the program's target
+        row["qual"] = None
+        row["unqualified"] = None
+        if book is not None and prog is not None:
+            tgt = float(prog.target or 0.0)
+            bq = sum(float(q) for _, q in book.bids)
+            aq = sum(float(q) for _, q in book.asks)
+            row["qual"] = {"bid": [round(bq), tgt, tgt <= 0 or bq >= tgt],
+                           "ask": [round(aq), tgt, tgt <= 0 or aq >= tgt]}
+            row["unqualified"] = sum(1 for s in ("bid", "ask") if not row["qual"][s][2])
         # every order here, with what it measures on this book
         for o in self._orders(slug):
             d = {"id": o.id, "side": o.side, "price": o.price, "qty": o.qty,
@@ -990,6 +1027,19 @@ class Focus:
                 self.scores[o.id] = (s["est"], s["pf"], s["ev"])
             row["orders"].append(d)
         row["orders"].sort(key=lambda d: (d["side"], -d["price"]))
+        # at a glance: what every order here earns a day, the shares held,
+        # and how far the rate sits under its eight-hour peak
+        row["shares"] = round(net, 2)
+        if book is not None and prog is not None and pool:
+            rate = round(sum(float(d.get("est") or 0.0) for d in row["orders"]), 2)
+            row["rate"] = rate
+            row["peak8"] = self._note_rate(slug, rate, now)
+            row["drop"] = round(max(row["peak8"] - rate, 0.0), 2)
+        else:
+            h = self.rate_hist.get(slug) or {}
+            row["rate"] = None
+            row["peak8"] = round(max(h.values()), 2) if h else 0.0
+            row["drop"] = None
         # the entry of 10% of buying power at the optimal price, each side
         # (the list's sort key), and what the tender itself would rest
         # under its own rules: the refill wait, the position bound, the
@@ -1656,6 +1706,7 @@ class Focus:
                 "filled_at": dict(self.filled_at), "mine_ids": list(self.mine_ids[-MINE_IDS_KEEP:]),
                 "silver_seeded": sorted(self.silver_seeded),
                 "displaced_at": dict(self.displaced_at),
+                "rate_hist": {k: dict(v) for k, v in self.rate_hist.items() if k in self.markets},
                 "events": self.events[-EVENTS_KEEP:], "log": self.log[-LOG_KEEP:]}
 
     def restore(self, d: dict) -> None:
@@ -1675,5 +1726,7 @@ class Focus:
         self.mine_ids = [str(x) for x in (d.get("mine_ids") or [])][-MINE_IDS_KEEP:]
         self.silver_seeded = {str(s) for s in (d.get("silver_seeded") or [])}
         self.displaced_at = {str(k): float(v) for k, v in (d.get("displaced_at") or {}).items()}
+        self.rate_hist = {str(k): {str(b): float(x) for b, x in (v or {}).items()}
+                          for k, v in (d.get("rate_hist") or {}).items()}
         self.events = list(d.get("events") or [])[-EVENTS_KEEP:]
         self.log = list(d.get("log") or [])[-LOG_KEEP:]

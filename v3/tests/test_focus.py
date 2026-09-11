@@ -1226,6 +1226,66 @@ class TestTheBondsHandOver(Base):
         self.assertIn(PLAIN, self.b.proposed)
 
 
+class TestTheGlance(Base):
+    def test_a_row_carries_the_rate_the_shares_and_the_eight_hour_peak(self):
+        # owner, 2026-09-11: "the name, the earning rate summed for all
+        # orders on that market, how many shares I own, and the drop in
+        # earning rate from its 8 hr peak"
+        self.r.positions[NC] = (120.0, 48.0)
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        self.tick()
+        row = self.f.rows[NC]
+        self.assertEqual(row["shares"], 120.0)
+        self.assertGreater(row["rate"], 0.0)
+        self.assertAlmostEqual(row["rate"], sum(d["est"] for d in row["orders"]), places=2)
+        self.assertAlmostEqual(row["peak8"], row["rate"], places=2)
+        self.assertEqual(row["drop"], 0.0)
+        peak = row["peak8"]
+        # the tender's orders come off: the rate falls, the peak remembers
+        self.f.pause(NC, True)
+        self.tick()
+        self.tick()
+        row = self.f.rows[NC]
+        self.assertLess(row["rate"], peak)
+        self.assertAlmostEqual(row["peak8"], peak, places=2)
+        self.assertAlmostEqual(row["drop"], peak - row["rate"], places=2)
+        # eight hours on, the old peak is forgotten
+        self.r.now += focus_mod.FOCUS_PEAK_WINDOW_S + focus_mod.FOCUS_PEAK_BUCKET_S
+        self.tick()
+        row = self.f.rows[NC]
+        self.assertAlmostEqual(row["peak8"], row["rate"], places=2)
+        # and the history survives a restart
+        d = json.loads(json.dumps(self.f.to_dict()))
+        g = Focus(self.r.fam, self.r.exchange, self.b, clock=lambda: self.r.now)
+        g.restore(d)
+        self.assertIn(NC, g.rate_hist)
+
+    def test_a_side_under_the_target_reads_unqualified(self):
+        # owner, 2026-09-11: "Maintenance may also result in many markets
+        # being unqualified for a while" — the exchange's maintenance
+        # cancelled every resting order, the walls that carried the
+        # sides to the target included
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        row = self.f.rows[NC]
+        self.assertEqual(row["unqualified"], 0)
+        self.assertTrue(row["qual"]["bid"][2] and row["qual"]["ask"][2])
+        self.assertEqual(row["qual"]["bid"][1], 25000.0)
+        thin = Book(bids=((0.44, 300.0), (0.43, 500.0)),          # the 1c wall gone
+                    asks=((0.47, 300.0), (0.48, 500.0), (0.98, 60000.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.r.exchange.books[NC] = thin
+        self.tick()
+        row = self.f.rows[NC]
+        self.assertEqual(row["unqualified"], 1)
+        self.assertFalse(row["qual"]["bid"][2])
+        self.assertEqual(row["qual"]["bid"][0], 800)
+        self.assertTrue(row["qual"]["ask"][2])
+        # nothing on the unqualified side reads as earning
+        self.assertEqual(sum(d["est"] for d in row["orders"] if d["side"] == "BUY"), 0.0)
+
+
 class TestTheWebPage(unittest.TestCase):
     def test_the_page_and_its_ops_are_wired(self):
         from v3 import web

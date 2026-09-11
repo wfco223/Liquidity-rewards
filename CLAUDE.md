@@ -139,6 +139,13 @@ long and accreted, so search it rather than reading it through.
   never fire on their own. Do not add a cron workflow — put the work
   in the monitor's publish loop instead.
 - Alerts go through ntfy; the topic name is a password.
+- The earnings graph and the day's estimate bill nothing across a
+  gap in the sampler longer than five minutes (owner, 2026-09-11
+  "Make the earning estimate during the period of maintenance 0" —
+  the graph had plateaued at the last reading across the exchange's
+  maintenance): the gap counts as stale time, the graph reads zero
+  across it, and a series carries a reading forward for three
+  minutes at most.
 - The market survey is GONE (owner, 2026-09-10 "Take off the survey
   entirely. Save the data on GitHub but i don't need it"): nothing
   samples, nothing enumerates the exchange's programs, no survey tab,
@@ -158,7 +165,26 @@ long and accreted, so search it rather than reading it through.
   its place in the ledger, the record books its sale). The list is
   sorted by the expected value of an entry of 10% of his buying power
   at the best price ("expected value with fill odds and considering
-  the cost of capital tie up"). Every order in a focus market — his,
+  the cost of capital tie up"). The page (owner, 2026-09-11 "Make the
+  list of markets more condensed. Let me open the more detailed info
+  if I click on them") is one line a market — the name, what every
+  order there earns a day, the shares held, the drop from the
+  eight-hour peak of the rate — and a tap opens the book with his
+  orders marked, each order's earnings and every control, the
+  tender's arithmetic folded under "the tender's math"; it sorts by
+  entry EV, name, earning, holding, drop, or unqualified sides first
+  ("Maintenance may also result in many markets being unqualified
+  for a while"), a side reading unqualified while what rests on it
+  is under the program's target. The exchange's maintenance of
+  2026-09-11 cancelled every resting order, his qualifying walls
+  included, and nothing re-places a wall on its own; after it the
+  owner said "Be careful of placing orders after the maintenance.
+  Don't sell everything for pennies there might not be any orders
+  resting" — the floors that hold: an exit never sits under both his
+  fair and the cost, an entry's concession past fair is charged in
+  full, a side under the target earns nothing in the model, and the
+  old engine's exits never go under their cost-based floor.
+  Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
   he has set a fair for that market and keeps the expected loss

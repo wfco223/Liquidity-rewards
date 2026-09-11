@@ -128,10 +128,23 @@ class Estimator:
             self.day = day
 
         # elapsed time since the previous sample, billed at the PREVIOUS
-        # rate (the rate that was actually in force over that interval)
+        # rate (the rate that was actually in force over that interval).
+        # A gap longer than one sample may bill for is a blackout — the
+        # exchange's maintenance, a stuck loop — and nothing was earned
+        # in it (owner, 2026-09-11, the graph plateaued across a 100-min
+        # maintenance: "Make the earning estimate during the period of
+        # maintenance 0"): it bills nothing, banks as unmeasured time,
+        # and the graph gets two zero dots so it reads as zero, not as
+        # the last rate carried forward
         dt_s = 0.0
         if self.last_ts is not None:
-            dt_s = min(max(now - self.last_ts, 0.0), MAX_GAP_S)
+            gap = max(now - self.last_ts, 0.0)
+            if gap > MAX_GAP_S:
+                self.stale_s += gap
+                self.dots.append([round(self.last_ts + 20.0, 1), 0.0, 0])
+                self.dots.append([round(now - 20.0, 1), 0.0, 0])
+            else:
+                dt_s = gap
         self.last_ts = now
 
         by_market: dict[str, list[dict]] = {}

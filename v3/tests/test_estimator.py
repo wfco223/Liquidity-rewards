@@ -51,12 +51,22 @@ class TestIntegration(unittest.TestCase):
         self.assertAlmostEqual(e.earned, e.rate * 100 / 86400, places=6)
         self.assertAlmostEqual(e.per_market[SLUG], e.earned, places=6)
 
-    def test_gap_is_capped_so_dead_time_is_not_billed(self):
+    def test_a_blackout_bills_nothing_and_reads_zero_on_the_graph(self):
+        # owner, 2026-09-11, the graph had plateaued across the exchange's
+        # maintenance: "Make the earning estimate during the period of
+        # maintenance 0"
         e, st = Estimator(), terms_with()
         t0 = noon_et()
         e.sample(t0, one_order(), books_at(t0), st, side_pool=_sp)
         e.sample(t0 + 5000, one_order(), books_at(t0 + 5000), st, side_pool=_sp)  # 83 min gap
-        self.assertAlmostEqual(e.earned, e.rate * 300 / 86400, places=6)
+        self.assertEqual(e.earned, 0.0)
+        self.assertAlmostEqual(e.stale_s, 5000.0)
+        zeros = [d for d in e.dots if d[1] == 0.0]
+        self.assertEqual([round(d[0] - t0) for d in zeros], [20, 4980])
+        self.assertEqual([round(d[0] - t0) for d in e.dots], [0, 20, 4980, 5000])
+        # a short gap still bills at the rate that was in force
+        e.sample(t0 + 5100, one_order(), books_at(t0 + 5100), st, side_pool=_sp)
+        self.assertAlmostEqual(e.earned, e.rate * 100 / 86400, places=6)
 
     def test_stale_books_bank_time_instead_of_accruing(self):
         e, st = Estimator(), terms_with()
