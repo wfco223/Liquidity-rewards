@@ -5014,3 +5014,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789159761.2,politics,paccc-balpow-2026-11-03-dsweep,BUY,7.4,0.5,hand,,11.07,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7NCGKVTSX0
 1789159761.2,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,10.24,0.1,backfill,,0.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAMQAFKMTN3
 1789159761.2,politics,ewc-usgub-nv-2026-11-03-rep,BUY,10,0.59,backfill,,2.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9Z5DSJ4TN2
+1789160269.5,politics,scc-senate-gop-2026-11-03-48,SELL,0.45,0.18,hand,,5,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7M40B3TSJH
