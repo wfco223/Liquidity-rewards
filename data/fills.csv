@@ -4886,3 +4886,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789142467.6,politics,usgubewc-usgub-il-2026-11-03-rep,SELL,0.12,0.08,backfill,,0.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7424KAPTMX
 1789142467.6,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,0.05,0.96,backfill,,0.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7G9CHF6TN3
 1789142467.6,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,11,0.12,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7PHE3XMTN3
+1789142533.0,politics,ewc-usgub-oh-2026-11-03-dem,SELL,200,0.58,sell,53.3343,4.61,0.52745,51,56,0.432,0.57,0.59,-0.0525,0,an exit — its fill reduces the position it sits on,CE41BG6HCTN3
+1789142773.0,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,4,0.92,focus,62.454,0.01,0.924025,88,92,0.624,0.87,0.96,-0.004,24,focus entry: ~$62.45/day; fill odds 49%/day; EV +62.40/day,CE81SNW3PTMY
+1789142976.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,52,0.192,focus,161.875,0.13,0.1382,19,21,0.945,0.191,0.192,-0.0538,-137,focus entry: ~$45.40/day; fill odds 89%/day; EV +44.27/day,CE8033PFPTMM
+1789143456.6,politics,usgubewc-usgub-pa-2026-11-03-dem,BUY,10,0.98,sell,6.2497,0.79,0.998975,95,99,0.647,0.93,0.98,-0.019,0,an exit — its fill reduces the position it sits on,CE7HRMYT6TMM
+1789143819.3,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,-11,0.12,fix,0.898,0.35,0.01355,7,10,0.809,0.09,0.11,-0.1064,-66,size trimmed by 11 to the exchange's count (order CE7PHE3XMTN3),CE7PHE3XMTN3
+1789143819.3,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,5,0.96,void,0.2257,0.19,0.98875,93,96,0.613,0.9,0.96,0.0288,0,voided: the exchange has no trade for order CE7E51XRJTMQ — the row of 09-11 15:3,CE7E51XRJTMQ
+1789143819.3,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,15,0.8,void,61.8589,0.02,0.924025,89,94,0.454,0.83,0.97,-0.124,30,voided: the exchange has no trade for order CE70ZQ3RATN3 — the row of 09-11 15:5,CE70ZQ3RATN3
