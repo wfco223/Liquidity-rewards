@@ -9183,6 +9183,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,enwc-uspres-nom-rep-2028-tedcru,liquidityProgram,0.01,PENDING
 2026-09-08,enwc-uspres-nom-rep-2028-tulgab,liquidityProgram,0.14,PENDING
 2026-09-08,enwc-ussep-de-2026-09-15-rep-johshu,liquidityProgram,1.41,PENDING
+2026-09-08,ewc-usgub-az-2026-11-03-dem,liquidityProgram,0.17,PENDING
 2026-09-08,ewc-usgub-ca-2026-11-03-stehil,liquidityProgram,0.73,PENDING
 2026-09-08,ewc-usgub-ca-2026-11-03-xavbec,liquidityProgram,0.06,PENDING
 2026-09-08,ewc-usgub-ga-2026-11-03-dem,liquidityProgram,0.46,PENDING
@@ -9316,6 +9317,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,ussewc-usse-ks-2026-11-03-dem,liquidityProgram,0.34,PENDING
 2026-09-08,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.16,PENDING
 2026-09-08,ussewc-usse-ky-2026-11-03-dem,liquidityProgram,4.68,PENDING
+2026-09-08,ussewc-usse-ky-2026-11-03-rep,liquidityProgram,4.51,PENDING
 2026-09-08,ussewc-usse-la-2026-11-03-dem,liquidityProgram,0.39,PENDING
 2026-09-08,ussewc-usse-la-2026-11-03-rep,liquidityProgram,1.69,PENDING
 2026-09-08,ussewc-usse-ma-2026-11-03-dem,liquidityProgram,0.74,PENDING
@@ -9424,6 +9426,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,aachc-cfb-wins-2026-11-28-sc-7pt5wins,liquidityProgram,0.43,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-sc-8pt5wins,liquidityProgram,0.06,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-sdst-8pt5wins,liquidityProgram,0.73,PENDING
+2026-09-09,aachc-cfb-wins-2026-11-28-stan-5pt5wins,liquidityProgram,0.51,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-syra-3pt5wins,liquidityProgram,2.47,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-tx-10pt5wins,liquidityProgram,0.59,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-tx-11pt5wins,liquidityProgram,0.25,PENDING
@@ -9757,6 +9760,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,tec-nfl-droy-2027-02-11-w-emmmcn,liquidityProgram,0.01,PENDING
 2026-09-09,tec-nfl-droy-2027-02-11-w-jermcc,liquidityProgram,0.03,PENDING
 2026-09-09,tec-nfl-droy-2027-02-11-w-zioyou,liquidityProgram,0.03,PENDING
+2026-09-09,tec-nfl-mvp-2027-02-11-w-joebur,liquidityProgram,0.04,PENDING
 2026-09-09,tec-nfl-nfcchamp-2027-01-31-w-sea,liquidityProgram,0.16,PENDING
 2026-09-09,tec-nfl-nfcnorth-2027-01-10-w-chi,liquidityProgram,0.1,PENDING
 2026-09-09,tec-nfl-nfcnorth-2027-01-10-w-det,liquidityProgram,0.01,PENDING
