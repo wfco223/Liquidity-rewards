@@ -4893,3 +4893,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789143819.3,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,-11,0.12,fix,0.898,0.35,0.01355,7,10,0.809,0.09,0.11,-0.1064,-66,size trimmed by 11 to the exchange's count (order CE7PHE3XMTN3),CE7PHE3XMTN3
 1789143819.3,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,5,0.96,void,0.2257,0.19,0.98875,93,96,0.613,0.9,0.96,0.0288,0,voided: the exchange has no trade for order CE7E51XRJTMQ — the row of 09-11 15:3,CE7E51XRJTMQ
 1789143819.3,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,15,0.8,void,61.8589,0.02,0.924025,89,94,0.454,0.83,0.97,-0.124,30,voided: the exchange has no trade for order CE70ZQ3RATN3 — the row of 09-11 15:5,CE70ZQ3RATN3
+1789144005.3,politics,paccc-usho-midterms-2026-11-03-dem,SELL,33,0.814,sell,375,0.51,0.8618,84,85,0.946,0.82,0.831,0.0478,0,an exit — its fill reduces the position it sits on,CE7WXQ4MYTN2
+1789144005.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,137,0.191,sell,375,0.28,0.1382,19,21,0.947,0.177,0.18,0.0528,0,an exit — its fill reduces the position it sits on,CE83TRKAPTMY
+1789144125.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,27,0.178,focus,362.924,0.01,0.1382,19,21,0.949,0.178,0.18,0.0398,-110,focus entry: ~$357.91/day; fill odds 84%/day; EV +345.03/day,CE8CT3DGJTMP
+1789144196.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,12,0.828,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8CQTNP0TN3
+1789144318.8,politics,ewc-usgub-mi-2026-11-03-rep,SELL,53,0.08,sell,4.1149,0.67,0.0557,10,14,0.709,0.07,0.08,-0.0243,0,an exit — its fill reduces the position it sits on,CE7VNY1Y4TMX
+1789144318.8,politics,paccc-usho-midterms-2026-11-03-dem,BUY,49,0.828,focus,6.0562,0.06,0.8618,84,85,0.947,0.829,0.831,-0.0338,55,focus entry: ~$103.45/day; fill odds 83%/day; EV +102.18/day,CE8CQTNP0TN3
+1789144318.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,6,0.831,sell,14.6229,0.04,0.8618,84,85,0.947,0.829,0.831,0.0308,49,an exit — its fill reduces the position it sits on,CE8D93XDPTMM
+1789144373.4,politics,paccc-usho-midterms-2026-11-03-dem,BUY,46,0.831,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE8ES1FMATMQ
+1789144391.7,politics,ewc-usgub-mi-2026-11-03-rep,SELL,131,0.08,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE8ET2Y1RTMP
+1789144497.8,politics,paccc-usho-midterms-2026-11-03-dem,BUY,12,0.828,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8CQTNP0TN3
+1789144497.8,politics,paccc-usho-midterms-2026-11-03-dem,BUY,46,0.831,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE8ES1FMATMQ
+1789144497.8,politics,ewc-usgub-mi-2026-11-03-rep,SELL,131,0.08,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE8ET2Y1RTMP
