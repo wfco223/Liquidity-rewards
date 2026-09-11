@@ -1404,6 +1404,49 @@ class TestTheBuyingPowerRead(Base):
         self.assertEqual(v["bp_high"], 2000.0)
 
 
+class TestNoMoneyNoPlacement(Base):
+    def test_an_entry_that_does_not_fit_the_buying_power_is_not_sent(self):
+        # owner, 2026-09-11: the exchange app at $177 available while the
+        # tender kept placing — 126 placements rejected in an hour
+        self.f.set_fair(NC, 45.0)
+        self.f.set_stake(NC, 300.0)               # ~$150 an order
+        self.f._bp_fn = lambda: 50.0
+        self.r.now += focus_mod.FOCUS_BP_EVERY_S + 1
+        before = len(self.r.exchange.live)
+        self.tick()
+        self.tick()
+        self.assertEqual(len(self.r.exchange.live), before)
+        self.assertEqual(self.mine(NC), [])
+        evs = [e for e in self.f.log if e.get("event") == "no_money"]
+        self.assertTrue(evs)
+        self.assertIn("$50 of buying power free", evs[0]["why"])
+        v = self.f.view(self.r.now, 50.0, True)
+        self.assertGreaterEqual(v["waiting_money"], 1)
+        # noted once a cooldown, not every pass
+        self.tick()
+        self.tick()
+        self.assertEqual(len([e for e in self.f.log if e.get("event") == "no_money"]), len(evs))
+        # money comes back: the entries rest
+        self.f._bp_fn = lambda: 2000.0
+        self.r.now += focus_mod.FOCUS_BP_EVERY_S + 1
+        self.tick()
+        self.tick()
+        self.assertTrue(self.mine(NC))
+        v = self.f.view(self.r.now, 2000.0, True)
+        self.assertEqual(v["waiting_money"], 0)
+
+    def test_an_exit_is_placed_with_no_money_free(self):
+        self.f.set_fair(NC, 45.0)
+        self.r.positions[NC] = (120.0, 48.0)
+        self.f._bp_fn = lambda: 0.0
+        self.r.now += focus_mod.FOCUS_BP_EVERY_S + 1
+        self.tick()
+        self.tick()
+        asks = self.mine(NC, "SELL")
+        self.assertTrue(asks)
+        self.assertEqual(self.mine(NC, "BUY"), [])
+
+
 class TestTheWebPage(unittest.TestCase):
     def test_the_page_and_its_ops_are_wired(self):
         from v3 import web
