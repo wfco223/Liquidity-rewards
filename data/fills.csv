@@ -4505,3 +4505,34 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789083870.4,politics,ussewc-usse-nm-2026-11-03-rep,SELL,20,0.06,backfill,,3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDQFCVGQ2SJR
 1789083902.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,13,0.174,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSVYK9KMSJZ
 1789083902.2,politics,ussewc-usse-nm-2026-11-03-rep,SELL,20,0.06,backfill,,3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDQFCVGQ2SJR
+1789084025.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,766,0.174,focus,356.548,0.15,0.1637,17,19,0.923,0.174,0.175,0.0103,779,focus entry: ~$356.77/day; fill odds 73%/day; EV +337.05/day,CDSY11HJMT6S
+1789084405.9,politics,ussewc-usse-la-2026-11-03-dem,SELL,9.69,0.05,earn,2.6791,1.15,0.0371,2,6,0.477,0.02,0.05,-0.0129,-9.69,at the touch — a fill here is 1 ticks inside value (Silver + evidence),CDS5M847GSJR
+1789084405.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,506,0.174,sell,81.5012,0.08,0.1637,17,18,0.928,0.173,0.174,-0.0103,273,an exit — its fill reduces the position it sits on,CDT3PYNGGSX4
+1789084465.9,nfl,aqc-nfl-afc-2027-01-24-champq-lac,SELL,2,0.15,sell,0.0394,7.18,,11,15,0.695,0.11,0.12,-0.02,0,selling filled stock — it earns while it waits,CDM1GZ01PSX0
+1789084885.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,54,0.174,sell,33.7048,0.21,0.1637,17,19,0.932,0.173,0.174,-0.0103,219,an exit — its fill reduces the position it sits on,CDT3PYNGGSX4
+1789085718.2,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,3.33,0.06,backfill,,4.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPJBVX3YSJ1
+1789085780.2,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,6,0.06,earn,0.8333,5.29,0.005175,4,7,0.755,0.04,0.06,-0.0548,-32,1 tick behind the touch — we would hold 49% of the ask side,CDNYX7266T75
+1789085785.5,politics,ussewc-usse-la-2026-11-03-dem,SELL,0.14,0.06,backfill,,0.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDT6VHH1TSJZ
+1789085840.2,politics,ussewc-usse-la-2026-11-03-dem,SELL,5,0.06,earn,3.136,0.37,0.0371,3,7,0.634,0.04,0.06,-0.0229,-15,1 tick behind the touch — we would hold 8% of the ask side,CDT6VHH1TSJZ
+1789086065.4,politics,ussewc-usse-sc-2026-11-03-dem,BUY,1.76,0.13,backfill,,2.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDRNK8360SK5
+1789086080.2,politics,usgubewc-usgub-nm-2026-11-03-rep,SELL,4,0.06,earn,0.3623,5.38,0.005175,5,8,0.797,0.04,0.12,-0.0548,-36,1 tick behind the touch — we would hold 49% of the ask side,CDNYX7266T75
+1789086080.2,politics,usgubewc-usgub-pa-2026-11-03-rep,SELL,10,0.08,earn,0.233,2.75,0.00155,2,7,0.541,0.06,0.08,-0.0785,-30,1 tick behind the touch — we would hold 50% of the ask side,CDR73KCNCSX0
+1789086140.2,politics,ussewc-usse-sc-2026-11-03-dem,BUY,6,0.17,sell,3.834,0.28,0.07555,10,14,0.695,0.13,0.18,0.0945,4,buying back the short at or under what it sold for — the bid earns while it wait,CDTB0Z332SJ1
+1789086312.6,politics,ussewc-usse-sd-2026-11-03-rep,BUY,1,0.9,manual,0.3472,22.71,0.991925,89,93,0.572,0.9,0.92,-0.0919,2,the owner's own order — the engine leaves it alone,CD73QRWFET3P
+1789086312.6,politics,ussewc-usse-sc-2026-11-03-dem,BUY,2,0.17,sell,0,0.05,0.07555,10,13,0.757,0.13,0.18,0.0945,2,buying back the short at or under what it sold for — the bid earns while it wait,CDTKAWS3WSJZ
+1789086312.6,politics,scc-senate-gop-2026-11-03-55,BUY,245.21,0.06,manual,17.9834,10.83,0.0168,2,6,0.651,0.04,0.06,0.0432,0.21,the owner's own order — the engine leaves it alone,CDH8YTYMTSJZ
+1789086312.6,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,600,0.11,manual,53.4502,2.91,0.01125,9,12,0.438,0.1,0.11,0.0988,-551,the owner's own order — the engine leaves it alone,CDR3MEXV8T75
+1789086612.6,politics,paccc-balpow-2026-11-03-rsweep,BUY,150,0.19,sell,145.028,1.16,,14,18,0.713,0.18,0.19,0.03,0,an exit — its fill reduces the position it sits on,CDSP5EFSAT6S
+1789086640.2,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,11.23,0.41,backfill,,2.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDRW2GCYMT75
+1789086852.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,72,0.849,focus,45.4279,0.58,0.8363,84,85,0.96,0.848,0.849,-0.0127,-194,focus entry: ~$94.55/day; fill odds 87%/day; EV +74.10/day,CDT8CGW74T6S
+1789086902.5,politics,scc-senate-gop-2026-11-03-54,BUY,5.82,0.04,backfill,,1.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSA8A324SX4
+1789086934.3,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,500,0.1,manual,61.8716,3.04,0.01125,8,11,0.616,0.08,0.1,0.0888,449,the owner's own order — the engine leaves it alone,CDR43JJBYSX4
+1789086934.3,politics,usgubewc-usgub-pa-2026-11-03-rep,BUY,30,0.07,sell,5.3511,0.24,0.00155,3,8,0.667,0.05,0.07,0.0685,0,buying back the short at or under what it sold for — the bid earns while it wait,CDTJZX97PSJZ
+1789087174.3,politics,ewc-usse-nc-2026-11-03-rep,SELL,85,0.12,focus,1.5292,0.48,0.12705,12,14,0.517,0.11,0.12,0.0071,-235,focus entry: ~$2.99/day; fill odds 54%/day; EV +1.23/day,CDTE0QBA0SX4
+1789087583.0,politics,ussewc-usse-nm-2026-11-03-rep,SELL,-20,0.06,fix,0.4368,3.01,0.0045,,,0.797,,,-0.0555,-21,size trimmed by 20 to the exchange's count (order CDQFCVGQ2SJR),CDQFCVGQ2SJR
+1789087583.0,politics,ussewc-usse-nm-2026-11-03-dem,SELL,2,0.97,void,0,0.09,0.9955,,,0.864,,,0.0255,-2,voided: the exchange has no trade for order CDSS3TAXRT6S — the row of 09-10 23:3,CDSS3TAXRT6S
+1789087583.0,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,3.33,0.06,backfill,,4.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDPJBVX3YSJ1
+1789087583.0,politics,ussewc-usse-la-2026-11-03-dem,SELL,0.14,0.06,backfill,,0.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDT6VHH1TSJZ
+1789087583.0,politics,ussewc-usse-sc-2026-11-03-dem,BUY,1.76,0.13,backfill,,2.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDRNK8360SK5
+1789087583.0,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,11.23,0.41,backfill,,2.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDRW2GCYMT75
+1789087583.0,politics,scc-senate-gop-2026-11-03-54,BUY,5.82,0.04,backfill,,1.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDSA8A324SX4
