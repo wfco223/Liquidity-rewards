@@ -4859,3 +4859,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789141057.2,politics,ussewc-usse-il-2026-11-03-rep,BUY,1,0.03,backfill,,5.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2E6WK3CTMP
 1789141057.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,5,0.191,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7KSB2A6TN5
 1789141057.2,politics,ussewc-usse-ks-2026-11-03-dem,SELL,1,0.19,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7HKJR2TTN1
+1789141577.6,politics,ewc-usgub-mi-2026-11-03-rep,SELL,10,0.08,sell,6.0066,1.91,0.0557,10,14,0.621,0.07,0.08,-0.0243,53,an exit — its fill reduces the position it sits on,CE643YWW2TN3
+1789141577.6,politics,paccc-usse-midterms-2026-11-03-dem,BUY,34,0.493,focus,209.958,0.88,0.5,47,49,0.737,0.493,0.494,-0.007,109,focus entry: ~$150.45/day; fill odds 54%/day; EV +147.80/day,CE713E5RGTN5
+1789141718.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,41,0.192,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7P2RD48TMQ
+1789141737.9,politics,usgubewc-usgub-nh-2026-11-03-rep,SELL,5,0.93,backfill,,3.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE538EYRMTN3
+1789141763.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,-5,0.191,fix,204.836,0.02,0.1382,19,20,0.945,0.191,0.192,0.0528,-39,size trimmed by 5 to the exchange's count (order CE7KSB2A6TN5),CE7KSB2A6TN5
+1789141763.1,politics,ussewc-usse-ks-2026-11-03-dem,SELL,-1,0.19,fix,1.1747,0.12,0.22595,,,0.563,,,0.0359,0,size trimmed by 1 to the exchange's count (order CE7HKJR2TTN1),CE7HKJR2TTN1
+1789141763.1,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-75,0.493,fix,209.958,0.88,0.5,47,49,0.737,0.493,0.494,-0.007,109,size trimmed by 75 to the exchange's count (order CE713E5RGTN5),CE713E5RGTN5
+1789141763.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,41,0.192,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7P2RD48TMQ
+1789141763.1,politics,usgubewc-usgub-nh-2026-11-03-rep,SELL,5,0.93,backfill,,3.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE538EYRMTN3
+1789141763.1,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,10,0.92,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7TM22NATN0
+1789141764.7,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,10,0.92,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7TM22NATN0
