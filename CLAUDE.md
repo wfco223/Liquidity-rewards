@@ -196,9 +196,17 @@ long and accreted, so search it rather than reading it through.
   46c against his 62c fair thirteen seconds after resting them (a
   bare ask side had made the order read $360 a day): an entry may
   sit past his fair only on a side with company, where what others
-  rest within six ticks of the side's best adds up to the full stake
-  or more; on a bare side it rests at his fair or better, and one
-  resting past fair there comes off at once — the resting order's
+  rest within six CENTS of the side's best adds up to the full stake
+  or more (owner, 2026-09-11 "the tender seems unwilling to consider
+  anything beyond fair and seems to be leaving money on the table"
+  ... "Good": six ticks had been the measure, and on the 0.1c-tick
+  House rep control book that was 0.6c — 627 shares near the 17.6c
+  touch read bare against a $139 stake while 13,400 sat 1.5c back,
+  and the bid was held at his 16c fair earning nothing where the
+  touch was worth about $170 a day; the plan's price search reaches
+  the same six cents, every tick near the touch and the resting
+  levels beyond); on a bare side it rests at his fair or better, and
+  one resting past fair there comes off at once — the resting order's
   test sized by the same room the plan uses (the stake less the
   collateral a position it adds to holds, scaled by the refill
   ramp), never the whole stake (15:08-15:20Z: a Texas governor dem

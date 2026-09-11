@@ -1408,6 +1408,55 @@ class TestTheGlance(Base):
         self.assertEqual(sum(d["est"] for d in row["orders"] if d["side"] == "BUY"), 0.0)
 
 
+class TestTheCompanyWindowIsSixCents(Base):
+    # the House rep control book of 2026-09-11 19:12Z: ticks of 0.1c,
+    # 50 shares at the 17.6c touch and 577 at 17.4c, 13,400 shares
+    # 1.5c back; six TICKS of company was 0.6c and read the side as
+    # bare against a $139 stake, so the bid sat at his 16c fair earning
+    # nothing while a bid at the touch was worth about $170 a day
+    HOUSE = Book(bids=((0.176, 50.0), (0.174, 577.0), (0.162, 86.0), (0.161, 5100.0),
+                       (0.160, 8300.0), (0.157, 4.0), (0.15, 37.0), (0.14, 10400.0),
+                       (0.01, 400000.0)),
+                 asks=((0.177, 9900.0), (0.179, 500.0), (0.18, 2600.0), (0.193, 5.0),
+                       (0.194, 707.0), (0.20, 500.0), (0.42, 275.0), (0.98, 900.0),
+                       (0.99, 400000.0)),
+                 tick=0.001, fetched_at=0.0)
+
+    def test_company_is_counted_six_cents_back_whatever_the_tick(self):
+        levels = self.f._levels_net(NC, "BUY", self.HOUSE)
+        self.assertFalse(self.f._bare(levels, 0.001, 787.0))      # 14,113 shares within 6c
+        # only the first six ticks: 627 shares, bare — the old reading
+        near = sum(q for p, q in levels if abs(p - 0.176) <= 6 * 0.001 + 1e-9)
+        self.assertLess(near, 787.0)
+        # and on a 1c-tick book six cents is the same six ticks as before
+        deep = Book(bids=((0.44, 300.0),), asks=((0.46, 4000.0), (0.47, 6000.0), (0.53, 9000.0)),
+                    tick=0.01, fetched_at=0.0)
+        self.assertFalse(self.f._bare(self.f._levels_net(NC, "SELL", deep), 0.01, 370.0))
+        bare = Book(bids=((0.44, 300.0),), asks=((0.46, 20.0), (0.47, 30.0), (0.53, 9000.0)),
+                    tick=0.01, fetched_at=0.0)
+        self.assertTrue(self.f._bare(self.f._levels_net(NC, "SELL", bare), 0.01, 370.0))
+
+    def test_the_search_reaches_the_resting_levels_six_cents_back(self):
+        cands = self.f._cands("BUY", self.HOUSE, 0.16)
+        for px in (0.176, 0.175, 0.170):                        # every tick near the touch
+            self.assertIn(px, cands)
+        for px in (0.162, 0.161, 0.160, 0.157, 0.15):           # the levels within six cents
+            self.assertIn(px, cands)
+        self.assertIn(0.14, cands)                               # 3.6c back, within six cents
+        self.assertNotIn(0.01, cands)                            # the wall, far past the window
+        self.assertNotIn(0.165, cands)                           # an empty slot past six ticks
+
+    def test_a_bid_past_fair_rests_where_the_company_is(self):
+        self.f.set_fair(NC, 16.0)
+        prog = self.f.terms.get(NC)
+        pool = self.f.fam._side_pool(NC, prog)
+        plan = self.f._entry_plan(NC, "BUY", self.HOUSE, prog, pool, 0.16, 138.59)
+        self.assertIsNotNone(plan)
+        self.assertGreater(plan["px"], 0.16 + 1e-9)              # past his fair, with company
+        self.assertGreater(plan["conc"], 0.0)                    # the concession charged
+        self.assertGreater(plan["est"], 20.0)                    # and it earns
+
+
 class TestABareSideGetsNoConcession(Base):
     def test_past_fair_needs_company(self):
         # owner, 2026-09-11, after the maintenance wiped the books: "Be
