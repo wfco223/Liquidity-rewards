@@ -4912,3 +4912,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789144728.1,politics,ussewc-usse-id-2026-11-03-rep,BUY,10,0.94,earn,6.25,0.82,0.997625,94,98,0.812,0.02,0.96,-0.0576,10,1 tick behind the touch — we would hold 39% of the bid side,CE7TJQ3G2TN1
 1789144728.1,politics,ewc-usgub-oh-2026-11-03-dem,BUY,194,0.58,manual,39.4685,0.06,0.52745,52,56,0.707,0.58,0.59,0.0525,302,the owner's own order — the engine leaves it alone,CE8AAK4GWTN2
 1789144979.5,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-46,0.831,fix,4.6667,0.06,0.8618,84,85,0.95,0.83,0.831,0.0308,-37,size trimmed by 46 to the exchange's count (order CE8ES1FMATMQ),CE8ES1FMATMQ
+1789145071.8,politics,paccc-usho-midterms-2026-11-03-rep,BUY,160,0.177,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8MCX1ZMTMQ
+1789146312.9,politics,ewc-usgub-mi-2026-11-03-rep,SELL,53,0.11,void,4.3138,-0,0.0557,12,17,0.765,0.1,0.11,-0.0543,0,voided: the exchange has no trade for order CE8G2S3ETTN3 — the row of 09-11 16:3,CE8G2S3ETTN3
+1789146312.9,politics,ewc-usgub-oh-2026-11-03-dem,BUY,108,0.58,void,21.9722,-0.01,0.52745,53,57,0.612,0.58,0.59,0.0525,108,voided: the exchange has no trade for order CE8G2XYTTTMP — the row of 09-11 16:3,CE8G2XYTTTMP
+1789146312.9,politics,ewc-usgub-mi-2026-11-03-rep,BUY,131,0.1,void,33.4673,-0.04,0.0557,12,17,0.765,0.1,0.11,0.0443,131,voided: the exchange has no trade for order CE8H3W702TN3 — the row of 09-11 16:3,CE8H3W702TN3
+1789146312.9,politics,paccc-usho-midterms-2026-11-03-dem,SELL,46,0.831,void,4.9371,-0.04,0.8618,84,85,0.948,0.83,0.831,0.0308,9,voided: the exchange has no trade for order CE8H44SAATMP — the row of 09-11 16:3,CE8H44SAATMP
+1789146312.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,160,0.177,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8MCX1ZMTMQ
