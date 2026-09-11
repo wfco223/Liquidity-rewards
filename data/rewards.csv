@@ -9282,6 +9282,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,usgubewc-usgub-tn-2026-11-03-rep,liquidityProgram,3.25,PENDING
 2026-09-08,usgubewc-usgub-tx-2026-11-03-dem,liquidityProgram,0.16,PENDING
 2026-09-08,usgubewc-usgub-tx-2026-11-03-rep,liquidityProgram,0.86,PENDING
+2026-09-08,usgubewc-usgub-vt-2026-11-03-dem,liquidityProgram,0.21,PENDING
 2026-09-08,usgubewc-usgub-vt-2026-11-03-rep,liquidityProgram,0.4,PENDING
 2026-09-08,usgubewc-usgub-wy-2026-11-03-dem,liquidityProgram,1.22,PENDING
 2026-09-08,usgubewc-usgub-wy-2026-11-03-rep,liquidityProgram,1.19,PENDING
@@ -9732,7 +9733,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,tec-nfl-oroy-2027-02-11-w-joncol,liquidityProgram,0.01,PENDING
 2026-09-09,tec-nfl-oroy-2027-02-11-w-malfie,liquidityProgram,0.01,PENDING
 2026-09-09,tec-nfl-oroy-2027-02-11-w-zacbra,liquidityProgram,0.01,PENDING
-2026-09-09,usgubewc-usgub-al-2026-11-03-dem,liquidityProgram,0.53,PENDING
+2026-09-09,usgubewc-usgub-al-2026-11-03-dem,liquidityProgram,1.48,PENDING
 2026-09-09,usgubewc-usgub-al-2026-11-03-rep,liquidityProgram,0.42,PENDING
 2026-09-09,usgubewc-usgub-ar-2026-11-03-dem,liquidityProgram,1.4,PENDING
 2026-09-09,usgubewc-usgub-co-2026-11-03-dem,liquidityProgram,0.7,PENDING
