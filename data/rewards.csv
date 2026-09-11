@@ -9271,7 +9271,6 @@ date,market,program_type,reward_usd,status
 2026-09-09,aachc-cfb-wins-2026-11-28-ind-11pt5wins,liquidityProgram,0.1,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-iowa-9pt5wins,liquidityProgram,0.06,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-iowast-4pt5wins,liquidityProgram,0.32,PENDING
-2026-09-09,aachc-cfb-wins-2026-11-28-kan-5pt5wins,liquidityProgram,0.27,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-kanst-9pt5wins,liquidityProgram,0.43,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-mary-6pt5wins,liquidityProgram,0.16,PENDING
 2026-09-09,aachc-cfb-wins-2026-11-28-mia-11pt5wins,liquidityProgram,0.02,PENDING
@@ -9337,7 +9336,6 @@ date,market,program_type,reward_usd,status
 2026-09-09,aqc-nfl-2027-01-10-playoffq-bal,liquidityProgram,0.01,PENDING
 2026-09-09,aqc-nfl-2027-01-10-playoffq-dal,liquidityProgram,0.17,PENDING
 2026-09-09,aqc-nfl-2027-01-10-playoffq-nyj,liquidityProgram,0.02,PENDING
-2026-09-09,aqc-nfl-2027-01-10-playoffq-phi,liquidityProgram,0.02,PENDING
 2026-09-09,aqc-nfl-2027-01-10-playoffq-tb,liquidityProgram,0.06,PENDING
 2026-09-09,aqc-nfl-afc-2027-01-24-champq-bal,liquidityProgram,0.01,PENDING
 2026-09-09,aqc-nfl-afc-2027-01-24-champq-buf,liquidityProgram,0.19,PENDING
@@ -9490,7 +9488,6 @@ date,market,program_type,reward_usd,status
 2026-09-09,ftsc-nfl-qbtop5fp-2027-01-10-josall,liquidityProgram,0.09,PENDING
 2026-09-09,ftsc-nfl-qbtop5fp-2027-01-10-patmah,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-rbmostfp-2027-01-10-jamcoo,liquidityProgram,0.01,PENDING
-2026-09-09,ftsc-nfl-rbmostfp-w1-2026-09-14-chrmcc,liquidityProgram,0.04,PENDING
 2026-09-09,ftsc-nfl-rbmostfp-w1-2026-09-14-jahgib,liquidityProgram,0.03,PENDING
 2026-09-09,ftsc-nfl-rbtop12fp-2027-01-10-ashjea,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-rbtop12fp-2027-01-10-chrmcc,liquidityProgram,0.12,PENDING
