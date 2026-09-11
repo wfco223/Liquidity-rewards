@@ -886,6 +886,56 @@ class TestTheCapHasSlack(Base):
         self.assertFalse([o for o in self.mine() if not self.f._exit_order(o)])
 
 
+class TestTheCapGoesByValue(Base):
+    """Owner, 2026-09-11: "Yes to value ranked cap allocation"."""
+
+    def entries(self, slug=None):
+        return [o for o in self.mine(slug) if not self.f._exit_order(o)]
+
+    def test_a_better_plan_displaces_the_weakest_resting_entries(self):
+        # Alaska governor ($600 a day over seven markets) rests first and
+        # fills the cap; the NC Senate plan ($1,500 a day over two) is
+        # worth far more per dollar of expected loss and takes the room
+        self.f.set_fair(AK, 30.0)
+        self.tick()
+        ak = self.entries(AK)
+        self.assertTrue(ak)
+        self.f.loss_cap = self.f.risk_used()          # full
+        self.r.now += focus_mod.FOCUS_CAP_GRACE_S       # past the grace
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        self.assertTrue(self.entries(NC))
+        pulls = [e for e in self.f.log if e.get("event") == "pull" and "displaced" in e.get("why", "")]
+        self.assertTrue(pulls)
+        self.assertTrue(all(e["market"] == AK for e in pulls))
+        self.assertLess(len(self.entries(AK)), len(ak))
+        self.assertLessEqual(self.f.risk_used(), self.f.loss_cap * focus_mod.FOCUS_CAP_SLACK + 1e-6)
+
+    def test_the_margin_and_the_grace_hold(self):
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        # against the weakest resting entry (a market rests two sides)
+        o = min(self.entries(NC), key=lambda x: self.f._value(float(x.live_ev), self.f._entry_risk(x)))
+        risk = self.f._entry_risk(o)
+        val = self.f._value(float(o.live_ev), risk)
+        used = self.f.risk_used()
+        self.f.loss_cap = used
+        plan = {"ev": val * 1.2 * risk, "risk": risk}
+        # inside the grace: nothing is displaced however good the plan
+        self.assertIsNone(self.f._make_room(self.r.now, OH, "BUY",
+                                            {"ev": val * 5 * risk, "risk": risk}, used, 8))
+        self.r.now += focus_mod.FOCUS_CAP_GRACE_S
+        # not a quarter better: no displacement
+        self.assertIsNone(self.f._make_room(self.r.now, OH, "BUY", plan, used, 8))
+        self.assertIn(o.id, self.r.exchange.live)
+        # a quarter better and more: the weaker order comes off
+        room = self.f._make_room(self.r.now, OH, "BUY", {"ev": val * 1.3 * risk, "risk": risk}, used, 8)
+        self.assertIsNotNone(room)
+        self.assertAlmostEqual(room[0], risk, places=6)
+        self.assertNotIn(o.id, self.r.exchange.live)
+        self.assertGreater(self.f.moved_at.get(f"{NC}|{o.side}", 0.0), 0.0)
+
+
 class TestSilverSeedsTheFairsHeNamed(Base):
     def test_a_named_market_gets_silvers_number_once(self):
         # owner, 2026-09-10: "those little hanging fruit markets that you
