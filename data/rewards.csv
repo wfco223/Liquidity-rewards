@@ -9106,6 +9106,7 @@ date,market,program_type,reward_usd,status
 2026-09-08,ewc-usp-2028-11-07-rokha,liquidityProgram,0.07,PENDING
 2026-09-08,ewc-usp-2028-11-07-thomas,liquidityProgram,0.17,PENDING
 2026-09-08,ewc-usp-2028-11-07-tulgab,liquidityProgram,0.25,PENDING
+2026-09-08,ewc-usse-ak-2026-11-03-dem,liquidityProgram,0.35,PENDING
 2026-09-08,ewc-usse-ia-2026-11-03-dem,liquidityProgram,0.03,PENDING
 2026-09-08,ewc-usse-me-2026-11-03-dem,liquidityProgram,1.28,PENDING
 2026-09-08,ewc-usse-mi-2026-11-03-rep,liquidityProgram,0.12,PENDING
@@ -9359,6 +9360,7 @@ date,market,program_type,reward_usd,status
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-car,liquidityProgram,0.08,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-cin,liquidityProgram,0.02,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-ind,liquidityProgram,0.02,PENDING
+2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-jax,liquidityProgram,0.04,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-nyj,liquidityProgram,0.06,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-2027-01-10-phi,liquidityProgram,0.01,PENDING
 2026-09-09,ftsc-nfl-dstmostfp-w1-2026-09-14-bal,liquidityProgram,0.05,PENDING
