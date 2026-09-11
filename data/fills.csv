@@ -5000,3 +5000,17 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789156395.8,politics,ewc-usp-2028-11-07-dontru,BUY,42,0.07,backfill,,0.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEARV2AR8TMY
 1789156395.8,politics,ewc-usgub-nv-2026-11-03-rep,BUY,25,0.59,backfill,,1.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9Z5DSJ4TN2
 1789156395.8,politics,usgubewc-usgub-fl-2026-11-03-rep,SELL,123,0.8,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEB7PGJ24TMP
+1789156477.9,politics,ewc-usp-2028-11-07-aleocc,SELL,22,0.1,focus,4.8687,0.07,,8,16,0.001,0.11,0.13,0.02,-22,focus entry: ~$4.85/day; fill odds 24%/day; EV +3.99/day,CEB8QWEY2TN1
+1789156809.1,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,10.24,0.1,backfill,,0.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAMQAFKMTN3
+1789156932.9,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,20.38,0.1,manual,15.3814,0.03,0.0103,8,12,0.627,0.1,0.11,0.0897,0.38,the owner's own order — the engine leaves it alone,CEAMQAFKMTN3
+1789157232.9,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,203,0.25,focus,56.9919,0.01,0.292825,20,25,0.537,0.24,0.26,-0.0428,0,focus exit: ~$56.74/day; fill odds 49%/day; EV +53.73/day,CEBFYTN5JTMM
+1789157352.9,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,56,0.25,focus,60.5267,0.02,0.292825,19,23,0.666,0.25,0.26,-0.0428,56,focus entry: ~$59.86/day; fill odds 50%/day; EV +57.74/day,CEBGFG5V6TMM
+1789158093.8,politics,usgubewc-usgub-nh-2026-11-03-rep,SELL,22.91,0.87,sell,26.2784,0.52,0.924025,85,89,0.824,0.86,0.87,0.054,46.09,an exit — its fill reduces the position it sits on,CEB905D4GTN3
+1789158520.0,politics,ewc-usse-ia-2026-11-03-rep,SELL,35,0.61,sell,8.1112,0.63,0.59045,57,62,0.602,0.6,0.61,-0.0195,166,an exit — its fill reduces the position it sits on,CEB8R00F2TMM
+1789158644.6,politics,ewc-usgub-nv-2026-11-03-rep,BUY,10,0.59,backfill,,2.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9Z5DSJ4TN2
+1789158960.2,politics,usgubewc-usgub-sc-2026-11-03-dem,BUY,4,0.09,sell,0.3451,4.95,0.023375,4,9,0.557,0.09,0.1,0.0666,0,buying back the short at or under what it sold for — the bid earns while it wait,CE7P01HSCTMM
+1789159761.2,politics,ewc-usp-2028-11-07-andbes,BUY,54,0.06,void,12.5123,0.11,,3,7,0.634,0.04,0.06,0.01,56,voided: the exchange has no trade for order CEB0VT8K0TMP — the row of 09-11 19:4,CEB0VT8K0TMP
+1789159761.2,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,123,0.73,void,0,0,0.707175,77,81,0.452,0.79,0.8,0.0228,-64,voided: the exchange has no trade for order CEBA7Q19WTN1 — the row of 09-11 19:5,CEBA7Q19WTN1
+1789159761.2,politics,paccc-balpow-2026-11-03-dsweep,BUY,7.4,0.5,hand,,11.07,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7NCGKVTSX0
+1789159761.2,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,10.24,0.1,backfill,,0.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAMQAFKMTN3
+1789159761.2,politics,ewc-usgub-nv-2026-11-03-rep,BUY,10,0.59,backfill,,2.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9Z5DSJ4TN2
