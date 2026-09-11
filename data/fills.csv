@@ -4750,3 +4750,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789129908.4,politics,ewc-usse-ak-2026-11-03-rep,BUY,198,0.37,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE4WPXE3PTMM
 1789129908.4,politics,ewc-usse-ak-2026-11-03-dem,SELL,3,0.64,hand,,1.54,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE3JD31YCTMX
 1789129908.4,politics,ewc-usse-ak-2026-11-03-dem,SELL,5,0.64,hand,,1.99,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2CNV53ATN1
+1789130011.5,politics,usgubewc-usgub-nm-2026-11-03-dem,BUY,25,0.97,bond,0,0.03,0.994825,91,94,0.27,0.96,0.98,-0.0248,50,bond: took 25 YES at 97c — it was in the way of our resting order,CE4YXBPQ6TMX
+1789130126.1,gameday,aec-cfb-ala-uk-2026-09-12,SELL,50,0.78,hand,,1.71,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE3H6KTF6TN0
+1789130458.4,gameday,aec-cfb-ala-uk-2026-09-12,SELL,50,0.78,hand,,1.71,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE3H6KTF6TN0

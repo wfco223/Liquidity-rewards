@@ -216,7 +216,14 @@ long and accreted, so search it rather than reading it through.
   re-freeze after a tap gives up after three seconds rather than
   wait out a pass (owner, 2026-09-11 "No answer from the server in
   time" on a placement — the pass was placing and verifying orders
-  of its own for a minute and his tap waited behind it).
+  of its own for a minute and his tap waited behind it). A refused
+  placement waits out the cooldown before another try on the
+  new-entry path too (12:29-12:34Z: four orders refused every pass,
+  13 in four minutes, each a placement, a twelve-second verify and a
+  withdrawal — the cooldown had been set but never asked there),
+  an exit the shorter exit cooldown; the refusal's note carries the
+  exchange's own answer to the placement and whether the withdrawal
+  found the order.
   Every order in a focus market — his,
   the engine's, the tender's — is his to place, cancel, move and
   resize from the page. The tender rests one order a side ONLY where
