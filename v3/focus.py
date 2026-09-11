@@ -252,6 +252,7 @@ class Focus:
         # exchange app at $177 available while the tender kept placing:
         # 126 placements rejected in an hour) — slug|side -> last noted
         self.no_money_at: dict[str, float] = {}
+        self.refused_at: dict[str, float] = {}     # slug|side -> last refused placement
         self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
         self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
         self._feed_prev_at: float = 0.0           # when it was last taken (0 = never)
@@ -565,7 +566,7 @@ class Focus:
             self.mine_ids.remove(oid)
 
     def _withdraw(self, oid: str, slug: str, side: str, qty: float, now: float,
-                  is_exit: bool, cancel: bool = True) -> None:
+                  is_exit: bool, cancel: bool = True) -> str:
         """An order the desk placed but never saw resting: it is the
         tender's (claimed), it is withdrawn so no ghost lives on, and
         a fill of it in the meantime is booked to the tender through
@@ -574,9 +575,11 @@ class Focus:
         self._vanished[oid] = (slug, side, qty, now, is_exit)
         if cancel:
             try:
-                self.fam.desk.cancel(oid, slug, initiator="auto")
-            except Exception:  # noqa: BLE001
-                pass
+                r = self.fam.desk.cancel(oid, slug, initiator="auto")
+                return str(r.note or ("cancelled" if r.ok else "cancel failed"))
+            except Exception as e:  # noqa: BLE001
+                return f"cancel failed: {type(e).__name__}"
+        return ""
 
     def _journal_fills(self, oid: str, since: float) -> float:
         """Shares the family's fill journal books to this order since
@@ -1419,6 +1422,14 @@ class Focus:
             key = f"{slug}|{side}"
             self.weak_since.pop(key, None)
             if cur is None:
+                # a refused placement waits out the cooldown before another
+                # try (12:29-12:34Z, 2026-09-11: four orders refused every
+                # pass, 13 in four minutes, each a placement, a twelve-second
+                # verify and a withdrawal — the cooldown had been set but
+                # never asked on this path)
+                since_refused = now - self.refused_at.get(key, 0.0)
+                if since_refused < (FOCUS_EXIT_COOLDOWN_S if is_exit else FOCUS_MOVE_COOLDOWN_S):
+                    continue
                 if not is_exit and used + plan["risk"] > self.loss_cap + 1e-9:
                     room = self._make_room(now, slug, side, plan, used, actions)
                     if room is None:
@@ -1466,15 +1477,17 @@ class Focus:
                     # a refused placement waits out the cooldown (21:05Z: a
                     # refused resize was retried every twenty seconds)
                     self.moved_at[key] = now
+                    self.refused_at[key] = now
                     note = r.note
                     if r.order_id:
                         # placed but never seen resting: withdraw it so no
                         # ghost lives on, and any fill of it in the meantime
                         # is booked to the tender, not to his hand (20:09Z
                         # and 20:24Z: two such orders filled as "your own
-                        # trade")
-                        self._withdraw(r.order_id, slug, side, plan["qty"], now, is_exit)
-                        note = "withdrawn — " + r.note
+                        # trade"); the cancel's answer says whether it
+                        # ever existed
+                        gone = self._withdraw(r.order_id, slug, side, plan["qty"], now, is_exit)
+                        note = f"withdrawn ({gone}) — " + r.note
                     self._log(event="refused", market=slug, side=side, price=plan["px"],
                               qty=plan["qty"], note=note[:140])
                 continue

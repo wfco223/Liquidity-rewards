@@ -411,6 +411,19 @@ class OrderDesk:
         self.health.accepted(self._clock())
         order_id = str((resp.get("order") or {}).get("id") or resp.get("id")
                        or resp.get("orderId") or "")
+        # the exchange's own word in its answer, for a refusal's note
+        # (2026-09-11: four orders were "placed but not resting" 80
+        # times in an hour with nothing said about why)
+        ans = resp.get("order") if isinstance(resp.get("order"), dict) else {}
+        answered = str(ans.get("state") or resp.get("state") or "")
+        reason = str(ans.get("orderRejectReason") or ans.get("rejectReason") or ans.get("text")
+                     or resp.get("orderRejectReason") or resp.get("text") or "")
+        if reason.endswith(("_UNSPECIFIED", "_UNDEFINED")):
+            reason = ""
+        if answered or reason:
+            said = f"; the exchange answered {answered or 'no state'}" + (f" ({reason})" if reason else "")
+        else:
+            said = "; its answer carried " + ",".join(sorted(ans.keys()))[:100] if ans else ""
         self.log({"op": "place", "market": slug, "side": side, "price": price,
                   "qty": qty, "intent": intent, "id": order_id, "initiator": initiator,
                   "ts": self._clock()})
@@ -423,7 +436,7 @@ class OrderDesk:
             # 2xx that never rests happens (and post-only rejections land
             # here too). Report it; the order id, if any, lets the caller
             # clean up. Never re-post: the first may still land late.
-            return OrderResult(ok=False, note=f"placed but not resting: {note}",
+            return OrderResult(ok=False, note=f"placed but not resting: {note}{said}",
                                order_id=order_id, intent=intent, price=price,
                                resting_qty=seen)
         return OrderResult(ok=True, note=note, order_id=order_id, intent=intent,

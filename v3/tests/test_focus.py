@@ -865,6 +865,8 @@ class TestTheRecordOfTheOrders(Base):
         self.assertIn(hid, self.f.mine_ids)                  # claimed
         self.assertNotIn(hid, self.r.exchange.live)          # withdrawn
         self.assertGreater(self.f.moved_at.get(f"{NC}|{side}", 0.0), 0.0)
+        # the note says the withdrawal found it (it was live, the list lagged)
+        self.assertIn("withdrawn (cancelled)", refused[0]["note"])
         # it had filled before the withdrawal: the journal books it to
         # the tender, and the side stands off
         self.r.fam.fills.append({"ts": self.r.now, "market": NC, "side": side,
@@ -874,6 +876,27 @@ class TestTheRecordOfTheOrders(Base):
         self.assertTrue(any(e.get("event") == "filled" and e.get("market") == NC
                             for e in self.f.log))
         self.assertFalse(self.mine(NC, side))
+
+    def test_a_refused_placement_waits_out_the_cooldown(self):
+        # 12:29-12:34Z, 2026-09-11: four orders refused every pass, 13 in
+        # four minutes — the cooldown was set but never asked on this path
+        hidden, _ = self.hide_next_placement()
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        refused = [e for e in self.f.log if e.get("event") == "refused"]
+        self.assertEqual(len(refused), 1)
+        side = refused[0]["side"]
+        rested_before = len([e for e in self.f.log if e.get("event") == "rested" and e.get("side") == side])
+        for _ in range(6):                        # ninety seconds of passes
+            self.tick()
+        self.assertEqual(len([e for e in self.f.log if e.get("event") == "refused"]), 1)
+        self.assertEqual(len([e for e in self.f.log if e.get("event") == "rested" and e.get("side") == side]),
+                         rested_before)
+        self.assertFalse(self.mine(NC, side))
+        # the cooldown out: it tries again, and this time the list shows it
+        self.r.now += focus_mod.FOCUS_MOVE_COOLDOWN_S
+        self.tick()
+        self.assertTrue(self.mine(NC, side))
 
     def test_a_refused_move_waits_out_the_cooldown(self):
         self.f.set_fair(NC, 45.0)
