@@ -705,6 +705,36 @@ class TestAfterAFill(Base):
         self.tick()
         self.assertEqual(self.f.rows[NC]["position"]["qty"], -137.0 - ask.qty)
 
+    def test_a_fill_that_lands_as_the_build_boots_is_not_counted_twice(self):
+        # 21:33Z, 2026-09-11, House rep control: a 742-share bid filled
+        # 192 as the build booted; the first pass had no feed "a pass
+        # ago", took the post-fill feed as the before, and added the
+        # journal's 192 again — 438 offered against 246 held
+        self.r.positions[NC] = (54.0, 54.0 * 0.10)
+        self.r.fam.positions_seen[NC] = 54.0
+        self.r.fam.inventory[NC] = {"qty": 54.0, "cost": 5.4}
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        bid = self.mine(NC, "BUY")[0]
+        # the restart: no feed a pass ago; the bid's record is gone, the
+        # journal books its fill and the feed already shows it
+        self.f._feed_prev = {}
+        self.f._feed_prev_at = 0.0
+        self.r.exchange.live.pop(bid.id, None)
+        self.r.fam.orders.pop(bid.id, None)
+        self.r.fam.fills.append({"ts": self.r.now, "market": NC, "side": "BUY", "qty": bid.qty,
+                                 "px": bid.price, "oid": bid.id, "purpose": bid.purpose,
+                                 "pos_after": 54.0 + bid.qty})
+        self.r.positions[NC] = (54.0 + bid.qty, 5.4 + bid.qty * bid.price)
+        self.r.fam.positions_seen[NC] = 54.0 + bid.qty
+        self.r.fam.inventory[NC] = {"qty": 54.0 + bid.qty, "cost": 5.4 + bid.qty * bid.price}
+        self.tick()
+        self.assertEqual(self.f.rows[NC]["position"]["qty"], 54.0 + bid.qty)
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S
+        self.tick()
+        exits = [o for o in self.mine(NC, "SELL") if self.f._exit_order(o)]
+        self.assertEqual([o.qty for o in exits], [54.0 + bid.qty])   # not 54 + 2 x the fill
+
     def test_a_fill_the_feed_already_shows_is_not_counted_twice(self):
         self.r.positions[NC] = (200.0, 200.0 * 0.40)
         self.r.fam.positions_seen[NC] = 200.0
