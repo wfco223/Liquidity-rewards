@@ -584,12 +584,6 @@ class Family:
         # vanished from the open list without our cancel is looked up
         # in the exchange's activity record, and the exchange's own
         # state and cancel reason for it are logged and counted
-        self.reason_queue: dict[str, dict] = {}   # id -> what vanished, when, tries
-        self.cancel_reasons: dict[str, int] = {}  # the exchange's reason -> count
-        self.activity_types: list[str] = []       # the activity types the feed has shown
-        self._reasons_at = 0.0
-        self._reasons_failed_at = 0.0
-        self.reasons_read_s = 0.0     # how long the last record read took, in the cycle
         self.gone_pending: dict[str, dict] = {}   # vanished, feed pending
         self.exit_float: dict[str, dict] = {}     # "slug|side" -> {px, since, steps}
         self.float_day: dict = {"day": "", "usd": 0.0}
@@ -2040,9 +2034,6 @@ class Family:
                 self._log(event="silent_cancel", market=rec.market,
                           side=rec.side, price=rec.price, qty=rec.qty,
                           id=oid)
-                self.reason_queue[oid] = {"market": rec.market, "side": rec.side,
-                                          "price": rec.price, "qty": rec.qty,
-                                          "since": now, "tries": 0}
                 del self.gone_pending[oid]
         for oid, rec in list(self.orders.items()):
             live = open_by_id.get(oid)
@@ -2452,148 +2443,6 @@ class Family:
                 self.orders.pop(rec.id, None)
                 self.evidence.order_gone(rec.market, rec.id)
 
-    # -- the exchange's own word on a vanished order ------------------------------
-    REASONS_EVERY_S = 300.0       # one record read every five minutes at most: this
-                                  # is diagnostics and it runs inside the cycle
-    REASONS_TIMEOUT_S = 8.0       # ...with ONE try and a short timeout, never the
-                                  # retry ladder (2026-09-12: the ladder's 15/30/45s
-                                  # waits took the family's lap to 1,177 s)
-    REASONS_PAGES = 2             # the newest ~200 activities
-    REASONS_TRIES = 6             # the feed lags: about six looks
-    REASONS_KEEP_S = 24 * 3600.0
-
-    @staticmethod
-    def _find_orders(node, wanted: set, out: dict, depth: int = 0) -> None:
-        """Every dict in the activity tree that carries an order id we
-        are looking for, with its state — the feed nests an order under
-        a trade's execution or as an activity of its own."""
-        if depth > 8:
-            return
-        if isinstance(node, dict):
-            oid = node.get("id")
-            if isinstance(oid, str) and oid in wanted and ("state" in node or "status" in node):
-                out.setdefault(oid, node)
-            for v in node.values():
-                Family._find_orders(v, wanted, out, depth + 1)
-        elif isinstance(node, list):
-            for v in node:
-                Family._find_orders(v, wanted, out, depth + 1)
-
-    @staticmethod
-    def _reasons_of(order: dict) -> dict:
-        """Every reason-like field the record carries, the unspecified
-        ones dropped."""
-        out = {}
-        for k, v in order.items():
-            if "reason" in str(k).lower() and isinstance(v, (str, int, float)):
-                sv = str(v)
-                if sv and not sv.endswith(("_UNSPECIFIED", "_UNDEFINED")):
-                    out[str(k)] = sv
-        return out
-
-    def _read_cancel_reasons(self, client, now: float) -> None:
-        """Owner, 2026-09-12 "Do the cancel reason read": for each order
-        that vanished from the open list without our cancel, read the
-        exchange's activity record and log its own state and cancel
-        reason for it (the probe of 2026-08-23 found the record carries
-        unsolicitedCancelReason; five batches of ~20 orders left the
-        list at once on 2026-09-12 with nothing said about why)."""
-        # forget what is a day old
-        for oid in [o for o, q in self.reason_queue.items()
-                    if now - float(q.get("since") or 0.0) > self.REASONS_KEEP_S]:
-            del self.reason_queue[oid]
-        if not self.reason_queue or client is None:
-            return
-        fn = getattr(client, "activities", None)
-        if fn is None or now - self._reasons_at < self.REASONS_EVERY_S:
-            return
-        self._reasons_at = now
-        # ONE try, a short timeout, and never the retry ladder: this is
-        # diagnostics and it runs INSIDE the family's cycle (2026-09-12,
-        # 20:25-20:52Z: the activity feed's 429s and read timeouts took
-        # the retry ladder — 15s, 30s, 45s — and the family's lap went
-        # from 4 s to 125 s to 1,177 s, so every exit, cancel and settle
-        # ran up to twenty minutes late; the open-list read I added to
-        # this path doubled the exposure)
-        t0 = time.time()
-        try:
-            rows = fn(pages=self.REASONS_PAGES, tries=1,
-                      timeout=self.REASONS_TIMEOUT_S)
-        except Exception as e:  # noqa: BLE001 — the feed times out at times
-            if now - self._reasons_failed_at > 600.0:
-                self._reasons_failed_at = now
-                self._log(event="reason_read_failed",
-                          note=f"the activity record could not be read: {str(e)[:120]}")
-            return
-        rows = list(rows or [])
-        self.reasons_read_s = round(time.time() - t0, 2)
-        if self.reasons_read_s > 5.0:
-            self._log(event="reason_read_slow",
-                      note=f"the record reads took {self.reasons_read_s:.1f}s inside the cycle")
-        seen_types = sorted({str(r.get("type")) for r in rows if isinstance(r, dict) and r.get("type")})
-        new_types = [t for t in seen_types if t not in self.activity_types]
-        if new_types:
-            self.activity_types = sorted(set(self.activity_types) | set(new_types))[:20]
-            self._log(event="activity_types", note="the activity record shows: "
-                      + ", ".join(self.activity_types))
-        # the activity record carries TRADES only (2026-09-12: every
-        # queued id read "not in the record" and the feed's own type
-        # list was ACTIVITY_TYPE_TRADE alone), so an order that was
-        # cancelled without trading is never in it. The open list is the
-        # other source: it keeps finished orders for a while with their
-        # state and reason (see api.DEAD_ORDER_STATES) — read raw, since
-        # the normalized list drops exactly those rows (owner,
-        # 2026-09-12 "Yes to those").
-        raw: list = []
-        rawfn = getattr(client, "open_orders_raw", None)
-        if rawfn is not None:
-            try:
-                raw = list(rawfn(tries=1, timeout=self.REASONS_TIMEOUT_S) or [])
-            except Exception as e:  # noqa: BLE001 — the activity record still answers
-                if now - self._reasons_failed_at > 600.0:
-                    self._reasons_failed_at = now
-                    self._log(event="reason_read_failed",
-                              note=f"the open list could not be read raw: {str(e)[:120]}")
-        found_raw: dict = {}
-        found_act: dict = {}
-        self._find_orders(raw, set(self.reason_queue), found_raw)
-        self._find_orders(rows, set(self.reason_queue), found_act)
-        for oid, q in list(self.reason_queue.items()):
-            q["tries"] = int(q.get("tries") or 0) + 1
-            rec = found_raw.get(oid) or found_act.get(oid)
-            src = "the open list" if oid in found_raw else "the activity record"
-            if rec is not None:
-                state = str(rec.get("state") or rec.get("status") or "")
-                reasons = self._reasons_of(rec)
-                key = (reasons.get("unsolicitedCancelReason") or next(iter(reasons.values()), None)
-                       or state or "no reason given")
-                self.cancel_reasons[key] = int(self.cancel_reasons.get(key, 0)) + 1
-                if len(self.cancel_reasons) > 40:
-                    self.cancel_reasons = dict(sorted(self.cancel_reasons.items(),
-                                                      key=lambda kv: -kv[1])[:40])
-                note = f"{src} lists it as {state or 'no state'}"
-                if reasons:
-                    note += ": " + ", ".join(f"{k}={v}" for k, v in reasons.items())
-                else:
-                    note += " — no reason field set"
-                try:
-                    if rec.get("cumQuantity") is not None:
-                        note += f" ({float(rec.get('cumQuantity') or 0):g} filled)"
-                except (TypeError, ValueError):
-                    pass
-                self._log(event="cancel_reason", market=q.get("market"), side=q.get("side"),
-                          price=q.get("price"), qty=q.get("qty"), id=oid, note=note)
-                del self.reason_queue[oid]
-            elif q["tries"] >= self.REASONS_TRIES:
-                self.cancel_reasons["not in the record"] = (
-                    int(self.cancel_reasons.get("not in the record", 0)) + 1)
-                self._log(event="cancel_reason", market=q.get("market"), side=q.get("side"),
-                          price=q.get("price"), qty=q.get("qty"), id=oid,
-                          note=f"in neither the open list nor the newest "
-                               f"{self.REASONS_PAGES * 100} activities "
-                               f"after {q['tries']} reads")
-                del self.reason_queue[oid]
-
     def _seed_inventory(self, positions: dict) -> None:
         """Positions on our ground the seller does not know yet — long
         stock OR shorts — join its book. Runs every armed cycle so a
@@ -2648,7 +2497,6 @@ class Family:
               money_out: bool = False, capped: bool = False) -> dict:
         self._client = client
         self.reconcile(open_orders, positions, now, trades=trades, capped=capped)
-        self._read_cancel_reasons(client, now)
         killed = self._kill_zombies()
         if killed:
             foreign_ids = set(foreign_ids) | killed
@@ -5825,9 +5673,6 @@ class Family:
             "inventory": self.inventory,
             "positions_seen": self.positions_seen,
             "silent_cancels": self.silent_cancels,
-            "reason_queue": dict(list(self.reason_queue.items())[-200:]),
-            "cancel_reasons": dict(self.cancel_reasons),
-            "activity_types": list(self.activity_types),
             "placed_at": self.placed_at,
             "active_until": self.active_until,
             "event_start": self.event_start,
@@ -5893,10 +5738,6 @@ class Family:
                               (d.get("probe_ratchet") or {}).items()}
         self.positions_seen = dict(d.get("positions_seen") or {})
         self.silent_cancels = d.get("silent_cancels") or 0
-        self.reason_queue = {str(k): dict(v) for k, v in (d.get("reason_queue") or {}).items()
-                             if isinstance(v, dict)}
-        self.cancel_reasons = {str(k): int(v) for k, v in (d.get("cancel_reasons") or {}).items()}
-        self.activity_types = [str(t) for t in (d.get("activity_types") or [])][:20]
         self.placed_at = {k: float(v) for k, v in
                           (d.get("placed_at") or {}).items()}
         self.pending_pages = list(d.get("pending_pages") or [])

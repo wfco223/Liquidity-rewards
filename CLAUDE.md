@@ -563,35 +563,31 @@ long and accreted, so search it rather than reading it through.
   exchange's answer says executed: answered with no execution,
   nothing is sold and nothing is booked (11:35-12:22Z: the 28-share
   sale into that ghost bid was booked as sold twenty times).
-- The cancel reason read (owner, 2026-09-12 "Do the cancel reason
-  read"): an order that vanished from the open list without our
-  cancel goes on a queue, and the family reads the exchange's
-  activity record (v3/api.py activities, the newest ~200 rows, once
-  a minute at most, six reads before giving up) for its own state and
-  cancel reason — the record carries unsolicitedCancelReason (the
-  probe of 2026-08-23) — logging "cancel_reason" with the market,
-  side, price, size, state and every reason field the record sets,
-  counting the reasons in fam.cancel_reasons, and logging the
-  activity types the feed shows the first time it sees them. A
-  failing read is logged once in ten minutes and never breaks the
-  cycle. Five batches of ~20 orders had left the list at once that
-  day (04:30, 05:52, 06:33, 07:47, 08:47Z, each within a minute of a
-  fill; a sixth at 15:10Z with $607 free) with nothing said about why.
-  THE ACTIVITY FEED CANNOT ANSWER: it carries ACTIVITY_TYPE_TRADE
-  alone, so an order cancelled without trading is never in it and all
-  16 queued ids read "not in the record" (2026-09-12). The open list
-  is the other source and is read FIRST (owner, "Yes to those"): its
-  raw rows keep a finished order for a while with its state and
-  reason, which the normalized list drops by design
-  (api.DEAD_ORDER_STATES). The note names which source answered, and
-  an id in neither after six reads is given up. BOTH READS RUN INSIDE
-  THE FAMILY'S CYCLE, so each takes ONE try with an eight-second
-  timeout and the pair runs every five minutes at most, never the
-  retry ladder (2026-09-12, 20:25-20:52Z: the feed's 429s and read
-  timeouts took the ladder's 15, 30 and 45 second waits, the family's
-  lap went 4 s -> 125 s -> 1,177 s, and every exit, cancel and settle
-  ran up to twenty minutes late; the open-list read had doubled the
-  exposure). A read over five seconds is logged "reason_read_slow".
+- The cancel reason read is GONE (owner, 2026-09-12 "Do the cancel
+  reason read", then "Do we even need cancel reason reads. I thought
+  you said it wasn't doing anything" and "Delete the cancel reason
+  read"): it looked up 26 orders that vanished from the open list and
+  answered NOTHING — every one came back "not in the record" — because
+  the exchange does not keep a cancel reason anywhere we can read it.
+  Its activity feed carries ACTIVITY_TYPE_TRADE alone (2,479 of 2,500
+  rows, the rest resolutions, transfers and cash moves; not one order
+  row), so an order cancelled without trading never appears; and
+  unsolicitedCancelReason is an EXECUTION field, not an order field,
+  so it can only ever describe a trade. The 2026-08-23 probe that
+  found "cancel reasons" had found them on executions, and I did not
+  check which rows carried the field before building the read. It also
+  did harm: both reads ran inside the family's cycle against the one
+  endpoint that hangs, and with a 30-second timeout on four tries the
+  lap went 4 s -> 125 s -> 1,177 s (2026-09-12, 20:25-20:52Z), so
+  every exit, cancel and settle ran up to twenty minutes late. The
+  queue, the counters, the activity-type log and both reads are
+  deleted. What a vanished order still gets: the "silent_cancel" log
+  line with its market, side, price and size. WHY THE BATCHES LEAVE is
+  answered by experiment instead — all six batches on 2026-09-12 left
+  within a minute of a fill with the account at its margin limit (his
+  own diagnosis, "the buying power got too low for the size of the
+  order"), and the $300 kept free now tests it: if the batches stop,
+  the diagnosis is confirmed.
 - New markets (owner, 2026-09-09: "Can you give me a report on any
   newly added markets?" ... "Yes state races should be included. But
   don't place orders in these races before I get the chance to look
