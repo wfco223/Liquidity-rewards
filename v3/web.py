@@ -2028,11 +2028,19 @@ function fRender(f){
   o+='</details></div>';}
  return o;
 }
+function fBooks(f){
+ // the book reads on the tender's clock (2026-09-12): what was read, what failed, what waits
+ var t=f.books_read+' books re-read';
+ if(f.books_due==null)return t;
+ var wait=Math.max((f.books_due||0)-(f.books_read||0),0);
+ if(!f.books_failed&&!wait)return t+(f.books_s>3?' in '+f.books_s+'s':'');
+ return t+' in '+f.books_s+'s <span class="warn">('+(f.books_failed?f.books_failed+' failed':'')+(f.books_failed&&wait?', ':'')+(wait?wait+' waiting':'')+(f.books_note?' — '+esc(f.books_note):'')+')</span>';
+}
 function fHead(f){
  var o='<div class="card"><b>Focus</b> '+(f.on?'<span class="pill on">switch ON</span>':'<span class="pill">switch off — showing, not tending</span>')
  +'<div class="sub">'+f.n+' boosted market'+(f.n!==1?'s':'')+' (programs paying '+usd(f.pool_min)+'/day or more) · '+f.tended+' tended · '+f.mine+' tender order'+(f.mine!==1?'s':'')+' · expected loss <b>'+usd(f.risk_used)+'</b> of '+usd(f.loss_cap)+'</div>'
  +'<div class="sub">buying power '+(f.bp!=null?usd(f.bp):'<span class="warn">unknown</span>')+(f.bp_age_s!=null?' <span class="'+(f.bp_age_s>120?'warn':'muted')+'">read '+fAge(f.bp_age_s)+' ago</span>':'')+(f.bp_note?' <span class="warn">'+esc(f.bp_note)+'</span>':'')+fCashLine(f)+(f.waiting_money?' <span class="warn">· '+f.waiting_money+' order'+(f.waiting_money!==1?'s':'')+' wait for money</span>':'')
- +' → entry stake <b>'+usd(f.stake)+'</b>'+(f.stake_bp!=null&&f.stake_src!=='set by you'?' <span class="muted">('+esc(f.stake_src)+': '+usd(f.stake_bp)+' = the highest read of the last 30 min less the '+usd(f.keep_free||0)+' kept free'+(f.walls_held>0.5?', '+usd(f.bp_high)+' + '+usd(f.walls_held)+' your walls hold':'')+')</span>':' ('+esc(f.stake_src)+')')+' · pass '+f.pass_s+'s, '+f.books_read+' books re-read'+(f.at?' · '+when(f.at):'')+'</div>'
+ +' → entry stake <b>'+usd(f.stake)+'</b>'+(f.stake_bp!=null&&f.stake_src!=='set by you'?' <span class="muted">('+esc(f.stake_src)+': '+usd(f.stake_bp)+' = the highest read of the last 30 min less the '+usd(f.keep_free||0)+' kept free'+(f.walls_held>0.5?', '+usd(f.bp_high)+' + '+usd(f.walls_held)+' your walls hold':'')+')</span>':' ('+esc(f.stake_src)+')')+' · pass '+f.pass_s+'s, '+fBooks(f)+(f.at?' · '+when(f.at):'')+'</div>'
  +(f.idle&&f.idle.length?'<details class="how"><summary class="muted">'+f.idle.length+' side'+(f.idle.length!==1?'s':'')+' with a fair resting nothing — why</summary>'+f.idle.map(function(d){return '<div class="sub"><b>'+esc(d.name||d.market)+'</b> '+esc(d.side)+' <span class="muted">'+esc(d.why)+(d.since_s>60?' · '+fAge(d.since_s):'')+'</span></div>';}).join('')+'</details>':'')
  +(f.note?'<div class="'+(f.blocked?'bad':'warn')+'">'+(f.blocked?'<b>Nothing can rest from this server.</b> ':'')+esc(f.note)+'</div>':'')
  +'<div id="fmsg">'+(window._fNote||'')+'</div>'
