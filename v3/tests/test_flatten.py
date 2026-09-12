@@ -6477,6 +6477,47 @@ class TestOwnerLiquidation(unittest.TestCase):
         self.assertFalse([o for o in r.fam.orders.values()
                           if o.market == A and o.side == "BUY"])
 
+    def test_an_unfilled_close_out_sale_is_not_booked(self):
+        """2026-09-12, 11:35-12:22Z: a 28-share sale into our own ghost
+        6c bid was answered with no execution and booked as sold twenty
+        times. What the exchange did not execute is not sold."""
+        r, A = self._rig()
+        r.exchange.taker_fills = False
+        r.fam.last_action.clear()
+        r.cycle(advance=120.0)
+        self.assertAlmostEqual(r.fam.inventory[A]["qty"], 63.0)
+        self.assertTrue(any(l.get("event") == "close_out_unfilled" for l in r.fam.log))
+        self.assertFalse(any(l.get("event") == "liquidated" for l in r.fam.log))
+        self.assertFalse([f for f in r.fam.fills if f.get("market") == A])
+
+    def test_a_bid_on_close_out_ground_is_cancelled_whoever_placed_it(self):
+        """Nothing may add to what he asked out of: a bid that is not a
+        cover or a 1c wall goes, an ask past the stock held goes; his
+        1c wall and his ask of held stock stay."""
+        from v3.family import FamilyOrder
+        from v3.intents import BUY_LONG, SELL_LONG, BUY_SHORT
+        r, A = self._rig()
+        rows = (("W", "BUY", 0.01, 25000.0, BUY_LONG),      # his qualifying wall
+                ("H", "SELL", 0.2, 8.0, SELL_LONG),         # his ask of held stock
+                ("G", "BUY", 0.06, 333.0, BUY_LONG),        # a bid: adds
+                ("S", "SELL", 0.3, 400.0, BUY_SHORT))       # an ask past the 63 held: opens a short
+        for oid, side, px, q, intent in rows:
+            r.exchange.live[oid] = {"id": oid, "market": A, "side": side,
+                                    "price": px, "size": q, "intent": intent}
+            r.fam.orders[oid] = FamilyOrder(
+                id=oid, market=A, side=side, price=px, qty=q, intent=intent,
+                placed_ts=r.now, purpose="manual",
+                why="the owner's own order — the engine leaves it alone")
+        r.fam.last_action.clear()
+        r.cycle(advance=120.0)
+        r.cycle(advance=120.0)
+        self.assertIn("W", r.fam.orders)
+        self.assertIn("H", r.fam.orders)
+        self.assertNotIn("G", r.fam.orders)
+        self.assertNotIn("G", r.exchange.live)
+        self.assertNotIn("S", r.fam.orders)
+        self.assertNotIn("S", r.exchange.live)
+
     def test_the_owners_own_ask_is_never_touched_or_double_offered(self):
         from v3.family import FamilyOrder
         from v3.intents import SELL_LONG

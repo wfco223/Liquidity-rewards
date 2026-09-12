@@ -455,7 +455,18 @@ long and accreted, so search it rather than reading it through.
   as his hand's — untouchable — while they rested on as the entries
   he had just asked out of); every desk remembers its cancels for a
   day, the memory is saved with the state, and a restart seeds it
-  from each family's own log of orders it cancelled.
+  from each family's own log of orders it cancelled. On close-out
+  ground nothing may ADD to what he asked out of, whoever placed it:
+  a bid that is not a cover or a 1c wall is cancelled, an ask past
+  the stock held (it opens a short) is cancelled, his 1c/99c walls
+  and his asks of held stock stay (2026-09-12, 09:46-12:25Z: the old
+  build's last 2028 entries came back after the deploy as "his
+  hand's" — a 181 bid at 11c filled and was sold at 9c, a 2c ask
+  opened a short, and a 333-share 6c bid blocked the close-out's own
+  sale by self-match). And a close-out sale books only what the
+  exchange's answer says executed: answered with no execution,
+  nothing is sold and nothing is booked (11:35-12:22Z: the 28-share
+  sale into that ghost bid was booked as sold twenty times).
 - New markets (owner, 2026-09-09: "Can you give me a report on any
   newly added markets?" ... "Yes state races should be included. But
   don't place orders in these races before I get the chance to look
