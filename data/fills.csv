@@ -1874,3 +1874,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789240402.0,politics,ewc-usse-oh-2026-11-03-dem,BUY,38,0.46,backfill,,31.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3V2ZR1GTN1
 1789241082.6,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,21,0.23,sell,1.0497,3.16,0.29015,25,28,0.658,0.23,0.24,-0.0602,0,an exit — its fill reduces the position it sits on,CEWSTBV30TN1
 1789241082.6,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,6,0.93,bond,1.5312,10.46,0.995925,93,97,0.701,0.93,0.94,-0.0659,102,bond more: split — 6 at 93c carry the share; never dearer than his first price,CEPEQBG8JTMQ
+1789242678.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,1491,0.169,focus,232.801,0.11,0.1398,18,20,0.9,0.168,0.169,0.0292,1491,focus entry: ~$76.57/day; fill odds 81%/day; EV +45.79/day,CEZV63WQTTN5
+1789244079.2,politics,usgubewc-usgub-hi-2026-11-03-rep,BUY,1,0.06,backfill,,29.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE6TM8HT2TN5
+1789245833.0,politics,paccc-usho-midterms-2026-11-03-dem,SELL,62,0.848,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDQRRFCMTSJH
+1789245833.0,politics,usgubewc-usgub-hi-2026-11-03-rep,BUY,1,0.06,backfill,,29.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE6TM8HT2TN5

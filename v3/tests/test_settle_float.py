@@ -285,6 +285,85 @@ class TestClosingCostFeedsTheFillModel(unittest.TestCase):
         self.assertIsNotNone(fm2.trip_summary()["cents"])
 
 
+class TestABrokenBasisTeachesNothing(unittest.TestCase):
+    """Owner, 2026-09-12 "Yes fix that". The exchange reports a
+    position's cost as the money tied up, POSITIVE for a short as well
+    as a long (Massachusetts governor rep read as -209 shares at
+    +$196.72). Stored as given, a short's basis came out negative and a
+    cover recorded its price PLUS that basis — about a dollar a share on
+    a contract that settles between 0 and 1. The fill model had learned
+    54c a share on the governor books and 238c on the house seats, and
+    it rejected 59 of 71 sides on those numbers."""
+
+    def test_the_feed_cost_takes_the_sign_of_the_position(self):
+        from v3.family import Family
+        self.assertEqual(Family._feed_cost(-209.0, 196.72), -196.72)
+        self.assertEqual(Family._feed_cost(209.0, 196.72), 196.72)
+        self.assertEqual(Family._feed_cost(-209.0, -196.72), -196.72)
+
+    def test_a_seeded_short_gets_a_basis_that_is_a_price(self):
+        r = Rig()
+        r.add_market(A)
+        r.fam.universe.setdefault(A, {})
+        r.fam._seed_inventory({A: (-209.0, 196.72)})
+        inv = r.fam.inventory[A]
+        basis = inv["cost"] / inv["qty"]
+        self.assertAlmostEqual(basis, 0.9413, places=3)
+        self.assertTrue(0.0 < basis < 1.0)
+
+    def test_a_cover_against_a_broken_basis_is_not_learned(self):
+        from v3.fillmodel import family_of
+        r = Rig()
+        fm = r.fam.fillmodel
+        # the state as it stood: a short with a positive cost
+        r.fam.inventory[A] = {"qty": -209.0, "cost": 196.72}
+        rec = FamilyOrder(id="b1", market=A, side="BUY", price=0.07, qty=209.0,
+                          intent="ORDER_INTENT_SELL_SHORT", placed_ts=r.now, purpose="sell")
+        r.fam._on_fill(rec, 209.0, r.now)
+        self.assertEqual(fm.trip_cost.get(family_of(A), 0.0), 0.0)
+        self.assertEqual(fm.trip_n.get(family_of(A), 0), 0)
+
+    def test_a_cost_per_share_off_the_contract_is_refused(self):
+        from v3.fillmodel import FillModel, family_of
+        fm = FillModel()
+        fm.observe_round_trip(A, 2.38, 100.0)       # $2.38 a share: impossible
+        fm.observe_round_trip(A, -0.5, 100.0)
+        self.assertEqual(fm.trip_cost.get(family_of(A), 0.0), 0.0)
+        self.assertEqual(fm.trip_dropped, 2)
+        fm.observe_round_trip(A, 0.03, 100.0)       # 3c a share: a measurement
+        self.assertGreater(fm.trip_cost[family_of(A)], 0.0)
+
+    def test_no_single_close_replaces_the_pools_number(self):
+        from v3.fillmodel import FillModel, TRIP_W_MAX, family_of
+        fm = FillModel()
+        for _ in range(4):
+            fm.observe_round_trip(A, 0.01, 1000.0)   # small, real losses
+        settled = fm.trip_cost[family_of(A)]
+        fm.observe_round_trip(A, 0.90, 5000.0)       # one huge close
+        after = fm.trip_cost[family_of(A)]
+        self.assertLess(after, settled + 0.90 * TRIP_W_MAX + 1e-6)
+        self.assertLess(after, 0.30)                 # it cannot own the number
+
+    def test_the_stored_numbers_are_dropped_once_and_relearned(self):
+        from v3.fillmodel import FillModel, TRIP_REPAIR
+        old = {"trip_cost": {"governor": 0.5413, "house-seats": 2.3805},
+               "trip_n": {"governor": 49, "house-seats": 6}}
+        fm = FillModel.from_dict(old)
+        self.assertEqual(fm.trip_cost, {})           # learned through the bug: dropped
+        self.assertEqual(fm.trip_repair, TRIP_REPAIR)
+        fm.observe_round_trip(A, 0.02, 100.0)
+        again = FillModel.from_dict(fm.to_dict())
+        self.assertEqual(again.trip_cost, fm.trip_cost)   # and kept from now on
+
+    def test_a_restore_repairs_the_rows_already_on_the_books(self):
+        r = Rig()
+        r.fam.restore({"inventory": {A: {"qty": -209.0, "cost": 196.72},
+                                     "b": {"qty": 100.0, "cost": 44.0}}})
+        self.assertEqual(r.fam.inventory[A]["cost"], -196.72)
+        self.assertEqual(r.fam.inventory["b"]["cost"], 44.0)
+        self.assertTrue(any(e.get("event") == "basis_signs_fixed" for e in r.fam.log))
+
+
 class TestTheLiveConfigs(unittest.TestCase):
     def test_politics_and_football_settle_float_and_pace(self):
         from v3 import politics, football
