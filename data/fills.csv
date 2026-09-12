@@ -1834,3 +1834,17 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789233134.3,politics,usgubewc-usgub-ne-2026-11-03-dem,BUY,0.34,0.08,backfill,,28.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3ZGPXFCTMQ
 1789233134.3,politics,ussewc-usse-ri-2026-11-03-rep,SELL,0.5,0.02,hand,,25.13,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE7G11QFGTMX
 1789233134.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,201,0.169,backfill,,1.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
+1789234436.3,politics,usgubewc-usgub-sc-2026-11-03-rep,BUY,2,0.96,earn,6.236,0.57,0.975925,94,99,0.118,0.96,0.97,-0.0159,2,4 ticks in front of the touch — we would hold 100% of the bid side,CEXEPCHSATMM
+1789234765.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,214,0.169,backfill,,1.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
+1789236799.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-0.06,0.22,fix,,29.83,,,,,,,,,size trimmed by 0.06 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789236799.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-4,0.22,fix,2.553,27.76,0.165075,22,26,0.651,0.21,0.22,-0.0549,68,size trimmed by 4 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789236799.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-0.35,0.22,fix,,27.75,,,,,,,,,size trimmed by 0.35 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789236799.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-15.63,0.22,fix,,27.75,,,,,,,,,size trimmed by 15.63 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789236799.6,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,-1,0.05,fix,,29.46,,,,,,,,,size trimmed by 1 to the exchange's count (order CE2CCY0YRTN2),CE2CCY0YRTN2
+1789236799.6,politics,usgubewc-usgub-ne-2026-11-03-dem,BUY,-0.34,0.08,fix,,28.94,,,,,,,,,size trimmed by 0.34 to the exchange's count (order CE3ZGPXFCTMQ),CE3ZGPXFCTMQ
+1789236799.6,politics,usgubewc-usgub-ne-2026-11-03-dem,BUY,-0.66,0.08,fix,,4.13,,,,,,,,,size trimmed by 0.66 to the exchange's count (order CE3ZGPXFCTMQ),CE3ZGPXFCTMQ
+1789236799.6,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,-1,0.96,fix,0.1201,24.63,0.9951,95,98,0.673,0.46,0.98,-0.0351,29,size trimmed by 1 to the exchange's count (order CE7FH8V4GTMP),CE7FH8V4GTMP
+1789236799.6,politics,ussewc-usse-ma-2026-11-03-rep,BUY,-2.56,0.04,fix,,16.76,,,,,,,,,size trimmed by 2.56 to the exchange's count (order CE2EVK0B2TN3),CE2EVK0B2TN3
+1789236799.6,politics,ussewc-usse-ma-2026-11-03-rep,BUY,-2.91,0.04,fix,,8.42,,,,,,,,,size trimmed by 2.91 to the exchange's count (order CE2EVK0B2TN3),CE2EVK0B2TN3
+1789236799.6,politics,enwc-uspres-nom-dem-2028-andbes,SELL,-8.07,0.03,fix,1.4022,8.78,0.09,2,5,0.604,0.02,0.04,0.06,0.07,size trimmed by 8.07 to the exchange's count (order CE51MYM22TMP),CE51MYM22TMP
+1789236799.6,politics,paccc-usho-midterms-2026-11-03-rep,BUY,214,0.169,backfill,,1.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
