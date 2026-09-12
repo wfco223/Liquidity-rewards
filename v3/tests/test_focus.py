@@ -113,6 +113,25 @@ class TestTheGround(Base):
         self.assertFalse(self.mine(BP))
         self.assertFalse(self.mine(AG))
 
+    def test_close_out_ground_leaves_the_tender_and_is_not_frozen(self):
+        # owner, 2026-09-12 "get out of 2028 markets": a market on the
+        # family's liquidate list is the engine's to sell down — off
+        # the tender's ground whatever its pool, so the engine is not
+        # frozen there and its close-out can run; the tender's own
+        # order there is the engine's to pull
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        self.assertIn(NC, self.f.markets)
+        self.assertTrue(self.mine(NC))
+        self.r.fam.cfg.liquidate_tokens = ("usse-nc-",)
+        self.tick()
+        self.assertNotIn(NC, self.f.markets)
+        self.assertFalse(self.f.is_boosted(NC))
+        self.assertFalse(self.r.fam._frozen(NC))
+        self.assertTrue(self.r.fam._liquidating(NC))
+        self.assertTrue(any(e.get("event") == "left_focus" and e.get("market") == NC
+                            for e in self.f.log))
+
     def test_a_market_taken_off_his_hands_list_is_tended_and_put_back_is_not(self):
         # owner, 2026-09-10: "Give me a button to take a market off of
         # the hand tended list"
@@ -210,6 +229,9 @@ class TestTheProgramWatch(Base):
                                      tick=0.01, fetched_at=self.r.now), event="usp", prog=T1)
         for m in (party, penny, wide):
             self.r.fam.universe[m] = {"event_n": 2, "name": m}
+        # the 2028 books are close-out ground since 2026-09-12; the
+        # rules under test stand for the day he reopens them
+        self.r.fam.cfg.liquidate_tokens = ("rondes",)
         self.f.last_terms_own = 0.0
         self.f._rotor = 0
         for _ in range(4):
@@ -235,6 +257,7 @@ class TestTheProgramWatch(Base):
         party = "ewc-usp-party-2028-11-07-dem"
         self.r.add_market(party, wide_book(self.r.now, bid=0.51, ask=0.53), event="party", prog=T1)
         self.r.fam.universe[party] = {"event_n": 2, "name": party}
+        self.r.fam.cfg.liquidate_tokens = ("rondes",)     # close-out ground since 2026-09-12
         self.f.last_terms_own = 0.0
         self.f._rotor = 0
         for _ in range(4):

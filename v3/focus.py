@@ -383,6 +383,13 @@ class Focus:
     # -- the ground ------------------------------------------------------------
 
     def is_boosted(self, slug: str, prog=None) -> bool:
+        # close-out ground is the engine's to sell down, not the
+        # tender's to work (owner, 2026-09-12 "get out of 2028
+        # markets"): a market on the family's liquidate list leaves
+        # the ground whatever its pool, so the engine is not frozen
+        # there and its close-out can run
+        if any(t in slug for t in (self.fam.cfg.liquidate_tokens or ())):
+            return False
         prog = self.terms.get(slug) if prog is None else prog
         if prog is None or not prog.is_live() or not prog.pool:
             return False

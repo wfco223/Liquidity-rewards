@@ -168,7 +168,12 @@ long and accreted, so search it rather than reading it through.
   event or more (the midterms tiers and the elections boost) is the
   focus tender's — v3/focus.py, its own thread every 15 s, its own
   switch, the /focus page. The engine treats that ground as frozen
-  (places, pulls and reprices nothing) and it charges no family
+  (places, pulls and reprices nothing — its whole-shares cull
+  included: 2026-09-12, 03:39-04:34Z, the exchange trimmed the
+  tender's orders to what the money funded, 285.23 shares of an Iowa
+  House ask, and the cull retired the fraction twenty times in an
+  hour, a fresh placement and a fresh trim after each) and it
+  charges no family
   ceiling; the bonds hand those markets over (a lot already held keeps
   its place in the ledger, the record books its sale). The list is
   sorted by the expected value of an entry of 10% of his buying power
@@ -433,6 +438,16 @@ long and accreted, so search it rather than reading it through.
 ## Scope and secrets
 - Markets: US politics, plus only categories the owner explicitly asked
   about (some sports futures have been surveyed). NEVER econ markets.
+- The 2028 books are CLOSE-OUT ground (owner, 2026-09-12 "get out of
+  2028 markets"; the same rail as DeSantis 2028 on 2026-08-27): every
+  slug carrying "2028" is on the politics liquidate list — the engine
+  sells the stock into the bid up to its shown size each cycle until
+  flat, rests covers for the shorts, never buys, and pulls every
+  order there that is not his hand's, a bond's or an exit; the focus
+  tender drops the ground (a close-out market is never boosted for
+  it). Sep 11 had paid $6.72 there against a $24.57 estimate while
+  the day's 2028 round trips lost about $26. His hand orders there
+  stay his.
 - New markets (owner, 2026-09-09: "Can you give me a report on any
   newly added markets?" ... "Yes state races should be included. But
   don't place orders in these races before I get the chance to look
