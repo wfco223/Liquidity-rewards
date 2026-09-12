@@ -5285,3 +5285,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789198825.7,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-0.53,0.94,fix,2.8762,19.54,0.99595,93,96,0.682,0.93,0.94,0.056,95.47,size trimmed by 0.53 to the exchange's count (order CE4357DFATMY),CE4357DFATMY
 1789198825.7,politics,ussewc-usse-tn-2026-11-03-rep,BUY,12,0.93,void,2.8877,0.03,0.99955,92,97,0,0.93,0.95,-0.0695,76,voided: the exchange has no trade for order CEMS69FS2TMY — the row of 09-12 07:0,CEMS69FS2TMY
 1789198825.7,politics,paccc-usho-midterms-2026-11-03-dem,BUY,76,0.84,backfill,,3.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEHYYM24WTMP
+1789199185.7,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,112,0.06,focus,21.3088,0.14,0.04,4,8,0.827,0.03,0.06,0.02,145,focus entry: ~$21.18/day; fill odds 60%/day; EV +18.63/day,CENAJPDQ8TMY
+1789201781.4,politics,ewc-usp-2028-11-07-tuccar,SELL,0.65,0.03,backfill,,19.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSB2PTMP
+1789201818.6,politics,ewc-usp-2028-11-07-tuccar,SELL,31,0.03,manual,0.0619,18.97,,1,4,0.139,0.01,0.03,-0.01,67,the owner's own order — the engine leaves it alone,CE5RSSB2PTMP
+1789201828.5,politics,ewc-usp-2028-11-07-markel,SELL,0.73,0.04,backfill,,2.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEM0C5S1PTN1
+1789201881.7,politics,ewc-usp-2028-11-07-gavnew,SELL,10.55,0.09,focus,2.7178,2.64,,12,16,0.853,0.08,0.09,0.05,-13.55,focus entry: ~$2.95/day; fill odds 31%/day; EV +1.95/day,CEKV4PZ5GTMP
+1789201881.7,politics,ewc-usp-2028-11-07-markel,SELL,23,0.04,sell,17.5191,2.42,,4,9,0.639,0.02,0.04,0.02,8,an exit — its fill reduces the position it sits on,CEM0C5S1PTN1
+1789202483.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-7,0.844,fix,,3.82,,,,,,,,,size trimmed by 7 to the exchange's count (order CE3PV0THATN5),CE3PV0THATN5
+1789202483.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-72,0.844,fix,3.8723,3.81,0.8363,84,85,0.95,0.843,0.844,-0.0077,60,size trimmed by 72 to the exchange's count (order CE3PV0THATN5),CE3PV0THATN5
+1789202483.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-60,0.844,fix,6.126,3.8,0.8363,84,85,0.95,0.843,0.844,-0.0077,132,size trimmed by 60 to the exchange's count (order CE3PV0THATN5),CE3PV0THATN5
+1789202483.8,politics,ewc-usp-2028-11-07-tuccar,SELL,0.65,0.03,backfill,,19.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSB2PTMP
+1789202483.8,politics,ewc-usp-2028-11-07-markel,SELL,0.73,0.04,backfill,,2.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEM0C5S1PTN1
