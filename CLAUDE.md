@@ -403,6 +403,19 @@ long and accreted, so search it rather than reading it through.
   shown with Silver's number as a suggestion and nothing is tended
   ("Yes for 5"). The fill cost never reads under 2c a share ("The fill
   cost for politics has been high recently. Keep that in mind").
+  Owner, 2026-09-12 ("The fair amount shouldn't affect the fill odds.
+  The fill odds should be based on the shape of the book. The
+  concession should affect the ev but make the concession as if I
+  sell it back midway between my fair price and the current price"):
+  the fill odds read the book alone — no bait for a slot past his
+  fair — and the concession charged, entry or exit, is what a fill
+  loses when the position is unwound midway between his fair and the
+  side's current price (the New York governor rep cover: short 392,
+  fair 8c, the bid 10c x4.7k — at 10c the charge is 1c a share, not
+  2c; at 9c nothing; until then a 2c concession had pushed the fill
+  odds toward certain and a 4c lottery ticket earning nothing beat
+  the 10c touch earning $9.62 a day, and the cover sat at 4c for
+  three hours).
   Alaska governor is on the tender's ground ("Add Alaska gov") while
   the engine still avoids it; the balance-of-power books stay his
   hand's; held ground stays held until he opens it. The old engine
