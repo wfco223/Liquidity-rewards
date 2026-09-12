@@ -1931,37 +1931,23 @@ class TestTheMoneyKeptFree(Base):
         self.assertEqual([o.qty for o in asks], [200.0])
 
 
-class TestTheOrderCapGoesByValue(Base):
-    """2026-09-12, 20:12Z: the 40-order cap was full and 26 sides with a
-    fair rested nothing, none of them logged — the slots held whichever
-    sides reached them first (owner, "Yes to those")."""
+class TestNothingCapsTheNumberOfOrders(Base):
+    """Owner, 2026-09-12: "There should not be a 40 order cap. Where did
+    that come from" — it came from the tender's first commit, never from
+    him. What bounds the tender is the expected-loss cap he sets and the
+    money the exchange leaves free."""
 
-    def test_a_better_side_takes_the_weakest_slot_and_the_cap_is_never_silent(self):
-        with mock.patch.object(focus_mod, "FOCUS_MAX_ORDERS", 1):
-            self.f.set_fair(OH, 52.0)
+    def test_no_constant_caps_the_order_count(self):
+        self.assertFalse(hasattr(focus_mod, "FOCUS_MAX_ORDERS"))
+
+    def test_a_side_worth_resting_is_never_refused_for_the_count(self):
+        for slug, fair in ((NC, 45.0), (OH, 52.0), (AK, 30.0), (AG, 60.0)):
+            self.f.set_fair(slug, fair)
+        for _ in range(6):
             self.tick()
-            self.assertEqual(len(self.mine()), 1)
-            weak = self.mine()[0]
-            # a second market's fair: the cap is full, and the resting
-            # order is too young to displace
-            self.f.set_fair(NC, 45.0)
-            self.tick()
-            self.assertIn(weak.id, self.r.exchange.live)
-            idle = self.f.view(self.r.now, 2000.0, True)["idle"]
-            self.assertTrue(any(d["market"] == NC and "order cap" in d["why"] for d in idle))
-            said = [e for e in self.f.log if e.get("event") == "idle_side"]
-            self.assertTrue(any("order cap" in (e.get("why") or "") for e in said))
-            # past the grace, with the resting order's own book gone
-            # thin (60,000 shares join its level, so it claims almost
-            # none of the side): its slot goes to the better side
-            self.r.now += focus_mod.FOCUS_DISPLACE_GRACE_S + 1.0
-            self.r.exchange.books[OH] = Book(
-                bids=((weak.price, 60000.0), (0.02, 60000.0)),
-                asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01, fetched_at=self.r.now)
-            self.tick()
-            self.assertNotIn(weak.id, self.r.exchange.live)
-            self.assertTrue(any(e.get("event") == "pull" and "its slot goes to" in (e.get("why") or "")
-                                for e in self.f.log))
+        self.assertGreaterEqual(len(self.mine()), 6)
+        self.assertFalse(any("order cap" in (v.get("why") or "")
+                             for v in self.f.idle.values()))
 
 
 class TestASideWithAFairSaysWhyNothingRests(Base):
