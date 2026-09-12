@@ -5359,3 +5359,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789205700.9,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,28.66,0.03,hand,,22.02,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE3VTVRDCTMM
 1789205700.9,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,0.3,0.02,hand,,6.1,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CEHHGGDVJTN0
 1789205700.9,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,9.77,0.02,hand,,6.94,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CEGTRCNY0TMP
+1789206392.2,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,20,0.99,void,0,0.1,0.99995,96,99,0.718,0.91,0.93,0.01,0,voided: the exchange has no trade for order CEPH5ZSF2TMQ — the row of 09-12 09:0,CEPH5ZSF2TMQ
+1789206392.2,politics,usgubewc-usgub-nm-2026-11-03-dem,SELL,1,0.97,void,0,20.52,0.9865,90,94,0.414,0.9,0.92,0.0165,49,voided: the exchange has no trade for order CE50TRAHTTN5 — the row of 09-12 09:1,CE50TRAHTTN5
+1789206392.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,517,0.175,hand,,4.31,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDN60H4HPSX4
+1789206512.2,politics,enwc-uspres-nom-dem-2028-jonste,BUY,20,0.06,manual,3.6956,0.08,,2,8,0.245,0.06,0.07,0.01,0,the owner's own order — the engine leaves it alone,CEQ40P8YMTMQ
+1789207181.4,politics,scc-senate-gop-2026-11-03-48,SELL,177,0.19,focus,16.8593,0.74,0.139825,16,20,0.39,0.19,0.21,-0.0502,-202,focus entry: ~$5.35/day; fill odds 64%/day; EV +2.35/day,CEPQ1B0DGTMY
+1789210028.5,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-2,0.22,fix,5.7455,19.83,0.165075,22,26,0.572,0.21,0.22,-0.0549,72,size trimmed by 2 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789210028.5,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-0.17,0.22,fix,,19.82,,,,,,,,,size trimmed by 0.17 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789210028.5,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-17.87,0.22,fix,,19.82,,,,,,,,,size trimmed by 17.87 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789210028.5,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,-1,0.06,fix,2.1104,3.48,0.0016,2,5,0.668,0.06,0.07,0.0584,0,size trimmed by 1 to the exchange's count (order CE7FKM222TN2),CE7FKM222TN2
+1789210028.5,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,-1,0.12,fix,,8.43,,,,,,,,,size trimmed by 1 to the exchange's count (order CE2HGFK3PTN2),CE2HGFK3PTN2
+1789210028.5,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,-0.95,0.96,fix,2.258,0.46,0.99865,89,94,0.763,0.87,0.97,-0.0386,12,size trimmed by 0.95 to the exchange's count (order CE7G9CHF6TN3),CE7G9CHF6TN3
+1789210028.5,politics,paccc-usho-midterms-2026-11-03-dem,BUY,-2,0.843,fix,375,0.03,0.8618,84,85,0.946,0.811,0.83,-0.0188,33,size trimmed by 2 to the exchange's count (order CE7TV5WGPTN0),CE7TV5WGPTN0
+1789210028.5,politics,usgubewc-usgub-wy-2026-11-03-rep,SELL,42,0.95,void,6.0417,22.44,0.999875,90,95,0,0.94,0.95,0.0499,0,voided: the exchange has no trade for order CE3GP0Y9WTMM — the row of 09-12 09:1,CE3GP0Y9WTMM
+1789210028.5,politics,ussewc-usse-tn-2026-11-03-rep,SELL,75,0.94,void,4.1845,0.55,0.99955,89,97,0,0.54,0.94,0.0595,1,voided: the exchange has no trade for order CEP9MJ032TN5 — the row of 09-12 09:1,CEP9MJ032TN5
+1789210028.5,politics,enwc-uspres-nom-dem-2028-jbpri,SELL,145,0.06,void,15.5775,0.02,0.04,4,7,0.863,0.02,0.05,-0.02,-145,voided: the exchange has no trade for order CEPRGF3CTTMP — the row of 09-12 09:2,CEPRGF3CTTMP
