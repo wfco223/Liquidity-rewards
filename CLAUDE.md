@@ -584,7 +584,14 @@ long and accreted, so search it rather than reading it through.
   raw rows keep a finished order for a while with its state and
   reason, which the normalized list drops by design
   (api.DEAD_ORDER_STATES). The note names which source answered, and
-  an id in neither after six reads is given up.
+  an id in neither after six reads is given up. BOTH READS RUN INSIDE
+  THE FAMILY'S CYCLE, so each takes ONE try with an eight-second
+  timeout and the pair runs every five minutes at most, never the
+  retry ladder (2026-09-12, 20:25-20:52Z: the feed's 429s and read
+  timeouts took the ladder's 15, 30 and 45 second waits, the family's
+  lap went 4 s -> 125 s -> 1,177 s, and every exit, cancel and settle
+  ran up to twenty minutes late; the open-list read had doubled the
+  exposure). A read over five seconds is logged "reason_read_slow".
 - New markets (owner, 2026-09-09: "Can you give me a report on any
   newly added markets?" ... "Yes state races should be included. But
   don't place orders in these races before I get the chance to look

@@ -75,7 +75,7 @@ class FakeClient:
     def recent_trades(self, limit=25):
         return list(self.trades)[-limit:]
 
-    def open_orders_raw(self):
+    def open_orders_raw(self, tries=4, timeout=None):
         """The exchange's own rows, finished orders included — the list
         keeps a cancelled order for a while with its state and reason
         (api.DEAD_ORDER_STATES), which the normalized list drops."""
@@ -84,7 +84,7 @@ class FakeClient:
         return ([dict(o) for o in self.live.values()]
                 + list(getattr(self, "raw_rows", [])))
 
-    def activities(self, types=None, pages=10, page_size=100):
+    def activities(self, types=None, pages=10, page_size=100, tries=4, timeout=None):
         """The transaction record: every trade, newest first like the
         exchange's — plus whatever rows a test adds (order activities
         with a state and a cancel reason)."""

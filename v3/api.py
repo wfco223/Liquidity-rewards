@@ -243,7 +243,8 @@ class Client:
         return out
 
     def activities(self, types=None, pages: int = 10,
-                   page_size: int = 100) -> list[dict]:
+                   page_size: int = 100, tries: int = 4,
+                   timeout: float | None = None) -> list[dict]:
         """The account's activity history, paginated to the end or
         `pages` pages — the DEFINITIVE record of what happened (owner,
         2026-08-23: "get the transaction history so we can have a
@@ -260,7 +261,7 @@ class Client:
             if cursor:
                 params["cursor"] = cursor
             j = self.get(TRADE_API + "/v1/portfolio/activities",
-                         signed=True, params=params)
+                         signed=True, params=params, tries=tries, timeout=timeout)
             rows = j.get("activities") or []
             out.extend(rows)
             cursor = j.get("nextCursor")
@@ -278,7 +279,8 @@ class Client:
 
     # -- orders (read only here) --------------------------------------------
 
-    def open_orders_raw(self, max_pages: int = 20) -> list[dict]:
+    def open_orders_raw(self, max_pages: int = 20, tries: int = 4,
+                        timeout: float | None = None) -> list[dict]:
         """Every row of /v1/orders/open, following pages when the exchange
         pages it (cursor/eof as positions do, or a page token), with the
         read's shape kept for the log. 2026-09-11: four markets' orders
@@ -297,6 +299,7 @@ class Client:
             if token:
                 params["page_token"] = token
             j = self.get(TRADE_API + "/v1/orders/open", signed=True,
+                         tries=tries, timeout=timeout,
                          params=params or None)
             pages += 1
             keys.update(k for k in (j or {}).keys() if k != "orders")
