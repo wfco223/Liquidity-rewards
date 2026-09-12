@@ -1058,6 +1058,46 @@ class TestWholeShares(unittest.TestCase):
         for o in r.fam.orders.values():
             self.assertEqual(o.qty, round(o.qty), o)
 
+    def test_the_tenders_trimmed_order_is_not_retired(self):
+        """The exchange trims a focus order to what the money funds and
+        the tender keeps the trimmed size; the whole-shares cull never
+        touches it (2026-09-12: twenty retirements in an hour, each
+        followed by a fresh placement and a fresh trim)."""
+        from v3.tests.test_family import A
+        from v3.family import FamilyOrder
+        r = self._rig()
+        r.add_market(A)
+        r.cycle()
+        rec = FamilyOrder(id="FOC1", market=A, side="SELL", price=0.73,
+                          qty=285.23, intent="ORDER_INTENT_SELL_SHORT",
+                          placed_ts=r.now, purpose="focus")
+        r.fam.orders["FOC1"] = rec
+        r.exchange.live["FOC1"] = {"id": "FOC1", "market": A,
+                                   "side": "SELL", "price": 0.73,
+                                   "size": 285.23}
+        r.cycle()
+        self.assertIn("FOC1", r.fam.orders)
+        self.assertFalse([e for e in r.fam.log
+                          if e.get("event") == "whole_shares_cull"
+                          and e.get("market") == A])
+
+    def test_a_fractional_order_on_frozen_ground_is_left_alone(self):
+        from v3.tests.test_family import A
+        from v3.family import FamilyOrder
+        r = self._rig()
+        r.add_market(A)
+        r.cycle()
+        rec = FamilyOrder(id="FRZ1", market=A, side="BUY", price=0.42,
+                          qty=2.5, intent="ORDER_INTENT_BUY_LONG",
+                          placed_ts=r.now, purpose="earn")
+        r.fam.orders["FRZ1"] = rec
+        r.exchange.live["FRZ1"] = {"id": "FRZ1", "market": A,
+                                   "side": "BUY", "price": 0.42,
+                                   "size": 2.5}
+        r.fam.freeze_dyn = {A}
+        r.cycle()
+        self.assertIn("FRZ1", r.fam.orders)
+
     def test_live_fractional_order_is_retired(self):
         from v3.tests.test_family import A
         from v3.family import FamilyOrder
@@ -6415,6 +6455,27 @@ class TestOwnerLiquidation(unittest.TestCase):
         buys = [o for o in r.fam.orders.values()
                 if o.market == A and o.side == "BUY"]
         self.assertEqual(buys, [])
+
+    def test_the_tenders_leftover_order_is_pulled_on_close_out_ground(self):
+        """Owner, 2026-09-12 "get out of 2028 markets": the tender drops
+        the ground, the engine is no longer frozen there, and the
+        tender's resting entry is pulled with everything else that is
+        not his hand's, a bond's or an exit."""
+        from v3.family import FamilyOrder
+        from v3.intents import BUY_LONG
+        r, A = self._rig()
+        r.exchange.live["F"] = {"id": "F", "market": A, "side": "BUY",
+                                "price": 0.04, "size": 500.0,
+                                "intent": BUY_LONG}
+        r.fam.orders["F"] = FamilyOrder(
+            id="F", market=A, side="BUY", price=0.04, qty=500.0,
+            intent=BUY_LONG, placed_ts=r.now, purpose="focus")
+        r.fam.last_action.clear()
+        r.cycle(advance=120.0)
+        self.assertNotIn("F", r.fam.orders)
+        self.assertNotIn("F", r.exchange.live)
+        self.assertFalse([o for o in r.fam.orders.values()
+                          if o.market == A and o.side == "BUY"])
 
     def test_the_owners_own_ask_is_never_touched_or_double_offered(self):
         from v3.family import FamilyOrder
