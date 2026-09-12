@@ -1854,3 +1854,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789237227.0,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,1,0.96,hand,,24.61,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7FH8V4GTMP
 1789237227.0,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,20.04,0.22,backfill,,29.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
 1789237227.0,politics,usgubewc-usgub-ne-2026-11-03-dem,BUY,1,0.08,backfill,,28.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3ZGPXFCTMQ
+1789237428.2,politics,enwc-uspres-nom-dem-2028-andbes,SELL,8.07,0.03,hand,,8.81,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE51MYM22TMP
+1789237428.2,politics,ussewc-usse-ma-2026-11-03-rep,BUY,5.47,0.04,hand,,16.76,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2EVK0B2TN3
+1789237428.2,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,1,0.05,hand,,29.46,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2CCY0YRTN2
+1789237428.2,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,1,0.96,hand,,24.61,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7FH8V4GTMP
+1789237428.2,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,20.04,0.22,backfill,,29.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789237428.2,politics,usgubewc-usgub-ne-2026-11-03-dem,BUY,1,0.08,backfill,,28.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3ZGPXFCTMQ
