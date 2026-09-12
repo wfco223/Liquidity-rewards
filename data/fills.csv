@@ -5244,3 +5244,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789187959.4,politics,enwc-uspres-nom-dem-2028-gavnew,BUY,35,0.2,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEJ6JGWZETN5
 1789187959.4,politics,ewc-usp-2028-11-07-dontru,BUY,28,0.07,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEHZ5CZA2TN5
 1789187959.4,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,29,0.06,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEJ75NBRYTN1
+1789188413.2,politics,enwc-uspres-nom-dem-2028-jonste,SELL,20,0.02,backfill,,1.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEHYW5PCJTN3
+1789190353.6,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,2,0.94,bond,0,0.04,0.9968,93,97,0,0.93,0.95,-0.0568,296,bond: took 2 YES at 94c — it was in the way of our resting order,CEKBTYWEJTMY
+1789191381.1,politics,ussewc-usse-ar-2026-11-03-dem,SELL,0.45,0.08,backfill,,4.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEG78CX2GTMX
+1789191404.8,politics,ussewc-usse-ar-2026-11-03-dem,SELL,6,0.08,earn,0.6288,4.06,0.01735,6,8,0.792,0.06,0.07,-0.0626,-42,1 tick behind the touch — we would hold 36% of the ask side,CEG78CX2GTMX
+1789191464.8,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,2,0.95,bond,1.1294,1.11,0.9968,92,96,0.453,0.93,0.96,0.0468,292,bond: resting 2 ticks behind the touch; keeping 100% of the best reward,CEJPHE0ACTMP
+1789191464.8,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,4,0.06,bond,3.3228,0.2,5e-05,2,8,0.601,0.02,0.03,-0.0599,-235,bond more: split — 43 at 6c carry the share; never dearer than his first price,CEKFG5DAETN3
+1789191464.8,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,3.9,0.05,bond,0,0.02,5e-05,2,8,0.601,0.02,0.03,-0.05,-238.9,bond: took 3.9 NO at 5c — it was in the way of our resting order,CEKM6NHR4TMP
+1789191584.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-41,0.175,fix,256.277,2.09,0.1637,18,20,0.94,0.174,0.175,-0.0113,275,size trimmed by 41 to the exchange's count (order CE3TSKJMYTN1),CE3TSKJMYTN1
+1789191584.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-54,0.175,fix,268.799,1.89,0.1637,18,19,0.937,0.174,0.175,-0.0113,329,size trimmed by 54 to the exchange's count (order CE3TSKJMYTN1),CE3TSKJMYTN1
+1789191584.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-27,0.175,fix,261.042,1.85,0.1637,18,19,0.934,0.174,0.175,-0.0113,383,size trimmed by 27 to the exchange's count (order CE3TSKJMYTN1),CE3TSKJMYTN1
+1789191584.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-27,0.175,fix,,1.65,,,,,,,,,size trimmed by 27 to the exchange's count (order CE3TSKJMYTN1),CE3TSKJMYTN1
+1789191584.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-13,0.175,fix,336.895,1.05,0.1637,18,19,0.931,0.174,0.175,-0.0113,437,size trimmed by 13 to the exchange's count (order CE3TSKJMYTN1),CE3TSKJMYTN1
+1789191584.8,politics,ewc-usp-2028-11-07-marrub,BUY,4,0.16,void,16.5276,0,,9,15,0.66,0.16,0.17,0.04,4,voided: the exchange has no trade for order CEJPB3J3GTMM — the row of 09-12 04:3,CEJPB3J3GTMM
+1789191584.8,politics,enwc-uspres-nom-dem-2028-jonste,SELL,20,0.02,backfill,,1.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEHYW5PCJTN3
+1789191584.8,politics,ussewc-usse-ar-2026-11-03-dem,SELL,0.45,0.08,backfill,,4.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEG78CX2GTMX
