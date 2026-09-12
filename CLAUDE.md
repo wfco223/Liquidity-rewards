@@ -237,7 +237,33 @@ long and accreted, so search it rather than reading it through.
   original still rests): 126 placements were rejected "placed but
   not resting" in the hour the account sat fully deployed; the side
   is logged "no_money" once a cooldown and the page counts the
-  orders waiting. Exits are never held back. His taps on the page
+  orders waiting. Exits are never held back. $300 of the exchange's
+  buying power STAYS FREE (owner, 2026-09-12 "Yes to those", his
+  diagnosis of the batch drops — "it's probably because the buying
+  power got too low for the size of the order": six batches of ~20
+  orders left the open list that day, each within a minute of a fill
+  with the account at its margin limit): the reserve comes off the
+  stake's basis as well as gating each entry, so the tender sizes
+  what it may actually spend; under it nothing new is planned and
+  what rests stays. An exit takes no buying power and is never held.
+  A side with a fair where NOTHING RESTS SAYS WHY — the reward it
+  would claim, the fill cost and the fill odds against it, the money
+  it waits for, the order cap, or a book too old — recorded per side,
+  shown on the page under "sides with a fair resting nothing" and
+  logged once an hour (2026-09-12, 20:12Z: 26 such sides had rested
+  nothing for hours in silence, and a $73-a-day reward claim on the
+  North Carolina senate dem ask read as money left on the table when
+  the tender had already priced the fill cost at 8.9c a share and
+  scored the slot −$26 a day; of 27 such sides only 2 had positive
+  expected value, worth $24 a day between them). The 40-order cap
+  goes BY VALUE, not first come: a plan that beats the weakest
+  resting entry by the margin the expected-loss cap uses (double,
+  past the half-hour grace) takes its slot, and being at the cap is
+  logged rather than skipped in silence. An exit always rests as the
+  position leaving — a cover as SELL_SHORT, a sale of the lot as
+  SELL_LONG — and a resting entry on the exit's side is re-laid as
+  the exit whatever its own reading, so the lot is never left
+  unoffered behind a short-opening ask. His taps on the page
   (place, move, cancel, pull) call the exchange OUTSIDE the tender's
   lock and take it only to record the result, and the page's
   re-freeze after a tap gives up after three seconds rather than
@@ -409,7 +435,12 @@ long and accreted, so search it rather than reading it through.
   157.230.234.13, an address the exchange had called a VPN on 09-10,
   60 placements were refused and none rested, and the weak pull took
   the tender from 39 orders to 18 and the day's rate from $1,110 to
-  $403 while he had not yet tapped Deploy for a new address);
+  $403 while he had not yet tapped Deploy for a new address). THE OLD
+  ENGINE holds the same line (owner, 2026-09-12 "Yes to those"):
+  while placements are refused it cycles nothing out for earning
+  little, and only the size-past-fair pull, which reduces risk, still
+  runs (19:14-19:39Z: it cycled 20 orders out mid-block, 18 of them
+  in one second, with no placement possible);
   a cover of a short is
   placed as the close it is (SELL_SHORT), never as a fresh long. A
   refused placement or resize waits out the cooldown before another
@@ -518,6 +549,14 @@ long and accreted, so search it rather than reading it through.
   cycle. Five batches of ~20 orders had left the list at once that
   day (04:30, 05:52, 06:33, 07:47, 08:47Z, each within a minute of a
   fill; a sixth at 15:10Z with $607 free) with nothing said about why.
+  THE ACTIVITY FEED CANNOT ANSWER: it carries ACTIVITY_TYPE_TRADE
+  alone, so an order cancelled without trading is never in it and all
+  16 queued ids read "not in the record" (2026-09-12). The open list
+  is the other source and is read FIRST (owner, "Yes to those"): its
+  raw rows keep a finished order for a while with its state and
+  reason, which the normalized list drops by design
+  (api.DEAD_ORDER_STATES). The note names which source answered, and
+  an id in neither after six reads is given up.
 - New markets (owner, 2026-09-09: "Can you give me a report on any
   newly added markets?" ... "Yes state races should be included. But
   don't place orders in these races before I get the chance to look

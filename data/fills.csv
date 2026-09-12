@@ -1848,3 +1848,29 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789236799.6,politics,ussewc-usse-ma-2026-11-03-rep,BUY,-2.91,0.04,fix,,8.42,,,,,,,,,size trimmed by 2.91 to the exchange's count (order CE2EVK0B2TN3),CE2EVK0B2TN3
 1789236799.6,politics,enwc-uspres-nom-dem-2028-andbes,SELL,-8.07,0.03,fix,1.4022,8.78,0.09,2,5,0.604,0.02,0.04,0.06,0.07,size trimmed by 8.07 to the exchange's count (order CE51MYM22TMP),CE51MYM22TMP
 1789236799.6,politics,paccc-usho-midterms-2026-11-03-rep,BUY,214,0.169,backfill,,1.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
+1789237227.0,politics,enwc-uspres-nom-dem-2028-andbes,SELL,8.07,0.03,hand,,8.81,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE51MYM22TMP
+1789237227.0,politics,ussewc-usse-ma-2026-11-03-rep,BUY,5.47,0.04,hand,,16.76,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2EVK0B2TN3
+1789237227.0,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,1,0.05,hand,,29.46,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2CCY0YRTN2
+1789237227.0,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,1,0.96,hand,,24.61,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7FH8V4GTMP
+1789237227.0,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,20.04,0.22,backfill,,29.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789237227.0,politics,usgubewc-usgub-ne-2026-11-03-dem,BUY,1,0.08,backfill,,28.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3ZGPXFCTMQ
+1789237428.2,politics,enwc-uspres-nom-dem-2028-andbes,SELL,8.07,0.03,hand,,8.81,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE51MYM22TMP
+1789237428.2,politics,ussewc-usse-ma-2026-11-03-rep,BUY,5.47,0.04,hand,,16.76,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2EVK0B2TN3
+1789237428.2,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,1,0.05,hand,,29.46,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2CCY0YRTN2
+1789237428.2,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,1,0.96,hand,,24.61,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7FH8V4GTMP
+1789237428.2,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,20.04,0.22,backfill,,29.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789237428.2,politics,usgubewc-usgub-ne-2026-11-03-dem,BUY,1,0.08,backfill,,28.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3ZGPXFCTMQ
+1789238099.4,politics,ewc-usse-ia-2026-11-03-rep,SELL,1,0.61,sell,2.84,22.74,0.583375,60,64,0.697,0.6,0.61,-0.0266,157,an exit — its fill reduces the position it sits on,CEB8R00F2TMM
+1789238720.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,12,0.482,focus,23.3947,0.41,0.5,49,51,0.767,0.481,0.482,0.018,-12,yours — the tender tends it like its own,CEYMP0R7YTMP
+1789238960.5,politics,ewc-usse-tx-2026-11-03-rep,BUY,9,0.54,sell,1.3655,0.53,0.399225,51,55,0.641,0.53,0.54,0.1408,0,an exit — its fill reduces the position it sits on,CEYK2987PTMP
+1789239378.8,politics,paccc-usho-midterms-2026-11-03-rep,BUY,28,0.169,backfill,,2.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
+1789239467.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,21,0.169,sell,1.6206,2.9,0.1398,18,21,0.898,0.169,0.17,0.0292,0,an exit — its fill reduces the position it sits on,CEWMAGBXMTMP
+1789239558.3,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,5.57,0.1,backfill,,2.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEX9WPYTWTN2
+1789239690.7,politics,ewc-usse-oh-2026-11-03-dem,BUY,38,0.46,backfill,,31.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3V2ZR1GTN1
+1789239965.2,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,10,0.95,manual,6.168,0.7,0.99865,93,96,0.706,0.94,0.96,-0.0486,22,the owner's own order — the engine leaves it alone,CEYMVHMA2TMP
+1789240402.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,55,0.173,hand,,1.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDQ22Q9H2SJ1
+1789240402.0,politics,paccc-usho-midterms-2026-11-03-rep,BUY,28,0.169,backfill,,2.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
+1789240402.0,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,5.57,0.1,backfill,,2.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEX9WPYTWTN2
+1789240402.0,politics,ewc-usse-oh-2026-11-03-dem,BUY,38,0.46,backfill,,31.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3V2ZR1GTN1
+1789241082.6,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,21,0.23,sell,1.0497,3.16,0.29015,25,28,0.658,0.23,0.24,-0.0602,0,an exit — its fill reduces the position it sits on,CEWSTBV30TN1
+1789241082.6,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,6,0.93,bond,1.5312,10.46,0.995925,93,97,0.701,0.93,0.94,-0.0659,102,bond more: split — 6 at 93c carry the share; never dearer than his first price,CEPEQBG8JTMQ

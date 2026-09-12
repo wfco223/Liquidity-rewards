@@ -82,8 +82,40 @@ class TestTheCancelReasonRead(unittest.TestCase):
         self.assertNotIn(oid, r.fam.reason_queue)
         ev = [l for l in r.fam.log if l.get("event") == "cancel_reason" and l.get("id") == oid]
         self.assertEqual(len(ev), 1)
-        self.assertIn("not in the newest", ev[0]["note"])
+        self.assertIn("in neither the open list nor the newest", ev[0]["note"])
         self.assertEqual(r.fam.cancel_reasons.get("not in the record"), 1)
+
+    def test_the_open_lists_own_row_answers_when_the_feed_cannot(self):
+        # 2026-09-12: the activity feed carries ACTIVITY_TYPE_TRADE
+        # alone, so an order cancelled without trading is never in it
+        # and all 16 queued ids read "not in the record". The open list
+        # keeps a finished order for a while with its state and reason
+        # (owner, "Yes to those").
+        r = Rig()
+        oid, rec = _vanish_one(r)
+        r.exchange.raw_rows = [{
+            "id": oid, "marketSlug": A, "state": "ORDER_STATE_CANCELED",
+            "unsolicitedCancelReason": "UNSOLICITED_CXL_REASON_INSUFFICIENT_MARGIN",
+            "cumQuantity": 0,
+        }]
+        r.cycle(advance=120.0)
+        self.assertNotIn(oid, r.fam.reason_queue)
+        ev = [l for l in r.fam.log if l.get("event") == "cancel_reason" and l.get("id") == oid]
+        self.assertEqual(len(ev), 1)
+        self.assertIn("the open list lists it as ORDER_STATE_CANCELED", ev[0]["note"])
+        self.assertIn("INSUFFICIENT_MARGIN", ev[0]["note"])
+        self.assertEqual(r.fam.cancel_reasons.get("UNSOLICITED_CXL_REASON_INSUFFICIENT_MARGIN"), 1)
+
+    def test_a_failing_open_list_read_never_breaks_the_cycle(self):
+        r = Rig()
+        oid, rec = _vanish_one(r)
+        r.exchange.raw_fail = True
+        for _ in range(3):
+            r.cycle(advance=120.0)
+        fails = [l for l in r.fam.log if l.get("event") == "reason_read_failed"]
+        self.assertEqual(len(fails), 1)
+        self.assertIn("open list", fails[0]["note"])
+        self.assertIn(oid, r.fam.reason_queue)       # still waiting for an answer
 
     def test_the_queue_and_the_counts_survive_a_restart(self):
         r = Rig()

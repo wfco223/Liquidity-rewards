@@ -49,7 +49,7 @@ import threading
 import time
 
 from .family import FamilyOrder, is_wall
-from .intents import BUY_LONG, BUY_SHORT, SELL_SHORT, capital_at_risk
+from .intents import BUY_LONG, BUY_SHORT, SELL_LONG, SELL_SHORT, capital_at_risk
 from .programs import pool_days
 from .scoring import estimate_join
 from .survey import QUALIFY_TARGET_MULT, wall_collateral, wall_price
@@ -195,6 +195,15 @@ FOCUS_REFILL_SCALE_S = 2 * 3600.0
 FOCUS_REFILL_FLOOR = 0.25
 FOCUS_BP_EVERY_S = 20.0         # the buying-power read's age at most (owner, 2026-09-11
                                 # "The buying power number is out of date")
+FOCUS_BP_KEEP_FREE_USD = 300.0  # kept free of the exchange's buying power: an entry is
+                                # never sent that would leave less (owner, 2026-09-12
+                                # "Yes to those"; his diagnosis of the batch drops, "the
+                                # buying power got too low for the size of the order" —
+                                # six batches of ~20 orders left the open list on
+                                # 2026-09-12, each within a minute of a fill with the
+                                # account at its margin limit). An exit takes no buying
+                                # power and is never held back.
+FOCUS_IDLE_SAY_S = 3600.0       # a side with a fair resting nothing says why this often
 FOCUS_BP_WINDOW_S = 1800.0      # the stake follows the HIGHEST buying-power read of
                                 # the last half hour: a fill's dip must not pull every
                                 # order and re-rest it a minute later (13:43-13:46Z)
@@ -294,6 +303,11 @@ class Focus:
         # exchange app at $177 available while the tender kept placing:
         # 126 placements rejected in an hour) — slug|side -> last noted
         self.no_money_at: dict[str, float] = {}
+        # a side with a fair where nothing rests, and why — until
+        # 2026-09-12 the tender skipped such a side in silence, and 26
+        # of them read as untended for hours with no word (owner, "Yes
+        # to those")
+        self.idle: dict[str, dict] = {}
         self.refused_at: dict[str, float] = {}     # slug|side -> last refused placement
         self._pos_adj: dict[str, dict] = {}       # oid -> the fill the feed has not shown yet
         self._feed_prev: dict[str, float] = {}    # slug -> the feed's net a pass ago
@@ -373,7 +387,10 @@ class Focus:
 
     def stake_bp(self, now: float) -> float | None:
         """The buying power the stake follows: the highest read of the
-        last FOCUS_BP_WINDOW_S, plus what his walls hold."""
+        last FOCUS_BP_WINDOW_S less the reserve kept free, plus what his
+        walls hold. The reserve comes off the basis as well as gating
+        each order, so the tender sizes what it may actually spend
+        (owner, 2026-09-12 "Yes to those")."""
         bp = self.buying_power(now)
         vals = [v for ts, v in self._bp_reads if now - ts <= FOCUS_BP_WINDOW_S]
         if bp is not None:
@@ -381,8 +398,9 @@ class Focus:
         if not vals:
             return None
         walls = self.walls_held()
-        self._stake_bp = (max(vals), walls, now)
-        return max(vals) + walls
+        high = max(max(vals) - FOCUS_BP_KEEP_FREE_USD, 0.0)
+        self._stake_bp = (high, walls, now)
+        return high + walls
 
     def stake(self, slug: str, bp: float | None) -> tuple[float, str]:
         s = self.stakes.get(slug)
@@ -1603,14 +1621,20 @@ class Focus:
                     self._log(event="pull", market=slug, side=side, price=o.price,
                               qty=o.qty, why="one order a side")
             cur = mine[0] if mine else None
+            key = f"{slug}|{side}"
+            if cur is not None:
+                self.idle.pop(key, None)          # something rests here: not idle
             if not plan or not plan.get("px") or (plan["ev"] <= 0.0 and not is_exit):
+                if cur is None:
+                    # nothing rests and nothing is worth resting: say why
+                    self._idle(key, slug, side, plan if plan and plan.get("px") else None,
+                               (plan or {}).get("note"), now)
                 # a resting order is judged by ITS OWN expected value, not
                 # by today's plan at a stake that moved (13:43-13:46Z: the
                 # balance-of-power ask was pulled and re-rested three times
                 # in three minutes on buying-power dips); a hold — a fill,
                 # a position past the stake, no fair — always pulls it
                 own_ev = self._own_ev(cur) if cur is not None else None
-                key = f"{slug}|{side}"
                 # past his fair with no company on the side: off at once,
                 # whatever its own paper reading (owner, 2026-09-11)
                 bare = cur is not None and not is_exit and self._own_bare(cur)
@@ -1653,8 +1677,11 @@ class Focus:
                 continue
             book = self.fam.cache.fresh(slug, FOCUS_ACT_AGE_S, now)
             if book is None or blocked:
+                if cur is None:
+                    self._idle(key, slug, side, None, None, now,
+                               "the exchange refuses this address's placements" if blocked
+                               else f"no book read in the last {FOCUS_ACT_AGE_S:.0f}s")
                 continue
-            key = f"{slug}|{side}"
             self.weak_since.pop(key, None)
             if cur is None:
                 # a refused placement waits out the cooldown before another
@@ -1675,10 +1702,29 @@ class Focus:
                         break
                 n_mine = sum(1 for o in list(self.fam.orders.values()) if o.purpose == PURPOSE)
                 if n_mine >= FOCUS_MAX_ORDERS and not is_exit:
-                    continue                      # an exit is never held back
+                    # the order cap was first-come-first-served and
+                    # silent: 40 slots held whichever sides reached them
+                    # first, and a better side waited out of sight
+                    # (2026-09-12, 20:12Z: the cap was full and 26 sides
+                    # with a fair rested nothing, none of them logged).
+                    # A plan that beats the weakest resting entry by the
+                    # same margin the loss cap uses takes its slot.
+                    spent = self._make_slot(now, slug, side, plan, actions)
+                    if spent is None:
+                        self._idle(key, slug, side, plan, None, now,
+                                   f"at the {FOCUS_MAX_ORDERS}-order cap and no resting "
+                                   "entry is weak enough to give up its slot")
+                        continue                  # an exit is never held back
+                    actions -= spent
+                    if actions <= 0:
+                        break
                 need = self._need(plan, side, is_exit)
-                if free is not None and need > free + 0.5:
-                    self._no_money(key, slug, side, need, free, now)
+                limit = max(free - FOCUS_BP_KEEP_FREE_USD, 0.0) if free is not None else None
+                if limit is not None and need > limit + 0.5:
+                    self._no_money(key, slug, side, need, free, limit, now)
+                    self._idle(key, slug, side, plan, None, now,
+                               f"waiting for money: it needs ${need:,.0f} and ${limit:,.0f} "
+                               f"may be spent (${FOCUS_BP_KEEP_FREE_USD:,.0f} stays free)")
                     continue
                 r = self.fam.desk.place_resting(slug, side, plan["px"], plan["qty"],
                                                 net_position=float((positions.get(slug) or (0.0,))[0] or 0.0),
@@ -1702,6 +1748,7 @@ class Focus:
                     self._last_mine[r.order_id] = (slug, side, rested, is_exit)
                     self._px_seen[r.order_id] = (slug, side, float(r.price or plan["px"]), float(rested))
                     self.no_money_at.pop(key, None)
+                    self.idle.pop(key, None)
                     if free is not None:
                         free -= self._need({"px": (r.price or plan["px"]), "qty": rested}, side, is_exit)
                     if not is_exit:
@@ -1754,7 +1801,14 @@ class Focus:
             size_ok = abs(cur.qty - plan["qty"]) <= max(1.0, 0.10 * plan["qty"])
             # a cover resting as a fresh long (the desk's default for a
             # bid) is re-laid as the close it is
-            wrong_intent = is_exit and side == "BUY" and cur.intent != SELL_SHORT
+            # an exit is the position leaving: a cover must rest as
+            # SELL_SHORT and a sale of the lot as SELL_LONG. A resting
+            # entry on the exit's side (a short-opening ask where the
+            # lot needs selling) is re-laid as the exit, whatever its
+            # own reading — otherwise the lot is never offered and a
+            # fill opens a short beside it.
+            want_intent = SELL_SHORT if side == "BUY" else SELL_LONG
+            wrong_intent = is_exit and cur.intent != want_intent
             if same_px and size_ok and not wrong_intent:
                 continue
             cur_ev = float(self._own_ev(cur) or 0.0)
@@ -1779,10 +1833,11 @@ class Focus:
                     if actions <= 0:
                         break
             need = self._need(plan, side, is_exit)
-            if free is not None and need > free + 0.5:
-                self._no_money(key, slug, side, need, free, now)   # the original stays
+            limit = max(free - FOCUS_BP_KEEP_FREE_USD, 0.0) if free is not None else None
+            if limit is not None and need > limit + 0.5:
+                self._no_money(key, slug, side, need, free, limit, now)  # the original stays
                 continue
-            intent = SELL_SHORT if wrong_intent else cur.intent
+            intent = want_intent if wrong_intent else cur.intent
             r = self.fam.desk.reprice(
                 {"id": cur.id, "market": slug, "side": side, "price": cur.price,
                  "size": cur.qty, "intent": intent},
@@ -1831,13 +1886,84 @@ class Focus:
         px, qty = float(plan["px"]), float(plan["qty"])
         return capital_at_risk(BUY_LONG if side == "BUY" else BUY_SHORT, px, qty)
 
-    def _no_money(self, key: str, slug: str, side: str, need: float, free: float, now: float) -> None:
+    def _no_money(self, key: str, slug: str, side: str, need: float, free: float,
+                  limit: float, now: float) -> None:
         """Note a side waiting for money — once per cooldown, not every pass."""
         last = self.no_money_at.get(key, 0.0)
         self.no_money_at[key] = now
         if now - last >= FOCUS_MOVE_COOLDOWN_S:
             self._log(event="no_money", market=slug, side=side, qty=None, price=None,
-                      why=f"${free:,.0f} of buying power free, the order needs ${need:,.0f}")
+                      why=f"${free:,.0f} of buying power free, ${limit:,.0f} of it spendable "
+                          f"(${FOCUS_BP_KEEP_FREE_USD:,.0f} stays free), "
+                          f"the order needs ${need:,.0f}")
+
+    def _idle(self, key: str, slug: str, side: str, plan: dict | None, note: str | None,
+              now: float, why: str | None = None) -> None:
+        """A side with a fair where nothing rests: record WHY, and say it
+        once an hour. Until 2026-09-12 the tender skipped such a side in
+        silence — 26 of them rested nothing for hours and the page could
+        not say whether it was the reward, the fill cost, the money or
+        the order cap (owner, "Yes to those")."""
+        if why is None:
+            if plan and plan.get("px"):
+                why = (f"not worth resting: ${float(plan.get('est') or 0.0):.2f} a day "
+                       f"against a {float(plan.get('fc') or 0.0) * 100:.1f}c fill cost at "
+                       f"{float(plan.get('pf') or 0.0) * 100:.0f}% fill odds — "
+                       f"expected value ${float(plan.get('ev') or 0.0):+.2f} a day")
+            else:
+                why = note or "nothing on this side earns"
+        rec = self.idle.get(key) or {"since": now, "said": 0.0}
+        rec["why"], rec["at"] = why, now
+        self.idle[key] = rec
+        if len(self.idle) > 400:
+            for k in sorted(self.idle, key=lambda k2: self.idle[k2].get("at") or 0.0)[:100]:
+                self.idle.pop(k, None)
+        if now - float(rec.get("said") or 0.0) >= FOCUS_IDLE_SAY_S:
+            rec["said"] = now
+            self._log(event="idle_side", market=slug, side=side, why=why[:160])
+
+    def _make_slot(self, now: float, slug: str, side: str, plan: dict,
+                   actions: int) -> int | None:
+        """The order cap is full and this plan wants in: the weakest
+        resting entry by value gives up its slot, and only when the plan
+        beats it by FOCUS_DISPLACE_MARGIN and it has rested past
+        FOCUS_DISPLACE_GRACE_S — the same rule the expected-loss cap
+        uses. Returns the actions spent, or None to leave the cap as it
+        is."""
+        if actions <= 0:
+            return None
+        if now - self.displaced_at.get(f"{slug}|{side}", 0.0) < FOCUS_DISPLACED_REST_S:
+            return None
+        mine_val = self._value(float(plan["ev"]), float(plan["risk"]))
+        weakest = None
+        for o in list(self.fam.orders.values()):
+            if (o.purpose != PURPOSE or o.market not in self.markets or self._exit_order(o)
+                    or (o.market == slug and o.side == side)):
+                continue
+            if now - float(o.placed_ts or 0.0) < FOCUS_DISPLACE_GRACE_S:
+                continue
+            risk = self._entry_risk(o)
+            if risk <= 1e-9:
+                continue
+            val = self._value(float(self._own_ev(o) or 0.0), risk)
+            if val * FOCUS_DISPLACE_MARGIN > mine_val:
+                continue
+            if weakest is None or val < weakest[0]:
+                weakest = (val, o)
+        if weakest is None:
+            return None
+        val, o = weakest
+        r = self.fam.desk.cancel(o.id, o.market, initiator="auto")
+        if not r.ok:
+            return None
+        self.fam.orders.pop(o.id, None)
+        self._forget(o.id)
+        self.moved_at[f"{o.market}|{o.side}"] = now
+        self.displaced_at[f"{o.market}|{o.side}"] = now
+        self._log(event="pull", market=o.market, side=o.side, price=o.price, qty=o.qty,
+                  why=(f"its slot goes to {self._label(slug)[:28]} {side} — "
+                       f"${mine_val:.2f} a day per $ of expected loss against ${val:.2f}"))
+        return 1
 
     @staticmethod
     def _why(plan: dict, is_exit: bool) -> str:
@@ -2098,6 +2224,18 @@ class Focus:
                 "balances": (self.balances_fn() if self.balances_fn is not None else None),
                 "waiting_money": sum(1 for t in self.no_money_at.values()
                                      if now - t < 2 * FOCUS_MOVE_COOLDOWN_S),
+                # every side with a fair where nothing rests, and why —
+                # the page's "nothing resting here" list (owner,
+                # 2026-09-12 "Yes to those")
+                "idle": sorted(
+                    ({"market": k.split("|")[0], "side": k.split("|")[-1],
+                      "name": self._label(k.split("|")[0])[:60],
+                      "why": (v.get("why") or "")[:160],
+                      "since_s": round(now - float(v.get("since") or now))}
+                     for k, v in self.idle.items()
+                     if now - float(v.get("at") or 0.0) < 4 * FOCUS_CYCLE_S),
+                    key=lambda d: (d["market"], d["side"]))[:120],
+                "keep_free": FOCUS_BP_KEEP_FREE_USD,
                 "loss_cap": self.loss_cap, "risk_used": self.risk_used(),
                 "coc_day": self.coc_day, "fill_floor": self.fill_floor,
                 "on": bool(on), "note": self.note, "blocked": self._blocked(),
