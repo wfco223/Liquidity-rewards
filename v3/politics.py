@@ -197,7 +197,13 @@ def config() -> FamilyConfig:
         # owner, 2026-08-27: "Take me out of all buy position on Ron
         # desantis in 2028 markets" — sell the stock into the bid
         # until flat, never buy DeSantis 2028 again
-        liquidate_tokens=("rondes",),
+        # owner, 2026-09-12: "get out of 2028 markets" — every 2028
+        # book (the nominee and winner slates, the party pair): the
+        # stock sells into the bid until flat, the shorts get their
+        # covers, nothing new rests, and the focus tender drops the
+        # ground (Sep 11 paid $6.72 there against a $24.57 estimate
+        # while the day's round trips lost $26)
+        liquidate_tokens=("rondes", "2028"),
         # owner, 2026-08-28: "Keep a websocket on those races",
         # corrected to "the margin of victory in the ma dem senate
         # primary markets" — those books stay fresh every cycle and

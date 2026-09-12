@@ -6456,6 +6456,27 @@ class TestOwnerLiquidation(unittest.TestCase):
                 if o.market == A and o.side == "BUY"]
         self.assertEqual(buys, [])
 
+    def test_the_tenders_leftover_order_is_pulled_on_close_out_ground(self):
+        """Owner, 2026-09-12 "get out of 2028 markets": the tender drops
+        the ground, the engine is no longer frozen there, and the
+        tender's resting entry is pulled with everything else that is
+        not his hand's, a bond's or an exit."""
+        from v3.family import FamilyOrder
+        from v3.intents import BUY_LONG
+        r, A = self._rig()
+        r.exchange.live["F"] = {"id": "F", "market": A, "side": "BUY",
+                                "price": 0.04, "size": 500.0,
+                                "intent": BUY_LONG}
+        r.fam.orders["F"] = FamilyOrder(
+            id="F", market=A, side="BUY", price=0.04, qty=500.0,
+            intent=BUY_LONG, placed_ts=r.now, purpose="focus")
+        r.fam.last_action.clear()
+        r.cycle(advance=120.0)
+        self.assertNotIn("F", r.fam.orders)
+        self.assertNotIn("F", r.exchange.live)
+        self.assertFalse([o for o in r.fam.orders.values()
+                          if o.market == A and o.side == "BUY"])
+
     def test_the_owners_own_ask_is_never_touched_or_double_offered(self):
         from v3.family import FamilyOrder
         from v3.intents import SELL_LONG
