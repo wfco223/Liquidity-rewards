@@ -927,6 +927,12 @@ def mem_limit_mb() -> float | None:
 class Monitor:
     def __init__(self):
         self.client = Client()
+        # every 429 the gateway answers is said once a hold, with the wait
+        # the exchange asked for (owner, 2026-09-12 "Yes to both")
+        self.client.on_throttle = lambda rec: self._note(
+            f"gateway 429 on {rec.get('path')}: Retry-After "
+            f"{rec.get('retry_after') or 'none'} — every gateway read held "
+            f"{rec.get('wait', 0):.0f}s")
         self.alerts = Alerts()
         self.names = Names()
         self.store = StateStore(os.environ.get("V3_STATE_PATH", "v3_state.json"))
@@ -4659,7 +4665,6 @@ class Monitor:
                          name="sampler").start()
         self._note(f"serving on :{web.port}")
         backoff = 5.0
-        stream_started = False
         # the focus tender's own loop starts NOW, before the board is
         # read (owner, 2026-09-10: "The start up time for focus has to
         # be very short"): its ground was claimed at seed, its first
@@ -4667,20 +4672,21 @@ class Monitor:
         if getattr(self, "focus", None) is not None:
             threading.Thread(target=self._focus_loop, daemon=True,
                              name="focus").start()
+        # and the stream with it (owner, 2026-09-12 "Yes to both"): the
+        # focus markets seat first, so every focus book arrives over the
+        # websocket on api.polymarket.us within seconds of boot — the
+        # gateway's throttle never touches it. Until 2026-09-12 the
+        # stream waited for the first cycle so the feed would not
+        # compete with the boot for the GIL and the health check
+        # (owner, 2026-08-31); on a throttled boot that left the tender
+        # blind for the twenty minutes the board took to read.
+        if self.stream is not None:
+            self.stream.start()
         while True:
             t0 = time.time()
             try:
                 self.cycle()
                 backoff = 5.0
-                # the feed pours ~54 book updates a second across 200
-                # markets through this one shared CPU. Holding it back
-                # until the first cycle has finished stops it competing
-                # with boot for the GIL, so the health check still gets
-                # answered while the board is being read (owner,
-                # 2026-08-31).
-                if not stream_started and self.stream is not None:
-                    stream_started = True
-                    self.stream.start()
             except Exception as e:  # noqa: BLE001 — the loop survives anything
                 self._note(f"cycle failed: {type(e).__name__}: {e}")
                 time.sleep(backoff)

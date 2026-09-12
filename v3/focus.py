@@ -640,7 +640,11 @@ class Focus:
         n = failed = 0
         note = ""
         t0 = self._clock()
-        held = t0 < self._books_hold
+        # the client's own hold (a 429 anywhere on the gateway holds every
+        # thread's reads for the wait the exchange named): not even tried
+        gw = getattr(self.client, "gateway_hold", None)
+        gw_hold = float(gw() or 0.0) if callable(gw) else 0.0
+        held = t0 < self._books_hold or gw_hold > 0
         # a market with no book at all (boot, or newly boosted) is read
         # now, all of them: the page must not wait a pass per dozen —
         # within the boot budget; a gateway that hangs gets the page up
@@ -652,7 +656,8 @@ class Focus:
                 break
             try:
                 book = self.client.book(slug, fetched_at=None,
-                                        timeout=FOCUS_BOOK_READ_TIMEOUT_S, tries=1)
+                                        timeout=FOCUS_BOOK_READ_TIMEOUT_S, tries=1,
+                                        priority=True)
             except Exception as e:  # noqa: BLE001 — counted, said, next pass
                 failed += 1
                 note = f"{slug}: {str(e)[:100]}"
@@ -667,7 +672,8 @@ class Focus:
         self.books_read, self.books_due, self.books_failed = n, len(due), failed
         self.books_s = round(self._clock() - t0, 1)
         if held:
-            note = "held off after a 429 — the exchange is throttling this address"
+            note = ("held off after a 429 — the exchange is throttling this address"
+                    + (f" ({gw_hold:.0f}s to go)" if gw_hold > 0 else ""))
         self.books_note = note
         if (failed or len(due) > n) and now - self._books_said > FOCUS_BOOKS_SAY_S:
             self._books_said = now

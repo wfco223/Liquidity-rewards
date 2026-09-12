@@ -93,7 +93,7 @@ class FakeClient:
         return list(getattr(self, "activity_rows", [])) + list(reversed(self.trades))
 
     # -- read side ----------------------------------------------------------
-    def book(self, slug, fetched_at=None, timeout=None, tries=4):
+    def book(self, slug, fetched_at=None, timeout=None, tries=4, priority=False):
         b = self.books[slug]
         return Book(bids=b.bids, asks=b.asks, tick=b.tick,
                     fetched_at=fetched_at or b.fetched_at)

@@ -277,8 +277,28 @@ long and accreted, so search it rather than reading it through.
   the pass's reads and holds the next twenty seconds, and the pass
   line on the page says what was read, what failed and what waits,
   with the last failure's own words; "books_slow" is logged once in
-  ten minutes. The stream, the other book source, still starts only
-  after the family's first cycle (the 2026-08-31 health-check rule). An exit always rests as the
+  ten minutes. ONE THROTTLE FOR THE WHOLE CLIENT, AND THE STREAM AT
+  BOOT (owner, 2026-09-12 "Yes to both", after the new pass line read
+  "0 books re-read — held off after a 429 — the exchange is
+  throttling this address" with 135 waiting: the gateway answered
+  the tender's book reads with HTTP 429 while the families' boot
+  discovery — hundreds of gateway reads on another thread — kept the
+  limit tripped for the twenty minutes the board took to read): a
+  429 from the gateway holds EVERY gateway read on every thread for
+  the wait the exchange names (Retry-After, 20 s when it names none,
+  120 s at most) — a retried read waits it out, a one-try read (the
+  tender's) is refused at once with the wait in its words and the
+  tender does not even try while it stands; gateway reads are paced
+  across threads (GATEWAY_PACE_PER_S, 5 a second) and the tender's
+  take the next slot ahead of the family's; every 429 is kept in
+  client.throttles with its Retry-After and noted once a hold, so the
+  pace is set from the record. And the stream starts at boot with
+  the tender, the focus markets seated first, so every focus book
+  arrives over the websocket on api.polymarket.us within seconds —
+  the gateway's throttle never touches it. That reverses the
+  2026-08-31 rule (the stream waited for the first cycle so the feed
+  would not compete with the boot for the GIL and the health check);
+  the owner took that cost knowingly. An exit always rests as the
   position leaving — a cover as SELL_SHORT, a sale of the lot as
   SELL_LONG — and a resting entry on the exit's side is re-laid as
   the exit whatever its own reading, so the lot is never left
