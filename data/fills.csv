@@ -5276,3 +5276,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789195204.0,politics,usgubewc-usgub-or-2026-11-03-rep,SELL,0.62,0.17,backfill,,1.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEJRD54QGTN3
 1789195204.0,politics,scc-senate-gop-2026-11-03-49,SELL,0.42,0.15,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEKTK5TCCTN2
 1789195204.0,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,0.17,0.22,backfill,,19.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789196423.4,politics,paccc-usho-midterms-2026-11-03-dem,BUY,76,0.84,backfill,,3.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEHYYM24WTMP
+1789196467.6,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,50,0.06,focus,16.0358,0.09,0.04,3,7,0.76,0.03,0.07,0.02,50,focus entry: ~$8.23/day; fill odds 59%/day; EV +1.96/day,CEMQC0W6YTN2
+1789196467.6,politics,ussewc-usse-tn-2026-11-03-rep,BUY,12.01,0.94,bond,0,0.02,0.99955,92,97,0,0.93,0.95,-0.0595,88.01,bond: took 12.01 YES at 94c — it was in the way of our resting order,CEMT04HYATN5
+1789198613.5,politics,scc-senate-gop-2026-11-03-49,SELL,18.5,0.15,focus,23.0767,0.06,0.149225,16,19,0.782,0.14,0.15,-0.0008,-18.5,focus entry: ~$22.42/day; fill odds 64%/day; EV +21.55/day,CEN85HGAJTMM
+1789198673.5,politics,enwc-uspres-nom-dem-2028-jbpri,SELL,16.44,0.07,sell,7.0253,0.6,0.04,3,7,0.798,0.06,0.07,-0.03,33.56,an exit — its fill reduces the position it sits on,CEMTPZZ5TTMX
+1789198825.7,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-32,0.844,fix,,3.82,,,,,,,,,size trimmed by 32 to the exchange's count (order CE3PV0THATN5),CE3PV0THATN5
+1789198825.7,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-0.53,0.94,fix,2.8762,19.54,0.99595,93,96,0.682,0.93,0.94,0.056,95.47,size trimmed by 0.53 to the exchange's count (order CE4357DFATMY),CE4357DFATMY
+1789198825.7,politics,ussewc-usse-tn-2026-11-03-rep,BUY,12,0.93,void,2.8877,0.03,0.99955,92,97,0,0.93,0.95,-0.0695,76,voided: the exchange has no trade for order CEMS69FS2TMY — the row of 09-12 07:0,CEMS69FS2TMY
+1789198825.7,politics,paccc-usho-midterms-2026-11-03-dem,BUY,76,0.84,backfill,,3.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEHYYM24WTMP
