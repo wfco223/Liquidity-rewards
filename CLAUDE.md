@@ -458,6 +458,30 @@ long and accreted, so search it rather than reading it through.
   shown with Silver's number as a suggestion and nothing is tended
   ("Yes for 5"). The fill cost never reads under 2c a share ("The fill
   cost for politics has been high recently. Keep that in mind").
+  A POSITION'S COST CARRIES THE SIGN OF ITS QUANTITY, so a basis is
+  always a price a share (owner, 2026-09-12 "Yes fix that", after the
+  audit he asked for): the exchange reports the cost as the money tied
+  up, POSITIVE for a short as well as a long (Massachusetts governor
+  rep read as -209 shares at +$196.72, New York governor rep as -386
+  at +$311.46), and stored as given a short's basis came out NEGATIVE,
+  so covering it recorded a per-share loss of the price PLUS that
+  basis — about a dollar a share on a contract that settles between 0
+  and 1. The fill model had learned 54.13c a share on the governor
+  books and 238.05c on the house seats, against a markdown measured
+  from real fills of 1.03c and 1.88c (1,406 and 68 marks), and since
+  the model charges whichever measure is larger it was rejecting 59 of
+  the 71 sides it refused as "not worth resting"; of 27 untended sides
+  only 2 had positive expected value where 18 do at the measured cost,
+  worth $217 a day on $3,452 of collateral. Three rails now hold: the
+  cost takes the sign of the quantity wherever the feed writes it and
+  22 stored rows were repaired on restore; a round trip is learned
+  only from a basis that is a price and only when the cost per share
+  falls between 0 and $1, the rest counted in trip_dropped; and no
+  single close may own a pool's number — the EWMA weight stops at
+  TRIP_W_MAX (0.25) where min(0.05 x qty, 1.0) had let any close of 20
+  shares or more replace it outright, so the "average" was the last
+  big close. Every stored trip cost was learned through that bug and
+  is dropped once (TRIP_REPAIR) to be relearned clean.
   Owner, 2026-09-12 ("The fair amount shouldn't affect the fill odds.
   The fill odds should be based on the shape of the book. The
   concession should affect the ev but make the concession as if I

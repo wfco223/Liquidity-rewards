@@ -680,6 +680,40 @@ class Family:
         bid until flat, rest nothing new, never buy."""
         return any(t in slug for t in self.cfg.liquidate_tokens)
 
+    @staticmethod
+    def _feed_cost(net: float, cost: float) -> float:
+        """The exchange reports a position's cost as the money tied up —
+        POSITIVE for a short as well as a long (2026-09-12: Massachusetts
+        governor rep read as -209 shares at +$196.72, New York governor
+        rep as -386 at +$311.46). Stored as given, a short's basis
+        (cost/qty) came out NEGATIVE, and covering it recorded a
+        per-share loss of the price PLUS that basis — about a dollar a
+        share on a contract that settles between 0 and 1, which is what
+        taught the fill model 54c on the governor books and 238c on the
+        house seats (owner, "Yes fix that"). The cost carries the sign
+        of the quantity, so a basis is always a price a share."""
+        c = abs(float(cost or 0.0))
+        return round(-c if float(net or 0.0) < 0.0 else c, 4)
+
+    def _fix_inventory_signs(self) -> int:
+        """Every held row's cost carries the sign of its quantity. Runs
+        on restore: 22 of 119 rows carried a short's cost positive on
+        2026-09-12, and their basis was not a price."""
+        n = 0
+        for m, v in list(self.inventory.items()):
+            try:
+                q = float(v.get("qty") or 0.0)
+                c = float(v.get("cost") or 0.0)
+            except (TypeError, ValueError, AttributeError):
+                continue
+            if abs(q) < 1e-9 or abs(c) < 1e-9:
+                continue
+            fixed = self._feed_cost(q, c)
+            if abs(fixed - c) > 1e-6:
+                v["cost"] = fixed
+                n += 1
+        return n
+
     def _place_blocked(self) -> bool:
         """The desk's placement breaker: the exchange refuses this
         address's placements as a VPN, so nothing we cancel can be
@@ -2080,8 +2114,9 @@ class Family:
                         else:
                             cost = (positions[m][1]
                                     if len(positions[m]) > 1 else 0.0)
-                        self.inventory[m] = {"qty": feed_qty,
-                                             "cost": round(cost, 4)}
+                        self.inventory[m] = {
+                            "qty": feed_qty,
+                            "cost": self._feed_cost(feed_qty, cost)}
                     self._log(event="inventory_corrected", market=m,
                               qty=feed_qty,
                               note=f"book said {have:g}, exchange says "
@@ -2119,7 +2154,11 @@ class Family:
             # closed (owner, 2026-09-09: "make sure the numbers about
             # fill costs are updating") — the fill model's trip_cost
             basis = c0 / q0
-            if rec.side == "SELL" and q0 > 0:
+            if not (0.0 < basis < 1.0):
+                # not a price a share: a broken basis teaches the fill
+                # model nothing (owner, 2026-09-12 "Yes fix that")
+                loss_ps = None
+            elif rec.side == "SELL" and q0 > 0:
                 loss_ps = max(basis - rec.price, 0.0)
             elif rec.side == "BUY" and q0 < 0:
                 loss_ps = max(rec.price - basis, 0.0)
@@ -2545,7 +2584,8 @@ class Family:
             net, cost = ((list(pv) + [0.0, 0.0])[:2]
                          if isinstance(pv, (tuple, list)) else (float(pv), 0.0))
             if m in self.universe and abs(net) > 0.005 and m not in self.inventory:
-                self.inventory[m] = {"qty": net, "cost": cost}
+                self.inventory[m] = {"qty": net,
+                                     "cost": self._feed_cost(net, cost)}
                 self.positions_seen[m] = net
 
     # ------------------------------------------------------------------ cycle
@@ -5825,6 +5865,7 @@ class Family:
                 rec.why = "the owner's own order — the engine leaves it alone"
             self.orders[oid] = rec
         self.inventory = dict(d.get("inventory") or {})
+        signs_fixed = self._fix_inventory_signs()
         self.exit_float = {k: dict(v) for k, v in (d.get("exit_float") or {}).items()}
         self.float_day = dict(d.get("float_day") or {"day": "", "usd": 0.0})
         self.opened = {str(s) for s in (d.get("opened") or [])}
@@ -5892,3 +5933,8 @@ class Family:
         self.earned_day = str(d.get("earned_day") or "")
         self.earned_history = list(d.get("earned_history") or [])
         self.log = list(d.get("log") or [])
+        if signs_fixed:
+            # after the log is restored, so the note survives the restore
+            self._log(event="basis_signs_fixed", qty=signs_fixed,
+                      note=f"{signs_fixed} held rows carried a cost whose sign did not "
+                           "match the position — their basis was not a price a share")

@@ -58,7 +58,17 @@ BAIT_PER_TICK = 1.0
 PRIOR_EXPOSURE_S = DAY_S
 
 MARKDOWN_SEED = 0.02             # $/share adverse move on a fill, to start
-TRIP_ALPHA = 0.05                # per share closed: 20 shares move the trip cost ~2/3 of the way
+TRIP_ALPHA = 0.05                # per share closed, up to TRIP_W_MAX in one go
+TRIP_W_MAX = 0.25                # no single close may replace a pool's number (owner,
+                                 # 2026-09-12 "Yes fix that": at min(0.05*qty, 1.0) any
+                                 # close of 20 shares or more overwrote it outright, so
+                                 # the "average" was the last big close — governor read
+                                 # 54.13c a share from 49 trips, house seats 238.05c
+                                 # from 6, against a markdown of 1.03c and 1.88c
+                                 # measured over 1,406 and 68 real fills)
+TRIP_REPAIR = "basis-sign-2026-09-12"   # every stored trip cost was learned through the
+                                        # negative-basis bug and that weight: dropped
+                                        # once, then relearned from clean observations
 OFFLOAD_SEED_DAYS = 2.0          # fill -> fully offloaded, until measured
 OFFLOAD_ALPHA = 0.25             # EWMA weight per completed offload
 MARKDOWN_ALPHA = 0.2             # EWMA weight of each new observed fill
@@ -168,6 +178,8 @@ class FillModel:
         self.markdown: dict[str, float] = {}       # family -> $/share EWMA
         self.trip_cost: dict[str, float] = {}      # family -> realized $/share lost closing
         self.trip_n: dict[str, int] = {}
+        self.trip_dropped: int = 0                 # observations refused as not a price
+        self.trip_repair: str = TRIP_REPAIR        # a fresh model has nothing to repair
         self.marks_n: dict[str, int] = {}          # family -> graded fills count
         self.scoring_frac: dict[str, float] = {}   # family -> EWMA 0..1
         # INSTRUMENTS, collecting only (owner-approved 2026-08-21): the
@@ -270,13 +282,27 @@ class FillModel:
     def observe_round_trip(self, slug: str, loss_ps: float, qty: float) -> None:
         """What closing a position really cost, per share, against the
         basis it closed (owner, 2026-09-09) — the exit's give-up made
-        real. Share-weighted EWMA per family; feeds fill_cost."""
-        if qty <= 0:
+        real. Share-weighted EWMA per family; feeds fill_cost.
+
+        A contract settles between 0 and 1, so a per-share cost outside
+        that range is not a measurement — it is a broken basis, and it
+        is dropped rather than learned (owner, 2026-09-12 "Yes fix
+        that": the exchange reports a short's cost as money tied up,
+        POSITIVE, so a seeded short's basis came out negative and a
+        cover recorded its price plus that basis — about a dollar a
+        share. House seats had learned 238.05c). No single close may
+        replace the pool's number either: the weight stops at
+        TRIP_W_MAX."""
+        if qty <= 0 or loss_ps is None:
+            return
+        loss_ps = float(loss_ps)
+        if not (0.0 <= loss_ps <= 1.0):
+            self.trip_dropped = getattr(self, "trip_dropped", 0) + 1
             return
         fam = family_of(slug)
         cur = self.trip_cost.get(fam, 0.0)
-        w = min(TRIP_ALPHA * qty, 1.0)
-        self.trip_cost[fam] = round(cur * (1 - w) + max(loss_ps, 0.0) * w, 4)
+        w = min(TRIP_ALPHA * qty, TRIP_W_MAX)
+        self.trip_cost[fam] = round(cur * (1 - w) + loss_ps * w, 4)
         self.trip_n[fam] = self.trip_n.get(fam, 0) + 1
 
     def trip_summary(self) -> dict:
@@ -496,7 +522,9 @@ class FillModel:
                             for k, v in self.own_obs.items()},
                 "age_fit": {k: [round(v[0], 1), v[1]]
                             for k, v in self.age_fit.items()},
-                "trip_cost": self.trip_cost, "trip_n": self.trip_n}
+                "trip_cost": self.trip_cost, "trip_n": self.trip_n,
+                "trip_repair": self.trip_repair,
+                "trip_dropped": getattr(self, "trip_dropped", 0)}
 
     @classmethod
     def from_dict(cls, d: dict) -> "FillModel":
@@ -509,6 +537,13 @@ class FillModel:
         m.markdown = dict(d.get("markdown") or {})
         m.trip_cost = {k: float(v) for k, v in (d.get("trip_cost") or {}).items()}
         m.trip_n = {k: int(v) for k, v in (d.get("trip_n") or {}).items()}
+        m.trip_dropped = int(d.get("trip_dropped") or 0)
+        m.trip_repair = str(d.get("trip_repair") or "")
+        if m.trip_repair != TRIP_REPAIR:
+            # everything stored was learned through the negative-basis
+            # bug and a weight one close could own: relearn it clean
+            m.trip_cost, m.trip_n = {}, {}
+            m.trip_repair = TRIP_REPAIR
         m.marks_n = dict(d.get("marks_n") or {})
         m.scoring_frac = dict(d.get("scoring_frac") or {})
         m.offload_days = dict(d.get("offload_days") or {})
