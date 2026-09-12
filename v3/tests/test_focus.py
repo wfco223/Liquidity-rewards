@@ -80,6 +80,99 @@ class Base(unittest.TestCase):
                 and (side is None or o.side == side)]
 
 
+class TestBooksOnTheTendersClock(Base):
+    """2026-09-12, 21:19-21:42Z: the boot on 174.138.33.47 spent 15.5
+    minutes over its first pass — 135 book reads through the gateway's
+    retry ladder — while the page said "the first pass has not run
+    yet"; every book was then stamped with the pass's start, the desk
+    read them as minutes old and refused "no book fresher than 120s",
+    and 46 of 85 sides sat idle "no book". The reads keep the tender's
+    clock now: one try and eight seconds each, a time budget a pass,
+    the stamp the read's own moment, what failed or waits on the page."""
+
+    def slow(self, seconds, fail=(), status=None):
+        """A gateway that takes `seconds` a read and refuses `fail`."""
+        calls = []
+        real = self.r.exchange.book
+
+        def book(slug, fetched_at=None, timeout=None, tries=4):
+            calls.append((slug, timeout, tries))
+            self.r.now += seconds
+            if slug in fail:
+                from v3.api import ApiError
+                raise ApiError(f"https://gateway/{slug}/book: ReadTimeout", status=status)
+            return real(slug, fetched_at=fetched_at, timeout=timeout, tries=tries)
+        self.r.exchange.book = book
+        return calls
+
+    def test_each_read_is_one_try_of_eight_seconds(self):
+        self.r.cache._books.clear()
+        calls = self.slow(0.5)
+        self.f.cycle(self.r.now + 1, {}, False)
+        self.assertEqual(len(calls), 5)
+        self.assertTrue(all(t == focus_mod.FOCUS_BOOK_READ_TIMEOUT_S and n == 1
+                            for _, t, n in calls), calls)
+        self.assertEqual(focus_mod.FOCUS_BOOK_READ_TIMEOUT_S, 8.0)
+
+    def test_the_stamp_is_the_reads_own_moment_not_the_pass_start(self):
+        self.r.cache._books.clear()
+        self.slow(3.0)
+        clock0 = self.r.now
+        start = self.r.now + 1
+        self.f.cycle(start, {}, False)
+        stamps = sorted(self.r.cache.any_age(s).fetched_at for s in (NC, OH, AK, BP, AG))
+        self.assertEqual(self.f.books_read, 5)
+        self.assertNotIn(start, stamps)
+        self.assertEqual(stamps, [clock0 + 3.0 * k for k in range(1, 6)])
+
+    def test_a_hanging_gateway_does_not_hold_the_pass_or_the_page(self):
+        self.r.cache._books.clear()
+        self.slow(100.0)                         # every read hangs long
+        self.f.cycle(self.r.now + 1, {}, False)
+        # the boot budget let one read through; the pass ended and froze
+        self.assertEqual(self.f.books_read, 1)
+        self.assertEqual(self.f.books_due, 5)
+        v = json.loads(self.f.payload_json)
+        self.assertTrue(v["ok"])
+        self.assertEqual((v["books_read"], v["books_due"], v["books_failed"]), (1, 5, 0))
+        self.assertGreater(v["books_s"], focus_mod.FOCUS_BOOK_BUDGET_BOOT_S)
+        self.assertEqual(sum(1 for r in v["rows"] if r["book"] is None), 4)
+        self.assertEqual([e for e in self.f.log if e["event"] == "books_slow"][-1]["read"], 1)
+        # the rest come in a pass at a time, oldest first
+        for k in range(2, 6):
+            self.f.cycle(self.r.now + 1, {}, False)
+            self.assertEqual(sum(1 for s in (NC, OH, AK, BP, AG)
+                                 if self.r.cache.any_age(s) is not None), k)
+
+    def test_a_failing_read_is_counted_and_named_and_the_rest_are_read(self):
+        self.r.cache._books.clear()
+        self.slow(0.5, fail=(OH,))
+        self.f.cycle(self.r.now + 1, {}, False)
+        self.assertEqual((self.f.books_read, self.f.books_failed), (4, 1))
+        self.assertIn(OH, self.f.books_note)
+        self.assertIn("ReadTimeout", self.f.books_note)
+        self.assertIsNone(self.r.cache.any_age(OH))
+        said = [e for e in self.f.log if e["event"] == "books_slow"]
+        self.assertEqual(len(said), 1)
+        self.assertEqual(said[0]["failed"], 1)
+        self.f.cycle(self.r.now + 1, {}, False)      # said once in ten minutes, not every pass
+        self.assertEqual(len([e for e in self.f.log if e["event"] == "books_slow"]), 1)
+
+    def test_a_429_stops_the_burst_and_holds_the_next_pass(self):
+        self.r.cache._books.clear()
+        self.slow(0.5, fail=(NC, OH, AK, BP, AG), status=429)
+        self.f.cycle(self.r.now + 1, {}, False)
+        self.assertEqual((self.f.books_read, self.f.books_failed), (0, 1))   # one refusal, no burst
+        self.r.exchange.book = self.r.exchange.__class__.book.__get__(self.r.exchange)
+        self.r.now += 5.0
+        self.f.cycle(self.r.now, {}, False)           # within the hold: nothing read
+        self.assertEqual(self.f.books_read, 0)
+        self.assertIn("held off after a 429", self.f.books_note)
+        self.r.now += focus_mod.FOCUS_BOOK_HOLD_S
+        self.f.cycle(self.r.now, {}, False)           # the hold is over
+        self.assertEqual(self.f.books_read, 5)
+
+
 class TestTheGround(Base):
     def test_boosted_programs_make_the_list_and_the_rest_do_not(self):
         self.tick()
