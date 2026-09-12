@@ -1825,3 +1825,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789232996.3,politics,usgubewc-usgub-sd-2026-11-03-dem,SELL,0.2,0.02,backfill,,23.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8DVDY2GTN0
 1789232996.3,politics,ussewc-usse-ri-2026-11-03-rep,SELL,0.5,0.02,hand,,25.13,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE7G11QFGTMX
 1789232996.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,33,0.169,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
+1789233130.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,201,0.169,backfill,,1.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
+1789233134.3,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,-21.08,0.24,fix,12.3459,0.33,0.29015,24,28,0.549,0.23,0.24,0.0502,-42.08,size trimmed by 21.08 to the exchange's count (order CEWD97S2PTN1),CEWD97S2PTN1
+1789233134.3,politics,ussewc-usse-co-2026-11-03-dem,SELL,60,0.95,hand,,8.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDFVVQXS0SJH
+1789233134.3,politics,paccc-usho-midterms-2026-11-03-rep,SELL,137,0.173,hand,,1.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDQ22Q9H2SJ1
+1789233134.3,politics,usgubewc-usgub-sd-2026-11-03-dem,SELL,0.2,0.02,backfill,,23.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE8DVDY2GTN0
+1789233134.3,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,0.06,0.22,backfill,,29.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789233134.3,politics,usgubewc-usgub-ne-2026-11-03-dem,BUY,0.34,0.08,backfill,,28.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3ZGPXFCTMQ
+1789233134.3,politics,ussewc-usse-ri-2026-11-03-rep,SELL,0.5,0.02,hand,,25.13,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE7G11QFGTMX
+1789233134.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,201,0.169,backfill,,1.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
