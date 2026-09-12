@@ -297,7 +297,11 @@ class TestThePlan(Base):
         buy = row["sides"]["BUY"]
         self.assertLessEqual(buy["qty"] * buy["px"], 200.0 + 1e-6)
         if buy["px"] > 0.40:
-            self.assertAlmostEqual(buy["conc"], buy["px"] - 0.40, places=4)
+            # owner, 2026-09-12: the concession is what a fill loses when
+            # the position is unwound midway between his fair (40c) and
+            # the side's current price (the 44c bid): px - 42c
+            self.assertAlmostEqual(buy["conc"], max(buy["px"] - 0.42, 0.0), places=4)
+            self.assertAlmostEqual(buy["past"], buy["px"] - 0.40, places=4)
             self.assertGreaterEqual(buy["fc"], buy["conc"] + self.f.fill_floor - 1e-9)
         sell = row["sides"]["SELL"]
         for p in (buy, sell):
@@ -1531,6 +1535,70 @@ class TestTheCompanyWindowIsSixCents(Base):
         self.assertGreater(plan["est"], 20.0)                    # and it earns
 
 
+class TestTheConcessionIsUnwoundMidway(Base):
+    """Owner, 2026-09-12: "The fair amount shouldn't affect the fill
+    odds. The fill odds should be based on the shape of the book. The
+    concession should affect the ev but make the concession as if I
+    sell it back midway between my fair price and the current price."
+    The New York governor rep book of 08:19 EDT: short 392, his fair
+    8c, the bid 10c x4.7k, the ask 11c; the cover had sat at 4c earning
+    nothing because a 2c concession had pushed the fill odds toward
+    certain and the 10c touch read worse than a 4c lottery ticket."""
+    NY = "usgubewc-usgub-ny-2026-11-03-rep"
+    NYP = {"timePeriods": [{"programId": "midterms_t3_coverage_gov_senate_house_districts_20260911",
+                            "rewardPool": 250.0, "targetSize": 10000, "discountFactor": 0.2,
+                            "status": "LIVE", "start": "2026-09-11T19:00:00Z",
+                            "end": "2026-11-04T00:00:00Z"}]}
+    BOOK = Book(bids=((0.10, 4700.0), (0.06, 19.0), (0.05, 51.0), (0.04, 25.0),
+                      (0.02, 335.0), (0.01, 13600.0)),
+                asks=((0.11, 1600.0), (0.17, 89.0), (0.18, 45.0), (0.96, 615.0),
+                      (0.97, 695.0), (0.98, 830.0), (0.99, 24800.0)),
+                tick=0.01, fetched_at=0.0)
+
+    def _ready(self):
+        self.r.add_market(self.NY, self.BOOK, event="ny", prog=self.NYP)
+        self.r.fam.universe[self.NY] = {"event_n": 2, "name": self.NY}
+        self.f.set_fair(self.NY, 8.0)
+        self.f.last_terms_own = 0.0
+        self.f._rotor = 0
+        for _ in range(4):
+            self.tick()
+        prog = self.f.terms.get(self.NY)
+        pool = self.f.fam._side_pool(self.NY, prog)
+        book = self.r.cache.any_age(self.NY)
+        return prog, pool, book
+
+    def test_the_fill_odds_read_the_book_not_his_fair(self):
+        prog, pool, book = self._ready()
+        levels = self.f._levels_net(self.NY, "BUY", book)
+        at8 = self.f._score(self.NY, "BUY", book, prog, pool, 0.08, 0.10, 392.0, levels, is_exit=True)
+        at10 = self.f._score(self.NY, "BUY", book, prog, pool, 0.10, 0.10, 392.0, levels, is_exit=True)
+        self.assertAlmostEqual(at8["pf"], at10["pf"], places=6)
+        self.assertGreater(at8["est"], 5.0)
+
+    def test_the_concession_is_the_unwind_midway_to_the_current_price(self):
+        prog, pool, book = self._ready()
+        levels = self.f._levels_net(self.NY, "BUY", book)
+        at10 = self.f._score(self.NY, "BUY", book, prog, pool, 0.08, 0.10, 392.0, levels, is_exit=True)
+        self.assertAlmostEqual(at10["past"], 0.02, places=4)     # 2c past his fair
+        self.assertAlmostEqual(at10["conc"], 0.01, places=4)     # unwound at 9c: 1c a share
+        self.assertAlmostEqual(at10["loss"], at10["pf"] * 392.0 * 0.01, places=3)
+        at9 = self.f._score(self.NY, "BUY", book, prog, pool, 0.08, 0.09, 392.0, levels, is_exit=True)
+        self.assertAlmostEqual(at9["conc"], 0.0, places=4)       # at the unwind price: nothing
+        entry = self.f._score(self.NY, "BUY", book, prog, pool, 0.08, 0.10, 100.0, levels)
+        self.assertAlmostEqual(entry["conc"], 0.01, places=4)    # an entry the same way
+
+    def test_the_cover_rests_at_the_touch_where_it_earns(self):
+        prog, pool, book = self._ready()
+        ex = self.f._exit_plan(self.NY, "BUY", book, prog, pool, 0.08, 392.0, 0.81)
+        self.assertIsNotNone(ex)
+        self.assertAlmostEqual(ex["px"], 0.10, places=4)
+        self.assertGreater(ex["est"], 5.0)
+        at4 = self.f._score(self.NY, "BUY", book, prog, pool, 0.08, 0.04, 392.0,
+                            self.f._levels_net(self.NY, "BUY", book), is_exit=True)
+        self.assertGreater(ex["ev"], 2 * at4["ev"])
+
+
 class TestTheTenderKeepsItsOwnIds(Base):
     def test_ids_of_orders_still_resting_survive_the_trim(self):
         # 20:37Z, 2026-09-11: an eleven-hour-old cover's id had been
@@ -1672,7 +1740,10 @@ class TestABareSideGetsNoConcession(Base):
         self.assertIsNotNone(plan)
         s_bare = self.f._score(NC, "SELL", bare, prog, pool, 0.62, 0.46, 84.0,
                                self.f._levels_net(NC, "SELL", bare))
-        self.assertGreater(s_bare["conc"], 0.15)
+        # 16c past his fair; charged as an unwind midway between 62c and
+        # the 46c ask: 8c a share (owner, 2026-09-12)
+        self.assertGreater(s_bare["past"], 0.15)
+        self.assertAlmostEqual(s_bare["conc"], 0.08, places=4)
 
     def test_one_resting_past_fair_on_a_bare_side_is_moved(self):
         self.f.set_fair(NC, 62.0)
