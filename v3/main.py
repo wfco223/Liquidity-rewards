@@ -2028,13 +2028,16 @@ class Monitor:
                            or (0.0,))[0]
                 except Exception:  # noqa: BLE001
                     pass
-                # one order carries at most the desk's size rail; the gap
-                # is re-read every pass, so a bigger gap closes in pieces
-                # (2026-09-12: a 2028 nominee's 22,201-share bid wall was
-                # refused "quantity 22201 outside 0.01-20000" and the run
-                # stopped with nothing rested)
-                r = fam.desk.place_resting(market, bs, px,
-                                           float(min(math.ceil(gap), QTY_MAX)),
+                # one order carries at most the desk's size rail, and never
+                # more than the run still needs by its own count: the book
+                # lags our own orders, so the gap it shows does not shrink
+                # as we post (2026-09-12: a 2028 nominee's 22,201-share
+                # bid wall was refused "quantity 22201 outside 0.01-20000";
+                # cut to the rail, the run then placed 20,000 twice against
+                # a gap the book still showed whole — 40,000 rested)
+                want = min(float(math.ceil(gap)), QTY_MAX,
+                           max(float(math.ceil(need - job["shares"])), 1.0))
+                r = fam.desk.place_resting(market, bs, px, want,
                                            net_position=net,
                                            initiator="owner", verify=False)
                 if not (r.ok and r.order_id):
