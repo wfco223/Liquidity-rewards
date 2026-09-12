@@ -1058,6 +1058,46 @@ class TestWholeShares(unittest.TestCase):
         for o in r.fam.orders.values():
             self.assertEqual(o.qty, round(o.qty), o)
 
+    def test_the_tenders_trimmed_order_is_not_retired(self):
+        """The exchange trims a focus order to what the money funds and
+        the tender keeps the trimmed size; the whole-shares cull never
+        touches it (2026-09-12: twenty retirements in an hour, each
+        followed by a fresh placement and a fresh trim)."""
+        from v3.tests.test_family import A
+        from v3.family import FamilyOrder
+        r = self._rig()
+        r.add_market(A)
+        r.cycle()
+        rec = FamilyOrder(id="FOC1", market=A, side="SELL", price=0.73,
+                          qty=285.23, intent="ORDER_INTENT_SELL_SHORT",
+                          placed_ts=r.now, purpose="focus")
+        r.fam.orders["FOC1"] = rec
+        r.exchange.live["FOC1"] = {"id": "FOC1", "market": A,
+                                   "side": "SELL", "price": 0.73,
+                                   "size": 285.23}
+        r.cycle()
+        self.assertIn("FOC1", r.fam.orders)
+        self.assertFalse([e for e in r.fam.log
+                          if e.get("event") == "whole_shares_cull"
+                          and e.get("market") == A])
+
+    def test_a_fractional_order_on_frozen_ground_is_left_alone(self):
+        from v3.tests.test_family import A
+        from v3.family import FamilyOrder
+        r = self._rig()
+        r.add_market(A)
+        r.cycle()
+        rec = FamilyOrder(id="FRZ1", market=A, side="BUY", price=0.42,
+                          qty=2.5, intent="ORDER_INTENT_BUY_LONG",
+                          placed_ts=r.now, purpose="earn")
+        r.fam.orders["FRZ1"] = rec
+        r.exchange.live["FRZ1"] = {"id": "FRZ1", "market": A,
+                                   "side": "BUY", "price": 0.42,
+                                   "size": 2.5}
+        r.fam.freeze_dyn = {A}
+        r.cycle()
+        self.assertIn("FRZ1", r.fam.orders)
+
     def test_live_fractional_order_is_retired(self):
         from v3.tests.test_family import A
         from v3.family import FamilyOrder

@@ -2773,8 +2773,15 @@ class Family:
                               # placement holds until the release rule
                               # (checked in _read_live) or the nurse ends it
             if (self.cfg.whole_shares
-                    and rec.purpose not in ("sell", "manual", "bond")
+                    and rec.purpose not in ("sell", "manual", "bond", "focus")
+                    and not self._frozen(rec.market)
                     and abs(rec.qty - round(rec.qty)) > 1e-9):
+                # the focus tender's orders are its own (2026-09-12,
+                # 03:39-04:34Z: the exchange trims a tender order to
+                # what the buying power funds — 285.23 shares of an
+                # Iowa House ask — the tender keeps the trimmed size,
+                # and this cull retired it a minute later, twenty
+                # times in an hour; frozen ground is never tidied)
                 r = self.desk.cancel(rec.id, rec.market)
                 if r.ok:
                     self.orders.pop(rec.id, None)
