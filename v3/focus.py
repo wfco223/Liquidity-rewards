@@ -882,21 +882,39 @@ class Focus:
         # cost at fill, charged in full on top of the measured markdown,
         # and a mispriced order is assumed to fill faster (the fill
         # model's bait) until its own record says otherwise
+        # owner, 2026-09-12: "The fair amount shouldn't affect the fill
+        # odds. The fill odds should be based on the shape of the book.
+        # The concession should affect the ev but make the concession as
+        # if I sell it back midway between my fair price and the current
+        # price." — `past` is how far past his fair the slot sits; the
+        # concession charged is what a fill loses when the position is
+        # unwound midway between his fair and the side's current price
+        # (a cover at 10c against an 8c fair with the bid at 10c: 1c a
+        # share, not 2c; a slot at 9c: nothing); the fill odds read the
+        # book alone, no bait (until then a 2c concession had pushed the
+        # odds toward certain and a 4c lottery ticket earning nothing
+        # beat the 10c touch earning $9.62 a day)
         conc = 0.0
+        past = 0.0
         if fair is not None:
-            # an entry past his fair, or an exit under it (a sale under
-            # fair, a cover over it): the concession, charged in full
-            conc = max((px - fair) if side == "BUY" else (fair - px), 0.0)
-        conc_ticks = int(round(conc / tick)) if conc > 0 else 0
+            past = max((px - fair) if side == "BUY" else (fair - px), 0.0)
+            if past > 0:
+                cur = float(touch) if touch is not None else float(px)
+                unwind = (float(fair) + cur) / 2.0
+                conc = max((px - unwind) if side == "BUY" else (unwind - px), 0.0)
         try:
-            pf = float(fm.p_fill(slug, side, ticks, shield=closer, target=float(prog.target),
-                                 bait=float(conc_ticks)))
+            pf = float(fm.p_fill(slug, side, ticks, shield=closer, target=float(prog.target)))
         except Exception:  # noqa: BLE001 — the prior stands in
             pf = {0: 0.5, 1: 0.3, 2: 0.15}.get(ticks, 0.08)
         pf = min(max(pf, 0.0), 1.0)
         if is_exit:
-            gain_ps = ((px - fair) if side == "SELL" else (fair - px)) if fair is not None else 0.0
-            loss = -pf * qty * gain_ps            # a fill past fair is a gain
+            if fair is None:
+                gain_ps = 0.0
+            elif past > 0:
+                gain_ps = -conc                   # past fair: the concession, unwound midway
+            else:
+                gain_ps = (px - fair) if side == "SELL" else (fair - px)
+            loss = -pf * qty * gain_ps            # a fill inside fair is a gain
             coll = coc = risk = 0.0
             fc = 0.0
         else:
@@ -915,7 +933,7 @@ class Focus:
                 "pf": round(pf, 4), "fc": round(fc, 4), "loss": round(loss, 4),
                 "coll": round(coll, 2), "coc": round(coc, 4), "ev": round(ev, 4),
                 "risk": round(risk, 2), "ticks": ticks, "share": round(float(j.share), 4),
-                "conc": round(conc, 4)}
+                "conc": round(conc, 4), "past": round(past, 4)}
 
     def _cands(self, side: str, book, fair: float | None,
                bound: bool = False, improve: bool = True) -> list[float]:
@@ -1202,16 +1220,18 @@ class Focus:
                 o.live_pf = s["pf"]
                 o.live_ev = s["ev"]
                 bare = False
-                if not is_exit and s["conc"] > 0 and stake >= 1.0:
+                if not is_exit and s["past"] > 0 and stake >= 1.0:
                     cost_ps = o.price if o.side == "BUY" else 1.0 - o.price
                     room = self._entry_room(f"{slug}|{o.side}", o.side, stake, net, cost, now)
                     full = float(math.floor(room / cost_ps)) if cost_ps > 0 else 0.0
                     bare = full >= 1.0 and self._bare(levels, book.tick or 0.01, full)
-                elif is_exit and s["conc"] > 0:
+                elif is_exit and s["past"] > 0:
                     # an exit under his fair: its company is measured
                     # against its own size (see _exit_plan)
                     bare = self._bare(levels, book.tick or 0.01, float(o.qty))
-                self.scores[o.id] = (s["est"], s["pf"], s["ev"], bare, s["conc"])
+                # slot 4 is how far past his fair the order sits (the
+                # bare test's key), not the concession charged
+                self.scores[o.id] = (s["est"], s["pf"], s["ev"], bare, s["past"])
             row["orders"].append(d)
         row["orders"].sort(key=lambda d: (d["side"], -d["price"]))
         # at a glance: what every order here earns a day, the shares held,
