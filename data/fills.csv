@@ -1351,3 +1351,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789216664.9,politics,ewc-usp-2028-11-07-dontru,SELL,28,0.06,void,0,0,,5,8,0.814,0.06,0.07,0.01,0,voided: the exchange has no trade for order CES3XTKMRTN0 — the row of 09-12 12:0,CES3XTKMRTN0
 1789216664.9,politics,ewc-usp-2028-11-07-dontru,SELL,28,0.06,void,0,0,,5,8,0.814,0.06,0.07,0.01,0,voided: the exchange has no trade for order CES3QT2CJTN1 — the row of 09-12 12:0,CES3QT2CJTN1
 1789216664.9,politics,ewc-usp-2028-11-07-markel,SELL,0.1,0.02,backfill,,0.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CERR67AYATN1
+1789217575.2,politics,ewc-usp-2028-11-07-markel,SELL,-0.1,0.02,fix,1.5694,0.95,,,,0.764,,,,-0.1,size trimmed by 0.1 to the exchange's count (order CERR67AYATN1),CERR67AYATN1
+1789217575.2,politics,ewc-usp-2028-11-07-dontru,SELL,28,0.06,void,0,0,,5,8,0.814,0.06,0.07,0.01,0,voided: the exchange has no trade for order CES4YXHJ8TN2 — the row of 09-12 12:1,CES4YXHJ8TN2
+1789217575.2,politics,ewc-usp-2028-11-07-dontru,SELL,28,0.06,void,0,0,,5,8,0.814,0.06,0.07,0.01,0,voided: the exchange has no trade for order CES5W5J26TN1 — the row of 09-12 12:1,CES5W5J26TN1
+1789217575.2,politics,ewc-usp-2028-11-07-dontru,SELL,28,0.06,void,0,0,,5,8,0.814,0.06,0.07,0.01,0,voided: the exchange has no trade for order CES7QFFXETN2 — the row of 09-12 12:1,CES7QFFXETN2
+1789217575.2,politics,ewc-usp-2028-11-07-dontru,SELL,28,0.06,void,0,0,,5,8,0.814,0.06,0.07,0.01,0,voided: the exchange has no trade for order CES8W6EYWTN3 — the row of 09-12 12:1,CES8W6EYWTN3
+1789217575.2,politics,ewc-usp-2028-11-07-dontru,SELL,28,0.06,void,0,0,,5,8,0.814,0.06,0.07,0.01,0,voided: the exchange has no trade for order CESBGB7QGTN0 — the row of 09-12 12:2,CESBGB7QGTN0
+1789217575.2,politics,ewc-usp-2028-11-07-dontru,SELL,28,0.06,void,0,0,,5,8,0.814,0.06,0.07,0.01,0,voided: the exchange has no trade for order CESBY6ZXRTN0 — the row of 09-12 12:2,CESBY6ZXRTN0
