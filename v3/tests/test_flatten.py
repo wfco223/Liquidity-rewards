@@ -216,6 +216,25 @@ class TestCycleOut(unittest.TestCase):
         pulls = [l for l in r.fam.log if l.get("event") == "pull"]
         self.assertTrue(any("cycling out" in l.get("why", "") for l in pulls))
 
+    def test_a_weak_order_stays_while_the_exchange_refuses_this_address(self):
+        # 2026-09-12, 19:14-19:39Z: the boot took an address the exchange
+        # calls a VPN and the engine cycled 20 orders out mid-block, 18
+        # of them in one second, with no placement possible (owner, "Yes
+        # to those")
+        r, A = self.rig()
+        r.cycle()
+        for o in r.exchange.prog_raw.values():
+            o["timePeriods"][0]["rewardPool"] = 0.05
+        r.cycle(advance=r.fam.cfg.terms_active_s + 1)
+        r.fam.desk.health.refused("your connection looks like a VPN", now=r.now)
+        r.cycle(advance=7300.0)
+        self.assertFalse(any("cycling out" in (l.get("why") or "") for l in r.fam.log))
+        self.assertTrue(r.fam.orders)                    # the book is still there
+        # the address recovers: now it cycles out as before
+        r.fam.desk.health.accepted(now=r.now)
+        r.cycle(advance=7300.0)
+        self.assertTrue(any("cycling out" in (l.get("why") or "") for l in r.fam.log))
+
     def test_healthy_order_is_not_cycled(self):
         r, A = self.rig()
         r.cycle()

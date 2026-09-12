@@ -680,6 +680,16 @@ class Family:
         bid until flat, rest nothing new, never buy."""
         return any(t in slug for t in self.cfg.liquidate_tokens)
 
+    def _place_blocked(self) -> bool:
+        """The desk's placement breaker: the exchange refuses this
+        address's placements as a VPN, so nothing we cancel can be
+        replaced (owner, 2026-09-12 "Yes to those")."""
+        h = getattr(self.desk, "health", None)
+        try:
+            return bool(h is not None and h.blocked())
+        except Exception:  # noqa: BLE001 — never breaks a cycle
+            return False
+
     def _adds_position(self, rec) -> bool:
         """On close-out ground: would this order's fill ADD to what he
         asked out of? A bid opens or adds to a long unless it covers a
@@ -2469,11 +2479,32 @@ class Family:
             self.activity_types = sorted(set(self.activity_types) | set(new_types))[:20]
             self._log(event="activity_types", note="the activity record shows: "
                       + ", ".join(self.activity_types))
-        found: dict = {}
-        self._find_orders(rows, set(self.reason_queue), found)
+        # the activity record carries TRADES only (2026-09-12: every
+        # queued id read "not in the record" and the feed's own type
+        # list was ACTIVITY_TYPE_TRADE alone), so an order that was
+        # cancelled without trading is never in it. The open list is the
+        # other source: it keeps finished orders for a while with their
+        # state and reason (see api.DEAD_ORDER_STATES) — read raw, since
+        # the normalized list drops exactly those rows (owner,
+        # 2026-09-12 "Yes to those").
+        raw: list = []
+        rawfn = getattr(client, "open_orders_raw", None)
+        if rawfn is not None:
+            try:
+                raw = list(rawfn() or [])
+            except Exception as e:  # noqa: BLE001 — the activity record still answers
+                if now - self._reasons_failed_at > 600.0:
+                    self._reasons_failed_at = now
+                    self._log(event="reason_read_failed",
+                              note=f"the open list could not be read raw: {str(e)[:120]}")
+        found_raw: dict = {}
+        found_act: dict = {}
+        self._find_orders(raw, set(self.reason_queue), found_raw)
+        self._find_orders(rows, set(self.reason_queue), found_act)
         for oid, q in list(self.reason_queue.items()):
             q["tries"] = int(q.get("tries") or 0) + 1
-            rec = found.get(oid)
+            rec = found_raw.get(oid) or found_act.get(oid)
+            src = "the open list" if oid in found_raw else "the activity record"
             if rec is not None:
                 state = str(rec.get("state") or rec.get("status") or "")
                 reasons = self._reasons_of(rec)
@@ -2483,7 +2514,7 @@ class Family:
                 if len(self.cancel_reasons) > 40:
                     self.cancel_reasons = dict(sorted(self.cancel_reasons.items(),
                                                       key=lambda kv: -kv[1])[:40])
-                note = f"the exchange lists it as {state or 'no state'}"
+                note = f"{src} lists it as {state or 'no state'}"
                 if reasons:
                     note += ": " + ", ".join(f"{k}={v}" for k, v in reasons.items())
                 else:
@@ -2501,7 +2532,8 @@ class Family:
                     int(self.cancel_reasons.get("not in the record", 0)) + 1)
                 self._log(event="cancel_reason", market=q.get("market"), side=q.get("side"),
                           price=q.get("price"), qty=q.get("qty"), id=oid,
-                          note=f"not in the newest {self.REASONS_PAGES * 100} activities "
+                          note=f"in neither the open list nor the newest "
+                               f"{self.REASONS_PAGES * 100} activities "
                                f"after {q['tries']} reads")
                 del self.reason_queue[oid]
 
@@ -3241,6 +3273,15 @@ class Family:
                 continue
             if ((best is None and ((rec.live_est or 0.0) <= 0.0
                                    or shrink_needed)) or weak):
+                # while the exchange refuses this address's placements as
+                # a VPN, an order that earns little stays: nothing can
+                # replace it, and cycling it out only empties the book
+                # (2026-09-12, 19:14-19:39Z: 20 orders were cycled out
+                # mid-block, 18 of them in one second, with no placement
+                # possible). The size-past-fair pull is a risk pull and
+                # still runs, as do his taps.
+                if self._place_blocked() and not shrink_needed:
+                    continue
                 r = self.desk.cancel(rec.id, rec.market)
                 if r.ok:
                     why = (f"under {self.cfg.min_est_day * 100:.0f}c/day for "
