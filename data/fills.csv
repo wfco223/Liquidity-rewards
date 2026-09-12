@@ -1878,3 +1878,29 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789244079.2,politics,usgubewc-usgub-hi-2026-11-03-rep,BUY,1,0.06,backfill,,29.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE6TM8HT2TN5
 1789245833.0,politics,paccc-usho-midterms-2026-11-03-dem,SELL,62,0.848,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDQRRFCMTSJH
 1789245833.0,politics,usgubewc-usgub-hi-2026-11-03-rep,BUY,1,0.06,backfill,,29.58,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE6TM8HT2TN5
+1789246063.2,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,85.58,0.0696,backfill,,11.78,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEPG57V3ETN5
+1789246075.8,politics,ussewc-usse-de-2026-11-03-dem,SELL,1,0.99,sell,0.0003,4.58,0.998625,96,99,0.716,0.98,0.99,0.0086,0,selling filled stock — it earns while it waits,CEWRQG9FCTMM
+1789246756.2,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,30,0.05,backfill,,14.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEM210JRATMM
+1789246980.2,politics,usgubewc-usgub-ct-2026-11-03-dem,SELL,20,0.93,backfill,,31.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSD0GTMP
+1789247043.5,politics,ewc-usp-2028-11-07-gavnew,BUY,3,0.08,backfill,,12.48,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEP4C1VBTTMQ
+1789247337.4,politics,ussewc-usse-ky-2026-11-03-rep,BUY,0.12,0.93,backfill,,0.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF09G57E4TN5
+1789247990.6,politics,ussewc-usse-il-2026-11-03-dem,SELL,1,0.97,manual,0.0119,33.03,0.996475,,,0.721,,,0.0265,0,the owner's own order — the engine leaves it alone,CE4R5MYMYTMM
+1789247990.6,politics,ussewc-usse-mt-2026-11-03-setbod,BUY,10,0.07,earn,0.5348,1.14,,,,0.5,,,,97,1 tick behind the touch — we would hold 13% of the bid side,CF0758FHCTMM
+1789248403.4,politics,paccc-usse-midterms-2026-11-03-dem,SELL,42,0.482,backfill,,0.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0SPSEY6TN1
+1789248490.3,politics,scc-senate-gop-2026-11-03-51,SELL,79.16,0.12,backfill,,9.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CES3GDS16TN5
+1789248659.3,politics,usgubewc-usgub-wy-2026-11-03-dem,SELL,2,0.02,backfill,,0.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0TTJRVJTMM
+1789248688.6,politics,ussewc-usse-ky-2026-11-03-dem,SELL,20,0.09,backfill,,1.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEZXKV1EETN3
+1789248800.4,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,17.36,0.22,backfill,,35.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789249205.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,738,0.841,backfill,,0.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0T93ZBCTMY
+1789249355.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,137,0.173,hand,,1.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDQ22Q9H2SJ1
+1789249355.9,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,85.58,0.0696,backfill,,11.78,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEPG57V3ETN5
+1789249355.9,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,30,0.05,backfill,,14.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEM210JRATMM
+1789249355.9,politics,usgubewc-usgub-ct-2026-11-03-dem,SELL,20,0.93,backfill,,31.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSD0GTMP
+1789249355.9,politics,ewc-usp-2028-11-07-gavnew,BUY,3,0.08,backfill,,12.48,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEP4C1VBTTMQ
+1789249355.9,politics,ussewc-usse-ky-2026-11-03-rep,BUY,0.12,0.93,backfill,,0.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF09G57E4TN5
+1789249355.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,42,0.482,backfill,,0.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0SPSEY6TN1
+1789249355.9,politics,scc-senate-gop-2026-11-03-51,SELL,79.16,0.12,backfill,,9.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CES3GDS16TN5
+1789249355.9,politics,usgubewc-usgub-wy-2026-11-03-dem,SELL,2,0.02,backfill,,0.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0TTJRVJTMM
+1789249355.9,politics,ussewc-usse-ky-2026-11-03-dem,SELL,20,0.09,backfill,,1.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEZXKV1EETN3
+1789249355.9,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,17.36,0.22,backfill,,35.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789249355.9,politics,paccc-usho-midterms-2026-11-03-dem,SELL,738,0.841,backfill,,0.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0T93ZBCTMY
