@@ -9,6 +9,7 @@ import unittest
 
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
+from v3 import api as api_mod
 from v3.api import ApiError, Client, auth_headers
 
 KEY = Ed25519PrivateKey.from_private_bytes(bytes(range(32)))
@@ -59,12 +60,119 @@ class TestAuth(unittest.TestCase):
         KEY.public_key().verify(base64.b64decode(h["X-PM-Signature"]), b"1GET/x")
 
 
+GW_BOOK = "https://gateway.polymarket.us/v1/markets/m/book"
+API_BAL = "https://api.polymarket.us/v1/balances"
+
+
+def paced_client(*responses, clock0=1_000_000.0):
+    """A client on a fake clock that only sleep moves."""
+    t = {"now": clock0}
+    slept = []
+
+    def sleep(s):
+        slept.append(round(s, 3))
+        t["now"] += s
+    c = Client(key_id="kid", secret_key=SECRET_B64, session=StubSession(responses),
+               sleep=sleep, clock=lambda: t["now"])
+    return c, t, slept
+
+
+class TestTheGatewayThrottle(unittest.TestCase):
+    """Owner, 2026-09-12 "Yes to both": a 429 from the gateway holds every
+    gateway read on every thread for the wait the exchange names, gateway
+    reads are paced across threads, the tender's take the next slot, and
+    every 429 is recorded with its Retry-After."""
+
+    def test_a_429_on_the_gateway_holds_every_gateway_read(self):
+        c, t, slept = paced_client(
+            FakeResponse(429, headers={"Retry-After": "30"}, text="Too Many Requests"),
+            FakeResponse(200, {"ok": 1}),
+            FakeResponse(200, {"book": {"bids": [], "offers": []}}))
+        said = []
+        c.on_throttle = said.append
+        with self.assertRaises(ApiError) as ctx:
+            c.get(GW_BOOK, tries=1)                    # a one-try read: refused with the wait
+        self.assertEqual(ctx.exception.status, 429)
+        self.assertIn("Retry-After 30", str(ctx.exception))
+        self.assertIn("every gateway read held 30s", str(ctx.exception))
+        self.assertAlmostEqual(c.gateway_hold(), 30.0)
+        self.assertEqual(len(said), 1)
+        self.assertEqual((said[0]["path"], said[0]["retry_after"], said[0]["wait"]),
+                         ("/v1/markets/m/book", "30", 30.0))
+        # another one-try gateway read is refused at once — nothing sent
+        with self.assertRaises(ApiError) as ctx:
+            c.get(GW_BOOK, tries=1)
+        self.assertEqual(ctx.exception.status, 429)
+        self.assertIn("held 30s more", str(ctx.exception))
+        self.assertEqual(len(c.session.calls), 1)
+        # the api host is not held
+        self.assertEqual(c.get(API_BAL), {"ok": 1})
+        self.assertEqual(len(c.session.calls), 2)
+        # a retried gateway read waits the hold out, then sends
+        self.assertEqual(c.get(GW_BOOK)["book"]["bids"], [])
+        self.assertIn(30.0, slept)
+        self.assertEqual(c.gateway_hold(), 0.0)
+        self.assertEqual(len(c.throttles), 1)
+        self.assertEqual(c.throttles[0]["host"], "gateway.polymarket.us")
+
+    def test_the_wait_is_the_exchanges_own_or_the_default(self):
+        import email.utils
+        c, t, _ = paced_client(FakeResponse(429))                      # no header
+        with self.assertRaises(ApiError):
+            c.get(GW_BOOK, tries=1)
+        self.assertAlmostEqual(c.gateway_hold(), api_mod.GATEWAY_HOLD_DEFAULT_S)
+        stamp = email.utils.formatdate(1_000_000.0 + 45, usegmt=True)   # an HTTP date
+        c, t, _ = paced_client(FakeResponse(429, headers={"Retry-After": stamp}))
+        with self.assertRaises(ApiError):
+            c.get(GW_BOOK, tries=1)
+        self.assertAlmostEqual(c.gateway_hold(), 45.0)
+        c, t, _ = paced_client(FakeResponse(429, headers={"Retry-After": "600"}))
+        with self.assertRaises(ApiError):
+            c.get(GW_BOOK, tries=1)
+        self.assertAlmostEqual(c.gateway_hold(), api_mod.GATEWAY_HOLD_MAX_S)
+
+    def test_a_429_on_the_api_host_is_recorded_but_holds_no_gateway_read(self):
+        c, t, slept = paced_client(FakeResponse(429, headers={"Retry-After": "5"}),
+                                   FakeResponse(200, {"book": {}}))
+        with self.assertRaises(ApiError) as ctx:
+            c.get(API_BAL, tries=1)
+        self.assertIn("this read held 5s", str(ctx.exception))
+        self.assertEqual(c.gateway_hold(), 0.0)
+        self.assertEqual(c.throttles[-1]["host"], "api.polymarket.us")
+        self.assertEqual(c.get(GW_BOOK, tries=1), {"book": {}})
+
+    def test_gateway_reads_are_paced_and_api_reads_are_not(self):
+        c, t, slept = paced_client(*[FakeResponse(200, {"n": i}) for i in range(5)])
+        gap = round(1.0 / api_mod.GATEWAY_PACE_PER_S, 3)
+        for _ in range(3):
+            c.get(GW_BOOK)
+        self.assertEqual(slept, [gap, gap])
+        c.get(API_BAL)
+        c.get(API_BAL)
+        self.assertEqual(slept, [gap, gap])
+
+    def test_a_priority_read_takes_the_slot_ahead_of_an_ordinary_one(self):
+        c, t, slept = paced_client(FakeResponse(200, {"n": 1}), FakeResponse(200, {"n": 2}))
+        gap = round(1.0 / api_mod.GATEWAY_PACE_PER_S, 3)
+        c._gw_prio_waiting = 1                       # the tender is waiting for a slot
+        real_sleep = c._sleep
+
+        def sleep(s):                                # ...and takes it during our wait
+            real_sleep(s)
+            c._gw_prio_waiting = 0
+        c._sleep = sleep
+        self.assertEqual(c.get(GW_BOOK), {"n": 1})   # the ordinary read yielded once
+        self.assertEqual(slept, [gap])
+        self.assertEqual(c.get(GW_BOOK, priority=True), {"n": 2})
+
+
 class TestRetry(unittest.TestCase):
     def test_429_honours_retry_after_then_succeeds(self):
         c = client(FakeResponse(429, headers={"Retry-After": "0.01"}),
                    FakeResponse(200, {"ok": True}))
         self.assertEqual(c.get("https://x.test/v1/thing"), {"ok": True})
         self.assertEqual(len(c.session.calls), 2)
+        self.assertEqual(len(c.throttles), 1)
 
     def test_plain_4xx_raises_immediately(self):
         c = client(FakeResponse(403, text="forbidden"))
