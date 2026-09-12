@@ -5359,3 +5359,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789205700.9,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,28.66,0.03,hand,,22.02,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE3VTVRDCTMM
 1789205700.9,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,0.3,0.02,hand,,6.1,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CEHHGGDVJTN0
 1789205700.9,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,9.77,0.02,hand,,6.94,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CEGTRCNY0TMP
+1789206392.2,politics,usgubewc-usgub-md-2026-11-03-dem,SELL,20,0.99,void,0,0.1,0.99995,96,99,0.718,0.91,0.93,0.01,0,voided: the exchange has no trade for order CEPH5ZSF2TMQ — the row of 09-12 09:0,CEPH5ZSF2TMQ
+1789206392.2,politics,usgubewc-usgub-nm-2026-11-03-dem,SELL,1,0.97,void,0,20.52,0.9865,90,94,0.414,0.9,0.92,0.0165,49,voided: the exchange has no trade for order CE50TRAHTTN5 — the row of 09-12 09:1,CE50TRAHTTN5
+1789206392.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,517,0.175,hand,,4.31,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDN60H4HPSX4
