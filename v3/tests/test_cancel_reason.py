@@ -9,6 +9,14 @@ import unittest
 from v3.tests.test_family import A, Rig
 
 
+def _quick_reads(r):
+    """The production interval is five minutes (2026-09-12: the record
+    reads run inside the family's cycle); these tests step in two-minute
+    cycles, so shorten it for the rig alone."""
+    r.fam.REASONS_EVERY_S = 60.0
+    return r
+
+
 def _vanish_one(r):
     """Rest an order, then have the exchange drop it without our cancel;
     cycle until the family books the silent cancel."""
@@ -26,8 +34,29 @@ def _vanish_one(r):
 
 class TestTheCancelReasonRead(unittest.TestCase):
 
+    def test_the_reads_cannot_stall_the_cycle(self):
+        """2026-09-12, 20:25-20:52Z: the feed's 429s and timeouts took the
+        retry ladder — 15s, 30s, 45s — inside the family's cycle, and the
+        lap went from 4 s to 1,177 s, so every exit, cancel and settle ran
+        up to twenty minutes late. One try, a short timeout, five minutes
+        apart."""
+        from v3.family import Family
+        self.assertEqual(Family.REASONS_EVERY_S, 300.0)
+        self.assertLessEqual(Family.REASONS_TIMEOUT_S, 10.0)
+        r = _quick_reads(Rig())
+        seen = []
+        real_act, real_raw = r.exchange.activities, r.exchange.open_orders_raw
+        r.exchange.activities = lambda **kw: (seen.append(("act", kw)), real_act(**kw))[1]
+        r.exchange.open_orders_raw = lambda **kw: (seen.append(("raw", kw)), real_raw(**kw))[1]
+        oid, rec = _vanish_one(r)
+        r.cycle(advance=120.0)
+        self.assertTrue(seen)
+        for what, kw in seen:
+            self.assertEqual(kw.get("tries"), 1, what)
+            self.assertLessEqual(float(kw.get("timeout") or 99.0), 10.0, what)
+
     def test_a_vanished_order_gets_the_exchanges_own_reason(self):
-        r = Rig()
+        r = _quick_reads(Rig())
         oid, rec = _vanish_one(r)
         self.assertIn(oid, r.fam.reason_queue)
         r.exchange.activity_rows = [{
@@ -47,7 +76,7 @@ class TestTheCancelReasonRead(unittest.TestCase):
         self.assertTrue(any(l.get("event") == "activity_types" for l in r.fam.log))
 
     def test_an_unspecified_reason_reads_as_the_state_alone(self):
-        r = Rig()
+        r = _quick_reads(Rig())
         oid, rec = _vanish_one(r)
         r.exchange.activity_rows = [{
             "type": "ACTIVITY_TYPE_TRADE",
@@ -65,7 +94,7 @@ class TestTheCancelReasonRead(unittest.TestCase):
         self.assertEqual(r.fam.cancel_reasons.get("ORDER_STATE_FILLED"), 1)
 
     def test_a_failing_record_read_is_logged_once_and_never_breaks_the_cycle(self):
-        r = Rig()
+        r = _quick_reads(Rig())
         oid, rec = _vanish_one(r)
         r.exchange.activities_fail = True
         for _ in range(5):
@@ -75,7 +104,7 @@ class TestTheCancelReasonRead(unittest.TestCase):
         self.assertIn(oid, r.fam.reason_queue)          # still waiting for an answer
 
     def test_an_order_the_record_never_shows_is_given_up_after_six_reads(self):
-        r = Rig()
+        r = _quick_reads(Rig())
         oid, rec = _vanish_one(r)
         for _ in range(8):
             r.cycle(advance=120.0)
@@ -91,7 +120,7 @@ class TestTheCancelReasonRead(unittest.TestCase):
         # and all 16 queued ids read "not in the record". The open list
         # keeps a finished order for a while with its state and reason
         # (owner, "Yes to those").
-        r = Rig()
+        r = _quick_reads(Rig())
         oid, rec = _vanish_one(r)
         r.exchange.raw_rows = [{
             "id": oid, "marketSlug": A, "state": "ORDER_STATE_CANCELED",
@@ -107,7 +136,7 @@ class TestTheCancelReasonRead(unittest.TestCase):
         self.assertEqual(r.fam.cancel_reasons.get("UNSOLICITED_CXL_REASON_INSUFFICIENT_MARGIN"), 1)
 
     def test_a_failing_open_list_read_never_breaks_the_cycle(self):
-        r = Rig()
+        r = _quick_reads(Rig())
         oid, rec = _vanish_one(r)
         r.exchange.raw_fail = True
         for _ in range(3):
@@ -118,7 +147,7 @@ class TestTheCancelReasonRead(unittest.TestCase):
         self.assertIn(oid, r.fam.reason_queue)       # still waiting for an answer
 
     def test_the_queue_and_the_counts_survive_a_restart(self):
-        r = Rig()
+        r = _quick_reads(Rig())
         oid, rec = _vanish_one(r)
         r.fam.cancel_reasons["UNSOLICITED_CXL_REASON_X"] = 3
         d = r.fam.to_dict()

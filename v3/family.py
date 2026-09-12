@@ -589,6 +589,7 @@ class Family:
         self.activity_types: list[str] = []       # the activity types the feed has shown
         self._reasons_at = 0.0
         self._reasons_failed_at = 0.0
+        self.reasons_read_s = 0.0     # how long the last record read took, in the cycle
         self.gone_pending: dict[str, dict] = {}   # vanished, feed pending
         self.exit_float: dict[str, dict] = {}     # "slug|side" -> {px, since, steps}
         self.float_day: dict = {"day": "", "usd": 0.0}
@@ -2452,9 +2453,13 @@ class Family:
                 self.evidence.order_gone(rec.market, rec.id)
 
     # -- the exchange's own word on a vanished order ------------------------------
-    REASONS_EVERY_S = 60.0        # one activities read a minute at most
+    REASONS_EVERY_S = 300.0       # one record read every five minutes at most: this
+                                  # is diagnostics and it runs inside the cycle
+    REASONS_TIMEOUT_S = 8.0       # ...with ONE try and a short timeout, never the
+                                  # retry ladder (2026-09-12: the ladder's 15/30/45s
+                                  # waits took the family's lap to 1,177 s)
     REASONS_PAGES = 2             # the newest ~200 activities
-    REASONS_TRIES = 6             # the feed lags: about six minutes of looking
+    REASONS_TRIES = 6             # the feed lags: about six looks
     REASONS_KEEP_S = 24 * 3600.0
 
     @staticmethod
@@ -2503,8 +2508,17 @@ class Family:
         if fn is None or now - self._reasons_at < self.REASONS_EVERY_S:
             return
         self._reasons_at = now
+        # ONE try, a short timeout, and never the retry ladder: this is
+        # diagnostics and it runs INSIDE the family's cycle (2026-09-12,
+        # 20:25-20:52Z: the activity feed's 429s and read timeouts took
+        # the retry ladder — 15s, 30s, 45s — and the family's lap went
+        # from 4 s to 125 s to 1,177 s, so every exit, cancel and settle
+        # ran up to twenty minutes late; the open-list read I added to
+        # this path doubled the exposure)
+        t0 = time.time()
         try:
-            rows = fn(pages=self.REASONS_PAGES)
+            rows = fn(pages=self.REASONS_PAGES, tries=1,
+                      timeout=self.REASONS_TIMEOUT_S)
         except Exception as e:  # noqa: BLE001 — the feed times out at times
             if now - self._reasons_failed_at > 600.0:
                 self._reasons_failed_at = now
@@ -2512,6 +2526,10 @@ class Family:
                           note=f"the activity record could not be read: {str(e)[:120]}")
             return
         rows = list(rows or [])
+        self.reasons_read_s = round(time.time() - t0, 2)
+        if self.reasons_read_s > 5.0:
+            self._log(event="reason_read_slow",
+                      note=f"the record reads took {self.reasons_read_s:.1f}s inside the cycle")
         seen_types = sorted({str(r.get("type")) for r in rows if isinstance(r, dict) and r.get("type")})
         new_types = [t for t in seen_types if t not in self.activity_types]
         if new_types:
@@ -2530,7 +2548,7 @@ class Family:
         rawfn = getattr(client, "open_orders_raw", None)
         if rawfn is not None:
             try:
-                raw = list(rawfn() or [])
+                raw = list(rawfn(tries=1, timeout=self.REASONS_TIMEOUT_S) or [])
             except Exception as e:  # noqa: BLE001 — the activity record still answers
                 if now - self._reasons_failed_at > 600.0:
                     self._reasons_failed_at = now
