@@ -230,7 +230,6 @@ FOCUS_VANISH_WAIT_S = 600.0     # an order gone from the open list is a fill onl
                                 # restored order
 MINE_IDS_KEEP = 600
 FOCUS_ACTIONS_PER_PASS = 8      # places, moves and pulls a pass
-FOCUS_MAX_ORDERS = 40           # the tender's own orders, all markets
 # the stream's 200 subscriptions (owner, 2026-09-10: "we'll have to
 # dramatically reduce its websocket budget"): the focus markets seat
 # first, up to FOCUS_WS_CAP; the old engine's whole list — bonds,
@@ -1700,24 +1699,12 @@ class Focus:
                     actions -= room[1]
                     if actions <= 0:
                         break
-                n_mine = sum(1 for o in list(self.fam.orders.values()) if o.purpose == PURPOSE)
-                if n_mine >= FOCUS_MAX_ORDERS and not is_exit:
-                    # the order cap was first-come-first-served and
-                    # silent: 40 slots held whichever sides reached them
-                    # first, and a better side waited out of sight
-                    # (2026-09-12, 20:12Z: the cap was full and 26 sides
-                    # with a fair rested nothing, none of them logged).
-                    # A plan that beats the weakest resting entry by the
-                    # same margin the loss cap uses takes its slot.
-                    spent = self._make_slot(now, slug, side, plan, actions)
-                    if spent is None:
-                        self._idle(key, slug, side, plan, None, now,
-                                   f"at the {FOCUS_MAX_ORDERS}-order cap and no resting "
-                                   "entry is weak enough to give up its slot")
-                        continue                  # an exit is never held back
-                    actions -= spent
-                    if actions <= 0:
-                        break
+                # NO CAP ON THE NUMBER OF ORDERS (owner, 2026-09-12
+                # "There should not be a 40 order cap. Where did that
+                # come from" — it came from me, in the tender's first
+                # commit, and he never asked for it): what bounds the
+                # tender is the expected-loss cap he sets and the money
+                # the exchange leaves free, both above.
                 need = self._need(plan, side, is_exit)
                 limit = max(free - FOCUS_BP_KEEP_FREE_USD, 0.0) if free is not None else None
                 if limit is not None and need > limit + 0.5:
@@ -1921,49 +1908,6 @@ class Focus:
         if now - float(rec.get("said") or 0.0) >= FOCUS_IDLE_SAY_S:
             rec["said"] = now
             self._log(event="idle_side", market=slug, side=side, why=why[:160])
-
-    def _make_slot(self, now: float, slug: str, side: str, plan: dict,
-                   actions: int) -> int | None:
-        """The order cap is full and this plan wants in: the weakest
-        resting entry by value gives up its slot, and only when the plan
-        beats it by FOCUS_DISPLACE_MARGIN and it has rested past
-        FOCUS_DISPLACE_GRACE_S — the same rule the expected-loss cap
-        uses. Returns the actions spent, or None to leave the cap as it
-        is."""
-        if actions <= 0:
-            return None
-        if now - self.displaced_at.get(f"{slug}|{side}", 0.0) < FOCUS_DISPLACED_REST_S:
-            return None
-        mine_val = self._value(float(plan["ev"]), float(plan["risk"]))
-        weakest = None
-        for o in list(self.fam.orders.values()):
-            if (o.purpose != PURPOSE or o.market not in self.markets or self._exit_order(o)
-                    or (o.market == slug and o.side == side)):
-                continue
-            if now - float(o.placed_ts or 0.0) < FOCUS_DISPLACE_GRACE_S:
-                continue
-            risk = self._entry_risk(o)
-            if risk <= 1e-9:
-                continue
-            val = self._value(float(self._own_ev(o) or 0.0), risk)
-            if val * FOCUS_DISPLACE_MARGIN > mine_val:
-                continue
-            if weakest is None or val < weakest[0]:
-                weakest = (val, o)
-        if weakest is None:
-            return None
-        val, o = weakest
-        r = self.fam.desk.cancel(o.id, o.market, initiator="auto")
-        if not r.ok:
-            return None
-        self.fam.orders.pop(o.id, None)
-        self._forget(o.id)
-        self.moved_at[f"{o.market}|{o.side}"] = now
-        self.displaced_at[f"{o.market}|{o.side}"] = now
-        self._log(event="pull", market=o.market, side=o.side, price=o.price, qty=o.qty,
-                  why=(f"its slot goes to {self._label(slug)[:28]} {side} — "
-                       f"${mine_val:.2f} a day per $ of expected loss against ${val:.2f}"))
-        return 1
 
     @staticmethod
     def _why(plan: dict, is_exit: bool) -> str:
