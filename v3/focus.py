@@ -1624,6 +1624,18 @@ class Focus:
                     since = self.weak_since.setdefault(key, now)
                     if now - since < FOCUS_WEAK_DWELL_S:
                         continue
+                    # and while the exchange refuses this address's
+                    # placements, nothing comes off that could not come
+                    # back — what the page and the alert already promise
+                    # (17:09-18:09Z, 2026-09-12: the boot took an address
+                    # the exchange calls a VPN, 60 placements were refused
+                    # and none rested, while this pull took the tender
+                    # from 39 orders to 18 and the day's rate from $1,110
+                    # to $403). A pull that reduces risk still runs: a
+                    # duplicate, a hold, an order past his fair on a bare
+                    # side, the close-out's own, and his taps.
+                    if blocked:
+                        continue
                 if cur is not None:
                     r = self.fam.desk.cancel(cur.id, slug, initiator="auto")
                     if r.ok:
