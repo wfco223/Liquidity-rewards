@@ -3642,6 +3642,30 @@ class TestQualifyTheSide(Base):
         bond = [o for o in self.orders(AL, "SELL") if o.purpose == "bond"]
         self.assertEqual(sum(o.qty for o in bond), 100.0)
 
+    def test_a_gap_over_the_size_rail_is_built_in_pieces(self):
+        # 2026-09-12, a 2028 nominee's bid wall: the run sent the whole
+        # 22,201-share gap as one order and the desk's own rail refused
+        # it ("quantity 22201 outside 0.01-20000") — nothing rested
+        from v3.orders import QTY_MAX
+        self.seed(AL, Book(bids=((0.05, 100.0),), asks=((0.06, 100.0),), tick=0.01,
+                           fetched_at=self.now))
+        import types as _t
+        g = self.r.fam.terms.get                        # a 20,000 target for this market
+        self.r.fam.terms.get = lambda slug, _g=g: _t.SimpleNamespace(target=20000.0) if slug == AL else _g(slug)
+        m = self._mon()
+        m._qualify_jobs[AL] = {"bs": "BUY", "target": 20000.0, "ask_total": 100.0,
+                               "goal": 25000.0, "placed": 0, "shares": 0.0,
+                               "state": "running"}
+        job = m._qualify_run(AL, self.r.fam)
+        walls = sorted((o for o in self.r.fam.orders.values()
+                        if o.market == AL and o.purpose == "manual"),
+                       key=lambda o: o.placed_ts)
+        self.assertGreaterEqual(len(walls), 2)
+        self.assertTrue(all(o.qty <= QTY_MAX + 1e-9 for o in walls))
+        self.assertAlmostEqual(walls[0].qty, QTY_MAX, places=2)   # the rail's worth first
+        self.assertGreaterEqual(sum(o.qty for o in walls), 24900.0 - 1.0)
+        self.assertNotIn("outside", job.get("stop") or "")
+
     def test_the_button_refuses_a_side_already_over_the_line(self):
         self.b.approve(AL, self.now)
         self.bond(AL, "YES", 100.0, 0.90)         # yes_book: 20,000 at 99.9c
