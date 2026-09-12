@@ -5164,3 +5164,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789175507.0,politics,ewc-usp-2028-11-07-andbes,BUY,400,0.05,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEF565GCGTMX
 1789175507.0,politics,paccc-usho-midterms-2026-11-03-rep,BUY,70,0.164,backfill,,0.62,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEEYRV0M2TMP
 1789175507.0,cfb,aachc-cfb-wins-2026-11-28-cah-6pt5wins,SELL,0.1,0.42,backfill,,12.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CDKQPJS92SX4
+1789175567.0,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,43.4,0.22,sell,15.5643,14.74,0.1639,22,26,0.391,0.21,0.22,-0.0561,74.6,an exit — its fill reduces the position it sits on,CE2EGZ1FETMM
+1789175582.6,politics,scc-hrep-rep-2026-11-03-gte230,SELL,0.18,0.03,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEFW1CXK2TMP
+1789175593.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,181,0.165,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEFXH47NMTMQ
+1789175627.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,181,0.165,manual,88.1324,0.03,0.1414,19,21,0.926,0.164,0.165,-0.0236,-239,the owner's own order — the engine leaves it alone,CEFTT0RMJTMQ
+1789175627.0,politics,scc-hrep-rep-2026-11-03-gte230,SELL,6,0.03,focus,23.3313,0.08,0.016475,2,6,0.303,0.02,0.03,-0.0135,-6,focus entry: ~$17.43/day; fill odds 32%/day; EV +10.11/day,CEFW1CXK2TMP
+1789175627.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,35,0.165,focus,328.195,0.02,0.1414,19,21,0.926,0.164,0.165,-0.0236,-274,focus entry: ~$82.14/day; fill odds 90%/day; EV +77.36/day,CEFXH47NMTMQ
+1789176055.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,853,0.842,hand,,0.42,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDGSNHVVWSJ1
+1789176055.6,politics,ewc-usse-tx-2026-11-03-dem,SELL,30,0.47,hand,,10.91,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7VQA77RSX0
+1789176055.6,politics,scc-hrep-rep-2026-11-03-gte230,SELL,0.18,0.03,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEFW1CXK2TMP
+1789176055.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,181,0.165,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEFXH47NMTMQ
