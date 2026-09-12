@@ -255,11 +255,15 @@ long and accreted, so search it rather than reading it through.
   North Carolina senate dem ask read as money left on the table when
   the tender had already priced the fill cost at 8.9c a share and
   scored the slot −$26 a day; of 27 such sides only 2 had positive
-  expected value, worth $24 a day between them). The 40-order cap
-  goes BY VALUE, not first come: a plan that beats the weakest
-  resting entry by the margin the expected-loss cap uses (double,
-  past the half-hour grace) takes its slot, and being at the cap is
-  logged rather than skipped in silence. An exit always rests as the
+  expected value, worth $24 a day between them). NOTHING CAPS THE
+  NUMBER OF THE TENDER'S ORDERS (owner, 2026-09-12 "There should not
+  be a 40 order cap. Where did that come from"): a FOCUS_MAX_ORDERS
+  of 40 had been in the tender since its first commit on 2026-09-10
+  and he never asked for it — it duplicated, at a number he could not
+  see or set, the two bounds that are his (the expected-loss cap and
+  the money the exchange leaves free), and on 2026-09-12 it sat full
+  while 26 sides with a fair rested nothing. It is gone, and with it
+  the slot-rationing it needed. An exit always rests as the
   position leaving — a cover as SELL_SHORT, a sale of the lot as
   SELL_LONG — and a resting entry on the exit's side is re-laid as
   the exit whatever its own reading, so the lot is never left
