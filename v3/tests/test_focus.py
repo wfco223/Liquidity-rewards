@@ -1599,6 +1599,67 @@ class TestTheConcessionIsUnwoundMidway(Base):
         self.assertGreater(ex["ev"], 2 * at4["ev"])
 
 
+class TestGhostNetting(Base):
+    """Owner, 2026-09-12 "Yes, do the ghost netting": an order the tender
+    moved or pulled is netted out of the book for a minute — the
+    exchange's book shows it for a read or two after the cancel, and
+    it had read as company and as the touch (the NY governor rep cover
+    flipped 4c<->10c chasing its own shadow)."""
+
+    def _rest_and_pull(self):
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        o = self.mine(NC, "BUY")[0]
+        # the tender's own pull: the record goes, the id is forgotten
+        self.r.exchange.live.pop(o.id, None)
+        self.r.fam.orders.pop(o.id, None)
+        self.f._forget(o.id)
+        return o
+
+    def test_the_ghost_is_netted_out_while_the_book_still_shows_it(self):
+        o = self._rest_and_pull()
+        ghost = Book(bids=((o.price, o.qty + 5.0), (0.02, 60000.0)),
+                     asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01, fetched_at=self.r.now)
+        lv = dict(self.f._levels_net(NC, "BUY", ghost))
+        self.assertAlmostEqual(lv.get(o.price, 0.0), 5.0, places=6)     # the others alone
+        only = Book(bids=((o.price, o.qty), (0.02, 60000.0)),
+                    asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01, fetched_at=self.r.now)
+        lv2 = self.f._levels_net(NC, "BUY", only)
+        self.assertNotIn(o.price, dict(lv2))                             # no level, no touch
+        self.assertAlmostEqual(lv2[0][0], 0.02, places=6)
+
+    def test_the_ghost_is_forgotten_after_a_minute(self):
+        o = self._rest_and_pull()
+        self.r.now += 61.0
+        late = Book(bids=((o.price, o.qty), (0.02, 60000.0)),
+                    asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01, fetched_at=self.r.now)
+        lv = dict(self.f._levels_net(NC, "BUY", late))
+        self.assertAlmostEqual(lv.get(o.price, 0.0), o.qty, places=6)   # a stranger's now
+        self.assertFalse(self.f.departed.get(f"{NC}|BUY"))
+
+    def test_a_book_read_well_after_the_cancel_is_not_netted(self):
+        o = self._rest_and_pull()
+        fresh = Book(bids=((o.price, o.qty), (0.02, 60000.0)),
+                     asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01,
+                     fetched_at=self.r.now + 61.0)
+        lv = dict(self.f._levels_net(NC, "BUY", fresh))
+        self.assertAlmostEqual(lv.get(o.price, 0.0), o.qty, places=6)
+
+    def test_a_fresh_rest_pulled_before_it_was_ever_scored_still_leaves_its_ghost(self):
+        # the price is remembered at the rest itself, not only at the
+        # next pass's scoring
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        o = self.mine(NC, "BUY")[0]
+        self.assertIn(o.id, self.f._px_seen)
+        self.r.exchange.live.pop(o.id, None)
+        self.r.fam.orders.pop(o.id, None)
+        self.f._forget(o.id)
+        ghosts = self.f.departed.get(f"{NC}|BUY") or []
+        self.assertTrue(any(abs(g[0] - o.price) < 1e-9 and abs(g[1] - o.qty) < 1e-9 for g in ghosts))
+        self.assertNotIn(o.id, self.f._px_seen)
+
+
 class TestTheTenderKeepsItsOwnIds(Base):
     def test_ids_of_orders_still_resting_survive_the_trim(self):
         # 20:37Z, 2026-09-11: an eleven-hour-old cover's id had been

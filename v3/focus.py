@@ -163,6 +163,11 @@ FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much
 FOCUS_SIZE_FRACS = (1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1)
 FOCUS_MOVE_COOLDOWN_S = 300.0   # an entry moves at most this often
 FOCUS_EXIT_COOLDOWN_S = 60.0    # an exit follows the touch and the lot within a minute
+FOCUS_GHOST_S = 60.0            # an order the tender moved or pulled is netted out of the
+                                # book this long (owner, 2026-09-12 "Yes, do the ghost
+                                # netting": the exchange's book showed the old order for a
+                                # read or two after a move, it read as company and as the
+                                # touch, and the NY governor rep cover flipped 4c<->10c)
                                 # (owner, 2026-09-10: "Exit orders should never be held
                                 # and don't need to ramp up. They can always be placed")
 # an order whose expected value reads under zero comes off only after
@@ -268,6 +273,10 @@ class Focus:
         # had just rested at +$168 a day read −$697 a minute later, a 62c
         # fill cost a share), and the tender must judge by its own numbers
         self.scores: dict[str, tuple[float, float, float]] = {}
+        # ghosts: what the tender moved or pulled off a side, for the
+        # book's lag — netted out of the levels like its resting orders
+        self.departed: dict[str, list] = {}       # "slug|side" -> [[price, qty, ts], ...]
+        self._px_seen: dict[str, tuple] = {}       # id -> (slug, side, price, qty) last scored
         self.rate_hist: dict[str, dict[str, float]] = {}   # slug -> bucket -> max rate
         # the qualify button's run note, slug -> one line (set by the
         # monitor, which owns the wall runs); owner, 2026-09-11 "Give me
@@ -636,11 +645,23 @@ class Focus:
         the tender's any more (the open list lags a cancel by a read
         and the family adopts the ghost as the owner's; it drops when
         the list catches up — the tender must not cancel it twice)."""
-        self._gone_by_me[oid] = float(self._clock())
+        now = float(self._clock())
+        self._gone_by_me[oid] = now
         self._last_mine.pop(oid, None)
         self._vanished.pop(oid, None)
         if oid in self.mine_ids:
             self.mine_ids.remove(oid)
+        # the ghost: the book may show this order for a read or two
+        # yet, and it must read as ours still, never as company or as
+        # the touch (owner, 2026-09-12 "Yes, do the ghost netting")
+        rec = self.fam.orders.get(oid)
+        seen = ((rec.market, rec.side, float(rec.price), float(rec.qty)) if rec is not None
+                else self._px_seen.get(oid))
+        if seen is not None:
+            slug, side, px, qty = seen
+            if qty > 0:
+                self.departed.setdefault(f"{slug}|{side}", []).append([float(px), float(qty), now])
+        self._px_seen.pop(oid, None)
 
     def _withdraw(self, oid: str, slug: str, side: str, qty: float, now: float,
                   is_exit: bool, cancel: bool = True) -> str:
@@ -858,6 +879,23 @@ class Focus:
             if read_at and float(o.placed_ts or 0.0) >= read_at - 1e-6:
                 continue
             raw = [(p, (q - o.qty) if abs(p - o.price) < tick / 2 else q) for p, q in raw]
+        # the ghosts: an order the tender moved or pulled off this side
+        # inside FOCUS_GHOST_S is netted out too — the book shows it for
+        # a read or two after the cancel, and until 2026-09-12 it read
+        # as company and as the touch (owner: "Yes, do the ghost netting")
+        key = f"{slug}|{side}"
+        ghosts = self.departed.get(key)
+        if ghosts:
+            now = float(self._clock())
+            keep = [g for g in ghosts if now - float(g[2]) <= FOCUS_GHOST_S]
+            if keep:
+                self.departed[key] = keep
+            else:
+                self.departed.pop(key, None)
+            for gpx, gq, gts in keep:
+                if read_at and read_at > float(gts) + FOCUS_GHOST_S:
+                    continue          # a book read well after the cancel: no ghost in it
+                raw = [(p, (q - gq) if abs(p - gpx) < tick / 2 else q) for p, q in raw]
         return [(p, q) for p, q in raw if q > 1e-9]
 
     def _score(self, slug: str, side: str, book, prog, pool: float,
@@ -1232,6 +1270,7 @@ class Focus:
                 # slot 4 is how far past his fair the order sits (the
                 # bare test's key), not the concession charged
                 self.scores[o.id] = (s["est"], s["pf"], s["ev"], bare, s["past"])
+                self._px_seen[o.id] = (slug, o.side, float(o.price), float(o.qty))
             row["orders"].append(d)
         row["orders"].sort(key=lambda d: (d["side"], -d["price"]))
         # at a glance: what every order here earns a day, the shares held,
@@ -1639,6 +1678,7 @@ class Focus:
                         live_est=plan["est"], live_pf=plan["pf"], live_ev=plan["ev"])
                     self.moved_at[key] = now
                     self._last_mine[r.order_id] = (slug, side, rested, is_exit)
+                    self._px_seen[r.order_id] = (slug, side, float(r.price or plan["px"]), float(rested))
                     self.no_money_at.pop(key, None)
                     if free is not None:
                         free -= self._need({"px": (r.price or plan["px"]), "qty": rested}, side, is_exit)
@@ -1660,6 +1700,7 @@ class Focus:
                         live_ev=plan["ev"])
                     self.moved_at[key] = now
                     self._last_mine[r.order_id] = (slug, side, plan["qty"], is_exit)
+                    self._px_seen[r.order_id] = (slug, side, float(r.price or plan["px"]), float(plan["qty"]))
                     self.no_money_at.pop(key, None)
                     if free is not None:
                         free -= self._need(plan, side, is_exit)
@@ -1750,6 +1791,7 @@ class Focus:
                 live_est=plan["est"], live_pf=plan["pf"], live_ev=plan["ev"])
             self.moved_at[key] = now
             self._last_mine[r.order_id] = (slug, side, rested, is_exit)
+            self._px_seen[r.order_id] = (slug, side, float(r.price or plan["px"]), float(rested))
             if not is_exit:
                 used += plan["risk"] - cur_risk
             self._log(event="moved", market=slug, side=side, price=(r.price or plan["px"]),
