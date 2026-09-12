@@ -3666,6 +3666,30 @@ class TestQualifyTheSide(Base):
         self.assertGreaterEqual(sum(o.qty for o in walls), 24900.0 - 1.0)
         self.assertNotIn("outside", job.get("stop") or "")
 
+    def test_a_lagging_book_never_makes_the_run_post_the_gap_twice(self):
+        # 01:34Z, 2026-09-12: the book did not show the run's own first
+        # 20,000 for a pass, the gap read whole again, and a second
+        # 20,000 went in — 40,000 against a 25,000 goal
+        import types as _t
+        from v3.orders import QTY_MAX
+        self.seed(AL, Book(bids=((0.05, 100.0),), asks=((0.06, 100.0),), tick=0.01,
+                           fetched_at=self.now))
+        g = self.r.fam.terms.get
+        self.r.fam.terms.get = lambda slug, _g=g: _t.SimpleNamespace(target=20000.0) if slug == AL else _g(slug)
+        m = self._mon()
+        # the book the exchange serves never catches up with our orders
+        self.r.exchange.post = _t.MethodType(type(self.r.exchange).post, self.r.exchange)
+        m._qualify_jobs[AL] = {"bs": "BUY", "target": 20000.0, "ask_total": 100.0,
+                               "goal": 25000.0, "placed": 0, "shares": 0.0,
+                               "state": "running"}
+        job = m._qualify_run(AL, self.r.fam)
+        walls = sorted((o for o in self.r.fam.orders.values()
+                        if o.market == AL and o.purpose == "manual"),
+                       key=lambda o: o.placed_ts)
+        self.assertEqual([o.qty for o in walls], [QTY_MAX, 4900.0])
+        self.assertAlmostEqual(job["shares"], 24900.0, places=1)
+        self.assertIn("rested the full gap", job.get("stop") or "")
+
     def test_the_button_refuses_a_side_already_over_the_line(self):
         self.b.approve(AL, self.now)
         self.bond(AL, "YES", 100.0, 0.90)         # yes_book: 20,000 at 99.9c
