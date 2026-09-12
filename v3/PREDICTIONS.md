@@ -966,6 +966,21 @@ daily-pool claim.
 **Resolves:** when 2026-09-10 posts to data/rewards.csv (rows for
 ewc-usse-nc-2026-11-03-rep, ewc-usse-oh-2026-11-03-dem/rep,
 ewc-usse-tx-2026-11-03-rep and the scc-senate-gop brackets).
+**Graded 2026-09-12 03:35Z — CONFIRMED.** Sep 10 posted 548 market-days,
+$1,005.26, against the day's $1,079.87 claim (0.93x). North Carolina
+Senate rep paid $34.47 against the daily-pool claim of $36.06 (the
+window-divided claim would have been $0.51); Ohio Senate dem $23.28 vs
+$20.28, Ohio Senate rep $30.16 vs $32.01, Texas Senate rep $8.35 vs
+$4.64, the twelve scc-senate-gop brackets $47.07 vs $51.75. The pools
+pay per day. What it taught: at the boosted pools the share model runs
+HIGH, not low — T1 control/bop 0.81x ($218 paid of $269 claimed over 18
+markets), balance of power 0.88x ($268 of $305), the race tier 0.82x
+($238 of $290) — while the unboosted markets ran 1.30x as they had all
+week. The biggest misses were the deepest books: House rep control
+$45.83 vs $67.51, Texas governor dem $46.61 vs $63.58, the balance-of-
+power R-sweep $21.88 vs $36.95. The level reading of the window (EXP-1)
+overstates our claim on those by 20-40%; P20 (half of the claim over
+three days) is on track at 0.8x.
 
 ### P20 — written 2026-09-10 ~12:00Z, BEFORE the focus tender rests anything
 **Claim:** on the boosted markets, an order the focus tender rests by
