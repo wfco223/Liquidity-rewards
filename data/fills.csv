@@ -1872,3 +1872,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789240402.0,politics,paccc-usho-midterms-2026-11-03-rep,BUY,28,0.169,backfill,,2.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEWMAGBXMTMP
 1789240402.0,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,5.57,0.1,backfill,,2.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEX9WPYTWTN2
 1789240402.0,politics,ewc-usse-oh-2026-11-03-dem,BUY,38,0.46,backfill,,31.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE3V2ZR1GTN1
+1789241082.6,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,21,0.23,sell,1.0497,3.16,0.29015,25,28,0.658,0.23,0.24,-0.0602,0,an exit — its fill reduces the position it sits on,CEWSTBV30TN1
+1789241082.6,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,6,0.93,bond,1.5312,10.46,0.995925,93,97,0.701,0.93,0.94,-0.0659,102,bond more: split — 6 at 93c carry the share; never dearer than his first price,CEPEQBG8JTMQ
