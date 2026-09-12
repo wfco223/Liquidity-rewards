@@ -5218,3 +5218,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789184011.4,politics,ussewc-usse-ma-2026-11-03-dem,BUY,0.06,0.96,backfill,,8.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAEVGARMTMM
 1789184011.4,politics,ewc-usp-2028-11-07-gavnew,SELL,0.87,0.09,backfill,,1.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEG9EP6H6TMM
 1789184011.4,politics,ewc-usp-2028-11-07-andbes,SELL,0.32,0.03,backfill,,2.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEFTYR302TMM
+1789184345.3,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,2.99,0.17,hand,,15.14,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD9TW1WBESX0
+1789184345.3,politics,paccc-balpow-2026-11-03-dsweep,BUY,1,0.5,hand,,13.38,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDECXDD6MSJ1
+1789184345.3,politics,scc-senate-gop-2026-11-03-55,BUY,5,0.06,hand,,10.82,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDH8YTYMTSJZ
