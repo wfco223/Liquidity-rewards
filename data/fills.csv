@@ -5374,3 +5374,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789210028.5,politics,usgubewc-usgub-wy-2026-11-03-rep,SELL,42,0.95,void,6.0417,22.44,0.999875,90,95,0,0.94,0.95,0.0499,0,voided: the exchange has no trade for order CE3GP0Y9WTMM — the row of 09-12 09:1,CE3GP0Y9WTMM
 1789210028.5,politics,ussewc-usse-tn-2026-11-03-rep,SELL,75,0.94,void,4.1845,0.55,0.99955,89,97,0,0.54,0.94,0.0595,1,voided: the exchange has no trade for order CEP9MJ032TN5 — the row of 09-12 09:1,CEP9MJ032TN5
 1789210028.5,politics,enwc-uspres-nom-dem-2028-jbpri,SELL,145,0.06,void,15.5775,0.02,0.04,4,7,0.863,0.02,0.05,-0.02,-145,voided: the exchange has no trade for order CEPRGF3CTTMP — the row of 09-12 09:2,CEPRGF3CTTMP
+1789212934.5,politics,paccc-usho-midterms-2026-11-03-dem,BUY,2,0.843,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7TV5WGPTN0
+1789212934.5,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,0.95,0.96,backfill,,0.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7G9CHF6TN3
+1789212934.5,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,1,0.06,backfill,,3.48,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7FKM222TN2
+1789212934.5,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,1,0.12,hand,,8.43,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2HGFK3PTN2
+1789212934.5,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,20.04,0.22,backfill,,19.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
