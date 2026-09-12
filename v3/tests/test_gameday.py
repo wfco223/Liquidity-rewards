@@ -50,7 +50,7 @@ class GameClient(FakeClient):
     def events_by_tag(self, tag, max_pages=30):
         return list(self.game_events) if tag in gameday.TAGS else []
 
-    def book(self, slug, fetched_at=None, timeout=None, tries=4):
+    def book(self, slug, fetched_at=None, timeout=None, tries=4, priority=False):
         self.book_reads.append(slug)
         return super().book(slug, fetched_at=fetched_at)
 

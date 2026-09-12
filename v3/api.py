@@ -15,7 +15,9 @@ polymarket-us SDK.
 from __future__ import annotations
 
 import base64
+import email.utils
 import os
+import threading
 import time
 
 import requests
@@ -43,6 +45,22 @@ DEAD_ORDER_STATES = frozenset({
 })
 
 RETRYABLE_STATUSES = (429, 500, 502, 503, 504)
+
+# ONE THROTTLE FOR THE WHOLE CLIENT (owner, 2026-09-12 "Yes to both"):
+# the gateway answered the focus tender's book reads with HTTP 429 at
+# boot while the families' discovery — hundreds of gateway reads on
+# another thread — kept the limit tripped, so the tender sat "held off
+# after a 429" with 135 books waiting. A 429 from the gateway now holds
+# EVERY gateway read, on every thread, for the wait the exchange names
+# (Retry-After), and gateway reads are paced across threads so the boot
+# burst does not trip the limit in the first place; a priority read
+# (the tender's) takes the next slot ahead of the family's. Every 429
+# is kept in client.throttles with the wait the exchange asked for, so
+# the pace is set from the record, not guessed twice.
+GATEWAY_PACE_PER_S = 5.0        # gateway reads, all threads together, at most this many a second
+GATEWAY_HOLD_DEFAULT_S = 20.0   # a 429 with no usable Retry-After holds this long
+GATEWAY_HOLD_MAX_S = 120.0      # ...and never longer than this whatever it says
+THROTTLE_KEEP = 200
 # a one-page open list this long with no paging field would be taken
 # as CAPPED — the exchange cut it. Off in practice (17:24Z, 2026-09-11,
 # the probe: every variant — plain, limit, pageSize, page_size, offset,
@@ -101,13 +119,21 @@ class Client:
     clock; all money numbers are parsed with to_num (protobuf shapes)."""
 
     def __init__(self, key_id: str | None = None, secret_key: str | None = None,
-                 session=None, timeout: float = 30.0, sleep=None):
+                 session=None, timeout: float = 30.0, sleep=None, clock=None):
         self.key_id = key_id if key_id is not None else os.environ.get("POLYMARKET_KEY_ID", "")
         self.secret_key = (secret_key if secret_key is not None
                            else os.environ.get("POLYMARKET_SECRET_KEY", ""))
         self.session = session or requests.Session()
         self.timeout = timeout
         self._sleep = sleep if sleep is not None else time.sleep
+        self._clock = clock if clock is not None else time.time
+        # the gateway's throttle and pace, shared by every thread
+        self._gw_lock = threading.Lock()
+        self._gw_next = 0.0          # the next gateway slot (the pace)
+        self._gw_hold = 0.0          # no gateway read before this (a 429's wait)
+        self._gw_prio_waiting = 0    # priority reads waiting for a slot
+        self.throttles: list[dict] = []   # every 429 answered, oldest first
+        self.on_throttle = None      # called as on_throttle(rec) when the hold is set or grows
 
     def fresh_connection(self) -> None:
         """Drop the pooled connection and open a new one (2026-09-05: the
@@ -119,6 +145,74 @@ class Client:
             pass
         self.session = requests.Session()
 
+    # -- the gateway's throttle and pace --------------------------------------
+
+    def gateway_hold(self) -> float:
+        """Seconds every gateway read is still held after a 429; 0 when free."""
+        return max(self._gw_hold - self._clock(), 0.0)
+
+    def _retry_after_s(self, resp) -> tuple[str, float]:
+        """The wait a 429 asks for: Retry-After in seconds or as an HTTP
+        date, the default when absent or unreadable, never past the cap."""
+        raw = str(resp.headers.get("Retry-After") or "").strip()
+        wait = GATEWAY_HOLD_DEFAULT_S
+        if raw:
+            try:
+                wait = float(raw)
+            except ValueError:
+                try:
+                    at = email.utils.parsedate_to_datetime(raw).timestamp()
+                    wait = at - self._clock()
+                except Exception:  # noqa: BLE001 — unreadable: the default
+                    wait = GATEWAY_HOLD_DEFAULT_S
+        return raw, min(max(wait, 1.0), GATEWAY_HOLD_MAX_S)
+
+    def _throttled(self, url: str, path: str, resp, gateway: bool) -> float:
+        """Record a 429 and, for the gateway, hold every gateway read for
+        the wait it asks. Returns the wait."""
+        raw, wait = self._retry_after_s(resp)
+        rec = {"ts": round(self._clock(), 1), "host": url.split("://", 1)[-1].split("/", 1)[0],
+               "path": path, "retry_after": raw, "wait": round(wait, 1)}
+        grew = False
+        with self._gw_lock:
+            self.throttles.append(rec)
+            del self.throttles[:-THROTTLE_KEEP]
+            if gateway:
+                until = self._clock() + wait
+                grew = until > self._gw_hold + 1.0
+                self._gw_hold = max(self._gw_hold, until)
+        if grew and self.on_throttle is not None:
+            try:
+                self.on_throttle(rec)
+            except Exception:  # noqa: BLE001 — a note never breaks a read
+                pass
+        return wait
+
+    def _gateway_slot(self, priority: bool) -> None:
+        """Wait for the next gateway slot: one every 1/GATEWAY_PACE_PER_S
+        across every thread. A priority read takes the next slot ahead
+        of any ordinary read waiting."""
+        gap = 1.0 / GATEWAY_PACE_PER_S
+        if priority:
+            with self._gw_lock:
+                self._gw_prio_waiting += 1
+        try:
+            while True:
+                with self._gw_lock:
+                    now = self._clock()
+                    if priority or self._gw_prio_waiting == 0:
+                        if now >= self._gw_next:
+                            self._gw_next = now + gap
+                            return
+                        wait = self._gw_next - now
+                    else:
+                        wait = gap
+                self._sleep(wait)
+        finally:
+            if priority:
+                with self._gw_lock:
+                    self._gw_prio_waiting -= 1
+
     # -- plumbing ----------------------------------------------------------
 
     def _headers(self, method: str, path: str) -> dict:
@@ -129,15 +223,27 @@ class Client:
     def _request(self, method: str, url: str, *, path: str | None = None,
                  signed: bool = False, params: dict | None = None,
                  json_body: dict | None = None, timeout: float | None = None,
-                 tries: int = 4):
+                 tries: int = 4, priority: bool = False):
         """One HTTP call with the retry discipline; returns parsed JSON.
         `path` is the signed path (defaults to the URL's path — the query
-        string is never part of the signature)."""
+        string is never part of the signature). A gateway read waits for
+        its slot in the pace and, while a 429 holds the gateway, waits
+        the hold out — a one-try read (one that must keep time) is
+        refused at once instead, with the hold in its words."""
         if path is None:
             path = "/" + url.split("://", 1)[-1].split("/", 1)[-1].split("?")[0]
+        gateway = url.startswith(GATEWAY)
         delay = 2.0
         last_exc: Exception | None = None
         for attempt in range(tries):
+            if gateway:
+                hold = self.gateway_hold()
+                if hold > 0:
+                    if tries == 1:
+                        raise ApiError(f"{url}: every gateway read held {hold:.0f}s more "
+                                       f"after a 429", status=429)
+                    self._sleep(hold)
+                self._gateway_slot(priority)
             try:
                 resp = self.session.request(
                     method, url, params=params, json=json_body,
@@ -152,6 +258,21 @@ class Client:
                 continue
             if resp.status_code < 400:
                 return resp.json()
+            if resp.status_code == 429:
+                # Cloudflare throttle windows are TIME-based and outlast a
+                # 2/4/8s ladder — the 2026-08-20 cycle failures were 429s
+                # that survived all four quick tries. Wait the window out
+                # — the exchange's own Retry-After, recorded, and for the
+                # gateway a hold on every thread's reads (2026-09-12)
+                wait = self._throttled(url, path, resp, gateway)
+                if attempt == tries - 1:
+                    raise ApiError(f"{url} -> {err_text(resp)} (Retry-After "
+                                   f"{resp.headers.get('Retry-After') or 'none'}; "
+                                   f"{'every gateway read ' if gateway else 'this read '}"
+                                   f"held {wait:.0f}s)", status=429)
+                self._sleep(max(wait, 15.0 * (attempt + 1)))
+                delay = min(delay * 2, 15.0)
+                continue
             if resp.status_code not in RETRYABLE_STATUSES or attempt == tries - 1:
                 raise ApiError(f"{url} -> {err_text(resp)}", status=resp.status_code)
             ra = resp.headers.get("Retry-After")
@@ -159,21 +280,15 @@ class Client:
                 wait = min(float(ra), 30.0) if ra else delay
             except ValueError:
                 wait = delay
-            if resp.status_code == 429:
-                # Cloudflare throttle windows are TIME-based and outlast a
-                # 2/4/8s ladder — the 2026-08-20 cycle failures were 429s
-                # that survived all four quick tries. Wait the window out:
-                # a cycle that stretches a minute beats a cycle that dies
-                # (the web thread keeps serving health checks meanwhile).
-                wait = max(wait, 15.0 * (attempt + 1))
             self._sleep(wait)
             delay = min(delay * 2, 15.0)
         raise ApiError(f"{url}: {type(last_exc).__name__} on every one of {tries} tries — {last_exc}")
 
     def get(self, url: str, *, path: str | None = None, signed: bool = False,
-            params: dict | None = None, timeout: float | None = None, tries: int = 4):
+            params: dict | None = None, timeout: float | None = None, tries: int = 4,
+            priority: bool = False):
         return self._request("GET", url, path=path, signed=signed, params=params,
-                             timeout=timeout, tries=tries)
+                             timeout=timeout, tries=tries, priority=priority)
 
     def post(self, url: str, json_body: dict, *, path: str | None = None,
              timeout: float | None = None, tries: int = 1):
@@ -425,7 +540,8 @@ class Client:
         return lines
 
     def book(self, slug: str, fetched_at: float | None = None,
-             timeout: float | None = None, tries: int = 4) -> Book:
+             timeout: float | None = None, tries: int = 4,
+             priority: bool = False) -> Book:
         """The resting book, as DEEP as the endpoint will give us.
 
         `timeout` and `tries` are the caller's: a read inside a loop
@@ -447,7 +563,8 @@ class Client:
         Depth is worth having for the fill model and the touch, not for
         the share. cache.depth_seen records what actually came back."""
         j = self.get(f"{GATEWAY}/v1/markets/{slug}/book",
-                     params={"depth": self.BOOK_DEPTH}, timeout=timeout, tries=tries)
+                     params={"depth": self.BOOK_DEPTH}, timeout=timeout, tries=tries,
+                     priority=priority)
         md = j.get("book") or j.get("marketData") or j
         bids = [(to_num(l.get("px")), to_num(l.get("qty"))) for l in md.get("bids") or []]
         asks = [(to_num(l.get("px")), to_num(l.get("qty")))

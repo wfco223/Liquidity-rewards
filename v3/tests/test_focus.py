@@ -95,8 +95,8 @@ class TestBooksOnTheTendersClock(Base):
         calls = []
         real = self.r.exchange.book
 
-        def book(slug, fetched_at=None, timeout=None, tries=4):
-            calls.append((slug, timeout, tries))
+        def book(slug, fetched_at=None, timeout=None, tries=4, priority=False):
+            calls.append((slug, timeout, tries, priority))
             self.r.now += seconds
             if slug in fail:
                 from v3.api import ApiError
@@ -110,8 +110,8 @@ class TestBooksOnTheTendersClock(Base):
         calls = self.slow(0.5)
         self.f.cycle(self.r.now + 1, {}, False)
         self.assertEqual(len(calls), 5)
-        self.assertTrue(all(t == focus_mod.FOCUS_BOOK_READ_TIMEOUT_S and n == 1
-                            for _, t, n in calls), calls)
+        self.assertTrue(all(t == focus_mod.FOCUS_BOOK_READ_TIMEOUT_S and n == 1 and pr
+                            for _, t, n, pr in calls), calls)   # one try, eight seconds, priority
         self.assertEqual(focus_mod.FOCUS_BOOK_READ_TIMEOUT_S, 8.0)
 
     def test_the_stamp_is_the_reads_own_moment_not_the_pass_start(self):
@@ -157,6 +157,20 @@ class TestBooksOnTheTendersClock(Base):
         self.assertEqual(said[0]["failed"], 1)
         self.f.cycle(self.r.now + 1, {}, False)      # said once in ten minutes, not every pass
         self.assertEqual(len([e for e in self.f.log if e["event"] == "books_slow"]), 1)
+
+    def test_the_clients_own_hold_is_not_even_tried(self):
+        # a 429 anywhere on the gateway holds every thread's reads in the
+        # client (owner, 2026-09-12 "Yes to both"): the tender reads
+        # nothing while it stands and says how long is left
+        self.r.cache._books.clear()
+        calls = self.slow(0.5)
+        self.r.exchange.gateway_hold = lambda: 37.0
+        self.f.cycle(self.r.now + 1, {}, False)
+        self.assertEqual((self.f.books_read, len(calls)), (0, 0))
+        self.assertIn("37s to go", self.f.books_note)
+        self.r.exchange.gateway_hold = lambda: 0.0
+        self.f.cycle(self.r.now + 1, {}, False)
+        self.assertEqual(self.f.books_read, 5)
 
     def test_a_429_stops_the_burst_and_holds_the_next_pass(self):
         self.r.cache._books.clear()
