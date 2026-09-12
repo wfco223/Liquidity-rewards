@@ -400,6 +400,16 @@ long and accreted, so search it rather than reading it through.
   to 45 s earlier, and it flipped 8c<->10c every minute with the
   netting in place; a level showing less than the ghost's size has
   already lost the order and is left as the others');
+  while the exchange refuses this address's placements as a VPN
+  nothing comes off that could not come back — the weak-reading pull
+  is paused, and only a cancel that reduces risk still runs (a
+  duplicate, a hold, an order past his fair on a bare side, the
+  close-out's own, his taps), which is what the page and the alert
+  already promised (2026-09-12, 17:09-18:09Z: the boot took
+  157.230.234.13, an address the exchange had called a VPN on 09-10,
+  60 placements were refused and none rested, and the weak pull took
+  the tender from 39 orders to 18 and the day's rate from $1,110 to
+  $403 while he had not yet tapped Deploy for a new address);
   a cover of a short is
   placed as the close it is (SELL_SHORT), never as a fresh long. A
   refused placement or resize waits out the cooldown before another
