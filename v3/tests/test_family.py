@@ -77,8 +77,11 @@ class FakeClient:
 
     def activities(self, types=None, pages=10, page_size=100):
         """The transaction record: every trade, newest first like the
-        exchange's."""
-        return list(reversed(self.trades))
+        exchange's — plus whatever rows a test adds (order activities
+        with a state and a cancel reason)."""
+        if getattr(self, "activities_fail", False):
+            raise RuntimeError("ReadTimeout on every one of 4 tries")
+        return list(getattr(self, "activity_rows", [])) + list(reversed(self.trades))
 
     # -- read side ----------------------------------------------------------
     def book(self, slug, fetched_at=None):

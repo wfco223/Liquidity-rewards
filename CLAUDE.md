@@ -386,7 +386,15 @@ long and accreted, so search it rather than reading it through.
   are never offered twice; an id the tender itself
   cancelled or replaced is remembered for ten minutes and never
   adopted back when the open list shows it late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
-  times in an hour, each a ghost of its own move); a cover of a short is
+  times in an hour, each a ghost of its own move); and an order the
+  tender moved or pulled off a side is netted OUT of the book for a
+  minute like its resting orders (owner, 2026-09-12 "Yes, do the
+  ghost netting": the exchange's book showed the old order for a
+  read or two after a move, the tender no longer owned it, so it
+  read as company and as the touch, and the New York governor rep
+  cover flipped 4c<->10c twenty times an hour chasing its own
+  shadow; a book read a minute after the cancel is taken as clean);
+  a cover of a short is
   placed as the close it is (SELL_SHORT), never as a fresh long. A
   refused placement or resize waits out the cooldown before another
   try (a refused resize had been retried every twenty seconds). An
@@ -480,6 +488,20 @@ long and accreted, so search it rather than reading it through.
   exchange's answer says executed: answered with no execution,
   nothing is sold and nothing is booked (11:35-12:22Z: the 28-share
   sale into that ghost bid was booked as sold twenty times).
+- The cancel reason read (owner, 2026-09-12 "Do the cancel reason
+  read"): an order that vanished from the open list without our
+  cancel goes on a queue, and the family reads the exchange's
+  activity record (v3/api.py activities, the newest ~200 rows, once
+  a minute at most, six reads before giving up) for its own state and
+  cancel reason — the record carries unsolicitedCancelReason (the
+  probe of 2026-08-23) — logging "cancel_reason" with the market,
+  side, price, size, state and every reason field the record sets,
+  counting the reasons in fam.cancel_reasons, and logging the
+  activity types the feed shows the first time it sees them. A
+  failing read is logged once in ten minutes and never breaks the
+  cycle. Five batches of ~20 orders had left the list at once that
+  day (04:30, 05:52, 06:33, 07:47, 08:47Z, each within a minute of a
+  fill; a sixth at 15:10Z with $607 free) with nothing said about why.
 - New markets (owner, 2026-09-09: "Can you give me a report on any
   newly added markets?" ... "Yes state races should be included. But
   don't place orders in these races before I get the chance to look
