@@ -579,6 +579,7 @@ class Family:
         self.earned_history: list[list] = []      # [day, $] rolling
         self._last_accrual = 0.0
         self.silent_cancels = 0
+        self._recancel: dict[str, list] = {}     # id -> [tries, last try]
         self.gone_pending: dict[str, dict] = {}   # vanished, feed pending
         self.exit_float: dict[str, dict] = {}     # "slug|side" -> {px, since, steps}
         self.float_day: dict = {"day": "", "usd": 0.0}
@@ -2292,6 +2293,8 @@ class Family:
         for o in open_orders:
             if o["id"] in self.orders or o["id"] in foreign_ids:
                 continue
+            if self._still_listed_after_our_cancel(o["id"], o["market"]):
+                continue          # ours still — cancelled again, never adopted
             if o["market"] not in self.universe:
                 continue
             if not o.get("size") or not o.get("price"):
@@ -2318,6 +2321,58 @@ class Family:
             self._log(event="owner_orders_seen", n=len(adoptable),
                       note="resting orders this engine did not place — "
                            "recorded hands-off, never cancelled")
+
+    # an order the open list still shows after we cancelled it is ours
+    # still — cancelled again, never adopted (2026-09-12, 09:44-09:46Z:
+    # the family cancelled the tender's fifteen leftover 2028 orders at
+    # boot, the list showed eight of them two minutes later, and they
+    # were recorded as his hand's — untouchable — while they rested on
+    # as the entries he had just asked out of)
+    RECANCEL_EVERY_S = 60.0
+    RECANCEL_MAX = 10
+
+    def _cancel_again(self, oid: str, slug: str, now: float, why: str) -> bool:
+        """Re-send the cancel for an id we cancelled before, at most once
+        a minute and RECANCEL_MAX times in all. True when sent."""
+        desk = getattr(self, "desk", None)
+        if desk is None:
+            return False
+        tries = self._recancel.setdefault(oid, [0, 0.0])
+        if tries[0] >= self.RECANCEL_MAX or now - tries[1] < self.RECANCEL_EVERY_S:
+            return False
+        tries[0] += 1
+        tries[1] = now
+        r = desk.cancel(oid, slug)
+        self._log(event="cancel_again", market=slug, id=oid,
+                  note=f"{why} — cancelled again ({tries[0]} of {self.RECANCEL_MAX})"
+                       + ("" if r.ok else f"; {r.note}"))
+        return bool(r.ok)
+
+    def _still_listed_after_our_cancel(self, oid: str, slug: str) -> bool:
+        desk = getattr(self, "desk", None)
+        at = desk.cancelled_at(oid) if desk is not None else None
+        if at is None:
+            return False
+        self._cancel_again(oid, slug, self._clock(),
+                           "the open list still shows an order we cancelled")
+        return True
+
+    def _recancel_ours(self, now: float) -> None:
+        """A record adopted as his after our own cancel of the same id
+        (the list showed it late): it is ours, it goes."""
+        desk = getattr(self, "desk", None)
+        if desk is None:
+            return
+        for rec in list(self.orders.values()):
+            if rec.purpose != "manual":
+                continue
+            at = desk.cancelled_at(rec.id)
+            if at is None or float(rec.placed_ts or 0.0) < at - 1e-6:
+                continue
+            if self._cancel_again(rec.id, rec.market, now,
+                                  "adopted as his after our own cancel"):
+                self.orders.pop(rec.id, None)
+                self.evidence.order_gone(rec.market, rec.id)
 
     def _seed_inventory(self, positions: dict) -> None:
         """Positions on our ground the seller does not know yet — long
@@ -2388,6 +2443,7 @@ class Family:
         self._read_live(now)
         self._accrue(now)
         self._back_from_limbo(open_orders, now)
+        self._recancel_ours(now)
         pending = (self.adoptable(open_orders, foreign_ids)
                    if self.cfg.adopt else [])
         summary = {"mode": "on" if switch_on else "observing",
