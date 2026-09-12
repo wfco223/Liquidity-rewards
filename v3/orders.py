@@ -187,6 +187,9 @@ class OrderResult:
     withdrawn_id: str = ""        # a reprice's replacement that never showed
                                   # resting and was cancelled: the caller may
                                   # still own a fill of it
+    filled: float | None = None   # shares the exchange's answer says executed
+                                  # at once (None: the answer carried no
+                                  # executions list, so nothing is known)
     unverified: bool = False      # accepted by the exchange, never seen in an
                                   # open list that was CAPPED — left resting,
                                   # the caller records it as its own
@@ -451,9 +454,16 @@ class OrderDesk:
         # executions are fills at once, the one thing a post-only order
         # should never have
         execs = resp.get("executions") if isinstance(resp.get("executions"), list) else []
+        # what the answer says executed at once — None when it carried no
+        # executions list at all (2026-09-12: a close-out sale into our
+        # own ghost bid was answered with none and booked as sold twenty
+        # times in fifty minutes)
+        filled_n: float | None = None
+        if isinstance(resp.get("executions"), list):
+            filled_n = sum(float(to_num(x.get("quantity")) or to_num(x.get("cumQuantity")) or 0.0)
+                           for x in execs if isinstance(x, dict))
         if execs:
-            filled = sum(float(to_num(x.get("quantity")) or to_num(x.get("cumQuantity")) or 0.0)
-                         for x in execs if isinstance(x, dict))
+            filled = filled_n or 0.0
             said = f"; the exchange answered with {len(execs)} execution(s) at once" + (
                 f", {filled:g} shares" if filled else "")
         elif answered or reason:
@@ -465,7 +475,8 @@ class OrderDesk:
                   "ts": self._clock()})
         if not verify:
             return OrderResult(ok=True, note="placed (unverified)",
-                               order_id=order_id, intent=intent, price=price)
+                               order_id=order_id, intent=intent, price=price,
+                               filled=filled_n)
         ok, note, seen = self.verify_resting(slug, side, price, want_id=order_id,
                                              min_qty=qty)
         if not ok:
@@ -487,7 +498,7 @@ class OrderDesk:
                                order_id=order_id, intent=intent, price=price,
                                resting_qty=seen)
         return OrderResult(ok=True, note=note, order_id=order_id, intent=intent,
-                           price=price)
+                           price=price, filled=filled_n)
 
     def verify_resting(self, slug: str, side: str, price: float, *,
                        want_id: str, min_qty: float) -> tuple[bool, str, float]:
