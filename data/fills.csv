@@ -5197,3 +5197,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789179681.4,politics,ewc-usp-2028-11-07-gavnew,SELL,0.8,0.09,backfill,,0.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEFY79QPTTMY
 1789179681.4,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,0.36,0.06,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEG6JJA8CTMP
 1789179681.4,politics,scc-hrep-rep-2026-11-03-gte230,BUY,1.18,0.04,backfill,,0.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEG4DXAXWTMY
+1789179741.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,25,0.167,focus,102.736,0.01,0.1414,19,20,0.926,0.166,0.167,-0.0256,-464,focus entry: ~$99.09/day; fill odds 90%/day; EV +96.12/day,CEGWTKGP2TN0
+1789180386.8,politics,scc-senate-gop-2026-11-03-56,SELL,2836.02,0.03,hand,,12.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD7FF7V7CSJR
