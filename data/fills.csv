@@ -5221,3 +5221,26 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789184345.3,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,2.99,0.17,hand,,15.14,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CD9TW1WBESX0
 1789184345.3,politics,paccc-balpow-2026-11-03-dsweep,BUY,1,0.5,hand,,13.38,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDECXDD6MSJ1
 1789184345.3,politics,scc-senate-gop-2026-11-03-55,BUY,5,0.06,hand,,10.82,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDH8YTYMTSJZ
+1789184918.3,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,2,0.1,bond,3.2897,0.07,0.000375,5,8,0.707,0.09,0.1,-0.0996,-436,bond more: split — 80 at 10c carry the share; never dearer than his first price,CEJ2Y2JV6TMQ
+1789184978.3,politics,enwc-uspres-nom-dem-2028-jbpri,SELL,21,0.07,focus,4.2735,0.2,0.04,3,9,0.002,0.07,0.09,-0.03,-21,focus entry: ~$4.27/day; fill odds 29%/day; EV +2.67/day,CEHZDTDF0TN0
+1789185342.7,politics,enwc-uspres-nom-dem-2028-gavnew,BUY,35,0.2,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEJ6JGWZETN5
+1789185362.1,politics,ewc-usp-2028-11-07-dontru,BUY,28,0.07,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEHZ5CZA2TN5
+1789185398.3,politics,ewc-usp-2028-11-07-gavnew,SELL,64.92,0.09,sell,7.2843,2.31,,12,16,0.824,0.08,0.1,0.05,0.08,an exit — its fill reduces the position it sits on,CEG9EP6H6TMM
+1789185398.3,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,21,0.07,focus,21.1021,0.03,0.04,4,10,0.455,0.05,0.07,0.03,0,focus exit: ~$21.02/day; fill odds 56%/day; EV +20.90/day,CEJ6PMAHPTMM
+1789185398.3,politics,enwc-uspres-nom-dem-2028-gavnew,BUY,15,0.2,focus,29.1684,0.04,,21,26,0.711,0.17,0.19,-0.04,50,focus entry: ~$11.85/day; fill odds 56%/day; EV +4.80/day,CEJ6JGWZETN5
+1789185474.7,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,29,0.06,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEJ75NBRYTN1
+1789185513.1,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,87,0.06,focus,21.639,0.03,0.04,3,8,0.625,0.03,0.09,0.02,116,focus entry: ~$21.68/day; fill odds 60%/day; EV +15.13/day,CEJ75NBRYTN1
+1789185813.1,politics,ewc-usp-2028-11-07-gavnew,SELL,3,0.09,focus,3.2107,0.01,,13,17,0.846,0.08,0.09,0.05,-3,focus entry: ~$3.21/day; fill odds 29%/day; EV +2.17/day,CEJ9YWHZ8TN1
+1789185993.1,politics,ussewc-usse-mt-2026-11-03-setbod,BUY,5.79,0.09,earn,0.9189,0.46,,9,13,0.36,0.09,0.1,-0.02,86.79,joins the touch — the book has been quiet,CEJ0QK4HTTMY
+1789186316.0,politics,usgubewc-usgub-id-2026-11-03-rep,BUY,5.68,0.96,earn,4.0323,0.02,0.9989,93,97,0.736,0.96,0.98,-0.0389,5.68,1 tick behind the touch — we would hold 65% of the bid side,CEJDYR5TATN5
+1789187479.3,politics,ewc-usp-2028-11-07-marrub,BUY,4,0.16,focus,16.5276,0,,9,15,0.66,0.16,0.17,0.04,4,focus entry: ~$16.53/day; fill odds 61%/day; EV +14.83/day,CEJPB3J3GTMM
+1789187539.3,politics,ewc-usp-2028-11-07-marrub,SELL,22,0.11,focus,18.518,0.19,,9,14,0.735,0.16,0.17,0.01,-44,focus entry: ~$9.15/day; fill odds 31%/day; EV +8.42/day,CEJH4Q52TTN2
+1789187959.4,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-20.04,0.22,fix,15.5643,14.74,0.1639,22,26,0.391,0.21,0.22,-0.0561,74.6,size trimmed by 20.04 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789187959.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-259,0.175,fix,106.966,2.97,0.1637,18,20,0.942,0.174,0.175,-0.0113,16,size trimmed by 259 to the exchange's count (order CE3TSKJMYTN1),CE3TSKJMYTN1
+1789187959.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-13,0.175,fix,256.277,2.09,0.1637,18,20,0.94,0.174,0.175,-0.0113,275,size trimmed by 13 to the exchange's count (order CE3TSKJMYTN1),CE3TSKJMYTN1
+1789187959.4,politics,enwc-uspres-nom-dem-2028-gavnew,BUY,35,0.2,void,8.2761,0.03,,21,26,0.711,0.17,0.19,-0.04,35,voided: the exchange has no trade for order CEJ48GRSTTMQ — the row of 09-12 03:5,CEJ48GRSTTMQ
+1789187959.4,politics,ewc-usp-2028-11-07-dontru,BUY,28,0.06,void,13.8569,0.01,,5,8,0.83,0.06,0.08,-0.01,28,voided: the exchange has no trade for order CEJ7J9M3CTMX — the row of 09-12 03:5,CEJ7J9M3CTMX
+1789187959.4,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,50,0.06,void,7.3953,0.12,0.04,3,8,0.625,0.03,0.09,0.02,29,voided: the exchange has no trade for order CEHYWW0R2TMM — the row of 09-12 03:5,CEHYWW0R2TMM
+1789187959.4,politics,enwc-uspres-nom-dem-2028-gavnew,BUY,35,0.2,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEJ6JGWZETN5
+1789187959.4,politics,ewc-usp-2028-11-07-dontru,BUY,28,0.07,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEHZ5CZA2TN5
+1789187959.4,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,29,0.06,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEJ75NBRYTN1
