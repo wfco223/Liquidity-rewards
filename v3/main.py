@@ -1973,6 +1973,7 @@ class Monitor:
         from . import survey as sv
 
         from .family import QUALIFY_WALL_WHY, FamilyOrder
+        from .orders import QTY_MAX
         job = self._qualify_jobs[market]
         bs = job.get("bs") or "SELL"
         deadline = time.time() + self.QUALIFY_MAX_S
@@ -2027,8 +2028,13 @@ class Monitor:
                            or (0.0,))[0]
                 except Exception:  # noqa: BLE001
                     pass
+                # one order carries at most the desk's size rail; the gap
+                # is re-read every pass, so a bigger gap closes in pieces
+                # (2026-09-12: a 2028 nominee's 22,201-share bid wall was
+                # refused "quantity 22201 outside 0.01-20000" and the run
+                # stopped with nothing rested)
                 r = fam.desk.place_resting(market, bs, px,
-                                           float(math.ceil(gap)),
+                                           float(min(math.ceil(gap), QTY_MAX)),
                                            net_position=net,
                                            initiator="owner", verify=False)
                 if not (r.ok and r.order_id):
