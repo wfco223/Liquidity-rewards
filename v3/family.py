@@ -671,6 +671,22 @@ class Family:
         bid until flat, rest nothing new, never buy."""
         return any(t in slug for t in self.cfg.liquidate_tokens)
 
+    def _adds_position(self, rec) -> bool:
+        """On close-out ground: would this order's fill ADD to what he
+        asked out of? A bid opens or adds to a long unless it covers a
+        short (his 1c walls excepted); an ask past the stock held opens
+        a short (his 99c walls excepted). Whoever placed it (2026-09-12:
+        the old build's last 2028 entries — a 333-share 6c bid, a 181
+        bid at 11c that then filled, 2c asks that opened shorts — came
+        back after the deploy as "his hand's" and traded on against
+        "get out of 2028 markets")."""
+        held = float((self.inventory.get(rec.market) or {}).get("qty") or 0.0)
+        if is_wall(rec, held):
+            return False
+        if rec.side == "BUY":
+            return not (held < -0.01 and float(rec.qty) <= -held + 0.5)
+        return float(rec.qty) > max(held, 0.0) + 0.5
+
     def _frozen(self, slug: str) -> bool:
         """Hands off entirely (owner, 2026-08-24: "don't touch those").
         Unlike an avoided market, nothing is pulled: whatever rests
@@ -2848,6 +2864,21 @@ class Family:
                                    "quotes whole shares now")
                     actions -= 1
                 continue
+            if (rec.purpose != "bond" and not self._frozen(rec.market)
+                    and self._liquidating(rec.market) and self._adds_position(rec)):
+                # owner's close-out: nothing may add to what he asked out
+                # of, whoever placed it — a bid that is not a cover or a
+                # 1c wall, an ask past the stock held (2026-09-12)
+                r = self.desk.cancel(rec.id, rec.market)
+                if r.ok:
+                    self.orders.pop(rec.id, None)
+                    self.evidence.order_gone(rec.market, rec.id)
+                    self._log(event="pull", market=rec.market, side=rec.side,
+                              price=rec.price, qty=rec.qty,
+                              why="owner's close-out — this order would add "
+                                  "to what he asked out of")
+                    actions -= 1
+                continue
             if rec.purpose in ("manual", "bond") or self._frozen(rec.market):
                 continue          # frozen ground: never repriced,
                                   # never pulled, never resized
@@ -4396,24 +4427,39 @@ class Family:
                 r_l = self.desk.place_resting(
                     slug, "SELL", bid_l, dq_l, net_position=qty,
                     intent=SELL_LONG, taker=True, verify=False)
+                if r_l.ok and r_l.filled is not None and r_l.filled < 0.01:
+                    # the exchange answered with no execution: the bid was
+                    # gone, or the sale would have matched our own order
+                    # and its self-match guard dropped it (2026-09-12,
+                    # 11:35-12:22Z: a 28-share sale into our own ghost 6c
+                    # bid was booked as sold twenty times) — nothing sold,
+                    # nothing booked
+                    self._log(event="close_out_unfilled", market=slug,
+                              price=bid_l, qty=dq_l,
+                              note="the exchange answered with no execution — "
+                                   "the bid was gone or the sale would have "
+                                   "matched our own order; nothing booked")
+                    actions -= 1
+                    continue
                 if r_l.ok:
-                    inv["qty"] = round(inv.get("qty", 0.0) - dq_l, 4)
+                    sold = dq_l if r_l.filled is None else min(dq_l, float(r_l.filled))
+                    inv["qty"] = round(inv.get("qty", 0.0) - sold, 4)
                     inv["cost"] = round(inv.get("cost", 0.0)
-                                        - dq_l * bid_l, 4)
+                                        - sold * bid_l, 4)
                     left_l = round(inv["qty"], 2)
                     if abs(inv["qty"]) < 0.005:
                         self.inventory.pop(slug, None)
                         self.inv_since.pop(slug, None)
                     self._journal_fill(FamilyOrder(
                         id=r_l.order_id or f"liq{int(now)}",
-                        market=slug, side="SELL", price=bid_l, qty=dq_l,
+                        market=slug, side="SELL", price=bid_l, qty=sold,
                         intent=SELL_LONG, placed_ts=now, purpose="sell",
                         why="owner-ordered close-out — sold into the "
-                            "bid"), dq_l, now, left_l)
-                    self._note_wind_down(slug, "close-out", dq_l, bid_l,
+                            "bid"), sold, now, left_l)
+                    self._note_wind_down(slug, "close-out", sold, bid_l,
                                          now, left=left_l)
                     self._log(event="liquidated", market=slug,
-                              price=bid_l, qty=dq_l,
+                              price=bid_l, qty=sold,
                               note=f"owner's close-out — {left_l:g} "
                                    "left" if left_l >= 0.01
                                    else "owner's close-out — flat")

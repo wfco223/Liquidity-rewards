@@ -29,6 +29,7 @@ class FakeClient:
         self.events: list[dict] = []
         self.programs_fail = False
         self.trades: list[dict] = []     # the exchange's own trade record
+        self.taker_fills = True          # a taker order executes at once
 
     # -- desk side ----------------------------------------------------------
     def post(self, url, body, path=None, **kw):
@@ -42,9 +43,15 @@ class FakeClient:
                 "size": float(body["quantity"]), "intent": body["intent"],
             }
             if body.get("participateDontInitiate") is False:
-                # a taker order fills: the trade record shows it
+                # a taker order fills (unless the rig says otherwise: the
+                # bid was gone, or the sale would have matched our own
+                # order): the answer carries its executions and the
+                # trade record shows it
                 q = float(body["quantity"])
                 px = float(body["price"]["value"])
+                if not self.taker_fills:
+                    self.live.pop(oid, None)
+                    return {"order": {"id": oid}, "id": oid, "executions": []}
                 self.trades.append({"type": "ACTIVITY_TYPE_TRADE", "trade": {
                     "id": f"t{oid}",
                     "aggressorExecution": {
@@ -54,6 +61,8 @@ class FakeClient:
                                   "avgPx": {"value": f"{px:.4f}"}},
                         "lastShares": f"{q:.4f}",
                         "lastPx": {"value": f"{px:.4f}"}}}})
+                return {"order": {"id": oid}, "id": oid,
+                        "executions": [{"id": f"x{oid}", "quantity": q}]}
             return {"order": {"id": oid}}
         if "/cancel" in url:
             self.live.pop(url.rstrip("/cancel").rsplit("/", 1)[-1], None)
