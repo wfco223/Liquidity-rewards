@@ -1769,3 +1769,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789222136.6,politics,ussewc-usse-ma-2026-11-03-dem,BUY,-5,0.97,fix,2.506,4.33,0.9997,94,98,0.772,0.97,0.99,-0.0297,10,size trimmed by 5 to the exchange's count (order CE6NW3VW2TMQ),CE6NW3VW2TMQ
 1789222136.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,-5,0.831,fix,18.0202,0.15,0.8618,84,85,0.941,0.831,0.832,-0.0308,73,size trimmed by 5 to the exchange's count (order CE9CTZTYWTN2),CE9CTZTYWTN2
 1789222136.6,politics,scc-senate-gop-2026-11-03-49,SELL,0.06,0.15,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CESSM2GXTTMY
+1789222400.3,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,0.35,0.22,backfill,,27.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789222436.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,4,0.22,sell,2.553,27.76,0.165075,22,26,0.651,0.21,0.22,-0.0549,68,an exit — its fill reduces the position it sits on,CE2EGZ1FETMM
+1789222811.8,politics,enwc-uspres-nom-dem-2028-jbpri,BUY,20,0.05,sell,1.8884,2.79,0.04,5,8,0.878,0.05,0.06,0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CERNN8JDYTMQ
+1789223541.9,politics,ewc-usse-ia-2026-11-03-rep,SELL,8,0.61,sell,5.261,18.7,0.59005,60,64,0.623,0.6,0.61,-0.0199,158,an exit — its fill reduces the position it sits on,CEB8R00F2TMM
+1789225762.8,politics,ewc-usgub-nv-2026-11-03-rep,BUY,211,0.59,void,16.8456,0,0.68085,57,61,0.578,0.59,0.6,-0.0908,211,voided: the exchange has no trade for order CEV6ZBQZ4TMM — the row of 09-12 14:2,CEV6ZBQZ4TMM
+1789225762.8,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,0.35,0.22,backfill,,27.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
