@@ -1628,22 +1628,48 @@ class TestGhostNetting(Base):
         self.assertNotIn(o.price, dict(lv2))                             # no level, no touch
         self.assertAlmostEqual(lv2[0][0], 0.02, places=6)
 
-    def test_the_ghost_is_forgotten_after_a_minute(self):
+    def test_the_ghost_is_forgotten_after_three_minutes(self):
         o = self._rest_and_pull()
-        self.r.now += 61.0
+        self.r.now += focus_mod.FOCUS_GHOST_S + 1.0
         late = Book(bids=((o.price, o.qty), (0.02, 60000.0)),
                     asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01, fetched_at=self.r.now)
         lv = dict(self.f._levels_net(NC, "BUY", late))
         self.assertAlmostEqual(lv.get(o.price, 0.0), o.qty, places=6)   # a stranger's now
         self.assertFalse(self.f.departed.get(f"{NC}|BUY"))
 
+    def test_the_ghost_outlasts_the_exit_cooldown(self):
+        # 16:41-16:44Z, 2026-09-12: at a minute the memory expired at the
+        # very pass the exit cooldown let the cover move again, on a book
+        # read up to 45 s earlier that still showed the old order — the
+        # New York governor rep cover flipped 8c<->10c every minute with
+        # the netting in place
+        o = self._rest_and_pull()
+        self.assertGreater(focus_mod.FOCUS_GHOST_S,
+                           focus_mod.FOCUS_EXIT_COOLDOWN_S + focus_mod.FOCUS_ACT_AGE_S)
+        self.r.now += focus_mod.FOCUS_EXIT_COOLDOWN_S + 1.0
+        stale = Book(bids=((o.price, o.qty + 5.0), (0.02, 60000.0)),
+                     asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01,
+                     fetched_at=self.r.now - 40.0)
+        lv = dict(self.f._levels_net(NC, "BUY", stale))
+        self.assertAlmostEqual(lv.get(o.price, 0.0), 5.0, places=6)     # still netted
+
     def test_a_book_read_well_after_the_cancel_is_not_netted(self):
         o = self._rest_and_pull()
         fresh = Book(bids=((o.price, o.qty), (0.02, 60000.0)),
                      asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01,
-                     fetched_at=self.r.now + 61.0)
+                     fetched_at=self.r.now + focus_mod.FOCUS_GHOST_S + 1.0)
         lv = dict(self.f._levels_net(NC, "BUY", fresh))
         self.assertAlmostEqual(lv.get(o.price, 0.0), o.qty, places=6)
+
+    def test_a_level_showing_less_than_the_ghost_has_already_lost_it(self):
+        # the exchange has taken the order off: what is left at the level
+        # is the others', and stripping the ghost from it would read the
+        # side barer than it is
+        o = self._rest_and_pull()
+        gone = Book(bids=((o.price, o.qty - 10.0), (0.02, 60000.0)),
+                    asks=((0.47, 300.0), (0.98, 60000.0)), tick=0.01, fetched_at=self.r.now)
+        lv = dict(self.f._levels_net(NC, "BUY", gone))
+        self.assertAlmostEqual(lv.get(o.price, 0.0), o.qty - 10.0, places=6)
 
     def test_a_fresh_rest_pulled_before_it_was_ever_scored_still_leaves_its_ghost(self):
         # the price is remembered at the rest itself, not only at the

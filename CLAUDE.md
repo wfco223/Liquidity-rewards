@@ -387,13 +387,19 @@ long and accreted, so search it rather than reading it through.
   cancelled or replaced is remembered for ten minutes and never
   adopted back when the open list shows it late (00:05Z, 2026-09-11: an Iowa governor ask was "adopted" four
   times in an hour, each a ghost of its own move); and an order the
-  tender moved or pulled off a side is netted OUT of the book for a
-  minute like its resting orders (owner, 2026-09-12 "Yes, do the
+  tender moved or pulled off a side is netted OUT of the book for
+  three minutes like its resting orders, where the level still shows
+  at least its size (owner, 2026-09-12 "Yes, do the
   ghost netting": the exchange's book showed the old order for a
   read or two after a move, the tender no longer owned it, so it
   read as company and as the touch, and the New York governor rep
   cover flipped 4c<->10c twenty times an hour chasing its own
-  shadow; a book read a minute after the cancel is taken as clean);
+  shadow; a book read three minutes after the cancel is taken as
+  clean; at a minute — 16:41-16:44Z — the memory expired at the very
+  pass the exit cooldown let the cover move again, on a book read up
+  to 45 s earlier, and it flipped 8c<->10c every minute with the
+  netting in place; a level showing less than the ghost's size has
+  already lost the order and is left as the others');
   a cover of a short is
   placed as the close it is (SELL_SHORT), never as a fresh long. A
   refused placement or resize waits out the cooldown before another
