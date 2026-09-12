@@ -43,6 +43,7 @@ races, county winners) is shown but not tended until he opens it.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import math
 import threading
@@ -101,6 +102,20 @@ FOCUS_BOOK_READS = 12           # ...this many a pass at most, oldest first
 FOCUS_BOOK_READS_BOOT = 150     # a market with no book at all is read at once,
                                 # this many a pass (owner, 2026-09-10: "The
                                 # start up time for focus has to be very short")
+# the reads keep the tender's clock (2026-09-12, 21:19-21:42Z: the boot
+# on 174.138.33.47 took 15.5 minutes over its first pass, 135 book reads
+# through the gateway's retry ladder — 30 s a try, four tries — and the
+# page said "the first pass has not run yet" the whole while; every book
+# was then stamped with the PASS'S start, so the desk read them as
+# minutes old and refused "no book fresher than 120s"; the next pass
+# re-read a dozen and the rest went stale, 46 of 85 sides idle "no
+# book"). Now: one try, eight seconds, a time budget a pass, the stamp
+# is the read's own moment, and what failed or waits is on the page.
+FOCUS_BOOK_READ_TIMEOUT_S = 8.0     # one try, this long — like every read inside a cycle
+FOCUS_BOOK_BUDGET_S = 10.0          # a pass reads books for this long at most...
+FOCUS_BOOK_BUDGET_BOOT_S = 45.0     # ...this long while any focus book is still unread
+FOCUS_BOOK_HOLD_S = 20.0            # after a 429 no book is read for this long
+FOCUS_BOOKS_SAY_S = 600.0           # slow or failing reads are logged this often at most
 FOCUS_ACT_AGE_S = 45.0          # no order rests or moves on a book older than this
 FOCUS_TERMS_S = 600.0           # the focus markets' terms re-read this often
 FOCUS_TERMS_SLICE = 200         # the politics universe walked this many slugs a pass
@@ -328,6 +343,12 @@ class Focus:
         self.last_pass = 0.0
         self.pass_s = 0.0
         self.books_read = 0
+        self.books_due = 0            # focus books older than FOCUS_BOOK_MAX_AGE_S at the pass
+        self.books_failed = 0
+        self.books_s = 0.0            # seconds the pass spent reading books
+        self.books_note = ""          # the last failed read's own words
+        self._books_hold = 0.0        # no read before this after a 429
+        self._books_said = 0.0
         self.note = ""
         self._blocked_noted = 0.0
         self.payload_json = b'{"ok":false,"note":"the first pass has not run yet"}'
@@ -601,6 +622,13 @@ class Focus:
     # -- books -------------------------------------------------------------------
 
     def _refresh_books(self, now: float) -> int:
+        """Read the focus books the cache holds old or not at all,
+        oldest first, on the tender's own clock: one try and eight
+        seconds a read, a time budget a pass, each book stamped at its
+        own read. A read that fails is counted and its words kept for
+        the page; a 429 stops the pass's reads at once and holds the
+        next — the exchange is throttling this address, and more reads
+        now make it worse. What was not read waits for the next pass."""
         due = []
         unread = 0
         for slug in self.markets:
@@ -609,18 +637,42 @@ class Focus:
                 due.append((-age, slug))
                 if age == float("inf"):
                     unread += 1
-        n = 0
+        n = failed = 0
+        note = ""
+        t0 = self._clock()
+        held = t0 < self._books_hold
         # a market with no book at all (boot, or newly boosted) is read
-        # now, all of them: the page must not wait a pass per dozen
+        # now, all of them: the page must not wait a pass per dozen —
+        # within the boot budget; a gateway that hangs gets the page up
+        # with what it gave, and the rest next pass
         cap = FOCUS_BOOK_READS_BOOT if unread else FOCUS_BOOK_READS
+        budget = FOCUS_BOOK_BUDGET_BOOT_S if unread else FOCUS_BOOK_BUDGET_S
         for _, slug in sorted(due)[:cap]:
+            if held or self._clock() - t0 > budget:
+                break
             try:
-                book = self.client.book(slug, fetched_at=now)
-            except Exception:  # noqa: BLE001 — next pass
+                book = self.client.book(slug, fetched_at=None,
+                                        timeout=FOCUS_BOOK_READ_TIMEOUT_S, tries=1)
+            except Exception as e:  # noqa: BLE001 — counted, said, next pass
+                failed += 1
+                note = f"{slug}: {str(e)[:100]}"
+                if getattr(e, "status", None) == 429:
+                    self._books_hold = self._clock() + FOCUS_BOOK_HOLD_S
+                    break
                 continue
+            # stamped at the read's own moment, never the pass's start
+            book = dataclasses.replace(book, fetched_at=self._clock())
             self.fam.cache.put(slug, book)
             n += 1
-        self.books_read = n
+        self.books_read, self.books_due, self.books_failed = n, len(due), failed
+        self.books_s = round(self._clock() - t0, 1)
+        if held:
+            note = "held off after a 429 — the exchange is throttling this address"
+        self.books_note = note
+        if (failed or len(due) > n) and now - self._books_said > FOCUS_BOOKS_SAY_S:
+            self._books_said = now
+            self._log(event="books_slow", read=n, due=len(due), failed=failed,
+                      seconds=self.books_s, note=note[:160])
         return n
 
     # -- orders here -------------------------------------------------------------
@@ -2186,7 +2238,9 @@ class Focus:
                 "tended": sum(1 for r in rows if not r.get("not_tended")),
                 "mine": sum(1 for o in list(self.fam.orders.values())
                             if o.purpose == PURPOSE and o.market in self.markets),
-                "books_read": self.books_read,
+                "books_read": self.books_read, "books_due": self.books_due,
+                "books_failed": self.books_failed, "books_s": self.books_s,
+                "books_note": self.books_note,
                 "pool_min": FOCUS_POOL_MIN_USD,
                 "events": list(reversed(self.events[-20:])),
                 "log": list(reversed(self.log[-40:])),

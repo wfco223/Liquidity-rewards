@@ -424,8 +424,14 @@ class Client:
             lines.append("  ".join(row))
         return lines
 
-    def book(self, slug: str, fetched_at: float | None = None) -> Book:
+    def book(self, slug: str, fetched_at: float | None = None,
+             timeout: float | None = None, tries: int = 4) -> Book:
         """The resting book, as DEEP as the endpoint will give us.
+
+        `timeout` and `tries` are the caller's: a read inside a loop
+        that must keep time takes one try with a short timeout (the
+        focus tender, 2026-09-12) — the default ladder is up to two
+        minutes a read when the gateway hangs.
 
         We asked for no depth and took the default, which measures at
         4-5 price levels a side across 370 stored snapshots. Asking for
@@ -441,7 +447,7 @@ class Client:
         Depth is worth having for the fill model and the touch, not for
         the share. cache.depth_seen records what actually came back."""
         j = self.get(f"{GATEWAY}/v1/markets/{slug}/book",
-                     params={"depth": self.BOOK_DEPTH})
+                     params={"depth": self.BOOK_DEPTH}, timeout=timeout, tries=tries)
         md = j.get("book") or j.get("marketData") or j
         bids = [(to_num(l.get("px")), to_num(l.get("qty"))) for l in md.get("bids") or []]
         asks = [(to_num(l.get("px")), to_num(l.get("qty")))

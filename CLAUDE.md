@@ -263,7 +263,22 @@ long and accreted, so search it rather than reading it through.
   see or set, the two bounds that are his (the expected-loss cap and
   the money the exchange leaves free), and on 2026-09-12 it sat full
   while 26 sides with a fair rested nothing. It is gone, and with it
-  the slot-rationing it needed. An exit always rests as the
+  the slot-rationing it needed. THE TENDER'S BOOK READS KEEP ITS CLOCK
+  (2026-09-12, 21:19-21:42Z: the boot on 174.138.33.47 spent 15.5
+  minutes over its first pass — 135 book reads through the gateway's
+  retry ladder, 30 s a try and four tries — while the page said "the
+  first pass has not run yet"; every book was then stamped with the
+  PASS'S start, the desk read them as minutes old and refused "no
+  book fresher than 120s", the next pass re-read a dozen and the rest
+  went stale, 46 of 85 sides idle "no book"; on every other boot that
+  day the first pass took 16-34 s): a read is one try of eight
+  seconds, a pass reads for ten seconds at most (45 while any focus
+  book is unread), each book is stamped at its own read, a 429 stops
+  the pass's reads and holds the next twenty seconds, and the pass
+  line on the page says what was read, what failed and what waits,
+  with the last failure's own words; "books_slow" is logged once in
+  ten minutes. The stream, the other book source, still starts only
+  after the family's first cycle (the 2026-08-31 health-check rule). An exit always rests as the
   position leaving — a cover as SELL_SHORT, a sale of the lot as
   SELL_LONG — and a resting entry on the exit's side is re-laid as
   the exit whatever its own reading, so the lot is never left
