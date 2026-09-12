@@ -163,11 +163,17 @@ FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much
 FOCUS_SIZE_FRACS = (1.0, 0.7, 0.5, 0.35, 0.25, 0.15, 0.1)
 FOCUS_MOVE_COOLDOWN_S = 300.0   # an entry moves at most this often
 FOCUS_EXIT_COOLDOWN_S = 60.0    # an exit follows the touch and the lot within a minute
-FOCUS_GHOST_S = 60.0            # an order the tender moved or pulled is netted out of the
+FOCUS_GHOST_S = 180.0           # an order the tender moved or pulled is netted out of the
                                 # book this long (owner, 2026-09-12 "Yes, do the ghost
                                 # netting": the exchange's book showed the old order for a
                                 # read or two after a move, it read as company and as the
-                                # touch, and the NY governor rep cover flipped 4c<->10c)
+                                # touch, and the NY governor rep cover flipped 4c<->10c).
+                                # It must outlast the exit cooldown plus the age a book
+                                # may have (16:41-16:44Z, 2026-09-12, at a minute: the
+                                # memory expired at the very pass the cooldown let the
+                                # exit move again, on a book read up to 45 s earlier that
+                                # still showed the old order — the cover flipped
+                                # 8c<->10c every minute with the netting in place)
                                 # (owner, 2026-09-10: "Exit orders should never be held
                                 # and don't need to ramp up. They can always be placed")
 # an order whose expected value reads under zero comes off only after
@@ -895,7 +901,11 @@ class Focus:
             for gpx, gq, gts in keep:
                 if read_at and read_at > float(gts) + FOCUS_GHOST_S:
                     continue          # a book read well after the cancel: no ghost in it
-                raw = [(p, (q - gq) if abs(p - gpx) < tick / 2 else q) for p, q in raw]
+                # only a level that still shows at least the ghost's size
+                # can be carrying it; one showing less has already lost
+                # the order, and netting it would strip the others
+                raw = [(p, (q - gq) if abs(p - gpx) < tick / 2 and q >= gq - 1e-9 else q)
+                       for p, q in raw]
         return [(p, q) for p, q in raw if q > 1e-9]
 
     def _score(self, slug: str, side: str, book, prog, pool: float,
