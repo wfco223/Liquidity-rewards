@@ -616,6 +616,32 @@ class TestAfterAFill(Base):
         self.tick()
         self.assertNotIn(f"{NC}|SELL", self.f.weak_since)
 
+    def test_a_weak_order_stays_while_the_exchange_refuses_this_address(self):
+        # 17:09-18:09Z, 2026-09-12: the boot took an address the exchange
+        # calls a VPN, 60 placements were refused and none rested, while
+        # this pull took the tender from 39 orders to 18 and the day's
+        # rate from $1,110 to $403. The page and the alert both say
+        # nothing is cancelled that could not come back.
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        ask = self.mine(NC, "SELL")[0]
+        dead = Book(bids=((0.44, 300.0), (0.02, 60000.0)),
+                    asks=((0.40, 5000.0), (0.46, 300.0), (0.98, 60000.0)),
+                    tick=0.01, fetched_at=self.r.now)
+        self.r.exchange.books[NC] = dead
+        self.tick()
+        self.r.fam.desk.health.refused("your connection looks like a VPN", now=self.r.now)
+        self.r.now += focus_mod.FOCUS_WEAK_DWELL_S
+        self.tick()
+        self.assertIn(ask.id, self.r.exchange.live)          # it could not come back
+        self.assertFalse(any(e.get("event") == "pull" and e.get("market") == NC
+                             and "min" in (e.get("why") or "") for e in self.f.log))
+        # the address recovers: now the weak reading pulls it
+        self.r.fam.desk.health.accepted(now=self.r.now)
+        self.r.now += focus_mod.FOCUS_WEAK_DWELL_S
+        self.tick()
+        self.assertNotIn(ask.id, self.r.exchange.live)
+
     def test_an_exit_fill_holds_nothing_and_an_exit_follows_the_lot_within_a_minute(self):
         # owner, 2026-09-10: "Exit orders should never be held and don't
         # need to ramp up. They can always be placed"
