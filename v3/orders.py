@@ -237,6 +237,30 @@ class OrderDesk:
         # the placement breaker, shared across desks when the monitor
         # hands one in (one address, one answer)
         self.health = health if health is not None else PlaceHealth(clock=self._clock)
+        # every id this desk cancelled, for a day: an order the open
+        # list still shows after our cancel is OURS still, never the
+        # owner's to adopt (2026-09-12, 09:44-09:46Z: the family
+        # cancelled the tender's fifteen leftover 2028 orders at boot,
+        # the list showed eight of them two minutes later, and they
+        # were recorded as his hand's — untouchable — while they rested
+        # on as the entries he had just asked out of)
+        self.cancelled: dict[str, float] = {}
+
+    CANCELLED_KEEP_S = 24 * 3600.0
+
+    def remember_cancel(self, order_id: str, at: float | None = None) -> None:
+        now = self._clock() if at is None else float(at)
+        self.cancelled[str(order_id)] = now
+        if len(self.cancelled) > 4000:
+            cutoff = now - self.CANCELLED_KEEP_S
+            self.cancelled = {k: v for k, v in self.cancelled.items() if v >= cutoff}
+
+    def cancelled_at(self, order_id: str) -> float | None:
+        """When this desk cancelled the id, if within the day."""
+        t = self.cancelled.get(str(order_id))
+        if t is None or self._clock() - t > self.CANCELLED_KEEP_S:
+            return None
+        return t
 
     # -- rails ---------------------------------------------------------------
 
@@ -537,6 +561,7 @@ class OrderDesk:
             return OrderResult(ok=False, note=f"cancel failed: {e}", order_id=order_id)
         self.log({"op": "cancel", "market": slug, "id": order_id,
                   "initiator": initiator, "ts": self._clock()})
+        self.remember_cancel(order_id)
         return OrderResult(ok=True, note="cancelled", order_id=order_id)
 
     def cancel_all(self, *, initiator: str) -> OrderResult:

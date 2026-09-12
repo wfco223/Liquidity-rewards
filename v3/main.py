@@ -1274,6 +1274,39 @@ class Monitor:
                    f"up {rec['uptime_min']:.0f} min"
                    + (f", last memory reading {last_mem[1]:.0f} MB" if last_mem else ""))
 
+    def _desk_cancelled(self) -> dict:
+        """Every id any family's desk cancelled in the last day — saved
+        so a restart still knows what is ours to cancel again rather
+        than the owner's to adopt (2026-09-12)."""
+        out: dict = {}
+        now = time.time()
+        for fam in self.families.values():
+            desk = getattr(fam, "desk", None)
+            for oid, at in list((getattr(desk, "cancelled", None) or {}).items()):
+                if now - float(at) <= OrderDesk.CANCELLED_KEEP_S:
+                    out[str(oid)] = float(at)
+        return out
+
+    def _restore_desk_cancelled(self, saved: dict) -> None:
+        """Hand the saved cancels back to every desk, and seed them from
+        each family's own log of orders it cancelled (the record of
+        2026-09-12 09:44Z predates this memory)."""
+        remembered = dict(saved.get("desk_cancelled") or {})
+        for fam in self.families.values():
+            for e in getattr(fam, "log", None) or []:
+                if (isinstance(e, dict) and e.get("event") in ("exit", "pull", "cancel_again")
+                        and e.get("id") and e.get("ts")):
+                    remembered.setdefault(str(e["id"]), float(e["ts"]))
+        for fam in self.families.values():
+            desk = getattr(fam, "desk", None)
+            if desk is None:
+                continue
+            for oid, at in remembered.items():
+                try:
+                    desk.remember_cancel(oid, float(at))
+                except Exception:  # noqa: BLE001
+                    pass
+
     def _rebuild_paid_by_day(self) -> None:
         """paid_seen ("date|market" -> usd) folded by day, for the bond
         meter's grading (owner, 2026-09-08)."""
@@ -1344,6 +1377,7 @@ class Monitor:
         self._rebuild_paid_by_day()
         self.mkt_claim_day = dict(saved.get("mkt_claim_day") or {})
         self.cancel_jobs = list(saved.get("cancel_jobs") or [])
+        self._restore_desk_cancelled(saved)
         self.ladder_day = str(saved.get("ladder_day") or "")
         if saved.get("bonds"):
             self.bonds.restore(saved["bonds"])
@@ -1492,6 +1526,7 @@ class Monitor:
             "paid_seen": self.paid_seen,
             "mkt_claim_day": self.mkt_claim_day,
             "cancel_jobs": list(getattr(self, "cancel_jobs", [])),
+            "desk_cancelled": self._desk_cancelled(),
             "rss_mb": round(rss_mb(), 1),
             "bonds": self.bonds.to_dict(),
             "places": self.places.to_dict(),

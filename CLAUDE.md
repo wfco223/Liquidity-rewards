@@ -447,7 +447,15 @@ long and accreted, so search it rather than reading it through.
   tender drops the ground (a close-out market is never boosted for
   it). Sep 11 had paid $6.72 there against a $24.57 estimate while
   the day's 2028 round trips lost about $26. His hand orders there
-  stay his.
+  stay his. An order the open list still shows after WE cancelled it
+  is ours still — cancelled again (once a minute, ten times at most),
+  never adopted as his (2026-09-12, 09:44-09:46Z: the family
+  cancelled the tender's fifteen leftover 2028 orders at boot, the
+  list showed eight of them two minutes later, and they were recorded
+  as his hand's — untouchable — while they rested on as the entries
+  he had just asked out of); every desk remembers its cancels for a
+  day, the memory is saved with the state, and a restart seeds it
+  from each family's own log of orders it cancelled.
 - New markets (owner, 2026-09-09: "Can you give me a report on any
   newly added markets?" ... "Yes state races should be included. But
   don't place orders in these races before I get the chance to look
