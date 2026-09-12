@@ -1759,3 +1759,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789218532.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,64,0.847,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDPZV7014T6S
 1789218532.2,politics,ussewc-usse-wv-2026-11-03-rep,BUY,20,0.94,hand,,2.39,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CDMYEY30MSJH
 1789218532.2,politics,ewc-usp-2028-11-07-dontru,SELL,3.11,0.06,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEST16XACTN3
+1789218865.8,politics,scc-senate-gop-2026-11-03-49,SELL,0.06,0.15,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CESSM2GXTTMY
+1789218892.2,politics,scc-senate-gop-2026-11-03-49,SELL,32,0.15,focus,17.0451,0.4,0.149225,16,19,0.799,0.14,0.15,-0.0008,-50,focus entry: ~$17.03/day; fill odds 64%/day; EV +14.22/day,CESSM2GXTTMY
+1789220839.0,politics,ewc-usgub-nv-2026-11-03-rep,BUY,211,0.59,sell,12.1377,19.45,0.68085,58,62,0.356,0.59,0.6,-0.0908,0,an exit — its fill reduces the position it sits on,CE9Z5DSJ4TN2
+1789222136.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-2.17,0.22,fix,,19.82,,,,,,,,,size trimmed by 2.17 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789222136.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,-17.87,0.22,fix,,19.82,,,,,,,,,size trimmed by 17.87 to the exchange's count (order CE2EGZ1FETMM),CE2EGZ1FETMM
+1789222136.6,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,-1,0.06,fix,,3.48,,,,,,,,,size trimmed by 1 to the exchange's count (order CE7FKM222TN2),CE7FKM222TN2
+1789222136.6,politics,usgubewc-usgub-vt-2026-11-03-dem,BUY,-1,0.12,fix,,8.43,,,,,,,,,size trimmed by 1 to the exchange's count (order CE2HGFK3PTN2),CE2HGFK3PTN2
+1789222136.6,politics,ussewc-usse-ma-2026-11-03-dem,BUY,-5,0.97,fix,2.506,4.33,0.9997,94,98,0.772,0.97,0.99,-0.0297,10,size trimmed by 5 to the exchange's count (order CE6NW3VW2TMQ),CE6NW3VW2TMQ
+1789222136.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,-5,0.831,fix,18.0202,0.15,0.8618,84,85,0.941,0.831,0.832,-0.0308,73,size trimmed by 5 to the exchange's count (order CE9CTZTYWTN2),CE9CTZTYWTN2
+1789222136.6,politics,scc-senate-gop-2026-11-03-49,SELL,0.06,0.15,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CESSM2GXTTMY
