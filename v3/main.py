@@ -1185,22 +1185,28 @@ class Monitor:
         while True:
             time.sleep(20.0)
             now = time.time()
-            with self._lock:
-                for key, fam in self.families.items():
+            # NO SHARED LOCK (owner, 2026-09-13 "Yes build both"): the cycle
+            # holds self._lock for its whole run (minutes when the board is
+            # slow), and this thread was blocking on it — sampling once a
+            # cycle instead of every 20 s, so the meter and graph froze. It
+            # only READS (fam.orders, the live book cache, terms) to score;
+            # a snapshot taken mid-mutation is caught below and skipped, and
+            # the next tick is 20 s away. The verified clock is stamped at
+            # the order read, so a long cycle no longer reads as an outage.
+            for key, fam in self.families.items():
+                try:
                     try:
-                        orders = [{"market": o.market, "side": o.side,
-                                   "price": o.price, "size": o.qty}
-                                  for o in list(fam.orders.values())]
-                        # the last time the exchange answered a full cycle:
-                        # past MAX_GAP_S the orders in hand are unverified
-                        # and the meter bills nothing on them
-                        cyc = getattr(self, "cycle_stats", None) or {}
-                        self.samplers[key].sample(
-                            now, orders, fam.cache, fam.terms,
-                            side_pool=lambda s, p, f=fam: f._side_pool(s, p),
-                            verified_at=cyc.get("at"))
-                    except Exception:  # noqa: BLE001 — measuring never breaks
-                        pass
+                        ovals = list(fam.orders.values())
+                    except RuntimeError:      # dict changed mid-iteration: brief, retry once
+                        ovals = list(fam.orders.values())
+                    orders = [{"market": o.market, "side": o.side,
+                               "price": o.price, "size": o.qty} for o in ovals]
+                    self.samplers[key].sample(
+                        now, orders, fam.cache, fam.terms,
+                        side_pool=lambda s, p, f=fam: f._side_pool(s, p),
+                        verified_at=getattr(self, "_verified_at", None))
+                except Exception:  # noqa: BLE001 — measuring never breaks
+                    pass
 
     def _audit(self, row: dict) -> None:
         self.audit.append(row)
@@ -4353,6 +4359,11 @@ class Monitor:
         self._floor_ok = self.floor.acked(now)
         self._stage("fetching the account's resting orders", 10)
         orders = self.client.open_orders()
+        # the moment the resting orders were confirmed — the sampler's
+        # "exchange still in reach" clock (owner, 2026-09-13). Stamped
+        # HERE, early in the cycle, not at cycle end, so a long cycle
+        # does not read as an outage a whole cycle later.
+        self._verified_at = time.time()
         open_read = getattr(self.client, "open_read", None) or {}
         capped = bool(open_read.get("capped"))
         if capped and now - getattr(self, "_cap_noted", 0.0) > 600.0:
