@@ -57,7 +57,11 @@ RETRYABLE_STATUSES = (429, 500, 502, 503, 504)
 # (the tender's) takes the next slot ahead of the family's. Every 429
 # is kept in client.throttles with the wait the exchange asked for, so
 # the pace is set from the record, not guessed twice.
-GATEWAY_PACE_PER_S = 5.0        # gateway reads, all threads together, at most this many a second
+GATEWAY_PACE_PER_S = 2.0        # gateway reads, all threads together, at most this many a second
+                                # (owner, 2026-09-13, api-dev channel: another
+                                # caller found bigger gaps beat a fast drip when
+                                # the endpoint tightened — 5 pulls at 2 s gaps
+                                # ran 20x a 300 ms drip that kept tripping the limit)
 GATEWAY_HOLD_DEFAULT_S = 20.0   # a 429 with no usable Retry-After holds this long
 GATEWAY_HOLD_MAX_S = 120.0      # ...and never longer than this whatever it says
 THROTTLE_KEEP = 200
