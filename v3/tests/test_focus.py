@@ -2305,13 +2305,19 @@ class TestTheSeatMarketsAreHisHands(Base):
         self.f.seed(self.r.now)
         self.r.switch = True
         self.assertIn(SEAT, self.f.markets, "the seat market must be on the tender's ground")
-        # a fair is what makes a market tended at all, and the 2026-09-10
-        # carve-out only ever applied where he had set one
+        # a fair is set so nothing here passes for want of one: the seat
+        # markets are refused because they are FROZEN (2026-09-13), which
+        # is the rule under test
         self.f.set_fair(SEAT, 45.0)
-        self.assertIsNone(self.f.why_not_tended(SEAT))
 
     def hand(self, slug, side="BUY", price=0.40, qty=20.0):
-        o = FamilyOrder(id=f"h-{slug}-{side}", market=slug, side=side, price=price,
+        """One of his, resting on the exchange as a real one is, so a
+        family cycle's reconcile sees it instead of dropping the record."""
+        res = self.r.fam.desk.place_resting(
+            slug, side, price, qty, net_position=0.0,
+            intent=BUY_LONG if side == "BUY" else SELL_LONG, verify=False)
+        self.assertTrue(res.ok, res.note)
+        o = FamilyOrder(id=res.order_id, market=slug, side=side, price=price,
                         qty=qty, intent=BUY_LONG if side == "BUY" else SELL_LONG,
                         placed_ts=self.r.now, purpose="manual", why="")
         self.r.fam.orders[o.id] = o
@@ -2364,11 +2370,45 @@ class TestTheSeatMarketsAreHisHands(Base):
         self.assertTrue([e for e in self.f.log if e.get("event") == "released"
                          and e.get("market") == SEAT])
 
-    def test_the_tender_still_works_the_seat_market_with_its_own_orders(self):
-        # his orders being his does not stand the tender down there
+    def test_the_tender_is_out_of_the_seat_markets_entirely(self):
+        # owner, 2026-09-13: "Keep the tender out of the seat markets."
+        # Frozen ground now, on the same footing as the governor seat
+        # counts: it rests nothing here and its own orders come off.
+        self.assertEqual(self.f.why_not_tended(SEAT),
+                         "frozen — hands off (owner, 2026-08-24)")
         for _ in range(4):
             self.tick()
-        self.assertTrue(self.mine(SEAT), "the tender rests nothing on seat ground")
+        self.assertEqual(self.mine(SEAT), [], "the tender rested on frozen ground")
+
+    def test_its_own_order_already_there_comes_off_and_his_stays(self):
+        his = self.hand(SEAT, side="SELL", price=0.95)
+        its = FamilyOrder(id="t-seat", market=SEAT, side="BUY", price=0.30, qty=25.0,
+                          intent=BUY_LONG, placed_ts=self.r.now, purpose=PURPOSE,
+                          why="focus entry: ~$1/day")
+        self.r.fam.orders[its.id] = its
+        self.f.mine_ids.append(its.id)
+        for _ in range(3):
+            self.tick()
+        self.assertNotIn(its.id, self.r.fam.orders, "the tender's own order stayed")
+        self.assertIn(his.id, self.r.fam.orders, "his order was taken with it")
+        self.assertEqual(self.r.fam.orders[his.id].purpose, "manual")
+
+    def test_the_engine_is_frozen_there_too(self):
+        # frozen, not avoided: it places nothing and pulls nothing
+        self.assertTrue(self.r.fam._frozen(SEAT))
+        self.assertFalse(self.r.fam.enterable(SEAT))
+        his = self.hand(SEAT, side="SELL", price=0.95)
+        self.r.cycle()
+        self.assertIn(his.id, self.r.fam.orders)
+        self.assertEqual([o for o in self.r.fam.orders.values()
+                          if o.market == SEAT and o.purpose in ("earn", "probe", "sell")], [])
+
+    def test_the_governor_seat_counts_are_frozen_as_they_always_were(self):
+        from v3 import politics
+        toks = politics.config().freeze_tokens
+        self.assertIn("usgovcc", toks)
+        self.assertIn("scc-senate-gop", toks)
+        self.assertIn("scc-hrep-rep", toks)
 
     def test_the_rule_names_both_seat_books_and_nothing_else(self):
         self.assertTrue(self.f.hand_keep("scc-senate-gop-2026-11-03-50"))
