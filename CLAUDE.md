@@ -561,6 +561,18 @@ long and accreted, so search it rather than reading it through.
   sampler's lock free and the estimator's verified clock inside its
   five-minute window (2026-09-13: the 21-35 minute cycle had locked
   the sampler out and zeroed every reading past five minutes).
+  THE BONDS TAKE THE SAME RULE (the same instruction, "everything";
+  I had applied it to the five families and missed this one, found on
+  the 17:52Z check): bonds._refresh_books read up to 40 books a cycle
+  across its whole listed set, ungated by its switch, at a 60-second
+  staleness threshold that a 6-15 minute cycle puts every market past.
+  Its switch had been OFF for 32 hours and the pass was still reading
+  61 listed markets — 431.8 s of a 676 s lap, the biggest single item
+  — while the tender read 0-2 books a pass with 57-80 due and the
+  gateway answered with SIX 429s a minute. With the switch off it now
+  reads only what it HOLDS or has an order resting in (10 markets, not
+  61); a row it stops reading keeps its last book on the page and is
+  flagged stale past ten minutes, which the page already promised.
   THE METER READS LIVE REGARDLESS OF CYCLE LENGTH (owner, 2026-09-13
   "Yes build both", after the scale-back left the cycle variable at
   2-9 minutes and the meter billing only ~8% of the time): two fixes,
