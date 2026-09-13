@@ -632,6 +632,23 @@ long and accreted, so search it rather than reading it through.
   the lot is never offered twice and never moved off his rule's price.
   A refused placement is reported on the card; its lot is left for the
   engine or tender to re-offer on their next pass.
+  THE ENGINE'S HANDS-OFF WAS TRUE IN SOME PATHS AND FALSE IN FIVE (my own
+  defect, found on the 19:00Z check of 2026-09-13 after the first real
+  run): the SHORT-cover sum did not name "sweep", so a sweep cover of a
+  short read as nothing, `rest` came out as the WHOLE short and the
+  engine rested a second cover beside it — the lot offered twice in TEN
+  markets (Connecticut, Hawaii, Illinois, Massachusetts and Wyoming
+  governor rep, Illinois senate rep, four cfb win totals), which is the
+  shape that flips a short long when both fill. The long side had been
+  right all along. Four more paths took a sweep order for their own: the
+  kickoff pull cancelled it (kickoff_pull defaults True, and 89 of the
+  104 orders were cfb and nfl), the whole-shares cull retired a
+  fractional one, the ceiling's trim could cancel it to get under a
+  ceiling it never fed (it is an _owner_exit, so it charges nothing),
+  and the aged-order path advanced the blank-market probe ratchet off
+  it. All five now name "sweep". The prune that cleans up an
+  over-covered side only ever cancels purpose "sell", so the ten live
+  doubles heal themselves on the first cycle of the new build.
   EACH ORDER IS PRICED ON A BOOK READ THE SECOND IT GOES ON (owner,
   2026-09-13 "It skipped almost everything because the books were old.
   Can you read the book immediately before placing" — the 16:51Z run

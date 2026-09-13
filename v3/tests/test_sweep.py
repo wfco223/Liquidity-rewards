@@ -364,6 +364,101 @@ class TestTheTapAnswersAtOnce(Base):
         self.assertFalse(self.sweep.start("nuke", self.r.now)["ok"])
 
 
+class TestTheEngineIsHandsOff(Base):
+    """The sweep order is the engine's to leave alone: never cancelled,
+    moved, trimmed or nursed, it charges no ceiling, and it is netted out
+    of every exit the engine sizes. My own defect, found on the 19:00Z
+    check of 2026-09-13: the claim was true in some paths and false in
+    five. The short-cover sum was the one that cost money — it did not
+    name "sweep", so a sweep cover read as nothing, the engine sized a
+    second cover for the whole short and the lot was offered twice in ten
+    markets after the 18:16Z run. Both filling flips a short long."""
+
+    def short_with_a_sweep_cover(self, qty=-6.0):
+        """A real short with the sweep's cover resting on the exchange —
+        placed by the sweep itself, so the open list shows it as the
+        engine's reconcile will."""
+        self.r.fam.inventory[A] = {"qty": qty, "cost": qty * 0.05}
+        self.r.positions[A] = (qty, qty * 0.05)
+        res = self.sweep.run(self.r.now)
+        self.assertEqual(res["n"], 1, res)
+        mine = self.orders_on(A, "BUY")
+        self.assertEqual([o.purpose for o in mine], [PURPOSE])
+        return mine[0]
+
+    def engine_cover(self, qty=6.0, price=0.03):
+        """The engine's own cover resting beside it — the live 18:16Z shape."""
+        res = self.r.fam.desk.place_resting(
+            A, "BUY", price, qty, net_position=-qty, intent=SELL_SHORT,
+            close_short=True, verify=False)
+        self.assertTrue(res.ok, res.note)
+        self.r.fam.orders[res.order_id] = FamilyOrder(
+            id=res.order_id, market=A, side="BUY", price=price, qty=qty,
+            intent=SELL_SHORT, placed_ts=self.r.now, purpose="sell",
+            why="engine cover")
+        return res.order_id
+
+    def test_a_sweep_cover_is_netted_so_the_short_is_never_covered_twice(self):
+        o = self.short_with_a_sweep_cover()
+        self.r.cycle()
+        buys = self.orders_on(A, "BUY")
+        self.assertEqual([b.purpose for b in buys], [PURPOSE])
+        self.assertEqual(sum(b.qty for b in buys), 6.0)     # the short, once
+        self.assertIn(o.id, self.r.fam.orders)
+
+    def test_an_engine_cover_beside_a_sweep_cover_is_pruned_not_the_sweep(self):
+        # the ten live doubles of 18:16Z: the engine's own cover comes off
+        o = self.short_with_a_sweep_cover()
+        eng = self.engine_cover()
+        self.r.cycle()
+        left = {b.id for b in self.orders_on(A, "BUY")}
+        self.assertIn(o.id, left)
+        self.assertNotIn(eng, left)
+
+    def test_a_sweep_order_is_not_pulled_at_kickoff(self):
+        o = self.short_with_a_sweep_cover()
+        self.r.fam.cfg.kickoff_pull = True
+        self.r.fam.event_start = {A: self.r.now - 60.0}
+        self.r.cycle()
+        self.assertIn(o.id, self.r.fam.orders)
+
+    def test_a_sweep_order_never_advances_the_probe_ratchet(self):
+        # the aged-order path does not retire anything, it advances the
+        # blank-market probe ratchet; a sweep order is not a probe
+        o = self.short_with_a_sweep_cover()
+        self.r.fam.orders[o.id].placed_ts = self.r.now - 200000.0
+        before = dict(self.r.fam.probe_ratchet)
+        self.r.cycle()
+        self.assertIn(o.id, self.r.fam.orders)
+        self.assertEqual(self.r.fam.probe_ratchet.get(f"{A}|BUY"),
+                         before.get(f"{A}|BUY"))
+
+    def test_a_fractional_sweep_order_survives_the_whole_shares_cull(self):
+        o = self.short_with_a_sweep_cover(qty=-6.25)
+        self.assertNotEqual(o.qty, round(o.qty))
+        self.r.fam.cfg.whole_shares = True
+        self.r.cycle()
+        self.assertIn(o.id, self.r.fam.orders)
+
+    def test_a_sweep_order_charges_no_ceiling_and_is_never_trimmed(self):
+        # it charges nothing (it is an owner exit), so it must never be
+        # the thing cancelled to get back under a ceiling it never fed
+        o = self.short_with_a_sweep_cover()
+        entry = self.r.fam.desk.place_resting(
+            B, "BUY", 0.44, 100.0, net_position=0.0, intent=BUY_LONG,
+            verify=False)
+        self.assertTrue(entry.ok, entry.note)
+        self.r.fam.orders[entry.order_id] = FamilyOrder(
+            id=entry.order_id, market=B, side="BUY", price=0.44, qty=100.0,
+            intent=BUY_LONG, placed_ts=self.r.now, purpose="earn",
+            why="an entry that blows the ceiling")
+        self.r.fam.cfg.capital_usd = 0.0           # every ceiling blown
+        self.assertGreater(self.r.fam.family_spent(), 0.0)
+        self.r.fam._trim(self.r.now, 5)
+        self.assertIn(o.id, self.r.fam.orders)              # the sweep stands
+        self.assertNotIn(entry.order_id, self.r.fam.orders)  # the entry went
+
+
 class TestTheTenderStandsDown(unittest.TestCase):
     def test_a_sweep_order_counts_as_cover_and_is_never_adopted(self):
         from v3.tests.test_focus import Base as FocusBase, NC
