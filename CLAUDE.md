@@ -540,6 +540,26 @@ long and accreted, so search it rather than reading it through.
   keeps cfb, NFL and the unboosted politics markets on $250 of
   expected loss in total (politics $150, cfb $60, NFL $40) and 40 of
   the stream's 200 subscriptions; the focus markets seat first.
+  SCALE THE NON-FOCUS GATEWAY READS BACK (owner, 2026-09-13 "Scale
+  everything that could be causing the 429s back", the meter frozen
+  at $359.63 while the old cycle ran 35 minutes): the 429s are the
+  old-engine families reading candidate books through the throttled
+  gateway — 163 a cycle across the five families, ~115 of them the
+  four sports families that hold nothing and earn $0. A family now
+  spends NO gateway read discovering candidates it cannot act on: its
+  _refresh_books candidate scan runs only when it will place entries
+  this cycle (its switch on, the master on, not a flatten); an off,
+  master-off or flattening family reads only what it HOLDS (staleness-
+  gated, for the exits) and re-plans from cache where replan_s is set,
+  so the page keeps its scores without a fetch. The per-cycle book
+  budgets are cut too: politics 48->24, cfb 48->16, nfl 40->16, nba
+  20->10, gameday 24->12 (scan_reserve halved with them). The tender
+  is untouched — it rides the websocket, and the boosted-market
+  discovery it needs is refresh_universe/refresh_terms, not the book
+  scan. This unfreezes the meter: the shorter cycle keeps the
+  sampler's lock free and the estimator's verified clock inside its
+  five-minute window (2026-09-13: the 21-35 minute cycle had locked
+  the sampler out and zeroed every reading past five minutes).
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

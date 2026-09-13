@@ -113,7 +113,7 @@ def cfb() -> FamilyConfig:
         # (456 books) get 48 look-ups/cycle with a 16-slot scan lane,
         # and the action allowance doubles. The 60s cycle and blast
         # radius are the caps now, not the exchange.
-        books_per_cycle=48, scan_reserve=16,
+        books_per_cycle=16, scan_reserve=8,
         book_stale_s=300.0, read_age_s=900.0,
         max_actions_per_cycle=12,
         # owner, 2026-08-21: football must test hypotheses too — scouts
@@ -165,7 +165,7 @@ def nfl() -> FamilyConfig:
         # with the switch off. The explorer re-reads its 1,160 idle
         # markets every 15 minutes, 40 a cycle, so the placer always
         # has fresh ground to enter.
-        books_per_cycle=40, scan_reserve=16, rescan_s=900.0,
+        books_per_cycle=16, scan_reserve=8, rescan_s=900.0,
         book_stale_s=300.0, read_age_s=900.0,
         max_actions_per_cycle=6,
         probe_usd=3.0, grow_usd=10.0,
