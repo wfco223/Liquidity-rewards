@@ -42,13 +42,16 @@ except Exception:  # no tz database: fixed EDT offset, same fallback as 1.0
 
 BOOK_MAX_AGE = 180.0   # a book older than this doesn't get scored
 MAX_GAP_S = 300.0      # longest interval one sample may bill for
-# the orders-still-resting check has its own, wider window (owner,
-# 2026-09-13 "Yes build both"): the open list is read once a cycle,
-# so `verified_at` is cycle-cadence — a healthy 6-9 minute cycle must
-# not read as an outage. A real outage (maintenance, a wedged loop)
-# runs far longer than this; past it the orders in hand are unverified
-# and nothing bills, the owner's 2026-09-11 rule.
-VERIFIED_MAX_S = 600.0
+# the orders-still-resting check keeps the owner's own five minutes
+# (2026-09-11): past five minutes with no word from the exchange that
+# the orders in hand are still resting, nothing bills on them. It was
+# widened to ten on 2026-09-13 to cover a cycle-cadence `verified_at`
+# (the open list was read once a cycle, and a healthy 6-9 minute cycle
+# read as an outage) — and ten was not enough either: that day's laps
+# ran 6 to 15.6 minutes and the meter still blanked one tick in six.
+# The stamp no longer waits for the cycle — the sampler probes the open
+# list on its own two-minute clock (v3/main.py) — so five is honest.
+VERIFIED_MAX_S = 300.0
 MIN_FRESH = 0.5        # book-freshness quorum below which nothing accrues
 HISTORY_DAYS = 30
 

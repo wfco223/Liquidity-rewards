@@ -50,10 +50,10 @@ class TestTheExchangeOutOfReach(unittest.TestCase):
         e.sample(t0 + 20, one_order(), books_at(t0 + 20), st, side_pool=_sp, verified_at=t0)
         earned = e.earned
         self.assertGreater(earned, 0.0)
-        # the cycle has not answered for eleven minutes: nothing bills
-        # (the verified window is 10 min now — a healthy 6-9 min cycle
-        # must not read as an outage; owner 2026-09-13)
-        e.sample(t0 + 40, one_order(), books_at(t0 + 40), st, side_pool=_sp, verified_at=t0 - 640)
+        # nothing has confirmed the orders for six minutes: nothing bills
+        # (the window is the owner's own five minutes again — the sampler
+        # probes the open list every two minutes now; owner 2026-09-13)
+        e.sample(t0 + 40, one_order(), books_at(t0 + 40), st, side_pool=_sp, verified_at=t0 - 340)
         self.assertEqual(e.earned, earned)
         self.assertEqual(e.rate, 0.0)
         self.assertEqual(e.dots[-1][1:], [0.0, 0])
@@ -67,19 +67,21 @@ class TestTheExchangeOutOfReach(unittest.TestCase):
         e.sample(t0 + 100, one_order(), books_at(t0 + 100), st, side_pool=_sp)
         self.assertAlmostEqual(e.earned, earned + 2 * e.rate * 20 / 86400, places=6)
 
-    def test_a_normal_cycle_stays_in_reach(self):
-        # owner, 2026-09-13: the open list is read once a cycle, so the
-        # verified clock is cycle-cadence — a healthy 6-9 minute cycle must
-        # keep billing, only a real outage (past 10 min) reads as unverified
+    def test_the_window_is_the_owners_five_minutes(self):
+        # owner, 2026-09-11: past five minutes with no word that the
+        # orders are still resting, nothing bills. Widening it to ten for
+        # a cycle-cadence stamp did not hold either — the laps of
+        # 2026-09-13 ran to 15.6 minutes — so the sampler probes the open
+        # list itself every two minutes and five minutes is honest again.
         from v3.estimator import VERIFIED_MAX_S
-        self.assertEqual(VERIFIED_MAX_S, 600.0)
+        self.assertEqual(VERIFIED_MAX_S, 300.0)
         e, st = Estimator(), terms_with()
         t0 = noon_et()
         e.sample(t0, one_order(), books_at(t0), st, side_pool=_sp, verified_at=t0)
         base = e.earned
-        # nine minutes since the last order read: still in reach, still bills
+        # four minutes since the last probe: still in reach, still bills
         e.sample(t0 + 20, one_order(), books_at(t0 + 20), st, side_pool=_sp,
-                 verified_at=t0 + 20 - 540)
+                 verified_at=t0 + 20 - 240)
         self.assertGreater(e.earned, base)
         self.assertGreater(e.rate, 0.0)
 

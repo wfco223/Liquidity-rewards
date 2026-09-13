@@ -16,6 +16,10 @@ rounded UP (toward the ask). Sized to the whole lot, post-only, never
 inside the touch. Every order already on that side comes off first --
 the engine's, the tender's and his hand's (his carve-out) -- except his
 qualifying walls, which by the house convention offer none of the lot.
+Each order is priced on a book read the second it goes on, never on the
+plan's (owner, 2026-09-13 "Can you read the book immediately before
+placing": the first run placed 7 and was refused 95, "no book fresher
+than 120s", because the placing loop outlived the plan's reads).
 Placed once and left; the button runs another pass. Frozen ground and
 close-out ground are skipped. The order rests as purpose "sweep": the
 engine treats it as hands-off like his own and nets it out of every
@@ -34,7 +38,14 @@ from .family import FamilyOrder, is_wall
 from .intents import SELL_LONG, SELL_SHORT
 
 SWEEP_MAX_VALUE_USD = 1.0       # a holding worth less than this at the midpoint
-SWEEP_BOOK_MAX_AGE_S = 120.0    # a cached book older than this is re-read
+SWEEP_BOOK_MAX_AGE_S = 120.0    # planning: a cached book older than this is re-read
+# PLACING reads the book again, right before the order goes on (owner,
+# 2026-09-13 "Can you read the book immediately before placing"). A book
+# the stream delivered within this many seconds already is that read, so
+# it stands and spends no gateway read.
+SWEEP_PLACE_BOOK_MAX_AGE_S = 30.0
+SWEEP_READ_TIMEOUT_S = 8.0      # one read, this long
+SWEEP_READ_TRIES = 3            # ...and it waits out a 429 rather than lose the lot
 PURPOSE = "sweep"
 LOG_KEEP = 40
 
@@ -103,10 +114,15 @@ class Sweep:
                     skipped.append({"market": slug, "name": name,
                                     "why": "close-out ground — already being sold"})
                     continue
-                book = fam.cache.fresh(slug, SWEEP_BOOK_MAX_AGE_S, now)
+                book = fam.cache.fresh(slug, SWEEP_BOOK_MAX_AGE_S, self._clock())
                 if book is None:
                     try:
-                        book = self.client.book(slug, fetched_at=now, timeout=8.0,
+                        # stamped at its OWN read, never at the pass's start:
+                        # a pass over a hundred holdings takes minutes through
+                        # the throttled gateway, and a book stamped with the
+                        # start reads minutes old the moment it lands
+                        book = self.client.book(slug, fetched_at=None,
+                                                timeout=SWEEP_READ_TIMEOUT_S,
                                                 tries=2, priority=True)
                         fam.cache.put(slug, book)
                     except Exception as e:  # noqa: BLE001 — said, skipped
@@ -141,60 +157,128 @@ class Sweep:
 
     # -- the run -------------------------------------------------------------
 
+    def _book_to_place_on(self, fam, slug: str):
+        """The book this order is priced and placed on, read RIGHT NOW.
+
+        Owner, 2026-09-13 ("Can you read the book immediately before
+        placing"): the 16:51Z run placed 7 orders and was refused 95,
+        every refusal "no book fresher than 120s — refusing to place
+        blind". The plan had priced all 102 holdings up front and the
+        placing loop that followed took minutes — a cancel and a
+        placement a market, one at a time, through a gateway answering
+        3-4 429s a minute — so by the fiftieth order the book it was
+        pricing from was minutes old and the desk's own freshness gate
+        threw it out. Each order now gets its own read and its price
+        comes from that read, so his rule lands on the book as it stands
+        the second the order goes on.
+
+        A book the stream delivered seconds ago already IS that read, so
+        a cache entry younger than SWEEP_PLACE_BOOK_MAX_AGE_S stands and
+        spends no gateway read."""
+        b = fam.cache.fresh(slug, SWEEP_PLACE_BOOK_MAX_AGE_S, self._clock())
+        if b is not None:
+            return b
+        book = self.client.book(slug, fetched_at=None,
+                                timeout=SWEEP_READ_TIMEOUT_S,
+                                tries=SWEEP_READ_TRIES, priority=True)
+        fam.cache.put(slug, book)
+        return book
+
     def run(self, now: float) -> dict:
-        """His tap: re-plan on this second's books, then for each holding
-        cancel what rests on the exit side and place the one exit. A
-        refused placement is reported, its lot left for the engine or
-        tender to re-offer on their next pass; the button runs again."""
+        """His tap: plan the candidates, then for each one read its book,
+        price it on THAT read, cancel what rests on the exit side and
+        place the one exit. A refused placement is reported, its lot left
+        for the engine or tender to re-offer on their next pass; the
+        button runs again."""
         plan = self.plan(now, busy=self.busy)
         placed: list[dict] = []
         failed: list[dict] = []
+        skipped: list[dict] = list(plan["skipped"])
         if self.busy is not None:
             self.busy.update(phase="placing", done=0, total=len(plan["rows"]))
         for r in plan["rows"]:
             fam = self.families[r["key"]]
             if self.busy is not None:
                 self.busy["done"] = self.busy.get("done", 0) + 1
+            slug, qty = r["market"], r["qty"]
+            row = {k: r[k] for k in ("key", "market", "name", "qty", "bid", "ask",
+                                     "mid", "value", "side", "price", "hand")}
+            row["replaced"] = []
+            # the book as it stands this second, never the plan's
+            try:
+                book = self._book_to_place_on(fam, slug)
+            except Exception as e:  # noqa: BLE001 — said on the card, lot left alone
+                row["note"] = f"no book to place on: {str(e)[:90]}"
+                failed.append(row)
+                fam._log(event="sweep_refused", market=slug, side=r["side"],
+                         price=r["price"], qty=abs(qty), note=row["note"][:120])
+                continue
+            if not book.bids or not book.asks:
+                skipped.append({"market": slug, "name": r["name"],
+                                "why": "one-sided book when the order came up"})
+                continue
+            bid, ask = float(book.bids[0][0]), float(book.asks[0][0])
+            mid = (bid + ask) / 2.0
+            value = abs(qty) * mid
+            tick = float(getattr(book, "tick", 0.0) or 0.01)
+            side, px, intent = price_for(qty, bid, ask, tick)
+            row.update(bid=bid, ask=ask, mid=round(mid, 4),
+                       value=round(value, 2), side=side, price=px)
+            # his dollar, tested on the same read the price comes from
+            if value >= SWEEP_MAX_VALUE_USD:
+                skipped.append({
+                    "market": slug, "name": r["name"],
+                    "why": (f"worth ${value:.2f} at the midpoint when the order came "
+                            f"up — over the dollar, left alone")})
+                continue
+            # and what rests on the exit side NOW, not when the plan ran:
+            # the engine or the tender may have laid something there since,
+            # and the lot is never offered twice. A previous sweep's own
+            # order is replaced like any other — that is what running the
+            # button again means.
+            replace = [o for o in list(fam.orders.values())
+                       if o.market == slug and o.side == side
+                       and not is_wall(o, abs(qty))]
+            row["hand"] = sum(1 for o in replace if o.purpose == "manual")
             gone: list[str] = []
-            for oid in r["replace"]:
+            for o in replace:
+                oid = o.id
                 if oid not in fam.orders:
                     continue
-                rr = fam.desk.cancel(oid, r["market"], initiator="owner")
+                rr = fam.desk.cancel(oid, slug, initiator="owner")
                 if rr.ok:
                     fam.orders.pop(oid, None)
                     try:
-                        fam.evidence.order_gone(r["market"], oid)
+                        fam.evidence.order_gone(slug, oid)
                     except Exception:  # noqa: BLE001
                         pass
                     gone.append(oid)
             res = fam.desk.place_resting(
-                r["market"], r["side"], r["price"], abs(r["qty"]),
-                net_position=r["qty"], intent=r["intent"],
-                close_short=(r["side"] == "BUY"), initiator="owner", verify=False)
-            row = {k: r[k] for k in ("key", "market", "name", "qty", "bid", "ask",
-                                     "mid", "value", "side", "price", "hand")}
+                slug, side, px, abs(qty),
+                net_position=qty, intent=intent,
+                close_short=(side == "BUY"), initiator="owner", verify=False)
             row["replaced"] = gone
             if not res.ok or not res.order_id:
                 row["note"] = res.note
                 failed.append(row)
-                fam._log(event="sweep_refused", market=r["market"], side=r["side"],
-                         price=r["price"], qty=abs(r["qty"]), note=str(res.note)[:120])
+                fam._log(event="sweep_refused", market=slug, side=side,
+                         price=px, qty=abs(qty), note=str(res.note)[:120])
                 continue
-            px = float(res.price or r["price"])
+            got = float(res.price or px)
             fam.orders[res.order_id] = FamilyOrder(
-                id=res.order_id, market=r["market"], side=r["side"], price=px,
-                qty=abs(r["qty"]), intent=r["intent"], placed_ts=now, purpose=PURPOSE,
-                why=(f"the dust sweep (owner, 2026-09-13): {abs(r['qty']):g} sh worth "
-                     f"${r['value']:.2f} at the midpoint, listed at the rule's price"))
+                id=res.order_id, market=slug, side=side, price=got,
+                qty=abs(qty), intent=intent, placed_ts=self._clock(), purpose=PURPOSE,
+                why=(f"the dust sweep (owner, 2026-09-13): {abs(qty):g} sh worth "
+                     f"${value:.2f} at the midpoint, listed at the rule's price"))
             row["id"] = res.order_id
-            row["price"] = px
+            row["price"] = got
             placed.append(row)
-            fam._log(event="sweep", market=r["market"], side=r["side"], price=px,
-                     qty=abs(r["qty"]),
-                     note=(f"worth ${r['value']:.2f} at mid {r['mid'] * 100:.1f}c; "
-                           f"replaced {len(gone)} ({r['hand']} yours)"))
+            fam._log(event="sweep", market=slug, side=side, price=got,
+                     qty=abs(qty),
+                     note=(f"worth ${value:.2f} at mid {mid * 100:.1f}c on a book read "
+                           f"now; replaced {len(gone)} ({row['hand']} yours)"))
         self.last = {"at": round(now, 1), "placed": placed, "failed": failed,
-                     "skipped": plan["skipped"], "n": len(placed),
+                     "skipped": skipped, "n": len(placed),
                      "value": round(sum(r["value"] for r in placed), 2),
                      "hand": sum(r["hand"] for r in placed)}
         self.log.append({"ts": round(now, 1), "placed": len(placed), "failed": len(failed),

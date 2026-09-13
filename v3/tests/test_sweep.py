@@ -161,6 +161,146 @@ class TestTheRun(Base):
         self.assertEqual(s2.view()["last"]["placed"][0]["market"], A)
 
 
+class TestTheBookIsReadRightBeforePlacing(Base):
+    """Owner, 2026-09-13: "It skipped almost everything because the books
+    were old. Can you read the book immediately before placing." The
+    16:51Z run placed 7 and was refused 95, every refusal "no book
+    fresher than 120s — refusing to place blind": the plan had priced all
+    102 holdings up front and the placing loop that followed took
+    minutes, so the books it was pricing from aged out under it."""
+
+    def place_takes(self, seconds):
+        """Every placement advances the clock, as a real one does."""
+        real = self.r.fam.desk.place_resting
+
+        def slow(*a, **kw):
+            self.r.now += seconds
+            return real(*a, **kw)
+        self.r.fam.desk.place_resting = slow
+
+    def test_a_long_placing_loop_still_places_every_order(self):
+        for i in range(6):
+            slug = f"{A}-{i}"
+            self.r.add_market(slug, book=wide(self.r.now))
+            self.r.fam.inventory[slug] = {"qty": 6.0, "cost": 0.30}
+            self.r.positions[slug] = (6.0, 0.30)
+        self.place_takes(45.0)          # 7 orders x 45 s = five minutes of loop
+        res = self.sweep.run(self.r.now)
+        self.assertEqual(res["n"], 7, res["failed"])
+        self.assertEqual(res["failed"], [])
+        # every one rests, and each was priced on a book read for it
+        for i in range(6):
+            self.assertEqual(len(self.orders_on(f"{A}-{i}", "SELL")), 1)
+
+    def test_the_book_is_read_for_the_order_when_the_cache_has_gone_old(self):
+        self.r.exchange.book_reads = []
+        self.r.now += 100.0             # older than SWEEP_PLACE_BOOK_MAX_AGE_S
+        self.sweep.run(self.r.now)
+        # the plan took the cached book (still inside its own 120s) and the
+        # placement read again for itself — the read that the price and the
+        # desk's freshness gate both depend on
+        self.assertEqual(self.r.exchange.book_reads.count(A), 1)
+        self.assertEqual(self.orders_on(A, "SELL")[0].price, 0.06)
+        self.assertLessEqual(self.r.cache.age(A, self.r.now), 30.0)
+
+    def test_the_plan_stamps_each_book_at_its_own_read(self):
+        # the tender's 2026-09-12 lesson, which the sweep needed too: a
+        # pass over a hundred holdings takes minutes through a throttled
+        # gateway, and a book stamped with the PASS's start reads minutes
+        # old the moment it lands, so the desk throws it out
+        slugs = [A]
+        for i in range(3):
+            slug = f"{A}-{i}"
+            slugs.append(slug)
+            self.r.add_market(slug, book=wide(self.r.now))
+            self.r.fam.inventory[slug] = {"qty": 6.0, "cost": 0.30}
+            self.r.positions[slug] = (6.0, 0.30)
+        self.r.now += 300.0             # every cached book past the plan's window
+        real = self.r.exchange.book
+
+        def slow_read(slug, **kw):
+            self.r.now += 20.0          # each read costs time, as a real one does
+            return real(slug, **kw)
+        self.r.exchange.book = slow_read
+        start = self.r.now
+        self.sweep.plan(self.r.now)
+        self.assertGreaterEqual(self.r.now - start, 80.0)     # the pass took 80 s
+        # the LAST book read is seconds old, not 80 s old
+        ages = sorted(self.r.cache.age(s, self.r.now) for s in slugs)
+        self.assertLessEqual(ages[0], 20.0)
+        self.assertLess(ages[-1], self.r.now - start + 1.0)
+
+    def test_a_book_the_stream_just_delivered_spends_no_gateway_read(self):
+        self.sweep.plan(self.r.now)     # warms the cache at this second
+        self.r.exchange.book_reads = []
+        self.sweep.run(self.r.now)
+        self.assertEqual(self.r.exchange.book_reads, [])
+        self.assertEqual(len(self.orders_on(A, "SELL")), 1)
+
+    def test_the_price_comes_from_the_read_not_the_plan(self):
+        real = self.r.fam.desk.place_resting
+
+        def move_the_book(*a, **kw):
+            return real(*a, **kw)
+        self.r.fam.desk.place_resting = move_the_book
+        self.sweep.plan(self.r.now)
+        self.assertEqual(self.sweep.preview["rows"][0]["price"], 0.06)
+        # the market moves, and the clock moves past the cached book
+        self.r.exchange.books[A] = wide(self.r.now, 0.20, 0.23)   # mid 21.5c
+        self.r.now += 100.0
+        self.r.fam.inventory[A] = {"qty": 4.0, "cost": 0.30}      # 4 x 21.5c = $0.86
+        self.r.positions[A] = (4.0, 0.30)
+        res = self.sweep.run(self.r.now)
+        self.assertEqual(res["n"], 1)
+        o = self.orders_on(A, "SELL")[0]
+        self.assertEqual(o.price, 0.21)            # the fresh book's rule price
+        self.assertEqual(res["placed"][0]["mid"], 0.215)
+
+    def test_a_lot_worth_over_the_dollar_on_the_fresh_read_is_left_alone(self):
+        self.sweep.plan(self.r.now)
+        self.assertEqual(self.sweep.preview["n"], 1)
+        self.r.exchange.books[A] = wide(self.r.now, 0.40, 0.43)   # 6 sh x 41.5c = $2.49
+        self.r.now += 100.0
+        res = self.sweep.run(self.r.now)
+        self.assertEqual(res["n"], 0)
+        self.assertEqual(self.orders_on(A, "SELL"), [])
+        self.assertIn("over the dollar", res["skipped"][-1]["why"])
+
+    def test_a_failed_read_leaves_the_lot_and_says_so(self):
+        self.sweep.plan(self.r.now)
+        self.r.now += 100.0
+
+        def boom(slug, **kw):
+            raise RuntimeError("HTTP 429: held 10s more after a 429")
+        self.r.exchange.book = boom
+        res = self.sweep.run(self.r.now)
+        self.assertEqual(res["n"], 0)
+        self.assertEqual(self.orders_on(A, "SELL"), [])
+        self.assertIn("429", res["failed"][0]["note"])
+        self.assertEqual(self.r.fam.log[-1]["event"], "sweep_refused")
+
+    def test_an_order_laid_on_the_side_since_the_plan_is_replaced_too(self):
+        # the lot is never offered twice: what rests NOW comes off, not
+        # what rested when the plan ran
+        self.sweep.plan(self.r.now)
+        self.assertEqual(self.sweep.preview["rows"][0]["replace"], [])
+        self.r.fam.orders["late"] = FamilyOrder(
+            id="late", market=A, side="SELL", price=0.07, qty=6.0,
+            intent=SELL_LONG, placed_ts=1.0, purpose="sell", why="engine exit")
+        res = self.sweep.run(self.r.now)
+        self.assertEqual(res["placed"][0]["replaced"], ["late"])
+        self.assertEqual(len(self.orders_on(A, "SELL")), 1)
+        self.assertEqual(self.orders_on(A, "SELL")[0].purpose, PURPOSE)
+
+    def test_running_the_button_again_replaces_the_sweeps_own_order(self):
+        self.sweep.run(self.r.now)
+        first = self.orders_on(A, "SELL")[0].id
+        self.r.now += 100.0
+        res = self.sweep.run(self.r.now)
+        self.assertEqual(res["placed"][0]["replaced"], [first])
+        self.assertEqual(len(self.orders_on(A, "SELL")), 1)   # never twice
+
+
 class TestTheTapAnswersAtOnce(Base):
     """2026-09-13, the owner: "Nothing is happening when I click preview
     the sweep" — the first tap read ~120 books through the throttled
