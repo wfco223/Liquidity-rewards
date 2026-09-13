@@ -43,6 +43,7 @@ from .silver import SilverFairs
 from .state import StateStore
 from .switch import MasterSwitch
 from .focus import ENGINE_WS_CAP, FOCUS_CYCLE_S, FOCUS_WS_CAP, Focus
+from .sweep import Sweep
 from .ws import Stream
 
 try:
@@ -1058,6 +1059,9 @@ class Monitor:
         self.switches["focus"] = MasterSwitch(alert=self.alerts.notify,
                                               name="Focus switch",
                                               scope="Focus")
+        # the dust sweep (owner, 2026-09-13): every family's holdings,
+        # his tap only — see v3/sweep.py
+        self.sweep = Sweep(self.families, self.client)
         self.focus = Focus(self.families["politics"], self.client, self.bonds,
                            fair=self.silver.model_fair, alert=self.alerts.notify,
                            switch_on=lambda: (self.master.on
@@ -1405,6 +1409,8 @@ class Monitor:
             self.switches["bonds"].restore(saved["sw_bonds"])
         if saved.get("sw_focus"):
             self.switches["focus"].restore(saved["sw_focus"])
+        if saved.get("sweep"):
+            self.sweep.restore(saved["sweep"])
         if saved.get("focus"):
             self.focus.restore(saved["focus"])
         self.ladder_seen = {str(k): str(v) for k, v in
@@ -1547,6 +1553,7 @@ class Monitor:
                                  (getattr(self, "_pos_last", None) or {}).items()}},
             "sw_bonds": self.switches["bonds"].to_dict(),
             "sw_focus": self.switches["focus"].to_dict(),
+            "sweep": self.sweep.to_dict(),
             "focus": self.focus.to_dict(),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
@@ -3936,6 +3943,7 @@ class Monitor:
 
     def public_state(self) -> dict:
         st = dict(self.last_state) if self.last_state else {"saved_at": 0}
+        st["sweep"] = self.sweep.view()
         st["switch_view"] = {
             "master": self.master.state(),
             **({"bonds": self.switches["bonds"].state()}
@@ -3985,7 +3993,7 @@ class Monitor:
     # every page read "unreachable" while the app was healthy
     # (2026-08-22 night). The payload is now frozen to bytes at the end
     # of each cycle, on the cycle's own thread, under the cycle's lock.
-    PHONE_KEYS = ("owner_fairs",
+    PHONE_KEYS = ("owner_fairs", "sweep",
                   "saved_at", "build", "boot_ts", "errors", "audit",
                   "master_switch", "flatten", "flat_stats", "summaries",
                   "silver", "silver_log", "grades", "paid_total", "ws",
@@ -4603,6 +4611,42 @@ class Monitor:
 
     def focus_json(self) -> bytes:
         return getattr(self.focus, "payload_json", b'{"ok":false}')
+
+    def sweep_op(self, op: str) -> dict:
+        """His taps on the sweep card (owner, 2026-09-13): preview reads
+        the books and shows every order the sweep would place; run
+        places them. Both audit-logged; a run is saved at once."""
+        now = time.time()
+        if op == "sweep_preview":
+            p = self.sweep.plan(now)
+            self._audit({"op": op, "initiator": "owner", "n": p["n"], "ts": now})
+            return {"ok": True,
+                    "note": (f"{p['n']} holdings under $1 (worth ${p['value']:.2f}); "
+                             f"{p['replace']} orders would be replaced ({p['hand']} yours); "
+                             f"{len(p['skipped'])} skipped")}
+        if op == "sweep_run":
+            r = self.sweep.run(now)
+            self._audit({"op": op, "initiator": "owner", "placed": r["n"],
+                         "failed": len(r["failed"]), "ts": now})
+            try:
+                self.alerts.notify(
+                    "3.0: dust sweep",
+                    f"placed {r['n']} exits worth ${r['value']:.2f}"
+                    f"{' (' + str(r['hand']) + ' of your hand orders replaced)' if r['hand'] else ''}"
+                    f"; {len(r['failed'])} refused, {len(r['skipped'])} skipped")
+            except Exception:  # noqa: BLE001
+                pass
+            st = dict(self.last_state) if self.last_state else {}
+            st["sweep"] = self.sweep.to_dict()
+            for key, fam in self.families.items():
+                st[f"fam_{key}"] = fam.to_dict()
+            st["saved_at"] = now
+            self.last_state = st
+            self.store.save_soon(st, force_remote=True)
+            return {"ok": True,
+                    "note": (f"placed {r['n']} exits worth ${r['value']:.2f}; "
+                             f"{len(r['failed'])} refused; {len(r['skipped'])} skipped")}
+        return {"ok": False, "note": f"unknown op {op}"}
 
     def focus_op(self, op: str, market: str, value=None) -> dict:
         """His taps on the focus page. Every one persisted at once, like

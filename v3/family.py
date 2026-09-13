@@ -956,7 +956,7 @@ class Family:
         engine's $250 search ceiling; the trimmer cut the engine's own
         politics book from 50 orders to 11 in an evening. Owner: "Yes
         to #1" — bond orders charge no engine ceiling."""
-        return o.purpose in ("manual", "bond")
+        return o.purpose in ("manual", "bond", "sweep")
 
     def close_value(self, slug: str, qty: float, book) -> tuple[float, float]:
         """What closing this position into the book RIGHT NOW would
@@ -2464,8 +2464,8 @@ class Family:
         and pull the owner's exits (2026-08-20 23:12Z) and counted their
         collateral against the rebuild ceiling. Idempotent, every cycle."""
         for rec in list(self.orders.values()):
-            if rec.purpose in ("sell", "manual", "bond"):
-                continue
+            if rec.purpose in ("sell", "manual", "bond", "sweep"):
+                continue      # a sweep exit keeps its label: the engine never takes it over
             net = (positions.get(rec.market) or (0.0, 0.0))[0]
             if ((rec.side == "SELL" and net > 0.005)
                     or (rec.side == "BUY" and net < -0.005)):
@@ -2620,7 +2620,7 @@ class Family:
         for rec in list(self.orders.values()):
             if actions <= 0:
                 break
-            if rec.purpose in ("manual", "bond") or self._frozen(rec.market):
+            if rec.purpose in ("manual", "bond", "sweep") or self._frozen(rec.market):
                 continue      # owner, 2026-08-22: never cancel the owner's
                               # own orders — no rule outranks the hand;
                               # 2026-08-24: nor anything in frozen ground
@@ -2934,7 +2934,7 @@ class Family:
                                   "to what he asked out of")
                     actions -= 1
                 continue
-            if rec.purpose in ("manual", "bond") or self._frozen(rec.market):
+            if rec.purpose in ("manual", "bond", "sweep") or self._frozen(rec.market):
                 continue          # frozen ground: never repriced,
                                   # never pulled, never resized
             if self._avoided(rec.market) or (
@@ -3340,7 +3340,7 @@ class Family:
                     search_orders = [o for o in list(self.orders.values())
                                      if o.market not in self.proven
                                      and o.market not in self.bond_markets
-                                     and o.purpose not in ("manual", "bond")]
+                                     and o.purpose not in ("manual", "bond", "sweep")]
                     if (self.family_spent() + plan_charge
                             > self.cfg.capital_usd + 1e-9):
                         continue      # the EXPECTED-risk ceiling
@@ -3963,7 +3963,7 @@ class Family:
         ground is skipped wholesale."""
         watch = []
         for rec in list(self.orders.values()):
-            if rec.purpose in ("manual", "bond"):
+            if rec.purpose in ("manual", "bond", "sweep"):
                 continue
             if rec.purpose == "sell" and not rec.pinned:
                 continue
@@ -4477,7 +4477,7 @@ class Family:
                 bid_l, bidsz_l = book.bids[0]
                 manual_l = sum(o.qty for o in list(self.orders.values())
                                if o.market == slug and o.side == "SELL"
-                               and o.purpose in ("manual", "bond") and not is_wall(o, qty))
+                               and o.purpose in ("manual", "bond", "sweep") and not is_wall(o, qty))
                 dq_l = round(min(qty - manual_l, bidsz_l), 2)
                 if dq_l < 0.01:
                     continue
@@ -4544,7 +4544,7 @@ class Family:
                 # not his qualifying walls at the far edge (2026-09-08)
                 manual_cover = sum(
                     o.qty for o in list(self.orders.values())
-                    if o.market == slug and o.purpose in ("manual", "bond")
+                    if o.market == slug and o.purpose in ("manual", "bond", "sweep")
                     and o.side == "SELL" and not is_wall(o, qty))
                 covered = manual_cover + sum(
                     o.qty for o in list(self.orders.values())

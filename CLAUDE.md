@@ -576,6 +576,38 @@ long and accreted, so search it rather than reading it through.
   once a cycle, so a healthy 6-9 minute cycle no longer reads as an
   outage. A real outage past 10 minutes still bills nothing, the
   owner's 2026-09-11 rule.
+  THE DUST SWEEP (owner, 2026-09-13 "Let's just do the holdings that
+  are less than 1 dollar when valued at a midpoint price between the
+  bid and the ask. If the difference between the bid and the ask is 1
+  cent, then sell at the ask. Otherwise list at the midpoint. If the
+  midpoint is not a whole number you can round toward the price that
+  it could be sold at" ... "Replace all my hand orders" ... "Place once
+  and leave it. Give me a button to run it again"; his goal "pull cash
+  out so I can reevaluate and try to simplify my operation" — the
+  exchange held 187 positions with shares across politics, cfb and
+  nfl, most of the sports ones a handful of shares): v3/sweep.py, a
+  card on the switch page. Every held position in EVERY family whose
+  shares x live midpoint is under $1 gets ONE exit at his rule — a
+  long sells at the ask on a one-tick spread, else at the midpoint
+  rounded DOWN to the tick (toward the bid, the side it could be sold
+  at); a short buys back at the bid on a one-tick spread, else at the
+  midpoint rounded UP (toward the ask) — sized to the whole lot,
+  post-only, never inside the touch. Every order already on that side
+  comes off first: the engine's, the tender's AND HIS HAND'S (his
+  carve-out from the untouchable rule, for the sweep alone), except
+  his qualifying walls, which by the house convention offer none of
+  the lot. Placed once and left; the button runs another pass; nothing
+  runs on its own — Preview reads the books and shows every order it
+  would place, Place (with a confirm) places them, both audit-logged,
+  a run saved and pushed to the phone at once. Frozen ground and the
+  close-out ground are skipped. The order rests as purpose "sweep":
+  the engine treats it as hands-off exactly like his own (never
+  cancelled, moved, trimmed or nursed; charges no ceiling; netted out
+  of every exit it sizes), _reclassify_exits never relabels it, and the
+  tender counts it as cover on the exit side and never adopts it — so
+  the lot is never offered twice and never moved off his rule's price.
+  A refused placement is reported on the card; its lot is left for the
+  engine or tender to re-offer on their next pass.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
