@@ -576,6 +576,18 @@ long and accreted, so search it rather than reading it through.
   once a cycle, so a healthy 6-9 minute cycle no longer reads as an
   outage. A real outage past 10 minutes still bills nothing, the
   owner's 2026-09-11 rule.
+  AND THE CLOCK NO LONGER WAITS FOR THE CYCLE (my own defect, found on
+  the 16:29Z check: the cycle is not a clock — with the master back on
+  the laps ran 6 to 15.6 minutes, 711.9 s on the 16:12Z lap alone, so
+  the stamp went past even the widened ten minutes and the meter still
+  blanked one 20-second tick in six on a healthy run). The sampler
+  reads the open list ITSELF when the stamp is older than two minutes
+  (VERIFY_PROBE_S) — one try, ten seconds, on the SIGNED trade api,
+  never the throttled gateway, so it costs the books and the tender
+  nothing — and the window goes back to the owner's own five minutes.
+  A probe that fails, or that answers "nothing resting" while we hold
+  records (the 2026-09-11 maintenance shape), does not stamp, so a
+  real outage still bills nothing.
   THE DUST SWEEP (owner, 2026-09-13 "Let's just do the holdings that
   are less than 1 dollar when valued at a midpoint price between the
   bid and the ask. If the difference between the bid and the ask is 1
