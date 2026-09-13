@@ -4615,38 +4615,41 @@ class Monitor:
     def sweep_op(self, op: str) -> dict:
         """His taps on the sweep card (owner, 2026-09-13): preview reads
         the books and shows every order the sweep would place; run
-        places them. Both audit-logged; a run is saved at once."""
+        places them. Both audit-logged. The work runs on the sweep's
+        own thread and the tap answers at once — the card polls
+        /sweep.json for progress and the result (the first tap had read
+        ~120 books through the throttled gateway on the web thread, and
+        the page, frozen at cycle end, showed nothing for minutes)."""
         now = time.time()
-        if op == "sweep_preview":
-            p = self.sweep.plan(now)
-            self._audit({"op": op, "initiator": "owner", "n": p["n"], "ts": now})
-            return {"ok": True,
-                    "note": (f"{p['n']} holdings under $1 (worth ${p['value']:.2f}); "
-                             f"{p['replace']} orders would be replaced ({p['hand']} yours); "
-                             f"{len(p['skipped'])} skipped")}
-        if op == "sweep_run":
-            r = self.sweep.run(now)
-            self._audit({"op": op, "initiator": "owner", "placed": r["n"],
-                         "failed": len(r["failed"]), "ts": now})
-            try:
-                self.alerts.notify(
-                    "3.0: dust sweep",
-                    f"placed {r['n']} exits worth ${r['value']:.2f}"
-                    f"{' (' + str(r['hand']) + ' of your hand orders replaced)' if r['hand'] else ''}"
-                    f"; {len(r['failed'])} refused, {len(r['skipped'])} skipped")
-            except Exception:  # noqa: BLE001
-                pass
+        which = op[len("sweep_"):] if op.startswith("sweep_") else op
+        if which not in ("preview", "run"):
+            return {"ok": False, "note": f"unknown op {op}"}
+        r = self.sweep.start(which, now, on_done=self._sweep_done)
+        self._audit({"op": op, "initiator": "owner", "started": bool(r.get("ok")), "ts": now})
+        return r
+
+    def _sweep_done(self, r: dict) -> None:
+        """A run finished (on the sweep's thread): say so and save."""
+        try:
+            self.alerts.notify(
+                "3.0: dust sweep",
+                f"placed {r['n']} exits worth ${r['value']:.2f}"
+                f"{' (' + str(r['hand']) + ' of your hand orders replaced)' if r.get('hand') else ''}"
+                f"; {len(r.get('failed') or [])} refused, {len(r.get('skipped') or [])} skipped")
+        except Exception:  # noqa: BLE001
+            pass
+        try:
             st = dict(self.last_state) if self.last_state else {}
             st["sweep"] = self.sweep.to_dict()
-            for key, fam in self.families.items():
-                st[f"fam_{key}"] = fam.to_dict()
-            st["saved_at"] = now
+            st["saved_at"] = time.time()
             self.last_state = st
             self.store.save_soon(st, force_remote=True)
-            return {"ok": True,
-                    "note": (f"placed {r['n']} exits worth ${r['value']:.2f}; "
-                             f"{len(r['failed'])} refused; {len(r['skipped'])} skipped")}
-        return {"ok": False, "note": f"unknown op {op}"}
+        except Exception as e:  # noqa: BLE001
+            self._note(f"sweep save: {type(e).__name__}: {e}")
+
+    def sweep_json(self) -> bytes:
+        """The card's own live view — never the frozen page payload."""
+        return json.dumps(self.sweep.view()).encode()
 
     def focus_op(self, op: str, market: str, value=None) -> dict:
         """His taps on the focus page. Every one persisted at once, like

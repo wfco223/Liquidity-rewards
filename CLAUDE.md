@@ -608,6 +608,18 @@ long and accreted, so search it rather than reading it through.
   the lot is never offered twice and never moved off his rule's price.
   A refused placement is reported on the card; its lot is left for the
   engine or tender to re-offer on their next pass.
+  THE TAP ANSWERS AT ONCE (owner, 2026-09-13 "Nothing is happening
+  when I click preview the sweep"): the first tap read ~120 books
+  through the throttled gateway ON THE WEB THREAD and the page, frozen
+  to bytes at cycle end, could not show the preview until the next
+  cycle, minutes later — so the tap looked dead. Now Preview and Place
+  run on the sweep's own thread and the tap answers at once with a
+  note; the card polls its own live endpoint, /sweep.json (the same
+  shape as /focus.json), every four seconds and shows the progress
+  (reading N of M holdings, placing N of M), the preview, the last
+  run and any error — never the frozen page payload. One at a time: a
+  tap while one runs answers with its progress instead of starting
+  another. A run finishing saves the state and pushes an ntfy.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
