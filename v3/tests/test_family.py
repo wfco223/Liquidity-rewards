@@ -30,6 +30,10 @@ class FakeClient:
         self.programs_fail = False
         self.trades: list[dict] = []     # the exchange's own trade record
         self.taker_fills = True          # a taker order executes at once
+        # the real client stamps a book at the moment of the read when the
+        # caller passes fetched_at=None (api.py: `time.time()`), which is
+        # what the tender and the sweep rely on. The rig's clock stands in.
+        self.clock = None
 
     # -- desk side ----------------------------------------------------------
     def post(self, url, body, path=None, **kw):
@@ -97,6 +101,8 @@ class FakeClient:
         self.book_reads = getattr(self, 'book_reads', [])
         self.book_reads.append(slug)
         b = self.books[slug]
+        if fetched_at is None and self.clock is not None:
+            fetched_at = self.clock()
         return Book(bids=b.bids, asks=b.asks, tick=b.tick,
                     fetched_at=fetched_at or b.fetched_at)
 
@@ -128,6 +134,7 @@ class Rig:
     def __init__(self, cfg=None, switch=True):
         self.now = 1_000_000.0
         self.exchange = FakeClient()
+        self.exchange.clock = lambda: self.now
         self.cache = BookCache()
         self.switch = switch
         self.alerts = []

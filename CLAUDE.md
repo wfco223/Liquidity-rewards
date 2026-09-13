@@ -620,6 +620,29 @@ long and accreted, so search it rather than reading it through.
   the lot is never offered twice and never moved off his rule's price.
   A refused placement is reported on the card; its lot is left for the
   engine or tender to re-offer on their next pass.
+  EACH ORDER IS PRICED ON A BOOK READ THE SECOND IT GOES ON (owner,
+  2026-09-13 "It skipped almost everything because the books were old.
+  Can you read the book immediately before placing" — the 16:51Z run
+  placed 7 and was refused 95, every refusal "no book fresher than 120s
+  — refusing to place blind"): the plan had priced all 102 holdings up
+  front and the placing loop that followed took minutes, a cancel and a
+  placement a market through a gateway answering 3-4 429s a minute, so
+  by the fiftieth order the book it was pricing from was minutes old and
+  the desk's own freshness gate threw it out. Now the plan only picks
+  the candidates; each order then gets its own read (one try of eight
+  seconds, three tries so a 429 is waited out rather than losing the
+  lot, the tender's priority) and its price, its midpoint and HIS DOLLAR
+  are all taken from that read — a lot the fresh book puts at a dollar
+  or more is left alone and said, a one-sided book likewise, a failed
+  read reported with the exchange's own words. A book the stream
+  delivered within thirty seconds already IS that read and stands, so
+  the focus markets spend no gateway read. What rests on the exit side
+  is re-read from the live orders at the same moment, not from the plan,
+  so an order laid there since comes off too and the lot is never
+  offered twice; the sweep's own order from an earlier run is replaced
+  like any other, which is what running the button again means. And the
+  plan stamps every book at its OWN read, never at the pass's start —
+  the tender's 2026-09-12 lesson, which the sweep had repeated.
   THE TAP ANSWERS AT ONCE (owner, 2026-09-13 "Nothing is happening
   when I click preview the sweep"): the first tap read ~120 books
   through the throttled gateway ON THE WEB THREAD and the page, frozen
