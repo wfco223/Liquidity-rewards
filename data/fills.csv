@@ -2231,3 +2231,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789274602.3,politics,scc-senate-gop-2026-11-03-51,SELL,121,0.12,void,1.8623,3.6,0.1103,11,15,0.626,0.1,0.11,-0.0097,0,voided: the exchange has no trade for order CF356PFP8TN5 — the row of 09-13 03:1,CF356PFP8TN5
 1789274602.3,politics,enwc-uspres-nom-dem-2028-jonste,BUY,20,0.01,void,0,18.99,,,,0.616,,,,20,voided: the exchange has no trade for order CEPGV0GCGTN1 — the row of 09-13 04:0,CEPGV0GCGTN1
 1789274602.3,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,6.25,0.05,backfill,,22.52,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEM210JRATMM
+1789275401.3,politics,ussewc-usse-ky-2026-11-03-dem,BUY,247.17,0.08,manual,6.2496,5.57,0.0042,4,8,0.428,0.04,0.08,0.0758,0.17,the owner's own order — the engine leaves it alone,CF2DXW5RRTMM
+1789278281.9,politics,ussewc-usse-ks-2026-11-03-dem,SELL,1,0.22,backfill,,9.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEZZDRDQTTMX
+1789278661.7,politics,ussewc-usse-ks-2026-11-03-dem,SELL,1,0.22,backfill,,9.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEZZDRDQTTMX
