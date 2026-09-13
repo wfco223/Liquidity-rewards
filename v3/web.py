@@ -914,6 +914,7 @@ function render(d){
  var ph=d.place_health||{};
  if(ph.blocked){var t=new Date((ph.since||0)*1000);out+='<div class="card"><div class="warn"><b>The exchange is refusing this server\\'s orders</b> \\u2014 "your connection looks like a VPN", since '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+', '+(ph.refused||0)+' refused.</div><div class="muted">Nothing is cancelled that could not come back: moves, step-ups and re-prices are paused; one placement a minute probes for recovery. Cancels that only reduce risk still run. The fix is a new outbound address: tap Deploy on DigitalOcean.</div></div>';}
  out+=placesCard(d.places||{});
+ out+=sweepCard(d.sweep||{});
  var order=['master'];for(var k in sv){if(k!=='master')order.push(k);}
  order.forEach(function(k){
   var s=sv[k]||{};var label=(k==='master'?'Master switch \\u2014 all of 3.0':k+' switch');
@@ -975,6 +976,21 @@ function placesCard(pl){
  return out+'</div>';
 }
 function tap(op,which){post({op:'switch_'+op,which:which});}
+function sweepCard(sw){
+ var last=sw.last||{},pv=sw.preview||{};
+ var h='<div class="card"><b>Sweep dust</b><div class="muted">Every holding worth under '+usd(sw.max_value||1)+' at the midpoint gets one exit at your rule: a 1-tick spread sells at the ask (a short buys back at the bid); wider, the midpoint rounded toward the side it could be closed at. It replaces every order on that side — the engine\\'s, the tender\\'s and your hand\\'s — but not your qualifying walls. Placed once and left; tap again for another pass.</div>';
+ if(last.at){h+='<div class="sub">Last run '+when(last.at)+': placed <b>'+(last.n||0)+'</b> exits worth '+usd(last.value||0)+(last.hand?' (replaced '+last.hand+' of your hand orders)':'')+((last.failed||[]).length?' · <span class="warn">'+last.failed.length+' refused</span>':'')+((last.skipped||[]).length?' · '+last.skipped.length+' skipped':'')+'</div>';
+  if((last.placed||[]).length){h+='<details class="how"><summary class="muted">what rested</summary>'+last.placed.map(function(r){return '<div class="muted">'+esc(r.name||r.market)+': '+(r.qty>0?'sell':'buy back')+' '+Math.abs(r.qty)+' at '+pc(r.price)+' (worth '+usd(r.value)+')'+((r.replaced||[]).length?' · replaced '+r.replaced.length:'')+'</div>';}).join('')+'</details>';}
+  if((last.failed||[]).length){h+='<details class="how"><summary class="warn">refused</summary>'+last.failed.map(function(r){return '<div class="muted">'+esc(r.name||r.market)+' — '+esc(r.note||'')+'</div>';}).join('')+'</details>';}
+  if((last.skipped||[]).length){h+='<details class="how"><summary class="muted">skipped</summary>'+last.skipped.map(function(r){return '<div class="muted">'+esc(r.name||r.market)+' — '+esc(r.why||'')+'</div>';}).join('')+'</details>';}}
+ if(pv.at&&pv.rows){h+='<div class="sub"><b>Preview</b> ('+when(pv.at)+'): '+pv.n+' holdings worth '+usd(pv.value||0)+'; '+pv.replace+' orders replaced ('+pv.hand+' yours); '+(pv.skipped||[]).length+' skipped.</div>';
+  h+='<details class="how" open><summary class="muted">what it would place</summary>'+pv.rows.map(function(r){return '<div class="muted">'+esc(r.name||r.market)+': '+(r.qty>0?'sell':'buy back')+' '+Math.abs(r.qty)+' at '+pc(r.price)+' (bid '+pc(r.bid)+' / ask '+pc(r.ask)+', worth '+usd(r.value)+')'+((r.replace||[]).length?' · replaces '+r.replace.length:'')+'</div>';}).join('')+'</details>';
+  if((pv.skipped||[]).length){h+='<details class="how"><summary class="muted">skipped</summary>'+pv.skipped.map(function(r){return '<div class="muted">'+esc(r.name||r.market)+' — '+esc(r.why||'')+'</div>';}).join('')+'</details>';}
+  h+='<div><button onclick="sweepOp(\\'run\\')">Place '+pv.n+' exits</button> <button class="off" onclick="sweepOp(\\'preview\\')">Refresh preview</button></div>';}
+ else{h+='<div><button onclick="sweepOp(\\'preview\\')">Preview the sweep</button></div><div class="hint">Preview reads the books (it may take a minute) and shows every order it would place. Nothing is placed until you tap Place.</div>';}
+ return h+'</div>';
+}
+function sweepOp(op){if(op==='run'&&!confirm('Place the sweep\\'s exits now? Every order on those sides comes off first, your hand orders included (not your walls).'))return;post({op:'sweep_'+op});}
 function auSet(k){var e=document.getElementById('au-'+k);var v=e?e.value:'';if(!v){alert('pick a time first');return;}var d=document.getElementById('aud-'+k);if(d&&d.value)v+=' '+d.value;post({op:'family_active_until',which:k,value:v});}
 function auClear(k){post({op:'family_active_until',which:k,value:''});}
 function gradOp(k,m,ok){if(ok&&!confirm('Graduate '+m+'? Its orders leave the '+k+' ceiling for the proven pool, up to the pool\\'s own cap.'))return;post({op:ok?'family_graduate':'family_ungraduate',which:k,market:m});}
@@ -2331,6 +2347,8 @@ class WebServer:
             return self.monitor.set_owner_fair(
                 str(body.get("market") or ""),
                 float(f) if f not in (None, "") else None)
+        if op.startswith("sweep_"):
+            return self.monitor.sweep_op(op)
         if op.startswith("focus_"):
             return self.monitor.focus_op(op, str(body.get("market") or ""),
                                          body.get("value"))
