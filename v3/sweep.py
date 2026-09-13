@@ -27,6 +27,7 @@ his tap.
 from __future__ import annotations
 
 import math
+import threading
 import time
 
 from .family import FamilyOrder, is_wall
@@ -68,18 +69,32 @@ class Sweep:
         self.last: dict = {}            # the last run, shown on the page and saved
         self.preview: dict = {}         # the last preview, shown until a run acts on it
         self.log: list[dict] = []
+        # a tap returns at once; the work runs here, and the card polls
+        # /sweep.json for its progress (2026-09-13: the first tap read
+        # ~120 books through the throttled gateway on the web thread and
+        # the page, frozen at cycle end, showed nothing for minutes)
+        self.busy: dict | None = None   # {"op", "phase", "started", "done", "total"}
+        self.error: str = ""
+        self._thread: threading.Thread | None = None
 
     # -- the plan ------------------------------------------------------------
 
-    def plan(self, now: float) -> dict:
-        """Read the books and apply the rule; place nothing."""
+    def plan(self, now: float, busy: dict | None = None) -> dict:
+        """Read the books and apply the rule; place nothing. `busy` is
+        the progress record the page polls (done / total holdings)."""
         rows: list[dict] = []
         skipped: list[dict] = []
-        for key, fam in self.families.items():
-            for slug, inv in list((getattr(fam, "inventory", None) or {}).items()):
+        held = [(key, slug, inv) for key, fam in self.families.items()
+                for slug, inv in list((getattr(fam, "inventory", None) or {}).items())
+                if abs(float((inv or {}).get("qty") or 0.0)) >= 0.01]
+        if busy is not None:
+            busy.update(phase="reading", done=0, total=len(held))
+        for key, slug, inv in held:
+            fam = self.families[key]
+            if busy is not None:
+                busy["done"] = busy.get("done", 0) + 1
+            if True:
                 qty = round(float((inv or {}).get("qty") or 0.0), 2)
-                if abs(qty) < 0.01:
-                    continue
                 name = fam._label(slug)
                 if fam._frozen(slug):
                     skipped.append({"market": slug, "name": name, "why": "frozen ground"})
@@ -131,11 +146,15 @@ class Sweep:
         cancel what rests on the exit side and place the one exit. A
         refused placement is reported, its lot left for the engine or
         tender to re-offer on their next pass; the button runs again."""
-        plan = self.plan(now)
+        plan = self.plan(now, busy=self.busy)
         placed: list[dict] = []
         failed: list[dict] = []
+        if self.busy is not None:
+            self.busy.update(phase="placing", done=0, total=len(plan["rows"]))
         for r in plan["rows"]:
             fam = self.families[r["key"]]
+            if self.busy is not None:
+                self.busy["done"] = self.busy.get("done", 0) + 1
             gone: list[str] = []
             for oid in r["replace"]:
                 if oid not in fam.orders:
@@ -184,11 +203,53 @@ class Sweep:
         self.preview = {}
         return self.last
 
+    # -- his tap: work in the background, answer at once ---------------------
+
+    def start(self, op: str, now: float, on_done=None) -> dict:
+        """Begin a preview or a run on a worker thread and return at once.
+        One at a time: a tap while one is running answers with its
+        progress instead of starting another. `on_done(result)` runs on
+        the worker when a run finishes (the monitor saves and notifies)."""
+        if op not in ("preview", "run"):
+            return {"ok": False, "note": f"unknown sweep op {op}"}
+        if self.busy is not None and self._thread is not None and self._thread.is_alive():
+            b = self.busy
+            return {"ok": False,
+                    "note": (f"already {b.get('op')}ing — {b.get('phase')} "
+                             f"{b.get('done', 0)} of {b.get('total', 0)}")}
+        self.error = ""
+        self.busy = {"op": op, "phase": "starting", "started": round(now, 1),
+                     "done": 0, "total": 0}
+
+        def work() -> None:
+            try:
+                if op == "preview":
+                    self.plan(now, busy=self.busy)
+                else:
+                    result = self.run(now)
+                    if on_done is not None:
+                        on_done(result)
+            except Exception as e:  # noqa: BLE001 — said on the card, never silent
+                self.error = f"{type(e).__name__}: {str(e)[:160]}"
+            finally:
+                self.busy = None
+
+        self._thread = threading.Thread(target=work, daemon=True, name=f"sweep-{op}")
+        self._thread.start()
+        held = sum(1 for fam in self.families.values()
+                   for inv in (getattr(fam, "inventory", None) or {}).values()
+                   if abs(float((inv or {}).get("qty") or 0.0)) >= 0.01)
+        return {"ok": True,
+                "note": (f"reading the books of {held} holdings — the card updates as "
+                         f"it goes" + (", then places" if op == "run" else ""))}
+
     # -- the page and the state ----------------------------------------------
 
     def view(self) -> dict:
         return {"last": self.last, "preview": self.preview,
-                "max_value": SWEEP_MAX_VALUE_USD}
+                "max_value": SWEEP_MAX_VALUE_USD,
+                "busy": dict(self.busy) if self.busy else None,
+                "error": self.error}
 
     def to_dict(self) -> dict:
         return {"last": self.last, "log": list(self.log)}

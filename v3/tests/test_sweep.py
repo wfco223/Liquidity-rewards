@@ -161,6 +161,69 @@ class TestTheRun(Base):
         self.assertEqual(s2.view()["last"]["placed"][0]["market"], A)
 
 
+class TestTheTapAnswersAtOnce(Base):
+    """2026-09-13, the owner: "Nothing is happening when I click preview
+    the sweep" — the first tap read ~120 books through the throttled
+    gateway on the web thread and the page, frozen at cycle end, showed
+    nothing for minutes. Now the work runs on the sweep's own thread,
+    the tap answers at once, and the card polls /sweep.json."""
+
+    def test_a_preview_runs_in_the_background_and_answers_at_once(self):
+        r = self.sweep.start("preview", self.r.now)
+        self.assertTrue(r["ok"], r)
+        self.assertIn("reading the books of 2 holdings", r["note"])
+        self.sweep._thread.join(5.0)
+        self.assertIsNone(self.sweep.busy)
+        self.assertEqual(self.sweep.preview["n"], 1)
+        self.assertEqual(self.sweep.error, "")
+
+    def test_a_second_tap_while_busy_answers_with_progress_not_a_second_run(self):
+        import threading
+        gate = threading.Event()
+        real = self.sweep.plan
+
+        def slow_plan(now, busy=None):
+            if busy is not None:
+                busy.update(phase="reading", done=3, total=9)
+            gate.wait(5.0)
+            return real(now, busy=busy)
+        self.sweep.plan = slow_plan
+        self.assertTrue(self.sweep.start("preview", self.r.now)["ok"])
+        again = self.sweep.start("preview", self.r.now)
+        self.assertFalse(again["ok"])
+        self.assertIn("already previewing", again["note"])
+        self.assertIn("3 of 9", again["note"])
+        gate.set()
+        self.sweep._thread.join(5.0)
+        self.assertIsNone(self.sweep.busy)
+        self.assertEqual(self.sweep.preview["n"], 1)
+
+    def test_a_run_calls_the_done_hook_with_its_result(self):
+        got = []
+        r = self.sweep.start("run", self.r.now, on_done=got.append)
+        self.assertTrue(r["ok"])
+        self.assertIn("then places", r["note"])
+        self.sweep._thread.join(5.0)
+        self.assertEqual(len(got), 1)
+        self.assertEqual(got[0]["n"], 1)
+        self.assertEqual(len(self.orders_on(A, "SELL")), 1)
+
+    def test_an_error_in_the_work_is_said_on_the_card_not_swallowed(self):
+        def boom(now, busy=None):
+            raise RuntimeError("gateway melted")
+        self.sweep.plan = boom
+        self.assertTrue(self.sweep.start("preview", self.r.now)["ok"])
+        self.sweep._thread.join(5.0)
+        self.assertIsNone(self.sweep.busy)
+        self.assertIn("gateway melted", self.sweep.error)
+        v = self.sweep.view()
+        self.assertIn("busy", v); self.assertIn("error", v)
+        self.assertIsNone(v["busy"])
+
+    def test_an_unknown_op_is_refused(self):
+        self.assertFalse(self.sweep.start("nuke", self.r.now)["ok"])
+
+
 class TestTheTenderStandsDown(unittest.TestCase):
     def test_a_sweep_order_counts_as_cover_and_is_never_adopted(self):
         from v3.tests.test_focus import Base as FocusBase, NC
