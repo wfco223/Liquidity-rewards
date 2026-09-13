@@ -60,7 +60,18 @@ long and accreted, so search it rather than reading it through.
   in a focus market he has given a fair, his own orders are the
   focus tender's to move, resize and pull under its rules, his 1c
   and 99c qualifying walls excepted; where no fair is set they stay
-  as he left them.
+  as he left them. THE SEAT MARKETS COME BACK OUT OF IT (owner,
+  2026-09-13 "You can stop cancelling my hand placed orders on the
+  seat markets"): on the seat-count books — Republican Senate Seats
+  (scc-senate-gop) and Republican House Seats (scc-hrep-rep) — his
+  hand's orders are never ADOPTED, and since the tender only ever
+  touches what it owns, that one refusal keeps every pull, move,
+  resize and trim off them; they stay exactly as he left them and
+  still count as company and as cover on the book. One adopted
+  before the rule is handed back and its id comes off the tender's
+  list. The tender goes on working that ground with its own orders.
+  (usgovcc, the GOP governor seat counts, is frozen ground entirely
+  and always was.)
 - FROZEN ground — the engine does NOTHING there (owner, 2026-08-24
   "Don't sell my gop governor count race orders. In fact don't touch
   those"): places nothing, rests no exits, reprices nothing, cancels
