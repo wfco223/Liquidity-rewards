@@ -193,7 +193,14 @@ def config() -> FamilyConfig:
         # owner, 2026-08-24: "Don't sell my gop governor count race
         # orders. In fact don't touch those." Frozen, not avoided —
         # whatever rests there stays exactly where it is.
-        freeze_tokens=("usgovcc",),
+        # owner, 2026-09-13: "Keep the tender out of the seat markets" —
+        # the senate and house seat counts join the governor ones on the
+        # same footing. Frozen is the whole answer: the tender reads the
+        # ground "frozen — hands off", so it rests nothing new there AND
+        # its own orders come off, while the engine places nothing, rests
+        # no exits and cancels nothing. His hand's orders are touched by
+        # neither. Nothing automated works these books now; they are his.
+        freeze_tokens=("usgovcc", "scc-senate-gop", "scc-hrep-rep"),
         # owner, 2026-08-27: "Take me out of all buy position on Ron
         # desantis in 2028 markets" — sell the stock into the bid
         # until flat, never buy DeSantis 2028 again
