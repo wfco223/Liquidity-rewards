@@ -2735,3 +2735,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789314651.1,politics,enwc-uspres-nom-dem-2028-petbut,SELL,0.97,0.05,backfill,,36.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7XM29WPTMP
 1789314651.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,327,0.168,hand,,4.67,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFCQQSMDRTMX
 1789314651.1,politics,scc-senate-gop-2026-11-03-51,SELL,14,0.11,hand,,0.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFGXXAZ0RTN2
+1789315216.5,politics,scc-senate-gop-2026-11-03-54,SELL,13,0.06,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFGYNRMY2TMQ
+1789315412.1,politics,ewc-usse-mn-2026-11-03-dem,BUY,233,0.89,hand,,27.22,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CESSD4H00TMQ
+1789315617.8,politics,ewc-usp-2028-11-07-tuccar,SELL,7.98,0.03,backfill,,50.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSB2PTMP
+1789315666.3,politics,ewc-usp-2028-11-07-dontru,SELL,7.83,0.06,backfill,,27.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEST16XACTN3
+1789315974.4,politics,scc-senate-gop-2026-11-03-54,SELL,13,0.06,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFGYNRMY2TMQ
+1789315974.4,politics,ewc-usse-mn-2026-11-03-dem,BUY,233,0.89,hand,,27.22,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CESSD4H00TMQ
+1789315974.4,politics,ewc-usp-2028-11-07-tuccar,SELL,7.98,0.03,backfill,,50.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSB2PTMP
+1789315974.4,politics,ewc-usp-2028-11-07-dontru,SELL,7.83,0.06,backfill,,27.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEST16XACTN3
