@@ -297,6 +297,13 @@ class TestRedesign(unittest.TestCase):
         from v3 import web
         self.assertIn("function placesCard(pl)", web.SWITCH_JS)
         self.assertIn("out+=placesCard(d.places||{});", web.SWITCH_JS)
+        # the sweep card is live: its own endpoint, polled, never the frozen page
+        self.assertIn("function sweepCard(sw)", web.SWITCH_JS)
+        self.assertIn("sweepCard(window._sweep||d.sweep||{})", web.SWITCH_JS)
+        self.assertIn("function sweepPoll()", web.SWITCH_JS)
+        self.assertIn("setInterval(sweepPoll,4000)", web.SWITCH_JS)
+        import inspect
+        self.assertIn('route == "/sweep.json"', inspect.getsource(web))
         self.assertIn("Tap Deploy on DigitalOcean for another address", web.SWITCH_JS)
 
     def test_the_band_is_printed_to_the_half_point(self):
