@@ -289,7 +289,8 @@ long and accreted, so search it rather than reading it through.
   120 s at most) — a retried read waits it out, a one-try read (the
   tender's) is refused at once with the wait in its words and the
   tender does not even try while it stands; gateway reads are paced
-  across threads (GATEWAY_PACE_PER_S, 5 a second) and the tender's
+  across threads (GATEWAY_PACE_PER_S, 2 a second — an api-dev caller
+  found bigger gaps beat a fast drip when the endpoint tightened) and the tender's
   take the next slot ahead of the family's; every 429 is kept in
   client.throttles with its Retry-After and noted once a hold, so the
   pace is set from the record. And the stream starts at boot with
