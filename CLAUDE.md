@@ -561,6 +561,21 @@ long and accreted, so search it rather than reading it through.
   sampler's lock free and the estimator's verified clock inside its
   five-minute window (2026-09-13: the 21-35 minute cycle had locked
   the sampler out and zeroed every reading past five minutes).
+  THE METER READS LIVE REGARDLESS OF CYCLE LENGTH (owner, 2026-09-13
+  "Yes build both", after the scale-back left the cycle variable at
+  2-9 minutes and the meter billing only ~8% of the time): two fixes,
+  meter-only, no trading touched. (1) The 20-second sampler no longer
+  takes the cycle's lock — the cycle held it for its whole run, so the
+  sampler blocked and sampled once a cycle instead of every 20 s; it
+  now reads a defensive snapshot of the orders lock-free (a read caught
+  mid-mutation retries once, then is skipped, the next tick 20 s away)
+  against the live book cache the stream feeds. (2) The "orders still
+  resting" clock (verified_at) is stamped at the open-list read, early
+  in the cycle, and given its own 10-minute window (VERIFIED_MAX_S)
+  separate from the 5-minute sampler-gap rule: the open list is read
+  once a cycle, so a healthy 6-9 minute cycle no longer reads as an
+  outage. A real outage past 10 minutes still bills nothing, the
+  owner's 2026-09-11 rule.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
