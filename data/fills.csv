@@ -2234,3 +2234,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789275401.3,politics,ussewc-usse-ky-2026-11-03-dem,BUY,247.17,0.08,manual,6.2496,5.57,0.0042,4,8,0.428,0.04,0.08,0.0758,0.17,the owner's own order — the engine leaves it alone,CF2DXW5RRTMM
 1789278281.9,politics,ussewc-usse-ks-2026-11-03-dem,SELL,1,0.22,backfill,,9.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEZZDRDQTTMX
 1789278661.7,politics,ussewc-usse-ks-2026-11-03-dem,SELL,1,0.22,backfill,,9.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEZZDRDQTTMX
+1789281816.7,politics,ussewc-usse-or-2026-11-03-dem,SELL,10,0.99,manual,0.0293,18.26,0.998725,95,98,0.647,0.96,0.99,0.0087,0,the owner's own order — the engine leaves it alone,CESEBWGRMTN0
+1789282371.7,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,-1,0.1,fix,,0,,,,,,,,,size trimmed by 1 to the exchange's count (order CEPNNXX7MTN0),CEPNNXX7MTN0
+1789282371.7,politics,ussewc-usse-ks-2026-11-03-dem,SELL,-1,0.22,fix,0.1021,10.07,0.21525,18,22,0.623,0.21,0.22,-0.0048,0,size trimmed by 1 to the exchange's count (order CEZZDRDQTTMX),CEZZDRDQTTMX
