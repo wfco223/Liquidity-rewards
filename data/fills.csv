@@ -2774,3 +2774,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789321218.2,politics,enwc-uspres-nom-dem-2028-petbut,SELL,0.97,0.05,backfill,,36.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7XM29WPTMP
 1789321218.2,politics,ewc-usp-2028-11-07-tuccar,SELL,31.65,0.03,backfill,,50.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSB2PTMP
 1789321218.2,politics,ewc-usp-2028-11-07-dontru,SELL,3.11,0.06,backfill,,27.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEST16XACTN3
+1789322098.8,politics,ewc-usse-me-2026-11-03-rep,SELL,35,0.35,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CFJVDNB1CTMY
+1789322403.1,politics,ewc-usse-me-2026-11-03-rep,SELL,35,0.35,sell,1.0082,2.34,0.32975,33,36,0.656,0.34,0.36,-0.0202,0,an exit — its fill reduces the position it sits on,CFGX7KQQMTMP
+1789322403.1,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,10,0.93,manual,4.2619,2.36,0.995925,93,96,0.742,0.92,0.93,0.0659,69,the owner's own order — the engine leaves it alone,CF4TZZYBGTN0
+1789322403.1,politics,usgubewc-usgub-pa-2026-11-03-dem,SELL,10,0.94,manual,1.8785,2.36,0.998575,94,97,0.64,0.93,0.94,0.0586,17,the owner's own order — the engine leaves it alone,CF4TB5ZAETMP
+1789322405.7,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,9,0.07,backfill,,25.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEXDAR0H8TMX
+1789322747.4,politics,ewc-usse-me-2026-11-03-rep,SELL,35,0.35,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CFJVDNB1CTMY
+1789322747.4,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,9,0.07,backfill,,25.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEXDAR0H8TMX
