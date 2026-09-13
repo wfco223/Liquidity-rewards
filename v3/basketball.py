@@ -94,7 +94,7 @@ def nba() -> FamilyConfig:
         holdings_in_ceiling=True,
         dump_usd_day=10.0,
         rest_from=None, rest_until=None,     # offseason: no game days yet
-        books_per_cycle=20, scan_reserve=8,
+        books_per_cycle=10, scan_reserve=5,
         book_stale_s=300.0, read_age_s=900.0,
         max_actions_per_cycle=6,
         probe_usd=3.0, grow_usd=10.0,

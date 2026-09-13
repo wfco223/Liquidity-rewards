@@ -94,6 +94,8 @@ class FakeClient:
 
     # -- read side ----------------------------------------------------------
     def book(self, slug, fetched_at=None, timeout=None, tries=4, priority=False):
+        self.book_reads = getattr(self, 'book_reads', [])
+        self.book_reads.append(slug)
         b = self.books[slug]
         return Book(bids=b.bids, asks=b.asks, tick=b.tick,
                     fetched_at=fetched_at or b.fetched_at)
@@ -159,6 +161,9 @@ class Rig:
                 for s in ([slug] + list(siblings or []))]
         self.exchange.events.append({"title": event, "markets": rows})
         self.exchange.books[slug] = book or politics_book(self.now)
+        # the book is in the cache as in production (stream or a prior
+        # read); an off family no longer fetches candidates (2026-09-13)
+        self.cache.put(slug, self.exchange.books[slug])
         import copy
         self.exchange.prog_raw[slug] = copy.deepcopy(prog)
 
@@ -216,13 +221,44 @@ class TestDiscovery(unittest.TestCase):
 
 
 class TestModes(unittest.TestCase):
-    def test_observing_scores_but_never_places(self):
+    def test_observing_never_places(self):
         r = Rig(switch=False)
         r.add_market(A)
         s = r.cycle()
         self.assertEqual(s["mode"], "observing")
-        self.assertTrue(s["best_idle"])          # it found the opportunity
-        self.assertEqual(r.exchange.live, {})    # and touched nothing
+        self.assertEqual(r.exchange.live, {})    # touched nothing
+
+    def test_observing_spends_no_gateway_read_discovering_candidates(self):
+        # owner, 2026-09-13 "Scale everything that could be causing the
+        # 429s back": a switched-off family reads no candidate books —
+        # the discovery scan is what trips the gateway's rate limit
+        r = Rig(switch=False)
+        r.add_market(A)
+        r.exchange.book_reads = []
+        r.cycle()
+        self.assertEqual(r.exchange.book_reads, [])   # not one candidate fetched
+        self.assertEqual(r.exchange.live, {})
+
+    def test_observing_still_scores_from_a_cached_book(self):
+        # the page keeps its scores off cache — only the fetch is cut
+        # (the real politics config re-plans from cache every replan_s)
+        import v3.politics as politics
+        r = Rig(cfg=politics.config(), switch=False)
+        r.add_market(A)
+        r.cycle()                                     # loads terms for A
+        r.cache.put(A, politics_book(r.now))          # a fresh book already in hand
+        r.exchange.book_reads = []
+        s = r.cycle(advance=60)                        # cold scoreboard → re-plans
+        self.assertEqual(r.exchange.book_reads, [])   # still no candidate fetch
+        self.assertTrue(s["best_idle"])               # but scored from cache
+
+    def test_an_armed_family_still_discovers(self):
+        r = Rig()                                     # switch on
+        r.add_market(A)
+        r.exchange.book_reads = []
+        s = r.cycle()
+        self.assertIn(A, r.exchange.book_reads)       # it fetched to score/place
+        self.assertTrue(s["best_idle"])
 
     def test_armed_places_on_both_sides_without_crossing(self):
         r = Rig()

@@ -250,7 +250,7 @@ def config() -> FamilyConfig:
         # (~1,200/min) and the whole machine was using under 10% of it.
         # The remaining caps are the 60s cycle (verification costs
         # seconds per placement) and blast radius, not the exchange.
-        books_per_cycle=48, scan_reserve=12,
+        books_per_cycle=24, scan_reserve=12,
         book_stale_s=300.0, read_age_s=900.0,
         max_actions_per_cycle=16,
         terms_slice=300, terms_full_s=1800.0,

@@ -212,7 +212,7 @@ def config() -> FamilyConfig:
         whole_shares=True,
         min_days_out=0,                 # the games ARE tomorrow
         rest_from=None, rest_until=None,
-        books_per_cycle=24, scan_reserve=4,
+        books_per_cycle=12, scan_reserve=4,
         book_stale_s=120.0, read_age_s=480.0,
         max_actions_per_cycle=8,
         probe_usd=0.0, grow_usd=0.0, replan_s=0.0, weak_pull_s=0.0,
