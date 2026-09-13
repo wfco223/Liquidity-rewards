@@ -150,8 +150,8 @@ class TestTheNflIsTheExplorer(unittest.TestCase):
         from v3 import football
         c = football.nfl()
         self.assertEqual(c.rescan_s, 900.0)
-        self.assertEqual(c.books_per_cycle, 40)
-        self.assertEqual(c.scan_reserve, 16)
+        self.assertEqual(c.books_per_cycle, 16)
+        self.assertEqual(c.scan_reserve, 8)
 
     def test_nfl_config_explores_with_a_dollar_per_order(self):
         from v3 import football

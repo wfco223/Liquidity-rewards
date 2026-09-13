@@ -2509,7 +2509,8 @@ class Family:
         stock_rate = sum(o.live_est or 0.0 for o in list(self.orders.values())
                          if o.purpose == "sell")
         self._exit_rate_ps = (stock_rate / stock) if stock > 0.01 else 0.0
-        refreshed = self._refresh_books(client, now)
+        refreshed = self._refresh_books(client, now,
+                                        scan=switch_on and not exits_only)
         self._read_live(now)
         self._accrue(now)
         self._back_from_limbo(open_orders, now)
@@ -5254,10 +5255,17 @@ class Family:
                     del self.orders[rec.id]
         return actions
 
-    def _refresh_books(self, client, now: float) -> int:
+    def _refresh_books(self, client, now: float, scan: bool = True) -> int:
         """Active markets by staleness first; the candidate scan keeps its
         reserved slice so discovery can never starve (the 2026-08-20 CFB
-        lesson)."""
+        lesson). `scan` off (owner, 2026-09-13 "Scale everything that
+        could be causing the 429s back"): a family that will not place
+        entries this cycle — its switch off, the master off, or a
+        flatten — reads only what it HOLDS (staleness-gated, for the
+        exits) and spends no gateway read discovering candidates it
+        cannot act on. The boosted-market discovery the tender rides on
+        is refresh_universe/refresh_terms, not this book scan, so it is
+        untouched."""
         budget = self.cfg.books_per_cycle
         scan_reserve = min(self.cfg.scan_reserve, budget)
         done = 0
@@ -5283,7 +5291,12 @@ class Family:
                 except Exception as e:  # noqa: BLE001
                     self._log(event="book_error", market=slug, error=str(e)[:60])
                 done += 1
-        idle = [s for s in self.universe if s not in self.active_markets()
+        # off / master-off / flatten: spend no gateway read discovering
+        # candidates we cannot act on (owner, 2026-09-13); the cached
+        # re-plan below still runs where replan_s is set, so the page
+        # keeps its scores without a fetch
+        idle = [s for s in self.universe if scan
+                and s not in self.active_markets()
                 and self.enterable(s)
                 and now - (self.scoreboard.get(s) or {}).get("ts", 0.0)
                 > self.cfg.rescan_s]
