@@ -965,10 +965,10 @@ function placesCard(pl){
   else if(v==='okay')out+='<div class="muted">The exchange has accepted orders from this address.</div>';
   else out+='<div class="muted">No order has been placed from this address yet; the first one is the verdict.</div>';}
  if(pl.check_note)out+='<div class="warn">Could not learn the address: '+esc(pl.check_note)+'</div>';
- if(rows.length){out+='<div class="muted" style="margin-top:6px">'+(pl.okay_n||0)+' okay, '+(pl.vpn_n||0)+' VPN, '+rows.length+' seen.</div>';
+ if(rows.length){out+='<details class="how" style="margin-top:6px"><summary class="muted">'+(pl.okay_n||0)+' okay, '+(pl.vpn_n||0)+' VPN, '+rows.length+' addresses seen \\u2014 tap to list</summary>';
   out+='<div style="overflow-x:auto"><table style="font-size:14px"><tr><th>address</th><th>verdict</th><th>first seen</th><th>last seen</th><th>orders ok</th><th>refused</th><th>deploys</th></tr>';
   rows.forEach(function(r){out+='<tr'+(r.current?' style="font-weight:bold"':'')+'><td>'+esc(r.ip)+(r.current?' (now)':'')+'</td><td>'+placeMark(r.verdict)+'</td><td>'+whenD(r.first)+'</td><td>'+whenD(r.last)+'</td><td>'+(r.accepted||0)+'</td><td>'+(r.refused||0)+'</td><td>'+(r.boots||0)+'</td></tr>';});
-  out+='</table></div>';}
+  out+='</table></div></details>';}
  var ev=pl.events||[];
  if(ev.length){out+='<details class="how"><summary>what happened</summary>';
   ev.slice().reverse().forEach(function(e){out+='<div class="muted">'+whenD(e.ts)+' \\u2014 '+esc(e.event)+(e.ip?' '+esc(e.ip):'')+(e.note?': '+esc(e.note):'')+'</div>';});
