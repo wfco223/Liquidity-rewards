@@ -1819,7 +1819,10 @@ class Bonds:
         self.scan(now)
         self._follow_tax()
         self._mark_engine()
-        self._refresh_books(now)             # fresh books BEFORE acting on them
+        # fresh books BEFORE acting on them — and with the switch off, only
+        # for what it holds (owner, 2026-09-13: no gateway read on a market
+        # it cannot act on)
+        self._refresh_books(now, scan=on)
         placed: list[dict] = []
         # sales: our earning order gave up shares and the ledger shrinks
         for slug in self._tending():
@@ -3100,16 +3103,34 @@ class Bonds:
 
     # -- fresh books for the page ------------------------------------------
 
-    def _refresh_books(self, now: float) -> int:
+    def _refresh_books(self, now: float, scan: bool = True) -> int:
         """The stream sends a book only when it changes, so a quiet
         market's cached book just ages, and a listed market nothing
         else works is never read at all (owner, 2026-09-03: "A lot of
         the books are stale"). At the start of every pass the books of
         every market the bond side works, past BOOK_MAX_AGE_S, are read
         again, oldest first — so what the pass acts on is seconds old
-        and what it pulls it can put back."""
+        and what it pulls it can put back.
+
+        `scan` off — the bonds switch off (owner, 2026-09-13 "Scale
+        everything that could be causing the 429s back"): this module
+        then places nothing, so it spends NO gateway read on a listed
+        market it holds nothing in. It reads only what it HOLDS or has
+        an order resting in, for the record and the exits, exactly as
+        the five families do. 2026-09-13, 17:40Z: the switch had been
+        off for 32 hours and the pass was still reading 40 books a
+        cycle across 61 listed markets — 431.8 s of a 676 s lap, the
+        biggest single item — while the tender read 0 to 2 books a pass
+        with 57 to 80 due and the gateway answered with 6 429s a
+        minute. A row it stops reading keeps its last book on the page
+        and is flagged stale past ten minutes, which is what the page
+        already promised."""
+        pool = sorted((set(self._working()) | set(self.approved)) - set(self.focus_out))
+        if not scan:
+            pool = [s for s in pool
+                    if self.held(s, self._side_of(s)) > 0.005 or self._orders(s)]
         due = []
-        for slug in sorted((set(self._working()) | set(self.approved)) - set(self.focus_out)):
+        for slug in pool:
             age = self.fam.cache.age(slug, now) if hasattr(self.fam.cache, "age") else None
             if age is None:
                 b = self.fam.cache.any_age(slug)

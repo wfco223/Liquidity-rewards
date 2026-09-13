@@ -211,6 +211,55 @@ class TestTheList(Base):
         self.assertIn(GA, self.b.scan(t + 86400))
 
 
+class TestNoGatewayReadItCannotActOn(Base):
+    """Owner, 2026-09-13: "Scale everything that could be causing the
+    429s back." The five families took that rule the same day; bonds was
+    missed. At 17:40Z its switch had been off for 32 hours and its pass
+    was still reading 40 books a cycle across 61 listed markets — 431.8 s
+    of a 676 s lap, the biggest single item — while the focus tender read
+    0 to 2 books a pass with 57 to 80 due and the gateway answered with
+    six 429s a minute."""
+
+    def setUp(self):
+        super().setUp()
+        for s in (AL, TN, ALD):
+            self.b.approve(s, self.now)
+        self.r.now += 300.0             # every cached book past BOOK_MAX_AGE_S
+        self.r.exchange.book_reads = []
+
+    def test_the_switch_off_reads_only_what_it_holds(self):
+        self.bond(AL, "YES", 100.0, 0.98)
+        self.b.cycle(self.r.now, self.positions(), on=False)
+        self.assertEqual(self.r.exchange.book_reads, [AL])
+
+    def test_the_switch_off_holding_nothing_reads_nothing(self):
+        self.b.cycle(self.r.now, self.positions(), on=False)
+        self.assertEqual(self.r.exchange.book_reads, [])
+
+    def test_the_switch_on_still_reads_the_whole_list(self):
+        self.b.cycle(self.r.now, self.positions(), on=True)
+        self.assertEqual(set(self.r.exchange.book_reads), {AL, TN, ALD})
+
+    def test_a_market_it_has_an_order_resting_in_is_still_read(self):
+        # nothing held, but an order of its own on the book: it is managed,
+        # so it is kept fresh
+        self.r.fam.orders["bo"] = FamilyOrder(
+            id="bo", market=TN, side="SELL", price=0.99, qty=10.0,
+            intent=SELL_LONG, placed_ts=1.0, purpose="bond", why="bond earning")
+        self.b.cycle(self.r.now, self.positions(), on=False)
+        self.assertEqual(self.r.exchange.book_reads, [TN])
+
+    def test_a_row_it_stops_reading_keeps_its_last_book_and_reads_stale(self):
+        # the page promised this already: any_age for the row, a stale flag
+        # past ten minutes
+        self.r.now += 400.0
+        self.b.cycle(self.r.now, self.positions(), on=False)
+        row = [r for r in self.b.view(self.r.now, self.positions())["rows"]
+               if r["market"] == TN][0]
+        self.assertTrue(row["stale"])
+        self.assertIsNotNone(row["bid"])          # the last book is still shown
+
+
 class TestTheLedger(Base):
     def test_only_bond_purchases_count_as_held(self):
         self.b.approve(AL, self.now)
