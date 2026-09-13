@@ -72,6 +72,19 @@ FOCUS_POOL_MIN_USD = 250.0      # a program paying this a day per event is boost
 # other and a mid inside [FOCUS_MID_FAIR_MIN, 1 - FOCUS_MID_FAIR_MIN];
 # a fair he clears stays cleared
 FOCUS_MID_FAIR_TOKENS = ("uspres-nom-", "ewc-usp-2028", "ewc-usp-party-2028")
+
+# THE SEAT MARKETS ARE HIS HAND'S (owner, 2026-09-13 "You can stop
+# cancelling my hand placed orders on the seat markets"): the seat-count
+# books — Republican Senate Seats and Republican House Seats — are the one
+# focus ground where the 2026-09-10 carve-out does NOT apply. His orders
+# there are never adopted, so no pull, move, resize or trim of the
+# tender's can reach them: the tender only ever touches what it owns, and
+# an order it never claims is not its own. They stay exactly as he left
+# them, and they keep counting as company and as cover on the book the way
+# any untended order of his does. The tender still works the ground with
+# its OWN orders. (usgovcc, the GOP governor seat counts, is frozen
+# ground entirely and always was — 2026-08-24.)
+FOCUS_HAND_KEEP_TOKENS = ("scc-senate-gop", "scc-hrep-rep")
 FOCUS_MID_FAIR_MIN = 0.05
 FOCUS_MID_FAIR_SPREAD = 0.06
 # and the money at risk there (owner, 2026-09-11: "Because there is no
@@ -897,18 +910,40 @@ class Focus:
         self._gone_by_me = {i: t for i, t in self._gone_by_me.items()
                             if now - t < FOCUS_VANISH_WAIT_S}
 
+    def hand_keep(self, slug: str) -> bool:
+        """His hand's orders on this ground are never the tender's to
+        take (owner, 2026-09-13, the seat markets). The tender touches
+        only what it owns, so refusing to adopt is the whole guard."""
+        return any(t in slug for t in FOCUS_HAND_KEEP_TOKENS)
+
     def _claim_orders(self) -> None:
         """The engine's orders on focus ground become the tender's; the
         bonds' exits become plain exits. His own orders in a market he
         has given a fair are the tender's too (owner, 2026-09-10: "my
         orders should be like any other the tender places, susceptible
         to being moved if there is another place they could be resting
-        that is more positive ev") — his qualifying walls excepted, and
-        in a market without a fair they stay as he left them."""
+        that is more positive ev") — his qualifying walls excepted, the
+        SEAT MARKETS excepted (owner, 2026-09-13: "You can stop
+        cancelling my hand placed orders on the seat markets"), and in a
+        market without a fair they stay as he left them."""
         for o in list(self.fam.orders.values()):
             if o.market not in self.markets:
                 continue
-            if o.purpose in ("earn", "probe", "revive"):
+            if (self.hand_keep(o.market) and o.purpose == PURPOSE
+                    and str(o.why or "").startswith("yours")):
+                # adopted before the seat markets became his hand's:
+                # handed back, and the id comes off the tender's list so
+                # nothing of its own reads it as one of its orders
+                o.purpose = "manual"
+                o.why = ""
+                o.pinned = False
+                if o.id in self.mine_ids:
+                    self.mine_ids.remove(o.id)
+                self._log(event="released", market=o.market, side=o.side,
+                          price=o.price, qty=o.qty,
+                          note="the seat markets are your hand's — the tender "
+                               "gives this one back and will not touch it")
+            elif o.purpose in ("earn", "probe", "revive"):
                 was = o.purpose
                 o.purpose = PURPOSE
                 o.why = f"inherited from the engine (was {was})"
@@ -917,6 +952,7 @@ class Focus:
                 o.purpose = "sell"
                 o.why = "inherited from the bonds — an exit"
             elif (o.purpose == "manual" and not is_wall(o)
+                  and not self.hand_keep(o.market)
                   and o.id not in self._gone_by_me
                   and self.why_not_tended(o.market) is None):
                 o.purpose = PURPOSE

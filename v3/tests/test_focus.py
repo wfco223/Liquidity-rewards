@@ -27,6 +27,7 @@ AK = "usgubewc-usgub-ak-2026-11-03-berwil"  # T2 $600, avoided by the engine
 BP = "paccc-balpow-2026-11-03-dsweep"      # T1, his own hand's book
 AG = "usag-2026-11-03-az-rep"              # held ground, boosted
 PLAIN = "ewc-usgub-ks-2026-11-03-dem"      # a $100 tier market: not boosted
+SEAT = "scc-senate-gop-2026-11-03-50"      # a SEAT market: his hand's, 2026-09-13
 
 T1 = {"timePeriods": [{"programId": "midterms_t1_control_bop_tossup_senate_20260909",
                        "rewardPool": 1500.0, "targetSize": 25000, "discountFactor": 0.3,
@@ -2276,6 +2277,105 @@ class TestTheWebPage(unittest.TestCase):
 
     def test_the_websocket_seats_the_focus_first_and_caps_the_engine(self):
         self.assertEqual(focus_mod.FOCUS_WS_CAP + focus_mod.ENGINE_WS_CAP, 200)
+
+
+class TestTheSeatMarketsAreHisHands(Base):
+    """Owner, 2026-09-13: "You can stop cancelling my hand placed orders
+    on the seat markets." The 2026-09-10 carve-out made his orders in a
+    market he has given a fair the tender's to move, resize and pull.
+    The seat-count books — Republican Senate Seats and Republican House
+    Seats — come back out of it. The tender only ever touches what it
+    owns, so never adopting is the whole guard."""
+
+    def setUp(self):
+        super().setUp()
+        # the seat market joins here, not in the shared rig, so no other
+        # test's market count moves
+        self.silver[SEAT] = 0.45
+        self.r.add_market(SEAT, wide_book(self.r.now), event="Republican Senate Seats?",
+                          prog=T2)
+        # discovery and the terms read both have cadences; force both
+        self.r.fam.last_discover = 0.0
+        self.r.fam.last_terms_active = 0.0
+        self.r.fam.last_terms_full = 0.0
+        self.r.fam.refresh_universe(self.r.exchange, self.r.now)
+        self.r.fam.refresh_terms(self.r.exchange, self.r.now)
+        self.r.switch = False
+        self.r.cycle()
+        self.f.seed(self.r.now)
+        self.r.switch = True
+        self.assertIn(SEAT, self.f.markets, "the seat market must be on the tender's ground")
+        # a fair is what makes a market tended at all, and the 2026-09-10
+        # carve-out only ever applied where he had set one
+        self.f.set_fair(SEAT, 45.0)
+        self.assertIsNone(self.f.why_not_tended(SEAT))
+
+    def hand(self, slug, side="BUY", price=0.40, qty=20.0):
+        o = FamilyOrder(id=f"h-{slug}-{side}", market=slug, side=side, price=price,
+                        qty=qty, intent=BUY_LONG if side == "BUY" else SELL_LONG,
+                        placed_ts=self.r.now, purpose="manual", why="")
+        self.r.fam.orders[o.id] = o
+        return o
+
+    def test_a_hand_order_on_a_seat_market_is_never_adopted(self):
+        o = self.hand(SEAT)
+        for _ in range(4):
+            self.tick()
+        self.assertEqual(self.r.fam.orders[o.id].purpose, "manual")
+        self.assertNotIn(o.id, self.f.mine_ids)
+        self.assertEqual([e for e in self.f.log
+                          if e.get("event") == "adopted" and e.get("market") == SEAT], [])
+
+    def test_the_same_order_elsewhere_is_still_adopted(self):
+        # the control: the 2026-09-10 carve-out is untouched off seat
+        # ground. One tick is enough — after that the tender owns it and
+        # may well have moved or pulled it, which is the whole point.
+        self.f.set_fair(NC, 45.0)
+        o = self.hand(NC)
+        self.tick()
+        self.assertTrue([e for e in self.f.log if e.get("event") == "adopted"
+                         and e.get("market") == NC],
+                        "his order off seat ground is still the tender's")
+        self.assertEqual([e for e in self.f.log if e.get("event") == "adopted"
+                          and e.get("market") == SEAT], [])
+
+    def test_the_tender_never_cancels_or_moves_it(self):
+        o = self.hand(SEAT, side="SELL", price=0.95)      # far off, earning nothing
+        for _ in range(8):
+            self.tick()
+        self.assertIn(o.id, self.r.fam.orders)
+        kept = self.r.fam.orders[o.id]
+        self.assertEqual((kept.purpose, kept.price, kept.qty), ("manual", 0.95, 20.0))
+        touched = [e for e in self.f.log
+                   if e.get("market") == SEAT and e.get("event") in ("pull", "moved")
+                   and abs(float(e.get("qty") or 0) - 20.0) < 1e-9]
+        self.assertEqual(touched, [])
+
+    def test_one_adopted_before_the_rule_is_handed_back(self):
+        o = self.hand(SEAT)
+        o.purpose = PURPOSE                      # as the old build had left it
+        o.why = "yours — the tender tends it like its own"
+        self.f.mine_ids.append(o.id)
+        self.tick()
+        back = self.r.fam.orders[o.id]
+        self.assertEqual(back.purpose, "manual")
+        self.assertEqual(back.why, "")
+        self.assertNotIn(o.id, self.f.mine_ids)
+        self.assertTrue([e for e in self.f.log if e.get("event") == "released"
+                         and e.get("market") == SEAT])
+
+    def test_the_tender_still_works_the_seat_market_with_its_own_orders(self):
+        # his orders being his does not stand the tender down there
+        for _ in range(4):
+            self.tick()
+        self.assertTrue(self.mine(SEAT), "the tender rests nothing on seat ground")
+
+    def test_the_rule_names_both_seat_books_and_nothing_else(self):
+        self.assertTrue(self.f.hand_keep("scc-senate-gop-2026-11-03-50"))
+        self.assertTrue(self.f.hand_keep("scc-hrep-rep-2026-11-03-gte220"))
+        self.assertFalse(self.f.hand_keep(NC))
+        self.assertFalse(self.f.hand_keep(BP))
+        self.assertFalse(self.f.hand_keep("paccc-usse-midterms-2026-11-03-dem"))
 
 
 if __name__ == "__main__":
