@@ -2878,3 +2878,35 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789334748.6,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,43.16,0.09,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CFNEY9YCRTMP
 1789334748.6,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,136,0.08,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFNG11SVTTMX
 1789334748.6,nfl,ftsc-nfl-qbmostfp-2027-01-10-patmah,BUY,0.05,0.15,hand,,4.21,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFJ9577SWTN1
+1789334879.8,politics,paccc-balpow-2026-11-03-rhou-dsen,BUY,50.12,0.04,hand,,48.63,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CEC47JX6CTN2
+1789335183.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,14,0.846,backfill,,0.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFNFGMCXYTN3
+1789335611.9,nfl,ftsc-nfl-wrtop12fp-2027-01-10-emeegb,BUY,1,0.46,backfill,,3.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKDQH5QETMY
+1789335628.8,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,5.04,0.21,hand,,5.33,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFHGMQ370TMY
+1789335877.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,58,0.492,backfill,,1.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFN4RYZD4TMX
+1789336292.1,cfb,aachc-cfb-wins-2026-11-28-boise-9pt5wins,SELL,1,0.16,backfill,,3.36,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKCB44K0TMQ
+1789336341.7,nfl,ftsc-nfl-dstmostfp-2027-01-10-cin,SELL,2,0.02,backfill,,3.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKEFCR68TN0
+1789336415.6,politics,usgubewc-usgub-ct-2026-11-03-dem,SELL,20,0.93,backfill,,31.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSD0GTMP
+1789336415.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,42,0.482,backfill,,0.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0SPSEY6TN1
+1789336415.6,politics,scc-senate-gop-2026-11-03-51,SELL,79,0.12,backfill,,9.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CES3GDS16TN5
+1789336415.6,politics,ussewc-usse-ky-2026-11-03-dem,SELL,20,0.09,backfill,,1.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEZXKV1EETN3
+1789336415.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,775,0.841,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0T93ZBCTMY
+1789336415.6,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,64.9,0.95,backfill,,13.45,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEP9G0DDMTMY
+1789336415.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,10,0.482,hand,,0.52,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CF1G795M2TMM
+1789336415.6,politics,ussewc-usse-de-2026-11-03-rep,SELL,10,0.02,backfill,,30.78,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7KSJCPCTMX
+1789336415.6,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,38,0.42,backfill,,1.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF0MP0MRPTMM
+1789336415.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,281,0.841,hand,,0.36,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CF21TCE6ETMQ
+1789336415.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,87.38,0.22,backfill,,36.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE2EGZ1FETMM
+1789336415.6,politics,ussewc-usse-ma-2026-11-03-dem,BUY,0.06,0.96,backfill,,27.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEAEVGARMTMM
+1789336415.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,48,0.482,hand,,0.62,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CF21ZN9JETN5
+1789336415.6,politics,ewc-usp-2028-11-07-gavnew,BUY,3,0.08,backfill,,18.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEP4C1VBTTMQ
+1789336415.6,politics,enwc-uspres-nom-dem-2028-petbut,SELL,0.97,0.05,backfill,,36.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE7XM29WPTMP
+1789336415.6,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,30,0.05,backfill,,22.52,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEM210JRATMM
+1789336415.6,politics,ewc-usp-2028-11-07-dontru,SELL,3.11,0.06,backfill,,27.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEST16XACTN3
+1789336415.6,politics,ewc-usp-2028-11-07-tuccar,SELL,31.65,0.03,backfill,,54.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE5RSSB2PTMP
+1789336415.6,politics,paccc-balpow-2026-11-03-rhou-dsen,BUY,50.12,0.04,hand,,48.63,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CEC47JX6CTN2
+1789336415.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,14,0.846,backfill,,0.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFNFGMCXYTN3
+1789336415.6,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,5.04,0.21,hand,,5.33,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFHGMQ370TMY
+1789336415.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,58,0.492,backfill,,1.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFN4RYZD4TMX
+1789336415.6,cfb,aachc-cfb-wins-2026-11-28-boise-9pt5wins,SELL,1,0.16,backfill,,3.36,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKCB44K0TMQ
+1789336415.6,nfl,ftsc-nfl-wrtop12fp-2027-01-10-emeegb,BUY,1,0.46,backfill,,3.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKDQH5QETMY
+1789336415.6,nfl,ftsc-nfl-dstmostfp-2027-01-10-cin,SELL,2,0.02,backfill,,3.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKEFCR68TN0
