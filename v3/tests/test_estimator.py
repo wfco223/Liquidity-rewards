@@ -50,8 +50,10 @@ class TestTheExchangeOutOfReach(unittest.TestCase):
         e.sample(t0 + 20, one_order(), books_at(t0 + 20), st, side_pool=_sp, verified_at=t0)
         earned = e.earned
         self.assertGreater(earned, 0.0)
-        # the cycle has not answered for six minutes: nothing bills
-        e.sample(t0 + 40, one_order(), books_at(t0 + 40), st, side_pool=_sp, verified_at=t0 - 340)
+        # the cycle has not answered for eleven minutes: nothing bills
+        # (the verified window is 10 min now — a healthy 6-9 min cycle
+        # must not read as an outage; owner 2026-09-13)
+        e.sample(t0 + 40, one_order(), books_at(t0 + 40), st, side_pool=_sp, verified_at=t0 - 640)
         self.assertEqual(e.earned, earned)
         self.assertEqual(e.rate, 0.0)
         self.assertEqual(e.dots[-1][1:], [0.0, 0])
@@ -64,6 +66,22 @@ class TestTheExchangeOutOfReach(unittest.TestCase):
         # no word on the cycle at all: bills as before
         e.sample(t0 + 100, one_order(), books_at(t0 + 100), st, side_pool=_sp)
         self.assertAlmostEqual(e.earned, earned + 2 * e.rate * 20 / 86400, places=6)
+
+    def test_a_normal_cycle_stays_in_reach(self):
+        # owner, 2026-09-13: the open list is read once a cycle, so the
+        # verified clock is cycle-cadence — a healthy 6-9 minute cycle must
+        # keep billing, only a real outage (past 10 min) reads as unverified
+        from v3.estimator import VERIFIED_MAX_S
+        self.assertEqual(VERIFIED_MAX_S, 600.0)
+        e, st = Estimator(), terms_with()
+        t0 = noon_et()
+        e.sample(t0, one_order(), books_at(t0), st, side_pool=_sp, verified_at=t0)
+        base = e.earned
+        # nine minutes since the last order read: still in reach, still bills
+        e.sample(t0 + 20, one_order(), books_at(t0 + 20), st, side_pool=_sp,
+                 verified_at=t0 + 20 - 540)
+        self.assertGreater(e.earned, base)
+        self.assertGreater(e.rate, 0.0)
 
     def test_a_billed_blackout_is_taken_back_out_once(self):
         e = Estimator()

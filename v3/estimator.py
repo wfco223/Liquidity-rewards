@@ -42,6 +42,13 @@ except Exception:  # no tz database: fixed EDT offset, same fallback as 1.0
 
 BOOK_MAX_AGE = 180.0   # a book older than this doesn't get scored
 MAX_GAP_S = 300.0      # longest interval one sample may bill for
+# the orders-still-resting check has its own, wider window (owner,
+# 2026-09-13 "Yes build both"): the open list is read once a cycle,
+# so `verified_at` is cycle-cadence — a healthy 6-9 minute cycle must
+# not read as an outage. A real outage (maintenance, a wedged loop)
+# runs far longer than this; past it the orders in hand are unverified
+# and nothing bills, the owner's 2026-09-11 rule.
+VERIFIED_MAX_S = 600.0
 MIN_FRESH = 0.5        # book-freshness quorum below which nothing accrues
 HISTORY_DAYS = 30
 
@@ -158,7 +165,7 @@ class Estimator:
         # "the estimate of earnings of today still includes the period
         # of maintenance"). The interval banks as unmeasured, the graph
         # reads zero.
-        if verified_at is not None and now - verified_at > MAX_GAP_S:
+        if verified_at is not None and now - verified_at > VERIFIED_MAX_S:
             if dt_s:
                 self.stale_s += dt_s
             self.market_rates, self.market_shares, self.market_pools = {}, {}, {}
