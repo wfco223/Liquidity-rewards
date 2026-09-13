@@ -57,6 +57,12 @@ POLL_S = 60.0
 NURSE_TICK_S = 5.0
 ERROR_BACKOFF_CAP_S = 600.0
 FLATTEN_CANCELS_PER_CYCLE = 45
+# the meter's "exchange still in reach" probe (owner, 2026-09-13): the
+# sampler reads the open list itself when the cycle's own read is older
+# than this. One try, a short timeout, the SIGNED trade api — never the
+# throttled gateway — so it costs the books nothing.
+VERIFY_PROBE_S = 120.0
+VERIFY_PROBE_TIMEOUT_S = 10.0
 
 
 def flatten_active() -> bool:
@@ -1195,8 +1201,8 @@ class Monitor:
             # cycle instead of every 20 s, so the meter and graph froze. It
             # only READS (fam.orders, the live book cache, terms) to score;
             # a snapshot taken mid-mutation is caught below and skipped, and
-            # the next tick is 20 s away. The verified clock is stamped at
-            # the order read, so a long cycle no longer reads as an outage.
+            # the next tick is 20 s away.
+            self._verify_probe(now)
             for key, fam in self.families.items():
                 try:
                     try:
@@ -1211,6 +1217,43 @@ class Monitor:
                         verified_at=getattr(self, "_verified_at", None))
                 except Exception:  # noqa: BLE001 — measuring never breaks
                     pass
+
+    def _verify_probe(self, now: float) -> bool:
+        """Keep the meter's "the orders are still resting" clock honest
+        without waiting for the cycle.
+
+        The clock is stamped when the cycle reads the open list, and the
+        cycle is not a clock: the laps of 2026-09-13 ran 6 to 15.6
+        minutes (bonds 239 s, the families 432 s on the lap measured at
+        16:12Z), so the stamp went past even the widened ten-minute
+        window and the meter billed nothing on a run that was perfectly
+        healthy — one 20-second tick in six read as an outage. So the
+        sampler reads the open list ITSELF when the stamp is older than
+        VERIFY_PROBE_S: one try, ten seconds, on the SIGNED trade api,
+        which is not the endpoint the exchange is throttling (every 429
+        of that hour was a gateway book read), so it costs the books and
+        the tender nothing.
+
+        A probe that fails, or comes back empty while we hold records,
+        does NOT stamp — so a real outage still bills nothing past five
+        minutes, the owner's 2026-09-11 rule, which this restores."""
+        last = getattr(self, "_verified_at", None)
+        if last is not None and now - last <= VERIFY_PROBE_S:
+            return False
+        try:
+            rows = self.client.open_orders_raw(
+                tries=1, timeout=VERIFY_PROBE_TIMEOUT_S)
+        except Exception:  # noqa: BLE001 — an outage must read as an outage
+            return False
+        if not rows:
+            # the exchange answered "nothing resting" while our records
+            # say otherwise: that is exactly the 2026-09-11 maintenance
+            # shape, so it is NOT a verification — the cycle will settle
+            # the records and the meter bills nothing meanwhile
+            if any(getattr(f, "orders", None) for f in self.families.values()):
+                return False
+        self._verified_at = time.time()
+        return True
 
     def _audit(self, row: dict) -> None:
         self.audit.append(row)
