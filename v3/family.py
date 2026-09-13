@@ -2571,8 +2571,8 @@ class Family:
             for rec in list(self.orders.values()):
                 if actions <= 0:
                     break
-                if rec.purpose in ("sell", "manual", "bond"):
-                    continue
+                if rec.purpose in ("sell", "manual", "bond", "sweep"):
+                    continue      # a sweep order is placed once and left
                 if not self.kicked_off(rec.market, now):
                     continue
                 r = self.desk.cancel(rec.id, rec.market)
@@ -2727,7 +2727,7 @@ class Family:
             self._track_est(rec, now)
             self.fillmodel.observe_order_age(rec.market, now - rec.placed_ts,
                                              60.0)
-            if (rec.purpose not in ("manual", "sell", "bond")
+            if (rec.purpose not in ("manual", "sell", "bond", "sweep")
                     and (self.fairs is None
                          or self.fairs(rec.market) is None)
                     and now - rec.placed_ts >= 86400.0
@@ -2900,7 +2900,8 @@ class Family:
                               # placement holds until the release rule
                               # (checked in _read_live) or the nurse ends it
             if (self.cfg.whole_shares
-                    and rec.purpose not in ("sell", "manual", "bond", "focus")
+                    and rec.purpose not in ("sell", "manual", "bond", "focus",
+                                            "sweep")
                     and not self._frozen(rec.market)
                     and abs(rec.qty - round(rec.qty)) > 1e-9):
                 # the focus tender's orders are its own (2026-09-12,
@@ -3634,7 +3635,7 @@ class Family:
             if not over_exp and not over_gross:
                 break
             cands = [o for o in list(self.orders.values())
-                     if o.purpose not in ("sell", "manual", "bond")
+                     if o.purpose not in ("sell", "manual", "bond", "sweep")
                      and not o.pinned
                      and o.market not in self.bond_markets   # not this ceiling's
                      and not self._frozen(o.market)]
@@ -4791,10 +4792,20 @@ class Family:
                         if o.market == slug and o.purpose == "sell"
                         and o.side == "BUY" and not is_wall(o, -qty)]
                 self._maybe_move_exit(slug, "BUY", mine, book, inv, now)
+                # the sweep's cover counts here exactly as his hand's does
+                # (owner, 2026-09-13; my own defect, found on the 19:00Z
+                # check): this sum did not name "sweep", so the sweep's
+                # cover of a short read as nothing, `rest` came out as the
+                # WHOLE short and the engine rested a second cover beside
+                # it — the lot offered twice, in ten markets after the
+                # 18:16Z run (Connecticut, Hawaii, Illinois, Massachusetts
+                # and Wyoming governor rep among them), which is the shape
+                # that flips a short long when both fill
                 covered = sum(
                     o.qty for o in list(self.orders.values())
                     if o.market == slug and o.side == "BUY"
-                    and o.purpose in ("sell", "manual", "bond") and not is_wall(o, -qty))
+                    and o.purpose in ("sell", "manual", "bond", "sweep")
+                    and not is_wall(o, -qty))
                 rest = -qty - covered
                 if covered > -qty + 0.01:
                     self._prune_excess_exits(slug, "BUY", covered + qty, now)
