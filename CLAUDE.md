@@ -69,15 +69,29 @@ long and accreted, so search it rather than reading it through.
   resize and trim off them; they stay exactly as he left them and
   still count as company and as cover on the book. One adopted
   before the rule is handed back and its id comes off the tender's
-  list. The tender goes on working that ground with its own orders.
-  (usgovcc, the GOP governor seat counts, is frozen ground entirely
-  and always was.)
+  list (three were, at 21:46:06Z — the log had ten adoptions on that
+  ground in the twelve minutes before he asked). Then, an hour later
+  ("Keep the tender out of the seat markets"), the ground went
+  FROZEN outright — see the frozen bullet below. Nothing automated
+  works these books now.
 - FROZEN ground — the engine does NOTHING there (owner, 2026-08-24
   "Don't sell my gop governor count race orders. In fact don't touch
   those"): places nothing, rests no exits, reprices nothing, cancels
   nothing. Whatever is resting stays exactly as it is. This is
   stricter than the avoid list, which PULLS the engine's orders out.
-  Currently frozen: usgovcc (GOP governor seat counts).
+  Currently frozen: usgovcc (GOP governor seat counts), and from
+  2026-09-13 the other two seat-count books — scc-senate-gop
+  (Republican Senate Seats) and scc-hrep-rep (Republican House
+  Seats), owner: "Keep the tender out of the seat markets".
+  FROZEN IS THE WHOLE ANSWER, and it binds BOTH desks: the tender
+  reads the ground "frozen — hands off", so it rests nothing new
+  there and its own orders already resting come off; the engine
+  places nothing, rests no exits and cancels nothing. His hand's
+  orders are touched by neither. The engine does NOT step into the
+  ground the tender leaves — freeze_tokens holds it whether or not
+  the tender still claims the market (a test pins that). The
+  consequence to know: NOTHING RESTS AN EXIT on a seat market any
+  more, so a position he holds there is his to work.
 - Order-touching endpoints keep: auth, X-Reprice CSRF header, known-market
   whitelist, 0.1–99.9c price bounds, post-only placement.
   ONE carved exception (owner, 2026-08-22 "Carve it"): the taker dump —
