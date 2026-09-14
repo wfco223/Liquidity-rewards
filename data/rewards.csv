@@ -10763,10 +10763,12 @@ date,market,program_type,reward_usd,status
 2026-09-12,ushrewc-ushr-pa-01-2026-11-03-rep,liquidityProgram,7.02,PENDING
 2026-09-12,ushrewc-ushr-tx-15-2026-11-03-rep,liquidityProgram,10.41,PENDING
 2026-09-12,ushrewc-ushr-tx-34-2026-11-03-dem,liquidityProgram,25.89,PENDING
+2026-09-12,ushrewc-ushr-va-02-2026-11-03-rep,liquidityProgram,2.98,PENDING
 2026-09-12,ushrewc-ushr-wa-03-2026-11-03-dem,liquidityProgram,7.96,PENDING
 2026-09-12,ussewc-usse-co-2026-11-03-rep,liquidityProgram,0.66,PENDING
 2026-09-12,ussewc-usse-de-2026-11-03-dem,liquidityProgram,0.11,PENDING
 2026-09-12,ussewc-usse-fl-2026-11-03-dem,liquidityProgram,0.61,PENDING
+2026-09-12,ussewc-usse-fl-2026-11-03-rep,liquidityProgram,1.43,PENDING
 2026-09-12,ussewc-usse-id-2026-11-03-todach,liquidityProgram,0.03,PENDING
 2026-09-12,ussewc-usse-il-2026-11-03-dem,liquidityProgram,0.04,PENDING
 2026-09-12,ussewc-usse-il-2026-11-03-rep,liquidityProgram,1.03,PENDING
