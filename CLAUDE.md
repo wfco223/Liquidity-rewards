@@ -861,6 +861,20 @@ long and accreted, so search it rather than reading it through.
   placement and never cause one. The live run also confirmed the hold:
   60 placements and 260 exits were refused "master switch is off" in the
   quarter hour after the pull, and nothing rested.
+  AND AN EMPTY BOOK IS NOT CHASED (the 12:32Z restore, same day): a
+  106-share bid went back at 14c where he had it at 42c, and its ask at
+  62c where he had it at 43c, because the North Carolina House 01 book
+  had come back 14c/62c with almost nothing resting on it. Nothing was
+  at risk — of the first 48 restored, NOT ONE moved against him, and the
+  collateral on the restored bids fell from $344.90 to $308.12 — but a
+  48c spread is not a price, and "approximately their correct spot" is
+  what he asked for. Past MAINT_TRUST_SPREAD (10c) the touch is not
+  trusted and HIS OWN price stands, clamped as ever so it cannot cross.
+  This is his own rule from the 2026-09-11 maintenance ("Be careful of
+  placing orders after the maintenance. Don't sell everything for
+  pennies there might not be any orders resting") applied to the way
+  back in. The median move over those 48 was 1c, so this changes only
+  the tail: 11 of 48 had moved more than 10c and 4 more than 25c.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

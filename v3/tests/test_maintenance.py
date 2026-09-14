@@ -40,7 +40,7 @@ class TestWhereAnOrderGoesBack(unittest.TestCase):
             self.assertLessEqual(px, 0.40 + 1e-9)
 
     def test_an_ask_takes_the_touch_when_the_touch_is_DEARER(self):
-        self.assertEqual(restore_price("SELL", 0.44, 0.20, 0.52, 0.01), 0.52)
+        self.assertEqual(restore_price("SELL", 0.44, 0.46, 0.52, 0.01), 0.52)
 
     def test_an_ask_never_sells_cheaper_than_he_did(self):
         for ask in (0.20, 0.40, 0.44, 0.52, 0.90):
@@ -357,3 +357,34 @@ class TestAnOrderThatNeverLeftIsNotPlacedTwice(Base):
         self.assertIn(a, self.m._live)                # the last read stands
         self.assertEqual(len([o for o in self.r.exchange.live.values()
                               if o["side"] == "BUY"]), 1)
+
+
+class TestAnEmptyBookIsNotChased(unittest.TestCase):
+    """Seen live at 12:32Z on 2026-09-14: a 106-share bid went back at
+    14c where he had it at 42c, and its ask at 62c where he had it at
+    43c, because the book had come back 14c/62c with almost nothing on
+    it. His own post-maintenance rule applies — "there might not be any
+    orders resting" — so past a spread we can trust, HIS price stands."""
+
+    def test_a_wide_book_keeps_his_own_price(self):
+        # 14c / 62c: a 48c spread, the book has not refilled
+        self.assertEqual(restore_price("BUY", 0.42, 0.14, 0.62, 0.01), 0.42)
+        self.assertEqual(restore_price("SELL", 0.43, 0.14, 0.62, 0.01), 0.43)
+
+    def test_a_normal_book_still_takes_the_better_touch(self):
+        self.assertEqual(restore_price("BUY", 0.40, 0.36, 0.44, 0.01), 0.36)
+        self.assertEqual(restore_price("SELL", 0.44, 0.46, 0.52, 0.01), 0.52)
+
+    def test_the_line_is_where_the_constant_says(self):
+        w = M.MAINT_TRUST_SPREAD
+        self.assertEqual(restore_price("BUY", 0.40, 0.30, round(0.30 + w, 4), 0.01), 0.30)
+        self.assertEqual(restore_price("BUY", 0.40, 0.30,
+                                       round(0.30 + w + 0.01, 4), 0.01), 0.40)
+
+    def test_his_price_still_never_crosses_on_a_wide_book(self):
+        # he had a bid at 60c and the book came back 10c / 55c
+        px = restore_price("BUY", 0.60, 0.10, 0.55, 0.01)
+        self.assertLess(px, 0.55)
+
+    def test_a_one_sided_book_is_unchanged_by_this(self):
+        self.assertEqual(restore_price("BUY", 0.40, None, None, 0.01), 0.40)
