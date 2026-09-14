@@ -815,6 +815,38 @@ long and accreted, so search it rather than reading it through.
   lesson and keeps the books right, but the card now says which
   happened: "the exchange did not report on these — their fills book on
   the next cycle" rather than a false zero.
+- SCHEDULED MAINTENANCE (owner, 2026-09-14: "There is maintenance from
+  4-8:30 this morning. Can you pull the orders 15 minutes before and
+  start putting them back in approximately their correct spot after
+  everything is back online? Don't have to be too aggressive. If you
+  can get better prices or higher earning in thinner books do that.
+  Stay flexible"): v3/maintenance.py, windows in MAINT_WINDOWS as ET
+  wall-clock pairs, ticked off the SAMPLER'S clock every 20 s so a slow
+  cycle can never make the pull late. Fifteen minutes before a window
+  every order on the EXCHANGE'S open list — not ours, because an order
+  of his we never adopted is on it and is exactly the kind that never
+  comes back on its own — is written down and cancelled. HIS HAND'S
+  ORDERS AND HIS QUALIFYING WALLS COME OFF TOO: the standing rule makes
+  them untouchable, and this is his own carve-out for the one case that
+  helps him, because the maintenance cancels them anyway (2026-09-11 it
+  cancelled every resting order, walls included, and nothing re-places
+  a wall on its own — the day after, the whole bid side of the
+  balance-of-power book read as earning nothing for want of the
+  25,000-share 1c wall that carried it to the target). While the window
+  runs nothing places: both desks read the master as off through
+  maint.holding(), his stored setting is never touched, and his own
+  taps still work. After the window, once ONE signed read answers, the
+  orders go back six a pass. Each is priced on a book read for it: a
+  wall goes back exactly where it was; a BID at its old price or the
+  best bid if that is LOWER (never pay up); an ASK at its old price or
+  the best ask if that is HIGHER (never sell cheaper) — so it lands at
+  its old spot or at the touch, whichever is better for him, and a side
+  that thinned out over the window gives both the better price and the
+  higher-earning slot at once. Nothing crosses. An order bigger than
+  the desk's QTY_MAX (20,000, and his walls are bigger) goes back as
+  however many orders it takes at the same price. A refusal is retried
+  six times, then left and reported on the card. The whole run is saved
+  with the state, so a restart mid-window picks it up where it was.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
