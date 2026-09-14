@@ -3564,3 +3564,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789404736.9,politics,paccc-usse-midterms-2026-11-03-rep,SELL,50,0.491,backfill,,0.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG5T7AB22VB4
 1789404736.9,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,86,0.4,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG6DP9CA0VB2
 1789404736.9,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,2.56,0.15,backfill,,3.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG33CC53MVB8
+1789404736.9,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,2.56,0.15,manual,0,3.93,0.063125,13,17,0.712,0.15,0.18,0.0869,-14.44,the owner's own order — the engine leaves it alone,CG33CC53MVB8
+1789404951.9,politics,ussewc-usse-tn-2026-11-03-rep,BUY,10,0.52,manual,0,4.24,0.9995,95,99,0.222,0.52,0.99,-0.4795,10,the owner's own order — the engine leaves it alone,CG2WACT00VB8
+1789405214.1,politics,ushrewc-ushr-pa-01-2026-11-03-rep,SELL,36,0.54,focus,31.3755,0.2,,53,57,0,0.53,0.54,0.01,-36,focus entry: ~$6.06/day; fill odds 77%/day; EV +1.36/day,CG6F8G2CAVB3
+1789405514.2,politics,paccc-usho-midterms-2026-11-03-dem,SELL,69,0.85,focus,3.1291,0.1,0.8637,87,89,0.887,0.849,0.85,0.0137,-264,focus entry: ~$5.20/day; fill odds 77%/day; EV +1.28/day,CG6KX38XCVB7
+1789405694.2,politics,paccc-usse-midterms-2026-11-03-rep,BUY,56,0.49,focus,51.091,0.17,0.4309,50,52,0.906,0.49,0.491,0.0591,112,focus entry: ~$53.30/day; fill odds 58%/day; EV +52.51/day,CG6K4T0F2VB4
+1789406328.0,politics,paccc-usse-midterms-2026-11-03-rep,SELL,56,0.491,sell,6.6784,0.18,0.4309,49,51,0.912,0.49,0.491,-0.0601,0,an exit — its fill reduces the position it sits on,CG6QV3Z2MVB5
+1789406626.9,politics,ushrewc-ushr-ca-45-2026-11-03-dem,BUY,52,0.93,focus,2.3348,0.28,,93,97,0,0.93,0.94,-0.02,52,focus entry: ~$2.18/day; fill odds 63%/day; EV +0.44/day,CG6QD7XXCVB4
+1789406806.9,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,10,0.77,sell,79.8213,0.17,0.83325,79,82,0.67,0.76,0.77,0.0633,162,an exit — its fill reduces the position it sits on,CG6VZMNFMVB6
+1789406926.9,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,10,0.77,sell,75.1805,0.21,0.83325,79,82,0.741,0.76,0.77,0.0633,152,an exit — its fill reduces the position it sits on,CG6VZMNFMVB6
+1789406926.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,46,0.508,focus,68.914,0,0.5,49,51,0.917,0.508,0.509,0.008,46,focus entry: ~$68.91/day; fill odds 58%/day; EV +67.68/day,CG7192B0JVBA
+1789406986.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,60,0.509,focus,22.8592,0.21,0.5,49,50,0.922,0.508,0.509,-0.009,-120,focus entry: ~$26.16/day; fill odds 56%/day; EV +25.15/day,CG6VX0KEYVB2
+1789406986.9,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,35,0.39,focus,143.779,0.08,,38,42,0.846,0.36,0.37,-0.01,190,focus entry: ~$19.81/day; fill odds 63%/day; EV +17.84/day,CG6ZE4W34VB3
+1789407134.3,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,11.88,0.15,manual,0,4.6,0.063125,12,16,0.766,0.15,0.18,0.0869,0.44,the owner's own order — the engine leaves it alone,CG33CC53MVB8
+1789407134.3,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,31.87,0.24,sell,1.1529,1.07,0.29155,21,24,0.809,0.22,0.24,0.0516,181.13,an exit — its fill reduces the position it sits on,CG64ZKN3RVB8
+1789407254.3,politics,paccc-usho-midterms-2026-11-03-dem,SELL,3,0.85,focus,1.0967,0.03,0.8637,87,90,0.889,0.849,0.85,0.0137,-267,focus entry: ~$56.91/day; fill odds 77%/day; EV +56.30/day,CG732BDKEVB5
+1789407314.3,politics,paccc-usse-midterms-2026-11-03-rep,SELL,32,0.491,focus,16.6287,0.2,0.4309,50,51,0.918,0.49,0.491,-0.0601,-32,focus entry: ~$7.85/day; fill odds 56%/day; EV +6.61/day,CG6Z24VR0VB4
+1789408313.0,politics,paccc-usse-midterms-2026-11-03-rep,BUY,32,0.49,sell,28.1673,0.27,0.4309,50,52,0.923,0.49,0.491,0.0591,0,an exit — its fill reduces the position it sits on,CG74H1RHMVB5
+1789408313.0,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,10,0.77,sell,40.007,0.59,0.83325,79,83,0.782,0.76,0.77,0.0633,142,an exit — its fill reduces the position it sits on,CG6VZMNFMVB6
+1789408389.5,politics,paccc-usse-midterms-2026-11-03-rep,SELL,-50,0.491,fix,17.0806,0.75,0.4309,50,52,0.898,0.49,0.491,-0.0601,0,size trimmed by 50 to the exchange's count (order CG5T7AB22VB4),CG5T7AB22VB4
+1789408389.5,politics,usgubewc-usgub-or-2026-11-03-rep,BUY,-2.56,0.15,fix,0,4.6,0.063125,12,16,0.766,0.15,0.18,0.0869,0.44,size trimmed by 2.56 to the exchange's count (order CG33CC53MVB8),CG33CC53MVB8
