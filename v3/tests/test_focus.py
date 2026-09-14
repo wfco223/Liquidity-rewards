@@ -2323,7 +2323,21 @@ class TestTheWebPage(unittest.TestCase):
         self.assertEqual(calls[2], ("focus_qualify", NC, "ask"))
 
     def test_the_websocket_seats_the_focus_first_and_caps_the_engine(self):
-        self.assertEqual(focus_mod.FOCUS_WS_CAP + focus_mod.ENGINE_WS_CAP, 200)
+        # the cap is per SUBSCRIPTION and there are STREAM_SHARDS of them
+        # (owner, 2026-09-14): on 2026-09-14 the tender's board was 209
+        # markets against 160 seats, so 49 of its own markets had no seat
+        # and were read through the throttled gateway every pass
+        from v3.ws import STREAM_SHARDS, SUB_CAP
+        seats = SUB_CAP * STREAM_SHARDS
+        # the tender's whole board fits — 209 markets on 2026-09-14,
+        # against the 160 seats it had
+        self.assertGreater(focus_mod.FOCUS_WS_CAP, 209)
+        self.assertLessEqual(focus_mod.FOCUS_WS_CAP, seats)
+        # and the engine's bound never binds before the total does, so no
+        # seat is left empty while a held market goes without one
+        self.assertGreaterEqual(focus_mod.FOCUS_WS_CAP + focus_mod.ENGINE_WS_CAP, seats)
+        # every market that wanted a book on 2026-09-14 now has a seat
+        self.assertGreaterEqual(seats, 209 + 173)
 
 
 class TestTheSeatMarketsAreHisHands(Base):
