@@ -3355,3 +3355,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789369643.3,politics,ewc-usgub-nv-2026-11-03-dem,SELL,113,0.46,sell,2.7968,11.7,0.31875,42,46,0.689,0.45,0.46,-0.1413,31,an exit — its fill reduces the position it sits on,CFM5GV0GWTN3
 1789371831.7,politics,paccc-usho-midterms-2026-11-03-dem,SELL,21,0.847,focus,13.5956,0.61,0.8637,86,88,0.887,0.846,0.847,0.0167,-367,focus entry: ~$18.94/day; fill odds 78%/day; EV +14.17/day,CFY2YP9VYTN3
 1789372720.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-57,0.844,fix,2.6506,0.39,0.8637,83,85,0.763,0.843,0.844,0.0197,-88,size trimmed by 57 to the exchange's count (order CFM2FMRX0TN1),CFM2FMRX0TN1
+1789373387.0,politics,enwc-uspres-nom-rep-2028-tuccar,SELL,22.97,0.04,hand,,54.12,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE5R6YXEWTN3
+1789373387.0,politics,paccc-usho-midterms-2026-11-03-dem,SELL,57,0.844,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFM2FMRX0TN1
+1789373387.0,politics,ewc-usp-2028-11-07-tuccar,SELL,39.63,0.03,hand,,54.95,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE5RSSB2PTMP
+1789373387.0,politics,ussewc-usse-ma-2026-11-03-dem,SELL,3.9,0.96,backfill,,11.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFD5F48D4TMM
+1789373387.0,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,33.11,0.93,backfill,,22.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF4TZZYBGTN0
+1789373387.0,politics,usgubewc-usgub-wy-2026-11-03-dem,SELL,28.66,0.03,hand,,64.98,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE3VTVRDCTMM
+1789373387.0,politics,ussewc-usse-sd-2026-11-03-rep,SELL,1.09,0.91,backfill,,27.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF4RE10D2TN1
+1789373387.0,nfl,tec-nfl-afcsouth-2027-01-10-w-hou,SELL,0.1,0.42,backfill,,1.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKCW23MJTMQ
