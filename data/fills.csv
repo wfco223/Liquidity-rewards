@@ -3374,3 +3374,37 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789376989.3,politics,ussewc-usse-ma-2026-11-03-dem,SELL,-3.9,0.96,fix,,11.34,,,,,,,,,size trimmed by 3.9 to the exchange's count (order CFD5F48D4TMM),CFD5F48D4TMM
 1789376989.3,politics,ussewc-usse-sd-2026-11-03-rep,SELL,-1.09,0.91,fix,,27.17,,,,,,,,,size trimmed by 1.09 to the exchange's count (order CF4RE10D2TN1),CF4RE10D2TN1
 1789376989.3,politics,ussewc-usse-sc-2026-11-03-rep,SELL,0.01,0.89,backfill,,4.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFW04G4MWTMP
+1789389074.0,politics,paccc-usse-midterms-2026-11-03-rep,SELL,91,0.509,sell,0,0,0.4309,51,53,0.828,0.509,0.51,-0.0781,37,taker dump — sold into the bid (the carved exception),CG2QWTXK8VB5
+1789389099.0,politics,ewc-usp-2028-11-07-dontru,SELL,17,0.01,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2RBQ7CWVB9
+1789389220.3,cfb,aachc-cfb-wins-2026-11-28-nd-8pt5wins,BUY,1,0.97,sell,0,0.09,,91,98,0.452,0.88,0.89,0.02,2,buying back the short at or under what it sold for — the bid earns while it wait,CG2Q9NDPCVBA
+1789389287.5,politics,ewc-usp-2028-11-07-dontru,SELL,17,0.01,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2T43C24VBE
+1789389700.5,politics,ussewc-usse-sd-2026-11-03-rep,SELL,2,0.69,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2XBXBFPVB6
+1789389815.8,politics,ussewc-usse-sd-2026-11-03-rep,SELL,2,0.69,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2Y8T88AVB3
+1789389831.4,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,20,0.91,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2X9G34GVB5
+1789389867.4,politics,ushrewc-ushr-nc-01-2026-11-03-rep,SELL,6,0.28,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2YGT8DTVB3
+1789389897.8,politics,ushrewc-ushr-wa-03-2026-11-03-dem,SELL,23,0.81,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2YZJC46VB7
+1789389910.2,politics,ewc-usgub-az-2026-11-03-rep,BUY,199,0.17,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZAX81JVB9
+1789389910.6,politics,ewc-usgub-wi-2026-11-03-rep,SELL,15,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2YYERGCVB2
+1789389942.2,politics,ewc-usse-nc-2026-11-03-rep,BUY,10,0.12,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZGWE16VB4
+1789389959.2,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,22,0.29,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZEZDVGVBA
+1789389970.9,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,4,0.92,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZEBS5RVB3
+1789389986.5,politics,ushrewc-ushr-va-02-2026-11-03-rep,BUY,13,0.29,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZXF74EVB5
+1789390008.7,politics,ushrewc-ushr-ia-01-2026-11-03-dem,SELL,11,0.68,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZZTHECVB2
+1789390030.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,43,0.493,backfill,,0.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2RD2M0GVB4
+1789390083.5,politics,ussewc-usse-sc-2026-11-03-rep,SELL,-3.67,0.89,fix,0.0023,7.16,0.8972,86,90,0.738,0.49,0.99,0.0072,2.33,size trimmed by 3.67 to the exchange's count (order CFW04G4MWTMP),CFW04G4MWTMP
+1789390083.5,politics,usgubewc-usgub-ct-2026-11-03-dem,SELL,20,0.93,void,1.3673,38.4,0.996875,92,96,0.41,0.49,0.99,0.0669,-20,voided: the exchange has no trade for order CF12JWBTWTMX — the row of 09-14 11:4,CF12JWBTWTMX
+1789390083.5,politics,ewc-usp-2028-11-07-dontru,SELL,17,0.01,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2RBQ7CWVB9
+1789390083.5,politics,ewc-usp-2028-11-07-dontru,SELL,17,0.01,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2T43C24VBE
+1789390083.5,politics,ussewc-usse-sd-2026-11-03-rep,SELL,2,0.69,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2XBXBFPVB6
+1789390083.5,politics,ussewc-usse-sd-2026-11-03-rep,SELL,2,0.69,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2Y8T88AVB3
+1789390083.5,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,20,0.91,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2X9G34GVB5
+1789390083.5,politics,ushrewc-ushr-nc-01-2026-11-03-rep,SELL,6,0.28,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2YGT8DTVB3
+1789390083.5,politics,ushrewc-ushr-wa-03-2026-11-03-dem,SELL,23,0.81,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2YZJC46VB7
+1789390083.5,politics,ewc-usgub-az-2026-11-03-rep,BUY,199,0.17,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZAX81JVB9
+1789390083.5,politics,ewc-usgub-wi-2026-11-03-rep,SELL,15,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2YYERGCVB2
+1789390083.5,politics,ewc-usse-nc-2026-11-03-rep,BUY,10,0.12,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZGWE16VB4
+1789390083.5,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,22,0.29,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZEZDVGVBA
+1789390083.5,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,4,0.92,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZEBS5RVB3
+1789390083.5,politics,ushrewc-ushr-va-02-2026-11-03-rep,BUY,13,0.29,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZXF74EVB5
+1789390083.5,politics,ushrewc-ushr-ia-01-2026-11-03-dem,SELL,11,0.68,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZZTHECVB2
+1789390083.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,43,0.493,backfill,,0.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2RD2M0GVB4
