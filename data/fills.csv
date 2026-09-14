@@ -3038,3 +3038,27 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789345842.1,nfl,ftsc-nfl-rbtop12fp-2027-01-10-brehal,BUY,0.01,0.22,backfill,,5.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKD3E2WYTMM
 1789345842.1,nfl,tec-nfl-afceast-2027-01-10-w-ne,SELL,0.1,0.3,backfill,,0.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRAQB086TN2
 1789345844.3,politics,paccc-usse-midterms-2026-11-03-rep,BUY,75,0.531,hand,,0.14,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFRBA8A2TTMQ
+1789346115.6,nfl,ftsc-nfl-kmostfp-w1-2026-09-14-harbut,BUY,0.01,0.22,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRC4E16TTMY
+1789346714.3,politics,ewc-usse-me-2026-11-03-rep,BUY,250,0.35,focus,12.4997,0.38,0.3273,33,36,0.763,0.35,0.36,0.0227,250,focus entry: ~$8.01/day; fill odds 57%/day; EV +4.74/day,CFRB7AMKJTN5
+1789347848.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,9,0.486,sell,16.3369,0.86,0.5,49,51,0.905,0.485,0.486,0.014,0,an exit — its fill reduces the position it sits on,CFR690VY8TN1
+1789348149.9,politics,usgubewc-usgub-or-2026-11-03-rep,SELL,6.32,0.85,manual,0,3.72,0.063125,13,17,0.716,0.2,0.21,-0.7869,-16.32,the owner's own order — the engine leaves it alone,CFNVN25KJTN2
+1789348149.9,politics,paccc-usho-midterms-2026-11-03-dem,SELL,52,0.847,focus,13.9898,0.5,0.8637,85,87,0.884,0.846,0.847,0.0167,-366,focus entry: ~$15.71/day; fill odds 81%/day; EV +6.40/day,CFRKTHCFETN5
+1789348604.6,nfl,ftsc-nfl-qbtop5fp-2027-01-10-lamjac,SELL,1,0.34,backfill,,0.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRAQXQPTTMX
+1789348666.8,politics,paccc-usse-midterms-2026-11-03-dem,BUY,180,0.485,focus,128.627,0.92,0.5,49,51,0.912,0.485,0.486,-0.015,180,focus entry: ~$52.59/day; fill odds 57%/day; EV +50.11/day,CFRBAPQM6TMM
+1789348666.8,cfb,aachc-cfb-wins-2026-11-28-wash-10pt5wins,SELL,4,0.02,manual,4.0053,0.95,,7,17,0.005,0.01,0.02,0.11,0,the owner's own order — the engine leaves it alone,CFR8MXPHCTN1
+1789349329.6,politics,paccc-usse-midterms-2026-11-03-rep,BUY,35,0.531,backfill,,0.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRX74VK0TN1
+1789349603.7,politics,ussewc-usse-sd-2026-11-03-rep,SELL,1.09,0.91,backfill,,24.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF4RE10D2TN1
+1789349656.0,politics,scc-senate-gop-2026-11-03-50,SELL,26.49,0.18,backfill,,2.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFQDYB3M6TN0
+1789349672.3,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,5.35,0.94,backfill,,55.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9BJ6DWTTN5
+1789349714.7,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,5,0.05,backfill,,1.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFR8AXY6MTMX
+1789349766.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-247,0.847,fix,12.931,0.14,0.8637,85,86,0.873,0.846,0.847,0.0167,-314,size trimmed by 247 to the exchange's count (order CFRB0F29GTN2),CFRB0F29GTN2
+1789349766.6,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,23.73,0.94,void,0.1269,9.11,0.99855,91,95,0.702,0.93,0.94,0.0586,0.27,voided: the exchange has no trade for order CF4SHH596TMY — the row of 09-14 00:4,CF4SHH596TMY
+1789349766.6,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,222,0.92,void,1.2853,5.32,0.997075,91,95,0.487,0.89,0.92,0.0771,0,voided: the exchange has no trade for order CFM4W59BETN3 — the row of 09-14 00:4,CFM4W59BETN3
+1789349766.6,politics,paccc-usse-midterms-2026-11-03-rep,BUY,35,0.531,backfill,,0.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRX74VK0TN1
+1789349766.6,politics,ussewc-usse-sd-2026-11-03-rep,SELL,1.09,0.91,backfill,,24.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF4RE10D2TN1
+1789349766.6,politics,scc-senate-gop-2026-11-03-50,SELL,26.49,0.18,backfill,,2.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFQDYB3M6TN0
+1789349766.6,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,5.35,0.94,backfill,,55.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9BJ6DWTTN5
+1789349766.6,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,5,0.05,backfill,,1.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFR8AXY6MTMX
+1789349766.6,nfl,tec-nfl-afceast-2027-01-10-w-ne,SELL,-0.1,0.3,fix,0,0.14,,27,35,0.12,0.29,0.3,0.02,1.9,size trimmed by 0.1 to the exchange's count (order CFRAQB086TN2),CFRAQB086TN2
+1789349766.6,nfl,ftsc-nfl-kmostfp-w1-2026-09-14-harbut,BUY,0.01,0.22,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRC4E16TTMY
+1789349766.6,nfl,ftsc-nfl-qbtop5fp-2027-01-10-lamjac,SELL,1,0.34,backfill,,0.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRAQXQPTTMX
