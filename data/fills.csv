@@ -3601,3 +3601,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789412046.4,politics,paccc-usho-midterms-2026-11-03-dem,BUY,81,0.849,backfill,,1.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG6PK6DY2VB2
 1789412046.4,cfb,aachc-cfb-wins-2026-11-28-stan-5pt5wins,SELL,-0.1,0.18,fix,0.8025,0.14,,13,19,0.046,0.18,0.19,-0.02,0,size trimmed by 0.1 to the exchange's count (order CFVK968DWTMX),CFVK968DWTMX
 1789412046.4,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,0.1,0.15,hand,,5.17,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG3648PEMVB8
+1789412960.3,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,1.15,0.15,hand,,6.17,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG3648PEMVB8
+1789413051.7,politics,paccc-usho-midterms-2026-11-03-dem,SELL,108,0.85,focus,10.1288,0.06,0.8637,87,90,0.893,0.849,0.85,0.0137,-300,focus entry: ~$10.13/day; fill odds 77%/day; EV +3.95/day,CG8F0NVZGVB8
+1789414231.7,politics,paccc-usho-midterms-2026-11-03-dem,BUY,280,0.853,backfill,,0.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG8NQ83EPVB3
+1789414334.9,politics,paccc-usho-midterms-2026-11-03-dem,BUY,20,0.853,sell,17.1875,0.17,0.8637,88,90,0.901,0.853,0.854,-0.0107,0,an exit — its fill reduces the position it sits on,CG8NQ83EPVB3
+1789414377.5,politics,paccc-usho-midterms-2026-11-03-dem,SELL,53,0.854,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG8S9Y7QPVB7
+1789414474.4,nfl,fptc-nfl-tefpou-2027-01-10-brobow,BUY,0.05,0.22,hand,,6.54,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG377VV68VBE
+1789414655.3,politics,paccc-usho-midterms-2026-11-03-dem,BUY,53,0.853,sell,33.565,0.06,0.8637,87,89,0.903,0.853,0.854,-0.0107,53,an exit — its fill reduces the position it sits on,CG8W0AXTMVBE
+1789415107.1,politics,paccc-usho-midterms-2026-11-03-dem,BUY,33,0.853,focus,8.1306,0.14,0.8637,86,88,0.9,0.853,0.854,-0.0107,33,focus entry: ~$35.64/day; fill odds 62%/day; EV +33.59/day,CG8XAXAZ6VB8
+1789415655.9,politics,ussewc-usse-id-2026-11-03-rep,SELL,10,0.99,backfill,,6.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG36MD1AMVBA
+1789415680.3,politics,ushrewc-ushr-me-02-2026-11-03-dem,SELL,77,0.39,void,15.4743,0,,42,47,0.821,0.38,0.39,0.06,-77,voided: the exchange has no trade for order CG8129YMEVB5 — the row of 09-14 18:3,CG8129YMEVB5
+1789415680.3,politics,paccc-usho-midterms-2026-11-03-dem,BUY,280,0.853,backfill,,0.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG8NQ83EPVB3
+1789415680.3,politics,paccc-usho-midterms-2026-11-03-dem,SELL,53,0.854,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG8S9Y7QPVB7
+1789415680.3,politics,ussewc-usse-id-2026-11-03-rep,SELL,10,0.99,backfill,,6.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG36MD1AMVBA
+1789415680.3,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,1.15,0.15,hand,,6.17,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG3648PEMVB8
+1789415680.3,nfl,fptc-nfl-tefpou-2027-01-10-brobow,BUY,0.05,0.22,hand,,6.54,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG377VV68VBE
