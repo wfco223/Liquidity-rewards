@@ -677,23 +677,20 @@ class TestAfterAFill(Base):
 
     def test_a_buying_power_dip_does_not_pull_an_order_earning_on_its_own(self):
         # 13:43-13:46Z: the balance-of-power ask was pulled and re-rested
-        # three times in three minutes as the stake followed the reads
+        # three times in three minutes as the stake followed the reads.
+        # The half-hour high used to smooth that. It is gone (owner,
+        # 2026-09-14: the stake follows the exchange's own number), so
+        # what protects a resting order through a dip is the rule that a
+        # dip plans nothing new and pulls nothing.
         self.f.set_fair(NC, 45.0)
         self.tick()
         ask = self.mine(NC, "SELL")[0]
-        self.f._bp_fn = lambda: 30.0                 # a dip: the stake would be $3
+        self.f._bp_fn = lambda: 30.0                 # a dip, under the reserve
         self.f._bp = None
         self.tick()
-        self.assertEqual(self.f.rows[NC]["stake"], 170.0)   # the half-hour high stands
-        self.assertIn(ask.id, self.r.exchange.live)
-        # and when the high has aged out, the plan shrinks but the
-        # resting order stays while its own expected value is positive
-        self.f._bp_reads = []
-        self.f._bp = None
-        self.tick()
-        # $30 free is under the $300 kept free: nothing new is planned,
-        # and the resting order still stays (owner, 2026-09-12)
+        # $30 free is under the $300 kept free: nothing new is planned...
         self.assertEqual(self.f.rows[NC]["stake"], 0.0)
+        # ...and the resting order stays, never pulled for want of money
         self.assertIn(ask.id, self.r.exchange.live)
         self.assertFalse(any(e.get("event") == "pull" and e.get("market") == NC
                              for e in self.f.log))
@@ -984,7 +981,7 @@ class TestAfterAFill(Base):
         self.tick()
         self.assertEqual(self.f.rows[NC]["exit"]["px"], 0.47)
 
-    def test_his_qualifying_wall_offers_none_of_the_lot_and_widens_the_stake(self):
+    def test_his_qualifying_wall_offers_none_of_the_lot_but_never_widens_the_stake(self):
         # owner, 2026-09-10: "My qualifying orders (1c or 99c) should not
         # impair the tender from placing orders"
         self.r.fam.orders["w1"] = FamilyOrder(id="w1", market=NC, side="SELL", price=0.99,
@@ -999,11 +996,12 @@ class TestAfterAFill(Base):
         # the exit offers the whole lot beside the wall
         self.assertEqual((row["exit"]["px"], row["exit"]["qty"]), (0.47, 200.0))
         self.assertEqual(self.mine(NC, "SELL")[0].qty, 200.0)
-        # the $60 the wall holds counts back into the buying power: the
-        # stake is 10% of $2,060, not of $2,000
+        # the $60 the wall holds is reported, but it is NOT added back to
+        # the buying power (owner, 2026-09-14: "You don't have to derive
+        # it. You can just read it") — the exchange has already taken it
         self.assertAlmostEqual(self.f.walls_held(), 60.0, places=2)
-        # 10% of ($2,000 read - $300 kept free + $60 the wall holds)
-        self.assertAlmostEqual(row["stake"], 176.0, places=2)
+        # 10% of ($2,000 the exchange says - $300 kept free)
+        self.assertAlmostEqual(row["stake"], 170.0, places=2)
         # a small resting ask of his is not a wall: in a market with a
         # fair it is the tender's (owner, 2026-09-10), so the exit stays
         # one order for the whole lot and his ask comes off beside it
@@ -2007,26 +2005,28 @@ class TestTheMoneyKeptFree(Base):
     def test_the_stake_and_the_gate_both_keep_the_reserve(self):
         self.tick()
         basis = self.f.stake_bp(self.r.now)
-        self.assertAlmostEqual(basis, 2000.0 - focus_mod.FOCUS_BP_KEEP_FREE_USD
-                               + self.f.walls_held(), places=2)
+        # the exchange's own number less the reserve — the walls' collateral
+        # is NOT added back (owner, 2026-09-14)
+        self.assertAlmostEqual(basis, 2000.0 - focus_mod.FOCUS_BP_KEEP_FREE_USD,
+                               places=2)
         v = self.f.view(self.r.now, self.f.buying_power(self.r.now), True)
         self.assertEqual(v["keep_free"], focus_mod.FOCUS_BP_KEEP_FREE_USD)
 
     def test_an_entry_is_not_sent_into_the_reserve(self):
-        # the stake follows the half-hour high, so a plan sized when the
-        # money was there meets a balance that has since fallen into the
-        # reserve: it waits, and the side says so
+        # the balance falls into the reserve: nothing new is sized or
+        # sent, and the side says so
         self.tick()                                  # the $2,000 read is on the books
         self.f.set_fair(NC, 45.0)
-        self.f._bp_fn = lambda: 310.0                # only $10 of it may be spent
+        self.f._bp_fn = lambda: 250.0                # under the reserve: $0 spendable
         self.f._bp = None
         self.tick()
         self.assertFalse(self.mine(NC))
-        waiting = [e for e in self.f.log if e.get("event") == "no_money"]
-        self.assertTrue(waiting)
-        self.assertIn("stays free", waiting[0]["why"])
+        # and the side says it is the money, not the book (owner, 2026-09-14)
         idle = self.f.view(self.r.now, self.f.buying_power(self.r.now), True)["idle"]
-        self.assertTrue(any(d["market"] == NC and "money" in d["why"] for d in idle))
+        rows = [d for d in idle if d["market"] == NC]
+        self.assertTrue(rows)
+        self.assertTrue(all("no money to spend" in d["why"] for d in rows), rows)
+        self.assertIn("stays free", rows[0]["why"])
 
     def test_an_exit_is_never_held_back_by_the_reserve(self):
         self.r.positions[NC] = (200.0, 200.0 * 0.40)
@@ -2083,7 +2083,7 @@ class TestASideWithAFairSaysWhyNothingRests(Base):
     def test_a_side_that_rests_again_is_no_longer_idle(self):
         self.tick()
         self.f.set_fair(NC, 45.0)
-        self.f._bp_fn = lambda: 310.0
+        self.f._bp_fn = lambda: 250.0          # under the reserve: nothing spendable
         self.f._bp = None
         self.tick()
         self.assertTrue(self.f.idle)
@@ -2095,6 +2095,52 @@ class TestASideWithAFairSaysWhyNothingRests(Base):
         self.assertFalse(live & set(self.f.idle))
 
 
+class TestTheBuyingPowerIsReadNotDerived(Base):
+    """Owner, 2026-09-14, with the page in front of him: "The number you
+    should use for buying power is in the balance rows... You don't have
+    to derive it. You can just read it. Right now the derived number is
+    almost double the real number." The page read $839.24 with 41 orders
+    waiting for money while the balances row said $490.92."""
+
+    def wall(self, qty=6000.0):
+        self.r.fam.orders["w1"] = FamilyOrder(
+            id="w1", market=NC, side="SELL", price=0.99, qty=qty,
+            intent=SELL_LONG, placed_ts=self.r.now, purpose="manual", why="his wall")
+        self.r.exchange.live["w1"] = {"id": "w1", "market": NC, "side": "SELL",
+                                      "price": 0.99, "size": qty, "intent": SELL_LONG}
+
+    def test_the_basis_is_the_exchanges_number_less_the_reserve(self):
+        self.wall()
+        self.tick()
+        keep = focus_mod.FOCUS_BP_KEEP_FREE_USD
+        self.assertGreater(self.f.walls_held(), 0.0)
+        self.assertAlmostEqual(self.f.stake_bp(self.r.now), 2000.0 - keep, places=2)
+
+    def test_the_walls_collateral_is_never_added_back(self):
+        self.tick()
+        plain = self.f.stake_bp(self.r.now)
+        self.wall()
+        self.tick()
+        self.assertAlmostEqual(self.f.stake_bp(self.r.now), plain, places=2)
+
+    def test_it_follows_the_read_down_not_the_half_hour_high(self):
+        self.tick()                                   # a $2,000 read on the books
+        keep = focus_mod.FOCUS_BP_KEEP_FREE_USD
+        self.assertAlmostEqual(self.f.stake_bp(self.r.now), 2000.0 - keep, places=2)
+        self.f._bp_fn = lambda: 800.0                 # the exchange now says less
+        self.f._bp = None
+        self.tick()
+        self.assertAlmostEqual(self.f.stake_bp(self.r.now), 800.0 - keep, places=2)
+
+    def test_the_page_shows_the_walls_without_counting_them(self):
+        self.wall()
+        self.tick()
+        v = self.f.view(self.r.now, self.f.buying_power(self.r.now), True)
+        self.assertGreater(v["walls_held"], 0.0)      # still reported
+        self.assertEqual(v["stake_bp"], v["bp_high"])  # but not in the basis
+        self.assertEqual(v["stake_bp"], 2000.0 - focus_mod.FOCUS_BP_KEEP_FREE_USD)
+
+
 class TestTheBuyingPowerRead(Base):
     def test_the_view_carries_the_reads_age_and_flags_a_failing_read(self):
         # owner, 2026-09-11: "The buying power number is out of date"
@@ -2103,8 +2149,7 @@ class TestTheBuyingPowerRead(Base):
         self.assertEqual(v["bp"], 2000.0)
         self.assertLessEqual(v["bp_age_s"], focus_mod.FOCUS_BP_EVERY_S)
         self.assertEqual(v["bp_note"], "")
-        self.assertEqual(v["stake_bp"],
-                         2000.0 - focus_mod.FOCUS_BP_KEEP_FREE_USD + self.f.walls_held())
+        self.assertEqual(v["stake_bp"], 2000.0 - focus_mod.FOCUS_BP_KEEP_FREE_USD)
         self.assertAlmostEqual(v["stake"], 0.1 * v["stake_bp"], places=2)
         # the exchange stops answering: the last read stands, aged and flagged
         def down():
@@ -2127,8 +2172,10 @@ class TestTheBuyingPowerRead(Base):
         self.assertEqual(v["bp"], 1500.0)
         self.assertEqual(v["bp_note"], "")
         self.assertLessEqual(v["bp_age_s"], focus_mod.FOCUS_BP_EVERY_S)
-        # the stake still follows the half-hour high, less the reserve
-        self.assertEqual(v["bp_high"], 2000.0 - focus_mod.FOCUS_BP_KEEP_FREE_USD)
+        # the stake follows THIS read, not the half-hour high: the $2,000
+        # is history and the exchange now says $1,500 (owner, 2026-09-14)
+        self.assertEqual(v["bp_high"], 1500.0 - focus_mod.FOCUS_BP_KEEP_FREE_USD)
+        self.assertEqual(v["stake_bp"], 1500.0 - focus_mod.FOCUS_BP_KEEP_FREE_USD)
 
 
 class TestTheBareTestSizesItselfAsThePlanDoes(Base):
