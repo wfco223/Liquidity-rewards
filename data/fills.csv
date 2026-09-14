@@ -3299,3 +3299,22 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-evamcp,SELL,0.05,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR0FPTN3
 1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-jassan,SELL,0.06,0.18,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM03PD2TMM
 1789360938.3,nfl,ftsc-nfl-dstmostfp-2027-01-10-sf,SELL,0.04,0.19,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVMHPTMQ
+1789360938.3,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,3,0.96,sell,0,0,0.98905,94,97,0.605,0.96,0.97,0.0291,2,taker dump — sold into the bid (the carved exception),CFW24A7K2TN3
+1789361015.0,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,2,0.94,backfill,,59.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9BJ6DWTTN5
+1789361525.2,politics,ewc-usse-oh-2026-11-03-dem,SELL,39,0.47,focus,273.692,0.01,0.65525,50,55,0.189,0.51,0.52,0.1853,-85,focus entry: ~$11.20/day; fill odds 55%/day; EV +9.05/day,CFW5PV8Y2TMY
+1789363629.9,politics,ussewc-usse-va-2026-11-03-rep,SELL,44,0.04,focus,1.4327,2.57,0.00415,1,5,0.275,0.03,0.04,-0.0358,-44,focus entry: ~$1.15/day; fill odds 55%/day; EV +0.45/day,CFTGDF27WTMQ
+1789363689.9,cfb,aachc-cfb-wins-ou-2026-11-28-stan,BUY,2,0.65,sell,0,7.14,,65,93,0.006,0.64,0.99,-0.13,0,buying back the short at or under what it sold for — the bid earns while it wait,CFPNNKNDMTN1
+1789364544.5,politics,ewc-usp-2028-11-07-tuccar,SELL,-31.65,0.03,fix,,54.95,,,,,,,,,size trimmed by 31.65 to the exchange's count (order CE5RSSB2PTMP),CE5RSSB2PTMP
+1789364544.5,politics,ewc-usp-2028-11-07-tuccar,SELL,-7.98,0.03,fix,,54.95,,,,,,,,,size trimmed by 7.98 to the exchange's count (order CE5RSSB2PTMP),CE5RSSB2PTMP
+1789364544.5,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,-2,0.03,fix,,64.98,,,,,,,,,size trimmed by 2 to the exchange's count (order CE3VTVRDCTMM),CE3VTVRDCTMM
+1789364544.5,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,-26.66,0.03,fix,,22.02,,,,,,,,,size trimmed by 26.66 to the exchange's count (order CE3VTVRDCTMM),CE3VTVRDCTMM
+1789364544.5,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-3,0.93,fix,0.6022,8.15,0.995975,92,96,0.768,0.92,0.93,0.066,66,size trimmed by 3 to the exchange's count (order CF4TZZYBGTN0),CF4TZZYBGTN0
+1789364544.5,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-0.01,0.93,fix,,22.16,,,,,,,,,size trimmed by 0.01 to the exchange's count (order CF4TZZYBGTN0),CF4TZZYBGTN0
+1789364544.5,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-10,0.93,fix,4.2619,2.36,0.995925,93,96,0.742,0.92,0.93,0.0659,69,size trimmed by 10 to the exchange's count (order CF4TZZYBGTN0),CF4TZZYBGTN0
+1789364544.5,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-19.62,0.93,fix,2.7263,1.19,0.995925,92,96,0.678,0.92,0.93,0.0659,79.38,size trimmed by 19.62 to the exchange's count (order CF4TZZYBGTN0),CF4TZZYBGTN0
+1789364544.5,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-0.48,0.93,fix,,0,,,,,,,,,size trimmed by 0.48 to the exchange's count (order CF4TZZYBGTN0),CF4TZZYBGTN0
+1789364544.5,politics,ussewc-usse-ma-2026-11-03-dem,SELL,-1,0.96,fix,0.4805,7.11,0.999775,95,99,0.734,0.95,0.96,0.0398,10,size trimmed by 1 to the exchange's count (order CFD5F48D4TMM),CFD5F48D4TMM
+1789364544.5,politics,ussewc-usse-ma-2026-11-03-dem,SELL,-2.9,0.96,fix,,0,,,,,,,,,size trimmed by 2.9 to the exchange's count (order CFD5F48D4TMM),CFD5F48D4TMM
+1789364544.5,politics,ussewc-usse-sd-2026-11-03-rep,SELL,-1,0.91,fix,0.2434,13.06,0.987825,91,94,0.751,0.88,0.91,0.0778,2,size trimmed by 1 to the exchange's count (order CF4RE10D2TN1),CF4RE10D2TN1
+1789364544.5,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,2,0.94,backfill,,59.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CE9BJ6DWTTN5
+1789364544.5,nfl,tec-nfl-afcsouth-2027-01-10-w-hou,SELL,-0.1,0.42,fix,,1.14,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CFKCW23MJTMQ),CFKCW23MJTMQ
