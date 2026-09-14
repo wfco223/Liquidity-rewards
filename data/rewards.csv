@@ -10740,6 +10740,7 @@ date,market,program_type,reward_usd,status
 2026-09-12,usgubewc-usgub-ct-2026-11-03-rep,liquidityProgram,0.63,PENDING
 2026-09-12,usgubewc-usgub-hi-2026-11-03-dem,liquidityProgram,2.56,PENDING
 2026-09-12,usgubewc-usgub-hi-2026-11-03-rep,liquidityProgram,0.48,PENDING
+2026-09-12,usgubewc-usgub-id-2026-11-03-dem,liquidityProgram,0.06,PENDING
 2026-09-12,usgubewc-usgub-id-2026-11-03-rep,liquidityProgram,0.72,PENDING
 2026-09-12,usgubewc-usgub-il-2026-11-03-rep,liquidityProgram,1.67,PENDING
 2026-09-12,usgubewc-usgub-ma-2026-11-03-dem,liquidityProgram,0.14,PENDING
