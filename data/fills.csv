@@ -3338,3 +3338,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789365470.7,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,8.78,0.73,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFWZNS3N8TMQ
 1789365470.7,politics,ussewc-usse-or-2026-11-03-rep,SELL,5.15,0.04,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CFX3JVC96TMX
 1789365470.7,nfl,tec-nfl-afcsouth-2027-01-10-w-hou,SELL,0.1,0.42,backfill,,1.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFKCW23MJTMQ
+1789367149.3,politics,paccc-usse-midterms-2026-11-03-rep,BUY,57,0.523,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFWZVVN6YTN3
+1789368571.0,politics,paccc-usho-midterms-2026-11-03-dem,BUY,79,0.846,backfill,,3.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFTV4GEX6TN5
+1789369120.5,politics,ewc-usp-2028-11-07-tuccar,SELL,-23.67,0.03,fix,,54.95,,,,,,,,,size trimmed by 23.67 to the exchange's count (order CE5RSSB2PTMP),CE5RSSB2PTMP
+1789369120.5,politics,ewc-usp-2028-11-07-tuccar,SELL,-15.96,0.03,fix,,54.95,,,,,,,,,size trimmed by 15.96 to the exchange's count (order CE5RSSB2PTMP),CE5RSSB2PTMP
+1789369120.5,politics,usgubewc-usgub-wy-2026-11-03-dem,SELL,-28.66,0.03,fix,,64.98,,,,,,,,,size trimmed by 28.66 to the exchange's count (order CE3VTVRDCTMM),CE3VTVRDCTMM
+1789369120.5,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,-33.11,0.93,fix,,22.16,,,,,,,,,size trimmed by 33.11 to the exchange's count (order CF4TZZYBGTN0),CF4TZZYBGTN0
+1789369120.5,politics,ussewc-usse-ma-2026-11-03-dem,SELL,-3.9,0.96,fix,,11.34,,,,,,,,,size trimmed by 3.9 to the exchange's count (order CFD5F48D4TMM),CFD5F48D4TMM
+1789369120.5,politics,ussewc-usse-sd-2026-11-03-rep,SELL,-1.09,0.91,fix,,27.17,,,,,,,,,size trimmed by 1.09 to the exchange's count (order CF4RE10D2TN1),CF4RE10D2TN1
+1789369120.5,politics,enwc-uspres-nom-rep-2028-tuccar,SELL,-15.03,0.04,fix,0.0188,54.25,,1,5,0.454,0.02,0.03,-0.01,-0.03,size trimmed by 15.03 to the exchange's count (order CE5R6YXEWTN3),CE5R6YXEWTN3
+1789369120.5,politics,enwc-uspres-nom-rep-2028-tuccar,SELL,-7.94,0.04,fix,0.0475,53.9,,1,4,0.005,0.02,0.03,-0.02,15.03,size trimmed by 7.94 to the exchange's count (order CE5R6YXEWTN3),CE5R6YXEWTN3
+1789369120.5,politics,paccc-usse-midterms-2026-11-03-rep,BUY,57,0.523,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFWZVVN6YTN3
+1789369120.5,politics,paccc-usho-midterms-2026-11-03-dem,BUY,79,0.846,backfill,,3.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFTV4GEX6TN5
+1789369120.5,nfl,tec-nfl-afcsouth-2027-01-10-w-hou,SELL,-0.1,0.42,fix,,1.14,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CFKCW23MJTMQ),CFKCW23MJTMQ
