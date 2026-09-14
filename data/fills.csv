@@ -3139,3 +3139,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789357472.3,cfb,aachc-cfb-wins-2026-11-28-bayl-7pt5wins,SELL,0.1,0.28,backfill,,0.68,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFSTDXZ4MTMP
 1789357472.3,nfl,tec-nfl-afceast-2027-01-10-w-ne,SELL,1.9,0.3,backfill,,2.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRAQB086TN2
 1789357472.3,nfl,ftsc-nfl-wrmostfp-w1-2026-09-14-malnab,BUY,0.01,0.1,backfill,,3.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRAVX3Q4TMY
+1789357710.8,nfl,tec-nfl-nfcwest-2027-01-10-w-sea,BUY,0.01,0.36,backfill,,3.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRBA5Y9WTMX
+1789358464.0,politics,usgubewc-usgub-pa-2026-11-03-dem,BUY,6.91,0.96,hand,,1.6,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE934A0JMTMP
+1789358464.0,politics,usgubewc-usgub-pa-2026-11-03-rep,BUY,10,0.06,hand,,0.23,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CEA8W4JE4TMY
+1789358464.0,politics,usgubewc-usgub-co-2026-11-03-rep,BUY,11,0.06,hand,,3.48,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7FKM222TN2
+1789358464.0,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,8,0.08,backfill,,2.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF3CSZCN4TN2
+1789358464.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,728,0.168,backfill,,3.97,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF3056CS8TN3
+1789358464.0,politics,ewc-usp-2028-11-07-gavnew,BUY,3,0.08,backfill,,18.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEP4C1VBTTMQ
+1789358464.0,politics,enwc-uspres-nom-dem-2028-petbut,SELL,0.97,0.05,hand,,36.19,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7XM29WPTMP
+1789358464.0,politics,usgubewc-usgub-me-2026-11-03-rep,BUY,30,0.05,backfill,,22.52,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEM210JRATMM
+1789358464.0,politics,ussewc-usse-sc-2026-11-03-rep,BUY,6,0.84,backfill,,11.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF133SQ8ATMP
+1789358464.0,politics,ewc-usp-2028-11-07-dontru,SELL,3.11,0.06,backfill,,27.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEST16XACTN3
+1789358464.0,politics,ewc-usp-2028-11-07-tuccar,SELL,31.65,0.03,hand,,54.95,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE5RSSB2PTMP
+1789358464.0,nfl,tec-nfl-nfcwest-2027-01-10-w-sea,BUY,0.01,0.36,backfill,,3.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRBA5Y9WTMX
