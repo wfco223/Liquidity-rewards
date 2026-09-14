@@ -793,6 +793,28 @@ long and accreted, so search it rather than reading it through.
   keep their reads and their stream seats deliberately. The rule this
   leaves: a read may be cut only where nothing rests, because nothing
   resting is the only proof that nothing is being earned.
+  THE TENDER'S GROUND IS NOT HIS FROZEN GROUND (owner, 2026-09-14:
+  "There are more markets that I have <1 dollar in that aren't being
+  caught up in the sweep"). The sweep asked the family `_frozen()`,
+  which is true for the ground he NAMED and also for every FOCUS
+  market — a family marks the tender's whole board frozen so the tender
+  owns it, an arrangement between two desks of ours, never an
+  instruction from him. So the 04:11Z run skipped 41 markets as "frozen
+  ground" and only 12 of them were his (the seat books and usgovcc, and
+  by basis not one of those twelve is even under a dollar); the other
+  29 were the tender's. A dust lot in a focus market is his to clear
+  like any other, and the tender's exit there comes off first like any
+  other order on the side. The sweep now skips freeze_tokens alone.
+  AND "DID NOT SAY" IS NOT "NOTHING TRADED" (my own defect, same
+  report): the run said "0 filled, N resting" for all 88 orders while
+  the exchange's position count fell 168 -> 112 in the seventeen
+  minutes after it and 44 fills were booked by the ordinary reconcile —
+  the orders HAD traded. The answer simply carried no executions list,
+  and res.filled is None for that where it is 0.0 for an empty list.
+  Nothing is booked in either case, which is the 2026-09-12 close-out
+  lesson and keeps the books right, but the card now says which
+  happened: "the exchange did not report on these — their fills book on
+  the next cycle" rather than a false zero.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
