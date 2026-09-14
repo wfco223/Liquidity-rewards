@@ -6,8 +6,8 @@ import unittest
 
 from v3 import politics
 from v3.books import BookCache
-from v3.family import Family, FamilyConfig, resting_ok
-from v3.intents import REST_SIDE
+from v3.family import Family, FamilyConfig, FamilyOrder, resting_ok
+from v3.intents import REST_SIDE, SELL_LONG
 from v3.names import Names
 from v3.orders import OrderDesk
 from v3.scoring import Book
@@ -30,6 +30,11 @@ class FakeClient:
         self.programs_fail = False
         self.trades: list[dict] = []     # the exchange's own trade record
         self.taker_fills = True          # a taker order executes at once
+        # how much of a taker order the touch can absorb. None = all of it
+        # (the default). A number models a touch thinner than the lot: that
+        # much executes and the remainder RESTS at the crossing price,
+        # which is what the dust sweep's orders do (owner, 2026-09-14).
+        self.taker_fill_qty: float | None = None
         # the real client stamps a book at the moment of the read when the
         # caller passes fetched_at=None (api.py: `time.time()`), which is
         # what the tender and the sweep rely on. The rig's clock stands in.
@@ -56,17 +61,31 @@ class FakeClient:
                 if not self.taker_fills:
                     self.live.pop(oid, None)
                     return {"order": {"id": oid}, "id": oid, "executions": []}
+                took = q
+                if self.taker_fill_qty is not None:
+                    # a touch thinner than the lot: only this much
+                    # executes and the REMAINDER stays on the book. Left
+                    # alone when the rig has not asked for it, so a
+                    # verify-by-id (the bond rail's) still finds its order
+                    # where it has always found it.
+                    took = min(max(float(self.taker_fill_qty), 0.0), q)
+                    if took >= q - 1e-9:
+                        self.live.pop(oid, None)      # nothing left to rest
+                    else:
+                        self.live[oid]["size"] = round(q - took, 4)
+                if took <= 1e-9:
+                    return {"order": {"id": oid}, "id": oid, "executions": []}
                 self.trades.append({"type": "ACTIVITY_TYPE_TRADE", "trade": {
                     "id": f"t{oid}",
                     "aggressorExecution": {
                         "id": f"x{oid}",
                         "order": {"id": oid, "intent": body["intent"],
-                                  "quantity": q, "cumQuantity": q,
+                                  "quantity": q, "cumQuantity": took,
                                   "avgPx": {"value": f"{px:.4f}"}},
-                        "lastShares": f"{q:.4f}",
+                        "lastShares": f"{took:.4f}",
                         "lastPx": {"value": f"{px:.4f}"}}}})
                 return {"order": {"id": oid}, "id": oid,
-                        "executions": [{"id": f"x{oid}", "quantity": q}]}
+                        "executions": [{"id": f"x{oid}", "quantity": took}]}
             return {"order": {"id": oid}}
         if "/cancel" in url:
             self.live.pop(url.rstrip("/cancel").rsplit("/", 1)[-1], None)
@@ -649,3 +668,54 @@ class TestTheMidtermPoolsPayDaily(unittest.TestCase):
         self.assertAlmostEqual(r.fam._side_pool(A, open_ended), 375.0)
         # the property that did the dividing still does, for golf's sake
         self.assertAlmostEqual(bounded.daily_pool, 1500.0 / 55.0)
+
+
+class TestDustSpendsNoGatewayRead(unittest.TestCase):
+    """Owner, 2026-09-14 ("Do all three for the 429s", with the caveat
+    "Unless it would affect our ability to estimate earnings from focus
+    markets"): a held market with NO order of ours on the book earns
+    nothing, so its book buys the meter nothing, and while the exchange
+    is throttling this address that read is worth more elsewhere. On
+    2026-09-14 that was 60 of NFL's 63 holdings — $19.01 of cost basis
+    between them, and NFL's measured rate was $0.00 a day across 0
+    markets — while 135 markets that DO earn had no stream seat and were
+    being read through the gateway every pass."""
+
+    def setUp(self):
+        self.r = Rig()
+        self.r.add_market(A, book=Book(bids=((0.05, 100.0),), asks=((0.08, 100.0),),
+                                       tick=0.01, fetched_at=self.r.now))
+
+    def test_a_dust_lot_with_nothing_resting_is_not_read(self):
+        self.r.fam.inventory[A] = {"qty": 6.0, "cost": 0.30}    # 6 x 6.5c = $0.39
+        self.assertTrue(self.r.fam._dust_unoffered(A))
+
+    def test_a_dust_lot_with_an_order_resting_keeps_its_book(self):
+        # a resting order is what EARNS, and the sampler prices it from
+        # the live book — this is the owner's caveat, pinned
+        self.r.fam.inventory[A] = {"qty": 6.0, "cost": 0.30}
+        self.r.fam.orders["o"] = FamilyOrder(
+            id="o", market=A, side="SELL", price=0.06, qty=6.0,
+            intent=SELL_LONG, placed_ts=1.0, purpose="sweep")
+        self.assertFalse(self.r.fam._dust_unoffered(A))
+
+    def test_a_lot_worth_more_than_the_dollar_keeps_its_book(self):
+        self.r.fam.inventory[A] = {"qty": 600.0, "cost": 30.0}   # $39
+        self.assertFalse(self.r.fam._dust_unoffered(A))
+
+    def test_no_book_is_no_verdict(self):
+        self.r.fam.inventory[A] = {"qty": 6.0, "cost": 0.30}
+        self.r.fam.cache._books.pop(A, None)
+        self.assertFalse(self.r.fam._dust_unoffered(A))
+
+    def test_the_refresh_skips_it_and_still_reads_a_lot_that_earns(self):
+        B2 = "vmc-ussemov-ga-2026-11-03-d8-9"
+        self.r.add_market(B2, book=Book(bids=((0.45, 100.0),), asks=((0.48, 100.0),),
+                                        tick=0.01, fetched_at=self.r.now))
+        self.r.fam.inventory[A] = {"qty": 6.0, "cost": 0.30}      # dust, nothing resting
+        self.r.fam.inventory[B2] = {"qty": 100.0, "cost": 45.0}   # $46.50
+        self.r.now += 600.0                       # both books well past stale
+        self.r.exchange.book_reads = []
+        self.r.fam._refresh_books(self.r.exchange, self.r.now, scan=False)
+        self.assertNotIn(A, self.r.exchange.book_reads)
+        self.assertIn(B2, self.r.exchange.book_reads)

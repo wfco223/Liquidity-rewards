@@ -44,7 +44,7 @@ from .state import StateStore
 from .switch import MasterSwitch
 from .focus import ENGINE_WS_CAP, FOCUS_CYCLE_S, FOCUS_WS_CAP, Focus
 from .sweep import Sweep
-from .ws import Stream
+from .ws import STREAM_SHARDS, Stream
 
 try:
     from zoneinfo import ZoneInfo
@@ -1079,9 +1079,17 @@ class Monitor:
         # the one the stream writes); a dead stream degrades to REST
         # polling through the cache's own age interlock.
         pol = self.families.get("politics")
-        self.stream = (Stream(CacheRouter(self.families), self._ws_slugs,
-                              self.client.key_id, self.client.secret_key)
-                       if pol is not None else None)
+        # STREAM_SHARDS connections, each with its own 200-market
+        # subscription and its own slice of the priority list (owner,
+        # 2026-09-14): 335 markets wanted a live book against 200 seats
+        # and the 135 without one were read through the throttled
+        # gateway, which is where the day's 429s came from.
+        self.streams = ([Stream(CacheRouter(self.families), self._ws_slugs,
+                                self.client.key_id, self.client.secret_key,
+                                shard=i, shards=STREAM_SHARDS)
+                         for i in range(STREAM_SHARDS)]
+                        if pol is not None else [])
+        self.stream = self.streams[0] if self.streams else None
         self._restore()
         # the focus ground is claimed before the first family cycle can
         # act on it: the family's terms stand in until the tender reads
@@ -1105,6 +1113,26 @@ class Monitor:
         # first automation pass, not a poll later.
         self.floor.write_want(self.master.on or self.flatten)
 
+    def stream_status(self) -> dict:
+        """The stream's health across every shard: one line the page and
+        the hourly note can read. `subscribed` adds the shards up, the
+        state is the WORST of them (a dead shard must not hide behind a
+        live one) and `shards` says how many are live out of how many."""
+        if not self.streams:
+            return {}
+        sts = [dict(st_.status) for st_ in self.streams]
+        live = [x for x in sts if x.get("state") == "live"]
+        rank = {"live": 0, "reconnecting": 1, "off": 2, "unavailable": 3}
+        worst = max(sts, key=lambda x: rank.get(x.get("state"), 2))
+        out = dict(worst)
+        out["subscribed"] = sum(int(x.get("subscribed") or 0) for x in sts)
+        out["last_msg"] = max(float(x.get("last_msg") or 0.0) for x in sts)
+        out["shards"] = f"{len(live)}/{len(sts)}"
+        out["per_shard"] = [{"shard": x.get("shard"), "state": x.get("state"),
+                             "subscribed": x.get("subscribed"),
+                             "note": str(x.get("note") or "")[:120]} for x in sts]
+        return out
+
     def _ws_slugs(self) -> list[str]:
         """The owner's slot order (2026-08-21): every politics market
         he is in seats first — that is the priority — then football
@@ -1112,7 +1140,7 @@ class Monitor:
         leftover slots. Promising candidates (a measured rate or a
         planned estimate) hold stable seats or rotate often; cold ones
         get a thin rotation lane."""
-        from .ws import SUB_CAP
+        from .ws import STREAM_SHARDS, SUB_CAP
         out: list[str] = []
         seen: set[str] = set()
 
@@ -1130,8 +1158,8 @@ class Monitor:
         # reduce its websocket budget")
         focus = getattr(self, "focus", None)
         if focus is not None:
-            take(sorted(focus.markets), room=min(FOCUS_WS_CAP, SUB_CAP))
-        cap = min(SUB_CAP, len(out) + ENGINE_WS_CAP)
+            take(sorted(focus.markets), room=min(FOCUS_WS_CAP, SUB_CAP * STREAM_SHARDS))
+        cap = min(SUB_CAP * STREAM_SHARDS, len(out) + ENGINE_WS_CAP)
         # the bonds he is in hold seats before everything (owner,
         # 2026-09-03: "reserve a websocket for each of the markets I'm
         # in") — the bonds page's live line reads their books from the
@@ -1609,7 +1637,7 @@ class Monitor:
             "names": self.names.to_dict(),
             "summaries": summaries,
             "floor": self.floor.status(now),
-            "ws": dict(self.stream.status) if self.stream else {},
+            "ws": self.stream_status(),
             "lite_study": self._lite_study(),
 
             "silver_log": self.silver.changes[-120:],
@@ -3324,7 +3352,7 @@ class Monitor:
             # the meter sawtooth traced back to the dead feed): is the
             # stream connected, when did it last speak, and how many
             # books did each writer actually put in the last hour
-            ws = dict(self.stream.status) if self.stream else {}
+            ws = self.stream_status()
             last = ws.get("last_msg") or 0.0
             ago = f"{now - last:.0f}s ago" if last else "never"
             wrote = {"ws": 0, "rest": 0}
@@ -3335,6 +3363,7 @@ class Monitor:
                 cache.writes = {"ws": 0, "rest": 0}
             self._note(
                 f"stream health: {ws.get('state', 'off')} · "
+                f"{ws.get('shards', '1/1')} connections · "
                 f"{ws.get('subscribed', 0)} subscribed · last message "
                 f"{ago} · books written last hour: stream {wrote['ws']}, "
                 f"rest {wrote['rest']}")
@@ -3353,7 +3382,10 @@ class Monitor:
                               if ts_l and ts_l[-1] > now - 3600)
             self._note(f"lite trade prints: {prints} markets saw trades "
                        f"in the last hour")
-            shapes = dict(getattr(self.stream, "frame_shapes", {}) or {})
+            shapes = {}
+            for st_ in self.streams:
+                for k_, v_ in (getattr(st_, "frame_shapes", {}) or {}).items():
+                    shapes.setdefault(k_, v_)
             if shapes:
                 top = sorted(shapes.items(), key=lambda kv: -kv[1]["n"])[:4]
                 self._note("ws frame shapes: " + " | ".join(
@@ -3775,7 +3807,9 @@ class Monitor:
         DECLARED best bid/ask instead of the raw touch. Read-only."""
         if self.stream is None:
             return {"note": "no stream"}
-        declared = dict(getattr(self.stream, "declared", {}) or {})
+        declared = {}
+        for st_ in self.streams:
+            declared.update(getattr(st_, "declared", {}) or {})
         if not declared:
             return {"note": "no lite frames yet"}
         rows: list[dict] = []
@@ -4781,8 +4815,8 @@ class Monitor:
         # compete with the boot for the GIL and the health check
         # (owner, 2026-08-31); on a throttled boot that left the tender
         # blind for the twenty minutes the board took to read.
-        if self.stream is not None:
-            self.stream.start()
+        for st_ in self.streams:
+            st_.start()
         while True:
             t0 = time.time()
             try:

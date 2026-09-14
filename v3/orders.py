@@ -331,6 +331,38 @@ class OrderDesk:
                 return (f"taker for {qty:g} exceeds the {at_level:g} others "
                         f"show at {price * 100:g}c")
             return None
+        if taker == "sweep":
+            # the THIRD carved exception (owner, 2026-09-14: "The original
+            # intent of my request for the sweep process was to have these
+            # shares cross the midpoint to sell because resting will do
+            # nothing"). The dust sweep crosses the spread on his tap: a
+            # long sells AT the bid, a short buys back AT the ask. Never
+            # worse than the touch, never anything but a close of what is
+            # already held, and never without his tap. The size is NOT
+            # capped to the touch's — he wants the lot gone, and what the
+            # touch cannot absorb rests at that same price, which is the
+            # most aggressive resting price the book has.
+            if initiator != "owner":
+                return "the sweep's taker orders are the owner's tap only"
+            if intent == SELL_LONG:
+                if side != "SELL":
+                    return "a sweep sale of held stock rests on the ask"
+                if not book.bids:
+                    return "no bid to cross — nothing to sell into"
+                if price < book.bids[0][0] - 1e-12:
+                    return (f"sweep ask {price * 100:g}c is below the bid "
+                            f"{book.bids[0][0] * 100:g}c — never worse than the touch")
+                return None
+            if intent == SELL_SHORT:
+                if side != "BUY":
+                    return "a sweep cover of a short rests on the bid"
+                if not book.asks:
+                    return "no ask to cross — nothing to buy back"
+                if price > book.asks[0][0] + 1e-12:
+                    return (f"sweep bid {price * 100:g}c is above the ask "
+                            f"{book.asks[0][0] * 100:g}c — never worse than the touch")
+                return None
+            return "sweep taker orders may only close a position already held"
         if taker:
             # the ONE carved exception (owner, 2026-08-22): a SELL of
             # held stock limited AT the bid crosses on purpose — but
