@@ -3152,3 +3152,150 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789358464.0,politics,ewc-usp-2028-11-07-dontru,SELL,3.11,0.06,backfill,,27.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CEST16XACTN3
 1789358464.0,politics,ewc-usp-2028-11-07-tuccar,SELL,31.65,0.03,hand,,54.95,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE5RSSB2PTMP
 1789358464.0,nfl,tec-nfl-nfcwest-2027-01-10-w-sea,BUY,0.01,0.36,backfill,,3.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRBA5Y9WTMX
+1789358763.2,cfb,aachc-cfb-wins-2026-11-28-ala-6pt5wins,BUY,8.01,0.69,sell,0,10.73,,68,75,0.211,0.69,0.7,-0.02,0,buying back the short at or under what it sold for — the bid earns while it wait,CFJDRRF3JTMY
+1789359105.2,politics,ussewc-usse-de-2026-11-03-rep,BUY,9,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVK9HDE8TN0
+1789359105.6,politics,usgubewc-usgub-ar-2026-11-03-dem,BUY,4,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKD6H4RTMM
+1789359122.1,politics,ussewc-usse-il-2026-11-03-rep,BUY,15,0.04,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ236YTN0
+1789359122.3,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,4,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKPD3MYTN5
+1789359122.4,politics,usgubewc-usgub-hi-2026-11-03-rep,BUY,9,0.07,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKKJ5JYTMY
+1789359122.6,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,5,0.08,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKD6S2ETMM
+1789359122.8,politics,ussewc-usse-ri-2026-11-03-rep,BUY,9,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKSSNK8TMQ
+1789359122.9,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,2,0.03,hand,,64.98,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE3VTVRDCTMM
+1789359123.3,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,10,0.09,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKSSNVMTMQ
+1789359139.7,cfb,aachc-cfb-wins-2026-11-28-lou-6pt5wins,SELL,0.01,0.65,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKYXEF8TN5
+1789359140.8,cfb,aachc-cfb-wins-ou-2026-11-28-clmsn,SELL,0.01,0.45,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKQRDFJTN3
+1789359141.3,cfb,aachc-cfb-wins-ou-2026-11-28-duke,BUY,1,0.7,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKQRDQ6TN3
+1789359141.7,cfb,aachc-cfb-wins-2026-11-28-syra-3pt5wins,BUY,1,0.72,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKWZYWGTMY
+1789359197.7,cfb,aachc-cfb-wins-2026-11-28-okst-8pt5wins,SELL,2,0.15,sweep,0,0.02,,12,17,0.154,0.15,0.16,0,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.31 at the midpoint; crossed at,CFVKSSZBJTMQ
+1789359197.7,cfb,aachc-cfb-wins-2026-11-28-wash-8pt5wins,SELL,1,0.32,sweep,2.9622,0.02,,31,37,0.07,0.32,0.33,0.02,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.33 at the midpoint; crossed at,CFVKPSXPMTMM
+1789359197.7,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,SELL,1,0.23,sweep,0,0.01,,40,61,0.501,0.23,0.24,0.29,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.23 at the midpoint; crossed at,CFVKYXS96TN5
+1789359197.7,cfb,aachc-cfb-wins-2026-11-28-mich-10pt5wins,SELL,1,0.01,sweep,0,0.01,,1,5,0.523,0.01,0.02,0.02,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.01 at the midpoint; crossed at,CFVKQRQFRTN3
+1789359197.7,cfb,aachc-cfb-wins-2026-11-28-vir-5pt5wins,SELL,1,0.89,sell,0,0,,87,92,0.106,0.89,0.9,0.01,0,taker dump — sold into the bid (the carved exception),CFVMWVF8ETN1
+1789359197.7,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,SELL,1,0.39,sell,0,0,,38,47,0.13,0.39,0.4,0.03,0,taker dump — sold into the bid (the carved exception),CFVN3E3P8TN3
+1789359197.7,cfb,aachc-cfb-wins-2026-11-28-nd-8pt5wins,SELL,1,0.98,sell,0,0,,92,98,0.117,0.98,0.99,-0.02,0,taker dump — sold into the bid (the carved exception),CFVMWVGPMTN1
+1789359197.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.56,sell,0,0,,65,71,0.266,0.56,0.57,0.12,0,taker dump — sold into the bid (the carved exception),CFVN3E3TPTN3
+1789359213.6,cfb,aachc-cfb-wins-2026-11-28-ore-11pt5wins,SELL,2,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM5JC90TN0
+1789359213.7,nfl,aqc-nfl-2027-01-10-playoffq-was,BUY,1,0.31,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM5JC9MTN0
+1789359213.8,nfl,fptc-nfl-rbfpou-2027-01-10-bhatut,BUY,1,0.47,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMHNYC0TN5
+1789359214.0,nfl,fptc-nfl-wrfpou-2027-01-10-ladmcc,BUY,0.01,0.74,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVK9GTMQ
+1789359214.0,nfl,fptc-nfl-wrfpou-2027-01-10-britho,SELL,0.02,0.28,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM03N2CTMM
+1789359214.1,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ19Z8TN2
+1789359214.2,nfl,tec-nfl-droy-2027-02-11-w-emmmcn,SELL,1,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM7SH7RTMP
+1789359214.2,nfl,ftsc-nfl-temostfp-w1-2026-09-14-orogad,BUY,0.01,0.89,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM5JCE2TN0
+1789359214.2,nfl,ftsc-nfl-rbmostfp-2027-01-10-jamcoo,SELL,1,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAQZJTTN3
+1789359214.3,nfl,aqc-nfl-nfc-2027-01-24-champq-was,SELL,0.01,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKV42FJTMX
+1789359214.3,nfl,ftsc-nfl-qbmostfp-2027-01-10-aarrod,SELL,2.01,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ1A1YTN2
+1789359214.3,nfl,ftsc-nfl-dstmostfp-2027-01-10-atl,SELL,0.01,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ1A30TN2
+1789359214.4,nfl,ftsc-nfl-kmostfp-2027-01-10-ryafit,SELL,1,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM19KW2TN1
+1789359214.4,nfl,ftsc-nfl-wrtop12fp-2027-01-10-romodu,BUY,0.01,0.98,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAQZR0TN3
+1789359214.5,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,SELL,2,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMFB61WTMY
+1789359214.7,nfl,ftsc-nfl-qbmostfp-2027-01-10-jaxdar,SELL,2,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMHNYW4TN5
+1789359214.9,nfl,ftsc-nfl-kmostfp-2027-01-10-chrbos,SELL,6,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVM14TMQ
+1789359214.9,nfl,ftsc-nfl-qbmostfp-2027-01-10-dramay,SELL,0.06,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVM28TMQ
+1789359215.0,nfl,fptc-nfl-wrfpou-2027-01-10-tetmcm,SELL,0.07,0.36,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM19MAYTN1
+1789359215.0,nfl,ftsc-nfl-qbmostfp-2027-01-10-patmah,SELL,4.99,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVM2WTMQ
+1789359215.1,nfl,ftsc-nfl-kmostfp-2027-01-10-eddpin,SELL,0.05,0.16,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ1AATTN2
+1789359215.1,nfl,ftsc-nfl-kmostfp-2027-01-10-kafai,SELL,0.06,0.24,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM19ME8TN1
+1789359215.2,nfl,ftsc-nfl-kmostfp-2027-01-10-willut,SELL,0.01,0.2,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR04MTN3
+1789359215.2,nfl,fptc-nfl-qbfpou-2027-01-10-danjon,SELL,0.02,0.56,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR058TN3
+1789359215.2,nfl,fptc-nfl-qbfpou-2027-01-10-kylmur,SELL,0.01,0.73,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR060TN3
+1789359215.3,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,SELL,0.05,0.16,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVM6JTMQ
+1789359215.3,nfl,aqc-nfl-2027-01-10-playoffq-ne,SELL,1,0.58,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM7SJC4TMP
+1789359215.4,nfl,ftsc-nfl-flexmostfp-2027-01-10-garrwil,SELL,0.08,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM5JCYPTN0
+1789359215.6,nfl,ftsc-nfl-dstmostfp-2027-01-10-jax,SELL,0.08,0.25,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR0DETN3
+1789359215.6,nfl,ftsc-nfl-dstmostfp-2027-01-10-pit,SELL,1,0.16,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM7SJDTTMP
+1789359215.7,nfl,ftsc-nfl-wrmostfp-2027-01-10-jusjef,SELL,1,0.06,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM19MPTTN1
+1789359215.8,nfl,ftsc-nfl-kmostfp-2027-01-10-camdic,SELL,0.05,0.17,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMFB6X8TMY
+1789359215.8,nfl,ftsc-nfl-kmostfp-2027-01-10-jakell,SELL,0.05,0.17,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVMDGTMQ
+1789359215.8,nfl,ftsc-nfl-kmostfp-2027-01-10-evamcp,SELL,0.05,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR0FPTN3
+1789359215.9,nfl,ftsc-nfl-kmostfp-2027-01-10-jassan,SELL,0.06,0.18,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM03PD2TMM
+1789359216.0,nfl,ftsc-nfl-dstmostfp-2027-01-10-sf,SELL,0.04,0.19,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVMHPTMQ
+1789359346.9,cfb,aachc-cfb-wins-2026-11-28-vir-5pt5wins,BUY,1,0.9,sweep,0,0.06,,87,92,0.106,0.89,0.9,0,1,the dust sweep (owner; 2026-09-13): 1 sh worth $0.90 at the midpoint; crossed at,CFVKJ2CMATN0
+1789359346.9,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,BUY,1,0.4,sweep,1.2992,0.05,,38,47,0.13,0.39,0.4,-0.02,1,the dust sweep (owner; 2026-09-13): 1 sh worth $0.40 at the midpoint; crossed at,CFVKYXRJRTN5
+1789359346.9,cfb,aachc-cfb-wins-2026-11-28-nd-8pt5wins,BUY,1,0.99,sweep,0,0.05,,92,98,0.117,0.98,0.99,0.03,1,the dust sweep (owner; 2026-09-13): 1 sh worth $0.98 at the midpoint; crossed at,CFVKJ20YETMX
+1789359346.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.69,sweep,0,0.05,,65,71,0.266,0.56,0.57,0.01,1,the dust sweep (owner; 2026-09-13): 1 sh worth $0.69 at the midpoint; crossed at,CFVKQRQJTTN3
+1789359346.9,cfb,aachc-cfb-wins-2026-11-28-rutger-4pt5wins,SELL,2,0.02,sweep,0,0.04,,2,8,0.211,0.02,0.03,0.02,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.05 at the midpoint; crossed at,CFVKJ19BTTN2
+1789359346.9,nfl,fptc-nfl-wrfpou-2027-01-10-emeegb,SELL,1,0.21,sweep,0,0.04,,18,31,0.074,0.21,0.22,0.03,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.21 at the midpoint; crossed at,CFVMHNYDATN5
+1789359346.9,nfl,fptc-nfl-qbfpou-2027-01-10-tuatag,SELL,1,0.54,sweep,0,0.04,,55,73,0.075,0.54,0.55,0.11,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.55 at the midpoint; crossed at,CFVMFB5NCTMY
+1789359346.9,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,2.75,0.15,sweep,0,0.04,,5,15,0.238,0.02,0.15,-0.05,1,the dust sweep (owner; 2026-09-13): 4 sh worth $0.62 at the midpoint; crossed at,CFVM19KVRTN1
+1789359346.9,nfl,ftsc-nfl-qbtop5fp-2027-01-10-joebur,SELL,1,0.27,sweep,0,0.04,,24,32,0.098,0.27,0.28,0.01,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.28 at the midpoint; crossed at,CFVMAQZRJTN3
+1789359346.9,nfl,ftsc-nfl-kmostfp-2027-01-10-andszm,SELL,1,0.11,sweep,0,0.04,,4,15,0.099,0.01,0.13,-0.02,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.12 at the midpoint; crossed at,CFVKV42R0TMX
+1789359346.9,nfl,ftsc-nfl-wrtop12fp-2027-01-10-emeegb,SELL,1,0.4,sweep,0,0.04,,38,47,0.459,0.4,0.43,0.03,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.42 at the midpoint; crossed at,CFVMFB620TMY
+1789359346.9,nfl,fptc-nfl-rbfpou-2027-01-10-camska,SELL,1,0.13,sweep,0,0.04,,14,24,0.233,0.13,0.2,0.06,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.17 at the midpoint; crossed at,CFVM03NZGTMM
+1789359346.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-camska,SELL,0.97,0.2,sweep,0,0.04,,7,20,0.135,0.17,0.2,-0.07,1,the dust sweep (owner; 2026-09-13): 2 sh worth $0.41 at the midpoint; crossed at,CFVM03P1ATMM
+1789359346.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-ashjea,SELL,0.06,0.16,sweep,0,0.04,,3,13,0.135,0.01,0.16,-0.08,0.94,the dust sweep (owner; 2026-09-13): 1 sh worth $0.17 at the midpoint; crossed at,CFVMHNZ5YTN5
+1789359346.9,nfl,ftsc-nfl-dstmostfp-2027-01-10-det,SELL,2,0.16,sweep,0,0.04,,10,17,0.239,0.16,0.17,-0.02,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.33 at the midpoint; crossed at,CFVM7SJD6TMP
+1789359346.9,nfl,ftsc-nfl-temostfp-2027-01-10-kylpit,SELL,5,0.01,sweep,0,0.04,,1,7,0.137,0.01,0.02,0.03,0,the dust sweep (owner; 2026-09-13): 5 sh worth $0.07 at the midpoint; crossed at,CFVM03P7ETMM
+1789359346.9,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,1,0.22,sweep,0,0.04,,18,26,0.274,0.22,0.23,0,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.23 at the midpoint; crossed at,CFVMHNZ84TN5
+1789359346.9,nfl,ftsc-nfl-dstmostfp-2027-01-10-phi,SELL,0.45,0.2,sweep,0,0.04,,5,16,0.144,0.01,0.2,-0.1,1.55,the dust sweep (owner; 2026-09-13): 2 sh worth $0.42 at the midpoint; crossed at,CFVMFB6ZJTMY
+1789359346.9,nfl,ftsc-nfl-dstmostfp-2027-01-10-sf,SELL,0.96,0.19,sweep,0,0.04,,11,21,0.144,0.19,0.2,-0.02,0.04,the dust sweep (owner; 2026-09-13): 1 sh worth $0.20 at the midpoint; crossed at,CFVMCVMHPTMQ
+1789359346.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-kyrwil,SELL,0.05,0.2,sweep,0,0.04,,6,18,0.144,0.13,0.2,-0.07,0.95,the dust sweep (owner; 2026-09-13): 1 sh worth $0.21 at the midpoint; crossed at,CFVM5JD5PTN0
+1789359346.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-abro,SELL,0.05,0.15,sweep,0,0.04,,7,16,0.144,0.01,0.14,-0.03,0.95,the dust sweep (owner; 2026-09-13): 1 sh worth $0.15 at the midpoint; crossed at,CFVM19N4PTN1
+1789359346.9,nfl,aqc-nfl-nfc-2027-01-24-champq-sea,SELL,1,0.29,sweep,0,0.04,,21,30,0.144,0.29,0.3,-0.03,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.29 at the midpoint; crossed at,CFVM7SJRTTMP
+1789359346.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-jamcoo,SELL,0.06,0.16,sweep,0,0.04,,5,16,0.145,0.12,0.15,-0.05,0.94,the dust sweep (owner; 2026-09-13): 1 sh worth $0.17 at the midpoint; crossed at,CFVKV43DATMX
+1789359346.9,nfl,fptc-nfl-tefpou-2027-01-10-tremcb,BUY,0.18,0.57,sweep,0,0.04,,58,74,0.224,0.57,0.67,-0.09,-0.82,the dust sweep (owner; 2026-09-13): 1 sh worth $0.56 at the midpoint; crossed at,CFVM7SJTPTMP
+1789359346.9,nfl,tec-nfl-cbpoty-2027-02-11-w-tuatag,SELL,0.01,0.03,sweep,0,0.04,,1,7,0.152,0.03,0.04,0,0,the dust sweep (owner; 2026-09-13): 0.01 sh worth $0.00 at the midpoint; crossed,CFVM5JD6PTN0
+1789359346.9,nfl,fptc-nfl-tefpou-2027-01-10-brobow,BUY,1,0.29,sweep,0,0.04,,23,37,0.152,0.28,0.29,0,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.29 at the midpoint; crossed at,CFVM7SJX2TMP
+1789359346.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-chrola,SELL,0.01,0.01,sweep,0,0.04,,1,7,0.153,0.01,0.02,0.02,0,the dust sweep (owner; 2026-09-13): 0.01 sh worth $0.00 at the midpoint; crossed,CFVKV43G8TMX
+1789359640.0,politics,cranc-uspres28-12-31-2026-gavnew,SELL,2,0.15,sweep,0,0.15,,11,20,0,0.16,0.2,0.01,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.35 at the midpoint; crossed at,CFVK95QBPTMX
+1789359640.0,politics,cranc-uspres28-12-31-2026-tuccar,SELL,2,0.1,sweep,0,0.14,,2,10,0,0.1,0.11,-0.04,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.21 at the midpoint; crossed at,CFVK5B262TN1
+1789359640.0,politics,ewc-usse-ne-2026-11-03-dem,SELL,1,0.01,sweep,0,0.14,0.132925,1,4,0.025,0.01,0.02,0.1229,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.01 at the midpoint; crossed at,CFVJYVDAYTN2
+1789359640.0,cfb,aachc-cfb-wins-2026-11-28-txst-8pt5wins,SELL,5,0.01,sweep,0,0.14,,2,8,0.001,0.01,0.02,0.03,0,the dust sweep (owner; 2026-09-13): 5 sh worth $0.07 at the midpoint; crossed at,CFVKJ23WATN0
+1789359640.0,cfb,aachc-cfb-wins-2026-11-28-ill-7pt5wins,SELL,1,0.35,sweep,0,0.14,,37,52,0.015,0.35,0.36,0.11,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.35 at the midpoint; crossed at,CFVKD71R8TMM
+1789359640.0,cfb,aachc-cfb-wins-2026-11-28-sdst-8pt5wins,SELL,1,0.01,sweep,0,0.14,,1,5,0.001,0.01,0.02,0.01,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.01 at the midpoint; crossed at,CFVKQRCTGTN3
+1789359640.0,cfb,aachc-cfb-wins-2026-11-28-stan-5pt5wins,SELL,1,0.18,sweep,0.8025,0.14,,13,19,0.046,0.18,0.19,-0.02,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.18 at the midpoint; crossed at,CFVK968DWTMX
+1789359640.0,cfb,aachc-cfb-wins-2026-11-28-wisc-8pt5wins,SELL,2,0.01,sweep,0,0.14,,2,8,0.087,0.07,0.08,0.03,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.03 at the midpoint; crossed at,CFVKE5RVPTN1
+1789359640.0,cfb,aachc-cfb-wins-2026-11-28-vand-7pt5wins,SELL,2,0.01,sweep,1.204,0.13,,1,6,0.175,0.01,0.02,0.02,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.03 at the midpoint; crossed at,CFVKYXR78TN5
+1789360854.3,politics,ussewc-usse-sd-2026-11-03-rep,SELL,1.09,0.91,backfill,,27.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF4RE10D2TN1
+1789360938.3,politics,ussewc-usse-de-2026-11-03-rep,BUY,9,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVK9HDE8TN0
+1789360938.3,politics,usgubewc-usgub-ar-2026-11-03-dem,BUY,4,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKD6H4RTMM
+1789360938.3,politics,ussewc-usse-il-2026-11-03-rep,BUY,15,0.04,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ236YTN0
+1789360938.3,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,4,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKPD3MYTN5
+1789360938.3,politics,usgubewc-usgub-hi-2026-11-03-rep,BUY,9,0.07,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKKJ5JYTMY
+1789360938.3,politics,usgubewc-usgub-il-2026-11-03-rep,BUY,5,0.08,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKD6S2ETMM
+1789360938.3,politics,ussewc-usse-ri-2026-11-03-rep,BUY,9,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKSSNK8TMQ
+1789360938.3,politics,usgubewc-usgub-wy-2026-11-03-dem,BUY,2,0.03,hand,,64.98,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CE3VTVRDCTMM
+1789360938.3,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,10,0.09,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKSSNVMTMQ
+1789360938.3,politics,ussewc-usse-sd-2026-11-03-rep,SELL,1.09,0.91,backfill,,27.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CF4RE10D2TN1
+1789360938.3,cfb,aachc-cfb-wins-2026-11-28-lou-6pt5wins,SELL,0.01,0.65,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKYXEF8TN5
+1789360938.3,cfb,aachc-cfb-wins-ou-2026-11-28-clmsn,SELL,0.01,0.45,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKQRDFJTN3
+1789360938.3,cfb,aachc-cfb-wins-ou-2026-11-28-duke,BUY,1,0.7,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKQRDQ6TN3
+1789360938.3,cfb,aachc-cfb-wins-2026-11-28-syra-3pt5wins,BUY,1,0.72,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKWZYWGTMY
+1789360938.3,cfb,aachc-cfb-wins-2026-11-28-ore-11pt5wins,SELL,2,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM5JC90TN0
+1789360938.3,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,-0.25,0.15,fix,0,0.04,,5,15,0.238,0.02,0.15,-0.05,1,size trimmed by 0.25 to the exchange's count (order CFVM19KVRTN1),CFVM19KVRTN1
+1789360938.3,nfl,ftsc-nfl-flexmostfp-2027-01-10-camska,SELL,-0.03,0.2,fix,0,0.04,,7,20,0.135,0.17,0.2,-0.07,1,size trimmed by 0.03 to the exchange's count (order CFVM03P1ATMM),CFVM03P1ATMM
+1789360938.3,nfl,aqc-nfl-2027-01-10-playoffq-was,BUY,1,0.31,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM5JC9MTN0
+1789360938.3,nfl,fptc-nfl-rbfpou-2027-01-10-bhatut,BUY,1,0.47,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMHNYC0TN5
+1789360938.3,nfl,fptc-nfl-wrfpou-2027-01-10-ladmcc,BUY,0.01,0.74,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVK9GTMQ
+1789360938.3,nfl,fptc-nfl-wrfpou-2027-01-10-britho,SELL,0.02,0.28,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM03N2CTMM
+1789360938.3,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ19Z8TN2
+1789360938.3,nfl,tec-nfl-droy-2027-02-11-w-emmmcn,SELL,1,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM7SH7RTMP
+1789360938.3,nfl,ftsc-nfl-temostfp-w1-2026-09-14-orogad,BUY,0.01,0.89,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM5JCE2TN0
+1789360938.3,nfl,ftsc-nfl-rbmostfp-2027-01-10-jamcoo,SELL,1,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAQZJTTN3
+1789360938.3,nfl,aqc-nfl-nfc-2027-01-24-champq-was,SELL,0.01,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKV42FJTMX
+1789360938.3,nfl,ftsc-nfl-qbmostfp-2027-01-10-aarrod,SELL,2.01,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ1A1YTN2
+1789360938.3,nfl,ftsc-nfl-dstmostfp-2027-01-10-atl,SELL,0.01,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ1A30TN2
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-ryafit,SELL,1,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM19KW2TN1
+1789360938.3,nfl,ftsc-nfl-wrtop12fp-2027-01-10-romodu,BUY,0.01,0.98,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAQZR0TN3
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,SELL,2,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMFB61WTMY
+1789360938.3,nfl,ftsc-nfl-qbmostfp-2027-01-10-jaxdar,SELL,2,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMHNYW4TN5
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-chrbos,SELL,6,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVM14TMQ
+1789360938.3,nfl,ftsc-nfl-qbmostfp-2027-01-10-dramay,SELL,0.06,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVM28TMQ
+1789360938.3,nfl,fptc-nfl-wrfpou-2027-01-10-tetmcm,SELL,0.07,0.36,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM19MAYTN1
+1789360938.3,nfl,ftsc-nfl-qbmostfp-2027-01-10-patmah,SELL,4.99,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVM2WTMQ
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-eddpin,SELL,0.05,0.16,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKJ1AATTN2
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-kafai,SELL,0.06,0.24,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM19ME8TN1
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-willut,SELL,0.01,0.2,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR04MTN3
+1789360938.3,nfl,fptc-nfl-qbfpou-2027-01-10-danjon,SELL,0.02,0.56,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR058TN3
+1789360938.3,nfl,fptc-nfl-qbfpou-2027-01-10-kylmur,SELL,0.01,0.73,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR060TN3
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,SELL,0.05,0.16,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVM6JTMQ
+1789360938.3,nfl,aqc-nfl-2027-01-10-playoffq-ne,SELL,1,0.58,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM7SJC4TMP
+1789360938.3,nfl,ftsc-nfl-flexmostfp-2027-01-10-garrwil,SELL,0.08,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM5JCYPTN0
+1789360938.3,nfl,ftsc-nfl-dstmostfp-2027-01-10-jax,SELL,0.08,0.25,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR0DETN3
+1789360938.3,nfl,ftsc-nfl-dstmostfp-2027-01-10-pit,SELL,1,0.16,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM7SJDTTMP
+1789360938.3,nfl,ftsc-nfl-wrmostfp-2027-01-10-jusjef,SELL,1,0.06,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM19MPTTN1
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-camdic,SELL,0.05,0.17,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMFB6X8TMY
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-jakell,SELL,0.05,0.17,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVMDGTMQ
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-evamcp,SELL,0.05,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMAR0FPTN3
+1789360938.3,nfl,ftsc-nfl-kmostfp-2027-01-10-jassan,SELL,0.06,0.18,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVM03PD2TMM
+1789360938.3,nfl,ftsc-nfl-dstmostfp-2027-01-10-sf,SELL,0.04,0.19,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVMCVMHPTMQ
