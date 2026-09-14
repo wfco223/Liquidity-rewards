@@ -61,12 +61,18 @@ class FakeClient:
                 if not self.taker_fills:
                     self.live.pop(oid, None)
                     return {"order": {"id": oid}, "id": oid, "executions": []}
-                took = q if self.taker_fill_qty is None else min(
-                    max(float(self.taker_fill_qty), 0.0), q)
-                if took >= q - 1e-9:
-                    self.live.pop(oid, None)          # nothing left to rest
-                else:
-                    self.live[oid]["size"] = round(q - took, 4)
+                took = q
+                if self.taker_fill_qty is not None:
+                    # a touch thinner than the lot: only this much
+                    # executes and the REMAINDER stays on the book. Left
+                    # alone when the rig has not asked for it, so a
+                    # verify-by-id (the bond rail's) still finds its order
+                    # where it has always found it.
+                    took = min(max(float(self.taker_fill_qty), 0.0), q)
+                    if took >= q - 1e-9:
+                        self.live.pop(oid, None)      # nothing left to rest
+                    else:
+                        self.live[oid]["size"] = round(q - took, 4)
                 if took <= 1e-9:
                     return {"order": {"id": oid}, "id": oid, "executions": []}
                 self.trades.append({"type": "ACTIVITY_TYPE_TRADE", "trade": {
