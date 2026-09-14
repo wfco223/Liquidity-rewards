@@ -100,12 +100,32 @@ class TestThePlan(Base):
         self.assertAlmostEqual(p["rows"][0]["concession"], 6.0 * 0.015, places=4)
         self.assertAlmostEqual(p["concession"], 0.09, places=2)
 
-    def test_frozen_and_close_out_ground_are_skipped(self):
+    def test_his_frozen_ground_is_skipped_but_the_tenders_is_not(self):
+        """Owner, 2026-09-14: "There are more markets that I have <1
+        dollar in that aren't being caught up in the sweep." A family
+        marks every FOCUS market frozen so the tender owns it, and asking
+        it `_frozen()` swept all of that up as his instruction: the
+        04:11Z run skipped 41 markets as "frozen ground" and 29 of them
+        were the tender's, not his. Only the ground he NAMED is his."""
+        # the tender's ground: a dust lot there is still his to clear
         self.r.fam.freeze_dyn.add(A)
         p = self.sweep.plan(self.r.now)
-        self.assertEqual(p["rows"], [])
-        self.assertEqual(p["skipped"][0]["why"], "frozen ground")
+        self.assertEqual([r["market"] for r in p["rows"]], [A])
         self.r.fam.freeze_dyn.discard(A)
+        # the ground he named: hands off, as he said
+        self.r.fam.cfg.freeze_tokens = ("ussemov-ga-2026-11-03-d4",)
+        p = self.sweep.plan(self.r.now)
+        self.assertEqual(p["rows"], [])
+        self.assertEqual(p["skipped"][0]["why"], "your hands — frozen ground")
+        self.r.fam.cfg.freeze_tokens = ()
+
+    def test_the_seat_and_governor_count_books_stay_his(self):
+        # the three he named by name, whatever else changes
+        from v3 import politics
+        for token in ("usgovcc", "scc-senate-gop", "scc-hrep-rep"):
+            self.assertIn(token, politics.config().freeze_tokens)
+
+    def test_close_out_ground_is_skipped(self):
         self.r.fam.cfg.liquidate_tokens = ("ussemov-ga-2026-11-03-d4",)
         p = self.sweep.plan(self.r.now)
         self.assertEqual(p["rows"], [])
@@ -642,3 +662,45 @@ class TestTheCostWalksBackToZero(Base):
         self.assertEqual(inv["qty"], -3.0)
         self.assertAlmostEqual(inv["cost"], -0.30 + 3.0 * 0.08, places=4)
         self.assertGreater(inv["cost"] / inv["qty"], 0.0)   # sign still matches
+
+
+class TestTheAnswerMayNotSayWhatTraded(Base):
+    """My own defect, reported by the owner on 2026-09-14: the 04:11Z run
+    said "0 filled" for all 88 orders while the exchange's position count
+    fell 168 -> 112 in the seventeen minutes after it and 44 fills were
+    booked by the ordinary reconcile. The orders HAD traded; the answer
+    simply carried no executions list, and "did not say" was being
+    reported as "nothing traded"."""
+
+    def no_execution_list(self):
+        real = self.r.exchange.post
+
+        def quiet(url, body, path=None, **kw):
+            r = real(url, body, path=path, **kw)
+            if url.endswith("/v1/orders"):
+                r.pop("executions", None)          # the answer says nothing
+            return r
+        self.r.exchange.post = quiet
+
+    def test_an_answer_that_does_not_say_is_marked_unsaid_not_zero(self):
+        self.no_execution_list()
+        res = self.sweep.run(self.r.now)
+        row = res["placed"][0]
+        self.assertIsNone(row["filled"])           # not 0.0 — unknown
+        self.assertTrue(row["unsaid"])
+        self.assertEqual(res["unsaid"], 1)
+        self.assertIn("no execution list", self.r.fam.log[-1]["note"])
+
+    def test_an_empty_execution_list_still_reads_as_a_confirmed_zero(self):
+        self.touch_absorbs(0.0)                    # answers executions: []
+        res = self.sweep.run(self.r.now)
+        row = res["placed"][0]
+        self.assertEqual(row["filled"], 0.0)       # the exchange did say
+        self.assertFalse(row.get("unsaid"))
+        self.assertEqual(res["unsaid"], 0)
+
+    def test_nothing_is_booked_either_way_the_reconcile_owns_it(self):
+        # the 2026-09-12 close-out lesson: book only what the answer says
+        self.no_execution_list()
+        self.sweep.run(self.r.now)
+        self.assertEqual(self.r.fam.inventory[A]["qty"], 6.0)
