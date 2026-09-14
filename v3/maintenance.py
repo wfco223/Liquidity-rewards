@@ -62,6 +62,9 @@ MAINT_BOOK_MAX_AGE_S = 30.0
 # orders it takes at the same price — the book sees the same size, which
 # is all the program counts.
 MAINT_CHUNK_MAX = 19_990.0
+MAINT_LIVE_RECHECK_S = 30.0    # how often the restore re-reads what is
+                               # actually resting, so an order that never
+                               # left is never placed a second time
 MAINT_READ_TIMEOUT_S = 8.0
 MAINT_READ_TRIES = 3
 WALL_PRICES = (0.01, 0.99)
@@ -127,6 +130,8 @@ class Maintenance:
         self.failed: list[dict] = []
         self.note = ""
         self.log: list[dict] = []
+        self._live: set[str] = set()     # ids the EXCHANGE says are resting
+        self._live_at = 0.0
 
     # -- where we are --------------------------------------------------------
 
@@ -234,8 +239,25 @@ class Maintenance:
 
     # -- putting them back ---------------------------------------------------
 
+    def _refresh_live(self, now: float) -> None:
+        """What the EXCHANGE says is resting, not what our books say. The
+        pull cancels, but a cancel can be refused and the open list lags
+        one either way (2026-09-14: 29 of the 313 pulled were still
+        showing when the window opened, and the desk was re-cancelling
+        them). An order that never left must NOT be placed a second time
+        — that is the same shape that offers a lot twice."""
+        if now - self._live_at < MAINT_LIVE_RECHECK_S:
+            return
+        try:
+            rows = self.client.open_orders()
+        except Exception:  # noqa: BLE001 — keep the last read; it only ever
+            return          # stops us placing, never causes one
+        self._live = {str(o.get("id") or "") for o in rows}
+        self._live_at = now
+
     def restore_step(self, now: float) -> int:
         """A few a pass. Each order is priced on a book read for it."""
+        self._refresh_live(now)
         left = [r for r in self.orders
                 if not r.get("back") and r.get("tries", 0) < MAINT_RESTORE_TRIES]
         if not left:
@@ -246,6 +268,15 @@ class Maintenance:
             return 0
         n = 0
         for rec in left[:MAINT_RESTORE_PER_PASS]:
+            if rec.get("id") and rec["id"] in self._live:
+                # it never came off: leave it exactly where it is
+                rec["back"] = True
+                rec["at"] = float(rec["price"])
+                rec["moved"] = 0.0
+                rec["kept"] = True
+                self.done.append(rec)
+                n += 1
+                continue
             rec["tries"] = rec.get("tries", 0) + 1
             if self._restore_one(rec, now):
                 n += 1
@@ -341,6 +372,7 @@ class Maintenance:
     def view(self) -> dict:
         return {"key": self.key, "phase": self.phase, "note": self.note,
                 "n": len(self.orders), "restored": len(self.done),
+                "kept": sum(1 for r in self.done if r.get("kept")),
                 "failed": len(self.failed),
                 "left": sum(1 for r in self.orders if not r.get("back")),
                 "windows": [{"start": a, "end": b} for a, b in MAINT_WINDOWS],
@@ -362,3 +394,4 @@ class Maintenance:
         self.failed = list(d.get("failed") or [])
         self.note = str(d.get("note") or "")
         self.log = list(d.get("log") or [])[-LOG_KEEP:]
+        self._live, self._live_at = set(), 0.0
