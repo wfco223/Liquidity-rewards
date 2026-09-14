@@ -10674,14 +10674,17 @@ date,market,program_type,reward_usd,status
 2026-09-12,ewc-usp-party-2028-11-07-rep,liquidityProgram,3.76,PENDING
 2026-09-12,paccc-balpow-2026-11-03-dsweep,liquidityProgram,21.98,PENDING
 2026-09-12,scc-hrep-rep-2026-11-03-gte220,liquidityProgram,1.84,PENDING
+2026-09-12,scc-senate-gop-2026-11-03-51,liquidityProgram,3.58,PENDING
 2026-09-12,usgubewc-usgub-ct-2026-11-03-rep,liquidityProgram,0.63,PENDING
 2026-09-12,usgubewc-usgub-ne-2026-11-03-dem,liquidityProgram,1.3,PENDING
 2026-09-12,usgubewc-usgub-nh-2026-11-03-rep,liquidityProgram,4.01,PENDING
 2026-09-12,usgubewc-usgub-pa-2026-11-03-dem,liquidityProgram,0.95,PENDING
+2026-09-12,usgubewc-usgub-tn-2026-11-03-dem,liquidityProgram,1.86,PENDING
 2026-09-12,ushrewc-ushr-ia-01-2026-11-03-dem,liquidityProgram,5.67,PENDING
 2026-09-12,ushrewc-ushr-tx-15-2026-11-03-rep,liquidityProgram,10.41,PENDING
 2026-09-12,ushrewc-ushr-wa-03-2026-11-03-dem,liquidityProgram,7.96,PENDING
 2026-09-12,ussewc-usse-ky-2026-11-03-dem,liquidityProgram,3.34,PENDING
 2026-09-12,ussewc-usse-ok-2026-11-03-rep,liquidityProgram,2.53,PENDING
 2026-09-12,ussewc-usse-sd-2026-11-03-briben,liquidityProgram,0.4,PENDING
+2026-09-12,ussewc-usse-sd-2026-11-03-rep,liquidityProgram,1.48,PENDING
 2026-09-12,ussewc-usse-tn-2026-11-03-dem,liquidityProgram,0.11,PENDING
