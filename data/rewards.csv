@@ -10679,6 +10679,7 @@ date,market,program_type,reward_usd,status
 2026-09-12,enwc-uspres-nom-rep-2028-tulgab,liquidityProgram,3.76,PENDING
 2026-09-12,ewc-usgub-ga-2026-11-03-rep,liquidityProgram,1.89,PENDING
 2026-09-12,ewc-usgub-mi-2026-11-03-dem,liquidityProgram,2.11,PENDING
+2026-09-12,ewc-usgub-mi-2026-11-03-rep,liquidityProgram,0.64,PENDING
 2026-09-12,ewc-usgub-nv-2026-11-03-rep,liquidityProgram,12.02,PENDING
 2026-09-12,ewc-usgub-oh-2026-11-03-dem,liquidityProgram,7.13,PENDING
 2026-09-12,ewc-usgub-wi-2026-11-03-dem,liquidityProgram,7.98,PENDING
