@@ -10728,6 +10728,7 @@ date,market,program_type,reward_usd,status
 2026-09-12,paccc-usho-midterms-2026-11-03-rep,liquidityProgram,18.9,PENDING
 2026-09-12,paccc-usse-midterms-2026-11-03-dem,liquidityProgram,20.98,PENDING
 2026-09-12,paccc-usse-midterms-2026-11-03-rep,liquidityProgram,11.86,PENDING
+2026-09-12,scc-hrep-rep-2026-11-03-gte185,liquidityProgram,5.35,PENDING
 2026-09-12,scc-hrep-rep-2026-11-03-gte210,liquidityProgram,2.38,PENDING
 2026-09-12,scc-hrep-rep-2026-11-03-gte220,liquidityProgram,1.84,PENDING
 2026-09-12,scc-hrep-rep-2026-11-03-gte225,liquidityProgram,5.25,PENDING
@@ -10796,6 +10797,7 @@ date,market,program_type,reward_usd,status
 2026-09-12,ushrewc-ushr-pa-01-2026-11-03-rep,liquidityProgram,7.02,PENDING
 2026-09-12,ushrewc-ushr-tx-15-2026-11-03-rep,liquidityProgram,10.41,PENDING
 2026-09-12,ushrewc-ushr-tx-34-2026-11-03-dem,liquidityProgram,25.89,PENDING
+2026-09-12,ushrewc-ushr-tx-34-2026-11-03-rep,liquidityProgram,21.51,PENDING
 2026-09-12,ushrewc-ushr-va-02-2026-11-03-rep,liquidityProgram,2.98,PENDING
 2026-09-12,ushrewc-ushr-wa-03-2026-11-03-dem,liquidityProgram,7.96,PENDING
 2026-09-12,ushrewc-ushr-wa-03-2026-11-03-rep,liquidityProgram,11.24,PENDING
