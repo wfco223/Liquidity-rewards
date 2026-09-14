@@ -847,6 +847,20 @@ long and accreted, so search it rather than reading it through.
   however many orders it takes at the same price. A refusal is retried
   six times, then left and reported on the card. The whole run is saved
   with the state, so a restart mid-window picks it up where it was.
+  AND AN ORDER THAT NEVER LEFT IS NEVER PLACED TWICE (found on the
+  live run of 2026-09-14, before the restore could do harm): the pull
+  cancelled 272 of 313 and 29 were still showing when the window
+  opened — a cancel can be refused, and the open list lags one either
+  way, which is what the desk's own "cancel_again" exists for. Restoring
+  those would have offered the same shares twice, the shape that flips
+  a position when both fill. Each restore pass now re-reads what the
+  EXCHANGE says is resting (not our books, which can be wrong in both
+  directions) at most once in thirty seconds; a snapshot row whose id is
+  still on that list is marked back where it is and never re-placed, and
+  a failed read keeps the last one, so the check can only ever stop a
+  placement and never cause one. The live run also confirmed the hold:
+  60 placements and 260 exits were refused "master switch is off" in the
+  quarter hour after the pull, and nothing rested.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

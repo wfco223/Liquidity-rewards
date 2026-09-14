@@ -290,3 +290,70 @@ class TestAWallBiggerThanOneOrder(Base):
         self.assertEqual(self.m.done, [])
         self.assertEqual(self.m.orders[0]["placed_qty"], 19990.0)
         self.assertIn("buying power", self.m.orders[0]["why"])
+
+
+class TestAnOrderThatNeverLeftIsNotPlacedTwice(Base):
+    """Found on the live run of 2026-09-14: the pull cancelled 272 of 313
+    and 29 were still showing when the window opened — a cancel can be
+    refused, and the open list lags one either way. Re-placing those
+    would offer the same shares twice, which is the shape that flips a
+    position when both fill. The restore checks the EXCHANGE'S list, not
+    our books."""
+
+    def pull_now(self):
+        self.r.now = self.start - 60.0
+        self.m.tick(self.r.now)
+
+    def test_one_still_resting_is_left_alone_not_re_placed(self):
+        a = self.rest(A, "BUY", 0.40, 50.0)
+        self.rest(A, "SELL", 0.44, 50.0)
+        self.pull_now()
+        # the exchange never took the first one off
+        self.r.exchange.live[a] = {"id": a, "market": A, "side": "BUY",
+                                   "price": 0.40, "size": 50.0,
+                                   "intent": BUY_LONG}
+        self.r.now = self.end + M.MAINT_SETTLE_S + 1
+        self.m.tick(self.r.now)
+        self.m.tick(self.r.now + 20.0)
+        buys = [o for o in self.r.exchange.live.values() if o["side"] == "BUY"]
+        self.assertEqual(len(buys), 1)                 # never doubled
+        self.assertEqual(len(self.m.done), 2)          # both accounted for
+        kept = [r for r in self.m.done if r.get("kept")]
+        self.assertEqual(len(kept), 1)
+        self.assertEqual(kept[0]["id"], a)
+        self.assertEqual(kept[0]["moved"], 0.0)
+
+    def test_the_check_reads_the_exchange_not_our_own_books(self):
+        # our books can be wrong in both directions; only the exchange
+        # decides whether an order is resting
+        a = self.rest(A, "BUY", 0.40, 50.0)
+        self.pull_now()
+        self.r.fam.orders["ghost"] = FamilyOrder(
+            id=a, market=A, side="BUY", price=0.40, qty=50.0,
+            intent=BUY_LONG, placed_ts=self.r.now, purpose="manual")
+        self.r.now = self.end + M.MAINT_SETTLE_S + 1
+        self.m.tick(self.r.now); self.m.tick(self.r.now + 20.0)
+        # the exchange does NOT show it, so it goes back
+        self.assertEqual(len(self.m.done), 1)
+        self.assertFalse(self.m.done[0].get("kept"))
+        self.assertEqual(len(self.r.exchange.live), 1)
+
+    def test_a_failed_live_read_never_causes_a_placement(self):
+        a = self.rest(A, "BUY", 0.40, 50.0)
+        self.pull_now()
+        self.r.exchange.live[a] = {"id": a, "market": A, "side": "BUY",
+                                   "price": 0.40, "size": 50.0,
+                                   "intent": BUY_LONG}
+        self.r.now = self.end + M.MAINT_SETTLE_S + 1
+        self.m.tick(self.r.now)                       # -> restoring
+        self.m.tick(self.r.now + 1.0)                 # the pass reads the list
+        self.assertIn(a, self.m._live)
+
+        def dead(*args, **kw):
+            raise RuntimeError("down")
+        self.r.exchange.open_orders = dead
+        self.r.now += M.MAINT_LIVE_RECHECK_S + 1
+        self.m.tick(self.r.now)
+        self.assertIn(a, self.m._live)                # the last read stands
+        self.assertEqual(len([o for o in self.r.exchange.live.values()
+                              if o["side"] == "BUY"]), 1)
