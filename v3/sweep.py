@@ -61,6 +61,23 @@ PURPOSE = "sweep"
 LOG_KEEP = 40
 
 
+def _his_hands_off(fam, slug: str) -> bool:
+    """The ground HE named, and only that: usgovcc (owner, 2026-08-24
+    "don't touch those") and the two seat-count books (2026-09-13 "Keep
+    the tender out of the seat markets").
+
+    NOT the focus tender's ground. A family marks every focus market
+    frozen so the tender owns it — an arrangement between two desks of
+    ours, never an instruction from him — and asking the family
+    `_frozen()` swept all of that up with it: on 2026-09-14 the 04:11Z
+    run skipped 41 markets as "frozen ground" and 29 of them were the
+    tender's, not his (owner: "There are more markets that I have <1
+    dollar in that aren't being caught up in the sweep"). A dust lot in
+    a focus market is his to clear like any other; the tender's exit
+    there comes off first like any other order on the side."""
+    return any(t in slug for t in (fam.cfg.freeze_tokens or ()))
+
+
 def price_for(qty: float, bid: float, ask: float, tick: float) -> tuple[str, float, str]:
     """The owner's rule for one holding. Returns (book side, price,
     intent). The lot CROSSES (owner, 2026-09-14 "have these shares cross
@@ -109,8 +126,9 @@ class Sweep:
             if True:
                 qty = round(float((inv or {}).get("qty") or 0.0), 2)
                 name = fam._label(slug)
-                if fam._frozen(slug):
-                    skipped.append({"market": slug, "name": name, "why": "frozen ground"})
+                if _his_hands_off(fam, slug):
+                    skipped.append({"market": slug, "name": name,
+                                    "why": "your hands — frozen ground"})
                     continue
                 if fam._liquidating(slug):
                     skipped.append({"market": slug, "name": name,
@@ -319,11 +337,22 @@ class Sweep:
             # times); an answer that carries no list at all books nothing
             # and leaves the whole lot resting, and the open list and the
             # position feed correct it either way within a cycle.
-            filled = float(res.filled or 0.0)
-            filled = min(filled, abs(qty))
+            # "nothing traded" and "the answer did not say" are NOT the
+            # same thing, and reporting them the same was a defect of my
+            # own (owner, 2026-09-14): the 04:11Z run said "0 filled" for
+            # all 88 orders while the exchange's position count fell 168
+            # -> 112 in the seventeen minutes after it and 44 fills were
+            # booked by the ordinary reconcile. res.filled is None when
+            # the answer carried no executions list at all, and 0.0 only
+            # when it carried an empty one. Either way nothing is booked
+            # here — that is the 2026-09-12 close-out lesson and it keeps
+            # the books right — but the card must say which happened.
+            said = res.filled is not None
+            filled = min(float(res.filled or 0.0), abs(qty))
             rest = round(abs(qty) - filled, 2)
-            row["filled"] = round(filled, 2)
+            row["filled"] = round(filled, 2) if said else None
             row["resting"] = rest if rest >= 0.01 else 0.0
+            row["unsaid"] = not said
             row["id"] = res.order_id
             row["price"] = got
             if filled >= 0.01:
@@ -342,13 +371,17 @@ class Sweep:
             fam._log(event="sweep", market=slug, side=side, price=got,
                      qty=abs(qty),
                      note=(f"worth ${value:.2f} at mid {mid * 100:.1f}c on a book read "
-                           f"now; crossed at {got * 100:.1f}c — {filled:g} filled, "
-                           f"{rest:g} resting; replaced {len(gone)} "
-                           f"({row['hand']} yours)"))
+                           f"now; crossed at {got * 100:.1f}c — "
+                           + (f"{filled:g} filled, {rest:g} resting"
+                              if said else
+                              "the answer carried no execution list; "
+                              "a fill books on the next cycle")
+                           + f"; replaced {len(gone)} ({row['hand']} yours)"))
         self.last = {"at": round(now, 1), "placed": placed, "failed": failed,
                      "skipped": skipped, "n": len(placed),
                      "value": round(sum(r["value"] for r in placed), 2),
                      "filled": round(sum(r.get("filled") or 0.0 for r in placed), 2),
+                     "unsaid": sum(1 for r in placed if r.get("unsaid")),
                      "resting": sum(1 for r in placed if (r.get("resting") or 0.0) >= 0.01),
                      "concession": round(sum(r.get("concession") or 0.0
                                              for r in placed), 2),
