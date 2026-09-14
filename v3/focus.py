@@ -419,21 +419,34 @@ class Focus:
         return round(tot, 2)
 
     def stake_bp(self, now: float) -> float | None:
-        """The buying power the stake follows: the highest read of the
-        last FOCUS_BP_WINDOW_S less the reserve kept free, plus what his
-        walls hold. The reserve comes off the basis as well as gating
-        each order, so the tender sizes what it may actually spend
-        (owner, 2026-09-12 "Yes to those")."""
+        """The buying power the stake follows: WHAT THE EXCHANGE SAYS,
+        less the reserve kept free. Nothing derived.
+
+        Owner, 2026-09-14, with the focus page in front of him ("The
+        number you should use for buying power is in the balance rows...
+        You don't have to derive it. You can just read it. Right now the
+        derived number is almost double the real number"): the balances
+        row carries buyingPower and that is the truth. Two derivations
+        had been laid over it and together they nearly doubled it —
+        the highest read of the last thirty minutes, and adding back
+        what his qualifying walls hold. The walls' collateral is money
+        the exchange has genuinely taken, so counting it back had the
+        tender sizing entries against money it did not have, and the
+        money gate — which always read the live number — then refused
+        them. The page read "buying power $839.24 ... 41 orders wait
+        for money" while the balances row said $490.92.
+
+        This supersedes the 2026-09-11 walls add-back ("My qualifying
+        orders should not impair the tender") and the thirty-minute
+        high ("The buying power number is out of date"). The reserve
+        still comes off the basis as well as gating each order (owner,
+        2026-09-12 "Yes to those")."""
         bp = self.buying_power(now)
-        vals = [v for ts, v in self._bp_reads if now - ts <= FOCUS_BP_WINDOW_S]
-        if bp is not None:
-            vals.append(bp)
-        if not vals:
+        if bp is None:
             return None
-        walls = self.walls_held()
-        high = max(max(vals) - FOCUS_BP_KEEP_FREE_USD, 0.0)
-        self._stake_bp = (high, walls, now)
-        return high + walls
+        free = max(bp - FOCUS_BP_KEEP_FREE_USD, 0.0)
+        self._stake_bp = (free, 0.0, now)
+        return free
 
     def stake(self, slug: str, bp: float | None) -> tuple[float, str]:
         s = self.stakes.get(slug)
@@ -1991,6 +2004,15 @@ class Focus:
                        f"against a {float(plan.get('fc') or 0.0) * 100:.1f}c fill cost at "
                        f"{float(plan.get('pf') or 0.0) * 100:.0f}% fill odds — "
                        f"expected value ${float(plan.get('ev') or 0.0):+.2f} a day")
+            elif self._stake_bp is not None and float(self._stake_bp[0] or 0.0) <= 0.0:
+                # the stake is nothing because the balance is at or under
+                # the reserve: say THAT, not "nothing earns here" (owner,
+                # 2026-09-14 — the basis is the exchange's own number now,
+                # so a side with no money must not read as a bad book)
+                bp = self._bp[0] if self._bp else None
+                why = ("no money to spend: the exchange shows "
+                       + (f"${bp:,.0f} free" if bp is not None else "no buying power")
+                       + f" and ${FOCUS_BP_KEEP_FREE_USD:,.0f} stays free")
             else:
                 why = note or "nothing on this side earns"
         rec = self.idle.get(key) or {"since": now, "said": 0.0}
@@ -2245,12 +2267,15 @@ class Focus:
                     r["qualify"] = n
                 else:
                     r.pop("qualify", None)
-        # the stake as the tender sizes it: the highest read of the last
-        # thirty minutes plus what his walls hold — and the read's age, so
-        # a stale number reads as stale (owner, 2026-09-11 "The buying
-        # power number is out of date")
-        high, walls = (self._stake_bp[0], self._stake_bp[1]) if self._stake_bp else (bp, 0.0)
-        basis = (high + walls) if high is not None else None
+        # the stake as the tender sizes it: the exchange's own buying
+        # power less the reserve, nothing derived (owner, 2026-09-14) —
+        # with the read's age beside it, so a stale number reads as
+        # stale (owner, 2026-09-11 "The buying power number is out of
+        # date"). walls_held is still reported, for the page to say what
+        # the walls have parked, but it is NOT added to the basis.
+        high = self._stake_bp[0] if self._stake_bp else bp
+        walls = self.walls_held()      # shown on the page, never added to the basis
+        basis = high
         stake, src = self.stake("-", basis)
         bp_at = self._bp[1] if self._bp else None
         return {"ok": True, "at": round(now, 1), "pass_s": self.pass_s,

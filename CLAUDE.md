@@ -250,13 +250,30 @@ long and accreted, so search it rather than reading it through.
   his hand's orders at the far edge of the book, which the tender
   leaves alone and counts back into the stake's buying power. The
   buying power on the page is read every twenty seconds and shown
-  with its age; a failing read keeps the last number and says so,
-  and the stake line shows its basis — the highest read of the last
-  thirty minutes plus what the walls hold (owner, 2026-09-11 "The
-  buying power number is out of date"), and beside it the exchange's
-  own arithmetic from its balances row: cash less the margin its
-  orders and shorts hold (12:11Z: cash $3,085, held $2,950, free
-  $122 — the app's "available" is the same figure). An entry or a
+  with its age; a failing read keeps the last number and says so.
+  THE BUYING POWER IS READ, NEVER DERIVED (owner, 2026-09-14, with
+  the focus page in front of him: "The number you should use for
+  buying power is in the balance rows... You don't have to derive
+  it. You can just read it. Right now the derived number is almost
+  double the real number" — the page said $839.24 with 41 orders
+  waiting for money while the balances row said buyingPower
+  $490.92). The stake's basis is the balances row's buyingPower
+  less the $300 kept free, full stop. The two derivations laid over
+  it are GONE: the highest read of the last thirty minutes (owner,
+  2026-09-11 "The buying power number is out of date") and adding
+  back what his qualifying walls hold (owner, 2026-09-11 "My
+  qualifying orders should not impair the tender"). The walls'
+  collateral is money the exchange has genuinely taken, so counting
+  it back had the tender sizing entries against money it did not
+  have while the money gate — which always read the live number —
+  refused them. The page still SHOWS what the walls hold, marked as
+  already counted out by the exchange, and never adds it. One thing
+  the half-hour high had been doing is now done by a different rule:
+  a dip plans nothing new and pulls nothing, so a resting order is
+  not cycled out when the balance moves (13:43-13:46Z). And a side
+  idle for a zero stake says "no money to spend", never "nothing
+  earns on this side" — with the basis read from the exchange, an
+  empty side must not read as a bad book. An entry or a
   move of one is not sent when its collateral is more than the
   buying power free (a move needs the replacement's while the
   original still rests): 126 placements were rejected "placed but
