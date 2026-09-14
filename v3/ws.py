@@ -28,6 +28,17 @@ WS_PATH = "/v1/ws/markets"
 RECONNECT_WAIT_S = 15.0
 RESUBSCRIBE_CHECK_S = 60.0
 SUB_CAP = 200
+# The cap is per SUBSCRIPTION, so a second connection buys a second 200
+# (owner, 2026-09-14, "Do all three for the 429s"). On 2026-09-14, 335
+# markets wanted a live book against 200 seats: the 135 with no seat
+# were read through the throttled gateway every pass instead, 35 of
+# those reads answered 429 in 10.8 minutes and each 429 holds EVERY
+# gateway read — 314 s of blackout in a 645 s window, 49% of the time,
+# which is why the tender's own pass line read "0 books read, 72 due".
+# Each shard is its own connection, its own thread and its own slice of
+# the priority-ordered list; a shard that cannot connect degrades to
+# REST exactly as one did before, and the others carry on.
+STREAM_SHARDS = 2
 
 
 class Stream:
@@ -35,11 +46,16 @@ class Stream:
     priority-ordered, ws_priority's job); the stream reconnects by itself
     when that list grows."""
 
-    def __init__(self, cache: BookCache, get_slugs, key_id: str, secret_key: str):
+    def __init__(self, cache: BookCache, get_slugs, key_id: str, secret_key: str,
+                 shard: int = 0, shards: int = 1):
         self.cache = cache
         self.get_slugs = get_slugs
         self.key_id, self.secret_key = key_id, secret_key
-        self.status = {"state": "off", "last_msg": 0.0, "subscribed": 0, "note": ""}
+        # which slice of the priority-ordered list this connection owns:
+        # shard 0 takes the first SUB_CAP, shard 1 the next, and so on
+        self.shard, self.shards = int(shard), max(int(shards), 1)
+        self.status = {"state": "off", "last_msg": 0.0, "subscribed": 0,
+                       "note": "", "shard": int(shard)}
         # the exchange's own DECLARED best bid/ask per market, from the
         # Lite feed (owner, 2026-08-21: does the exchange's "best" match
         # the raw touch, and is IT the scoring anchor?)
@@ -128,6 +144,15 @@ class Stream:
         except Exception:  # noqa: BLE001
             return None
 
+    def _my_slugs(self) -> list[str]:
+        """This connection's slice of the priority-ordered list. The list
+        is ordered once, by ws_priority; the shards just cut it, so the
+        best markets still land on the first connection and a shard that
+        dies costs only its own slice."""
+        all_slugs = self.get_slugs()
+        lo = self.shard * SUB_CAP
+        return all_slugs[lo:lo + SUB_CAP]
+
     def _run(self) -> None:
         try:
             import asyncio
@@ -138,7 +163,7 @@ class Stream:
             return
 
         async def session() -> None:
-            slugs = self.get_slugs()[:SUB_CAP]
+            slugs = self._my_slugs()
             headers = auth_headers(self.key_id, self.secret_key, "GET", WS_PATH)
             try:  # websockets >= 14 renamed the kwarg
                 conn = websockets.connect(WS_URL, additional_headers=headers)
@@ -165,7 +190,7 @@ class Stream:
                         pass  # quiet books are normal
                     if time.time() - last_check > RESUBSCRIBE_CHECK_S:
                         last_check = time.time()
-                        want = set(self.get_slugs()[:SUB_CAP])
+                        want = set(self._my_slugs())
                         drift = len(want ^ set(slugs))
                         # reconnect when the wanted list really moved —
                         # the 15-minute rotation windows land here — but

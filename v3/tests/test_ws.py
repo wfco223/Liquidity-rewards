@@ -3,6 +3,7 @@
 import json
 import unittest
 
+from v3 import ws
 from v3.books import BookCache, ws_priority
 from v3.ws import Stream
 
@@ -75,3 +76,42 @@ class TestStream(unittest.TestCase):
         self.assertEqual(out[0], "m-250")
         self.assertEqual(out[1], "m-299")
         self.assertEqual(len(out), 200)
+
+class TestTheStreamShards(unittest.TestCase):
+    """Owner, 2026-09-14 ("Do all three for the 429s"). The exchange caps
+    a SUBSCRIPTION at 200 markets, so a second connection buys a second
+    200. On 2026-09-14, 335 markets wanted a live book against 200 seats;
+    the 135 without one were read through the gateway every pass, 35 of
+    those reads answered 429 in 10.8 minutes, and because a 429 holds
+    EVERY gateway read the gateway was shut 314 s of a 645 s window —
+    which is why the tender's pass line read "0 books read, 72 due"."""
+
+    def slugs(self, n):
+        return [f"m{i:04d}" for i in range(n)]
+
+    def stream(self, shard, n):
+        return ws.Stream(BookCache(), lambda: self.slugs(n), "k", "s",
+                         shard=shard, shards=ws.STREAM_SHARDS)
+
+    def test_each_shard_takes_its_own_slice_and_they_do_not_overlap(self):
+        n = ws.SUB_CAP * ws.STREAM_SHARDS
+        seen = [self.stream(i, n)._my_slugs() for i in range(ws.STREAM_SHARDS)]
+        for got in seen:
+            self.assertEqual(len(got), ws.SUB_CAP)
+        flat = [s for got in seen for s in got]
+        self.assertEqual(len(set(flat)), len(flat))      # no market twice
+        self.assertEqual(set(flat), set(self.slugs(n)))  # and none left out
+
+    def test_the_best_markets_still_land_on_the_first_connection(self):
+        # the list is priority-ordered once, by ws_priority; the shards
+        # only cut it, so a shard dying costs its own slice and no more
+        first = self.stream(0, 400)._my_slugs()
+        self.assertEqual(first, self.slugs(400)[:ws.SUB_CAP])
+
+    def test_a_short_list_leaves_the_later_shards_empty_not_broken(self):
+        self.assertEqual(self.stream(1, 50)._my_slugs(), [])
+        self.assertEqual(len(self.stream(0, 50)._my_slugs()), 50)
+
+    def test_the_seats_now_hold_every_market_that_wanted_a_book(self):
+        # 335 on 2026-09-14, against 200 before
+        self.assertGreaterEqual(ws.SUB_CAP * ws.STREAM_SHARDS, 335)

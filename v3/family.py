@@ -59,6 +59,10 @@ from .terms import TermsStore
 ET = ZoneInfo("America/New_York")
 
 BOOK_MAX_AGE = 120.0
+# a holding worth less than this with nothing of ours resting in it gets
+# no gateway book read (owner, 2026-09-14) — it earns nothing, so the
+# read buys the meter nothing; the sweep reads its own book when it places
+DUST_NO_READ_USD = 1.0
 # An exit slot "pays" when the model scores it at least this much a
 # day. Exits must earn while they wait (owner, 2026-09-04: 33 of 53
 # politics exits sat where nothing pays — buy-backs 14 ticks under the
@@ -1019,6 +1023,27 @@ class Family:
 
     def active_markets(self) -> set[str]:
         return {o.market for o in list(self.orders.values()) if o.purpose != "sell"}
+
+    def _dust_unoffered(self, slug: str, have_orders: set | None = None) -> bool:
+        """True for a holding worth less than the sweep's dollar with NOT
+        ONE order of ours resting in it. Such a market earns nothing —
+        rewards are paid on resting orders — so its book is worth no
+        gateway read while the exchange is throttling us. Never true
+        while anything rests there, and never true when we have no book
+        to judge the value by: no data is no verdict."""
+        if have_orders is None:
+            have_orders = {o.market for o in list(self.orders.values())}
+        if slug in have_orders:
+            return False
+        inv = self.inventory.get(slug) or {}
+        qty = abs(float(inv.get("qty") or 0.0))
+        if qty <= 0.0:
+            return False
+        book = self.cache.any_age(slug)
+        if book is None or not book.bids or not book.asks:
+            return False
+        mid = (float(book.bids[0][0]) + float(book.asks[0][0])) / 2.0
+        return qty * mid < DUST_NO_READ_USD
 
     def _dead_here(self, slug: str) -> bool:
         """Program known dead: read as paying nothing, or read as GONE
@@ -5291,7 +5316,23 @@ class Family:
                     except Exception as e:  # noqa: BLE001
                         self._log(event="book_error", market=slug,
                                   error=str(e)[:60])
-        active = sorted(self.active_markets() | set(self.inventory),
+        # DUST WITH NOTHING RESTING SPENDS NO GATEWAY READ (owner,
+        # 2026-09-14, "Do all three for the 429s" with the caveat
+        # "Unless it would affect our ability to estimate earnings from
+        # focus markets"): a held market with no order of ours on the
+        # book earns nothing, so its book buys the meter nothing, and a
+        # lot worth less than the sweep's dollar is not going to be
+        # exited by this desk anyway — the sweep owns it and reads its
+        # own book at the moment it places. On 2026-09-14 that was 60 of
+        # NFL's 63 holdings, $19.01 of cost basis between them, and NFL's
+        # measured rate was $0.00 a day across 0 markets. A market with
+        # ANY resting order keeps its book, whatever it is worth, because
+        # a resting order is what earns and the sampler prices it from
+        # the live book.
+        have_orders = {o.market for o in list(self.orders.values())}
+        holding = {s2 for s2 in self.inventory
+                   if not self._dust_unoffered(s2, have_orders)}
+        active = sorted(self.active_markets() | holding,
                         key=lambda s: self.cache.age(s, now), reverse=True)
         for slug in active:
             if done >= budget - scan_reserve:

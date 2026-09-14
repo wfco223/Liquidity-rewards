@@ -726,6 +726,73 @@ long and accreted, so search it rather than reading it through.
   run and any error — never the frozen page payload. One at a time: a
   tap while one runs answers with its progress instead of starting
   another. A run finishing saves the state and pushes an ntfy.
+  THE SHARES CROSS (owner, 2026-09-14, correcting my reading of his
+  rule: "The original intent of my request for the sweep process was
+  to have these shares cross the midpoint to sell because resting will
+  do nothing"). I had read "sell at the ask ... otherwise list at the
+  midpoint" as a RESTING price and laid every order on the passive
+  side of the touch, where it earned nothing and sold nothing: of the
+  96 orders the 00:08Z run placed on 2026-09-14, 27 were still sitting
+  there two and a half hours later and the exchange's position count
+  had fallen by five; 26 of the 27 sat on a ONE-CENT spread and
+  crossing all of them would have cost $1.09 in total. So the
+  midpoint decides WHICH lots go and nothing else: every holding under
+  SWEEP_MAX_VALUE_USD at the midpoint is sold ACROSS the spread — a
+  long sells AT THE BID, a short buys back AT THE ASK, the whole lot,
+  taking whatever rests there. That is the THIRD carved exception to
+  post-only placement (the 2026-08-22 taker dump and the bond rail are
+  the others) and its rails are: HIS TAP ONLY, never a price worse
+  than the touch (a sale never under the bid, a cover never over the
+  ask), and only a close of something already held — never an opening
+  order. The size is NOT capped to what the touch shows, because he
+  wants the lot gone: what the touch cannot absorb rests at that same
+  price, which is the most aggressive resting price the book has and
+  strictly better than the midpoint it used to sit at. A crossing
+  order FILLS AS IT IS PLACED, so the sweep books what the exchange's
+  answer says executed — the position moves, its cost moves with it,
+  the fill is journalled — and records only the remainder as resting;
+  an answer carrying no executions list at all books nothing and
+  leaves the whole lot resting (the 2026-09-12 close-out lesson), and
+  the open list and the position feed correct it either way within a
+  cycle. The card shows what crossing GIVES UP against the midpoint
+  before he taps, and the confirm says the orders trade at once rather
+  than resting.
+  WHERE THE 429s CAME FROM, AND THE THREE FIXES (owner, 2026-09-14
+  "Do all three for the 429s" with the caveat "Unless it would affect
+  our ability to estimate earnings from focus markets" — a whole day
+  of throttling). The cause was not any one caller: 335 markets wanted
+  a live book (the tender's 209-market board plus 173 held by the five
+  families) against a stream of 200 seats, so 135 markets had NO seat
+  and were read through the gateway every pass, forever. It ate
+  itself — 35 429s in 10.8 minutes, and since a 429 holds EVERY
+  gateway read on every thread, 314 s of blackout in a 645 s window,
+  the gateway shut 49% of the time, which is why the tender's own pass
+  line kept reading "0 books read, 72 due — held off after a 429". The
+  429'd paths proved it: the tender itself took one at 02:25:10Z
+  reading scc-hrep-rep-gte225, a FROZEN seat book, and one at
+  02:24:40Z was stsc-hormuz-normal-2026-09-30, a market we hold
+  nothing in and have no order in. (1) THE STREAM GETS A SECOND
+  CONNECTION: the cap is per SUBSCRIPTION, so STREAM_SHARDS
+  connections buy 200 seats each — each shard its own thread and its
+  own slice of the one priority-ordered list, so the best markets
+  still land on the first and a shard that dies costs only its slice.
+  FOCUS_WS_CAP/ENGINE_WS_CAP go 160/40 -> 280/120: the tender's whole
+  board fits with room for the old engine's held markets behind it.
+  (2) DUST WITH NOTHING RESTING SPENDS NO GATEWAY READ: a held market
+  with no order of ours on the book earns nothing — rewards are paid
+  on RESTING ORDERS — so its book buys the meter nothing. On
+  2026-09-14 that was 60 of NFL's 63 holdings, $19.01 of cost basis
+  between them, and NFL's measured rate was $0.00 a day across 0
+  markets. A market with ANY order resting keeps its book whatever it
+  is worth, and a market we have no book for at all is never judged
+  dust: no data is no verdict. (3) FROZEN GROUND KEEPS ITS BOOKS —
+  the cut I proposed and HIS CAVEAT KILLED. Frozen means neither desk
+  may act, so the read looked free; it is not, because his 72 hand
+  orders on the seat books measured $24.34 A DAY on 2026-09-14 and
+  the meter prices a resting order off the LIVE book. Frozen markets
+  keep their reads and their stream seats deliberately. The rule this
+  leaves: a read may be cut only where nothing rests, because nothing
+  resting is the only proof that nothing is being earned.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

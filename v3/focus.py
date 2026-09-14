@@ -262,8 +262,23 @@ FOCUS_ACTIONS_PER_PASS = 8      # places, moves and pulls a pass
 # dramatically reduce its websocket budget"): the focus markets seat
 # first, up to FOCUS_WS_CAP; the old engine's whole list — bonds,
 # football, unboosted politics — fits in the ENGINE_WS_CAP behind them
-FOCUS_WS_CAP = 160
-ENGINE_WS_CAP = 40
+# The stream's seats (owner, 2026-09-14). These were 160/40 when there
+# was ONE 200-market subscription, and the tender's board had already
+# grown to 209 — so 49 of its own markets never had a seat and were read
+# through the throttled gateway every pass. With STREAM_SHARDS
+# subscriptions the seats are 200 a shard: the tender's whole board fits
+# with room for the old engine's held markets behind it. ENGINE_WS_CAP is
+# deliberately loose enough that it never binds before the total does —
+# the tender is seated FIRST, so it cannot be crowded out, and a held
+# market earns more than an idle candidate does. With 209 on the board
+# and 173 held on 2026-09-14 that is 382 of the 400 seats, the first
+# time every market that earns has had one. The frozen seat
+# books keep their seats and their reads deliberately — his 72 hand
+# orders there measured $24.34 a day on 2026-09-14, and the meter prices
+# a resting order off the live book (owner: "Unless it would affect our
+# ability to estimate earnings from focus markets").
+FOCUS_WS_CAP = 280
+ENGINE_WS_CAP = 200
 LOG_KEEP = 300
 EVENTS_KEEP = 60
 PURPOSE = "focus"

@@ -1,6 +1,14 @@
 """The dust sweep (owner, 2026-09-13): every holding worth under $1 at
-the midpoint gets one exit at his rule, replacing every order on that
-side but his qualifying walls; placed once, left, run again by a tap.
+the midpoint is cleared, replacing every order on that side but his
+qualifying walls; run again by a tap.
+
+THE SHARES CROSS (owner, 2026-09-14, correcting my reading of the rule:
+"The original intent of my request for the sweep process was to have
+these shares cross the midpoint to sell because resting will do
+nothing"). The midpoint decides WHICH lots go and nothing else: a long
+sells at the bid, a short buys back at the ask, the whole lot, taking
+whatever rests there. What the touch cannot absorb is left resting at
+that same price.
 """
 import unittest
 
@@ -19,32 +27,41 @@ def wide(now, bid=0.05, ask=0.08, tick=0.01):
 
 
 class TestTheRule(unittest.TestCase):
-    def test_a_long_on_a_one_tick_spread_sells_at_the_ask(self):
-        self.assertEqual(price_for(6, 0.05, 0.06, 0.01), ("SELL", 0.06, SELL_LONG))
+    """Owner, 2026-09-14: "have these shares cross the midpoint to sell
+    because resting will do nothing." A long sells AT THE BID, a short
+    buys back AT THE ASK — the far side of the spread, every time."""
 
-    def test_a_long_on_a_wide_spread_lists_at_the_midpoint_rounded_toward_the_bid(self):
-        self.assertEqual(price_for(6, 0.05, 0.08, 0.01), ("SELL", 0.06, SELL_LONG))   # mid 6.5c
-        self.assertEqual(price_for(6, 0.05, 0.07, 0.01), ("SELL", 0.06, SELL_LONG))   # mid 6c exactly
+    def test_a_long_sells_at_the_bid(self):
+        self.assertEqual(price_for(6, 0.05, 0.06, 0.01), ("SELL", 0.05, SELL_LONG))
+        self.assertEqual(price_for(6, 0.05, 0.08, 0.01), ("SELL", 0.05, SELL_LONG))
 
-    def test_a_short_on_a_one_tick_spread_buys_back_at_the_bid(self):
-        self.assertEqual(price_for(-6, 0.05, 0.06, 0.01), ("BUY", 0.05, SELL_SHORT))
+    def test_a_short_buys_back_at_the_ask(self):
+        self.assertEqual(price_for(-6, 0.05, 0.06, 0.01), ("BUY", 0.06, SELL_SHORT))
+        self.assertEqual(price_for(-6, 0.05, 0.08, 0.01), ("BUY", 0.08, SELL_SHORT))
 
-    def test_a_short_on_a_wide_spread_rounds_toward_the_ask(self):
-        self.assertEqual(price_for(-6, 0.05, 0.08, 0.01), ("BUY", 0.07, SELL_SHORT))   # mid 6.5c
+    def test_the_midpoint_is_never_the_price_however_wide_the_spread(self):
+        # the old rule rested at the midpoint and sold nothing: of 96
+        # orders placed at 00:08Z on 2026-09-14, 27 were still sitting
+        # there two and a half hours later
+        for bid, ask in ((0.05, 0.08), (0.30, 0.41), (0.10, 0.90)):
+            _, long_px, _ = price_for(6, bid, ask, 0.01)
+            _, short_px, _ = price_for(-6, bid, ask, 0.01)
+            mid = (bid + ask) / 2.0
+            self.assertNotEqual(long_px, mid)
+            self.assertNotEqual(short_px, mid)
+            self.assertEqual((long_px, short_px), (bid, ask))
 
-    def test_a_tenth_cent_book_rounds_to_its_tick(self):
-        # a 1c spread on a 0.1c book has an inside: the midpoint, to the tick
-        self.assertEqual(price_for(6, 0.175, 0.185, 0.001), ("SELL", 0.18, SELL_LONG))
-        self.assertEqual(price_for(-6, 0.175, 0.186, 0.001), ("BUY", 0.181, SELL_SHORT))
-        # one tick on that book joins the touch
-        self.assertEqual(price_for(6, 0.175, 0.176, 0.001), ("SELL", 0.176, SELL_LONG))
+    def test_a_tenth_cent_book_crosses_at_its_own_touch(self):
+        # the price comes off the book, so it is already on the grid
+        self.assertEqual(price_for(6, 0.175, 0.185, 0.001), ("SELL", 0.175, SELL_LONG))
+        self.assertEqual(price_for(-6, 0.175, 0.186, 0.001), ("BUY", 0.186, SELL_SHORT))
 
-    def test_never_inside_the_touch(self):
-        for q in (6, -6):
-            for bid, ask in ((0.05, 0.08), (0.30, 0.41), (0.175, 0.199)):
-                _, px, _ = price_for(q, bid, ask, 0.01 if bid > 0.2 else 0.001)
-                self.assertGreaterEqual(px, bid)
-                self.assertLessEqual(px, ask)
+    def test_never_worse_than_the_touch(self):
+        for bid, ask in ((0.05, 0.08), (0.30, 0.41), (0.175, 0.199)):
+            _, long_px, _ = price_for(6, bid, ask, 0.001)
+            _, short_px, _ = price_for(-6, bid, ask, 0.001)
+            self.assertGreaterEqual(long_px, bid)     # a sale never under the bid
+            self.assertLessEqual(short_px, ask)       # a cover never over the ask
 
 
 class Base(unittest.TestCase):
@@ -61,14 +78,27 @@ class Base(unittest.TestCase):
     def orders_on(self, slug, side):
         return [o for o in self.r.fam.orders.values() if o.market == slug and o.side == side]
 
+    def touch_absorbs(self, qty):
+        """The touch takes this much of a crossing order; the rest rests.
+        0 models a touch that was gone by the time the order landed."""
+        self.r.exchange.taker_fill_qty = qty
+
 
 class TestThePlan(Base):
     def test_only_holdings_under_a_dollar_at_the_midpoint(self):
         p = self.sweep.plan(self.r.now)
         self.assertEqual([r["market"] for r in p["rows"]], [A])
         row = p["rows"][0]
-        self.assertEqual((row["side"], row["price"], row["value"]), ("SELL", 0.06, 0.39))
+        # the midpoint picks the lot ($0.39); the BID is the price
+        self.assertEqual((row["side"], row["price"], row["value"]), ("SELL", 0.05, 0.39))
         self.assertEqual(SWEEP_MAX_VALUE_USD, 1.0)
+
+    def test_the_preview_says_what_crossing_gives_up(self):
+        # a taker order spends money a resting one does not, so the card
+        # shows the cost BEFORE he taps Place
+        p = self.sweep.plan(self.r.now)
+        self.assertAlmostEqual(p["rows"][0]["concession"], 6.0 * 0.015, places=4)
+        self.assertAlmostEqual(p["concession"], 0.09, places=2)
 
     def test_frozen_and_close_out_ground_are_skipped(self):
         self.r.fam.freeze_dyn.add(A)
@@ -90,15 +120,47 @@ class TestThePlan(Base):
 
 
 class TestTheRun(Base):
-    def test_places_one_exit_for_the_whole_lot_as_a_sweep_order(self):
+    def test_the_whole_lot_crosses_at_the_bid_and_is_gone(self):
         res = self.sweep.run(self.r.now)
         self.assertEqual(res["n"], 1)
+        row = res["placed"][0]
+        self.assertEqual((row["side"], row["price"]), ("SELL", 0.05))
+        self.assertEqual(row["filled"], 6.0)
+        self.assertEqual(row["resting"], 0.0)
+        # it traded, so nothing is left resting and the position is flat
+        self.assertEqual(self.orders_on(A, "SELL"), [])
+        self.assertNotIn(A, self.r.fam.inventory)
+        self.assertEqual(self.sweep.preview, {})       # the plan was acted on
+
+    def test_a_fill_is_booked_the_moment_it_happens_not_left_to_the_feed(self):
+        # the position feed lags a fill by a read or more, and an unbooked
+        # sale would leave the engine sizing exits for shares that are gone
+        self.sweep.run(self.r.now)
+        self.assertNotIn(A, self.r.fam.inventory)
+        self.assertIn("sweep_filled", [r["event"] for r in self.r.fam.log[-3:]])
+        self.assertTrue(any(f.get("market") == A for f in self.r.fam.fills))
+
+    def test_what_the_touch_cannot_absorb_is_left_resting_at_the_same_price(self):
+        self.touch_absorbs(4.0)                 # the bid shows 4 of our 6
+        res = self.sweep.run(self.r.now)
+        row = res["placed"][0]
+        self.assertEqual((row["filled"], row["resting"]), (4.0, 2.0))
         mine = self.orders_on(A, "SELL")
         self.assertEqual(len(mine), 1)
         o = mine[0]
-        self.assertEqual((o.purpose, o.price, o.qty, o.intent), (PURPOSE, 0.06, 6.0, SELL_LONG))
-        self.assertIn(o.id, self.r.exchange.live)      # it rests on the exchange
-        self.assertEqual(self.sweep.preview, {})       # the plan was acted on
+        # the remainder rests at the crossing price, not the midpoint
+        self.assertEqual((o.purpose, o.price, o.qty, o.intent),
+                         (PURPOSE, 0.05, 2.0, SELL_LONG))
+        self.assertEqual(self.r.fam.inventory[A]["qty"], 2.0)
+
+    def test_an_answer_with_no_executions_books_nothing_and_rests_the_lot(self):
+        # the 2026-09-12 close-out lesson: book only what the exchange's
+        # own answer says executed
+        self.touch_absorbs(0.0)
+        res = self.sweep.run(self.r.now)
+        self.assertEqual((res["placed"][0]["filled"], res["placed"][0]["resting"]), (0.0, 6.0))
+        self.assertEqual(self.r.fam.inventory[A]["qty"], 6.0)
+        self.assertEqual(self.orders_on(A, "SELL")[0].qty, 6.0)
 
     def test_replaces_the_engines_the_tenders_and_his_hand_orders_but_not_a_wall(self):
         for oid, purpose, price, qty, why in (
@@ -121,14 +183,24 @@ class TestTheRun(Base):
         self.assertNotIn("eng", left); self.assertNotIn("ten", left); self.assertNotIn("hand", left)
         self.assertIn("wall", left)                    # the wall offers none of the lot
         self.assertIn("bid", left)                     # the other side is not an exit
-        self.assertEqual(len(self.orders_on(A, "SELL")), 2)   # the sweep's + the wall
+        # the sweep's own order crossed and traded, so only the wall is left
+        self.assertEqual([o.id for o in self.orders_on(A, "SELL")], ["wall"])
 
-    def test_a_short_is_bought_back_at_the_rule(self):
+    def test_a_short_is_bought_back_across_the_spread_at_the_ask(self):
         self.r.fam.inventory[A] = {"qty": -6.0, "cost": -0.30}
         self.r.positions[A] = (-6.0, -0.30)
         res = self.sweep.run(self.r.now)
+        row = res["placed"][0]
+        self.assertEqual((row["side"], row["price"], row["filled"]), ("BUY", 0.08, 6.0))
+        self.assertNotIn(A, self.r.fam.inventory)          # the short is closed
+        # and a remainder would rest as the cover it is, never a fresh long
+        self.r.fam.inventory[A] = {"qty": -6.0, "cost": -0.30}
+        self.r.positions[A] = (-6.0, -0.30)
+        self.touch_absorbs(2.0)
+        self.sweep.run(self.r.now)
         o = self.orders_on(A, "BUY")[0]
-        self.assertEqual((o.purpose, o.price, o.qty, o.intent), (PURPOSE, 0.07, 6.0, SELL_SHORT))
+        self.assertEqual((o.purpose, o.price, o.qty, o.intent),
+                         (PURPOSE, 0.08, 4.0, SELL_SHORT))
 
     def test_a_refused_placement_is_reported_and_leaves_no_record(self):
         self.r.fam.desk.place_resting = lambda *a, **k: OrderResult(ok=False, note="nope")
@@ -139,6 +211,7 @@ class TestTheRun(Base):
         self.assertEqual(self.r.fam.log[-1]["event"], "sweep_refused")
 
     def test_the_engine_never_offers_the_lot_on_top_of_a_sweep_order(self):
+        self.touch_absorbs(0.0)        # the lot rests, so there is one to guard
         # control: with nothing resting, the engine's own cycle rests an exit
         self.r.cycle()
         self.assertGreaterEqual(len(self.orders_on(A, "SELL")), 1)
@@ -168,6 +241,12 @@ class TestTheBookIsReadRightBeforePlacing(Base):
     fresher than 120s — refusing to place blind": the plan had priced all
     102 holdings up front and the placing loop that followed took
     minutes, so the books it was pricing from aged out under it."""
+
+    def setUp(self):
+        super().setUp()
+        # these tests are about WHEN the book is read, not about the fill:
+        # a touch that absorbs nothing leaves the order resting to inspect
+        self.touch_absorbs(0.0)
 
     def place_takes(self, seconds):
         """Every placement advances the clock, as a real one does."""
@@ -200,7 +279,7 @@ class TestTheBookIsReadRightBeforePlacing(Base):
         # placement read again for itself — the read that the price and the
         # desk's freshness gate both depend on
         self.assertEqual(self.r.exchange.book_reads.count(A), 1)
-        self.assertEqual(self.orders_on(A, "SELL")[0].price, 0.06)
+        self.assertEqual(self.orders_on(A, "SELL")[0].price, 0.05)
         self.assertLessEqual(self.r.cache.age(A, self.r.now), 30.0)
 
     def test_the_plan_stamps_each_book_at_its_own_read(self):
@@ -244,7 +323,7 @@ class TestTheBookIsReadRightBeforePlacing(Base):
             return real(*a, **kw)
         self.r.fam.desk.place_resting = move_the_book
         self.sweep.plan(self.r.now)
-        self.assertEqual(self.sweep.preview["rows"][0]["price"], 0.06)
+        self.assertEqual(self.sweep.preview["rows"][0]["price"], 0.05)
         # the market moves, and the clock moves past the cached book
         self.r.exchange.books[A] = wide(self.r.now, 0.20, 0.23)   # mid 21.5c
         self.r.now += 100.0
@@ -253,7 +332,7 @@ class TestTheBookIsReadRightBeforePlacing(Base):
         res = self.sweep.run(self.r.now)
         self.assertEqual(res["n"], 1)
         o = self.orders_on(A, "SELL")[0]
-        self.assertEqual(o.price, 0.21)            # the fresh book's rule price
+        self.assertEqual(o.price, 0.20)            # the fresh book's bid
         self.assertEqual(res["placed"][0]["mid"], 0.215)
 
     def test_a_lot_worth_over_the_dollar_on_the_fresh_read_is_left_alone(self):
@@ -339,6 +418,7 @@ class TestTheTapAnswersAtOnce(Base):
         self.assertEqual(self.sweep.preview["n"], 1)
 
     def test_a_run_calls_the_done_hook_with_its_result(self):
+        self.touch_absorbs(0.0)
         got = []
         r = self.sweep.start("run", self.r.now, on_done=got.append)
         self.assertTrue(r["ok"])
@@ -373,6 +453,13 @@ class TestTheEngineIsHandsOff(Base):
     name "sweep", so a sweep cover read as nothing, the engine sized a
     second cover for the whole short and the lot was offered twice in ten
     markets after the 18:16Z run. Both filling flips a short long."""
+
+    def setUp(self):
+        super().setUp()
+        # these tests are about what the ENGINE does to a sweep order that
+        # is resting, so the touch absorbs nothing and the lot stays on
+        # the book to be left alone
+        self.touch_absorbs(0.0)
 
     def short_with_a_sweep_cover(self, qty=-6.0):
         """A real short with the sweep's cover resting on the exchange —
@@ -481,3 +568,77 @@ class TestTheTenderStandsDown(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestCrossingIsRailed(Base):
+    """Crossing is the THIRD carved exception to post-only placement
+    (owner, 2026-09-14). The rails that hold it: his tap only, a close of
+    something already held, and never a price worse than the touch."""
+
+    def test_the_order_goes_out_as_a_taker_not_post_only(self):
+        sent = []
+        real = self.r.exchange.post
+
+        def watch(url, body, path=None, **kw):
+            if url.endswith("/v1/orders"):
+                sent.append(body)
+            return real(url, body, path=path, **kw)
+        self.r.exchange.post = watch
+        self.sweep.run(self.r.now)
+        self.assertEqual(len(sent), 1)
+        # post-only OFF: the order is allowed to initiate a trade
+        self.assertIs(sent[0]["participateDontInitiate"], False)
+
+    def test_a_price_worse_than_the_touch_is_refused(self):
+        desk = self.r.fam.desk
+        # a sale UNDER the bid, and a cover OVER the ask, both refused
+        r1 = desk.place_resting(A, "SELL", 0.04, 6.0, net_position=6.0,
+                                intent=SELL_LONG, taker="sweep",
+                                initiator="owner", verify=False)
+        self.assertFalse(r1.ok)
+        self.assertIn("never worse than the touch", r1.note)
+        self.r.fam.inventory[A] = {"qty": -6.0, "cost": -0.30}
+        r2 = desk.place_resting(A, "BUY", 0.09, 6.0, net_position=-6.0,
+                                intent=SELL_SHORT, taker="sweep",
+                                close_short=True, initiator="owner", verify=False)
+        self.assertFalse(r2.ok)
+        self.assertIn("never worse than the touch", r2.note)
+
+    def test_nothing_but_his_tap_may_cross(self):
+        r = self.r.fam.desk.place_resting(A, "SELL", 0.05, 6.0, net_position=6.0,
+                                          intent=SELL_LONG, taker="sweep",
+                                          initiator="auto", verify=False)
+        self.assertFalse(r.ok)
+        self.assertIn("owner's tap only", r.note)
+
+    def test_it_may_only_close_a_position_never_open_one(self):
+        r = self.r.fam.desk.place_resting(A, "BUY", 0.05, 6.0, net_position=0.0,
+                                          intent=BUY_LONG, taker="sweep",
+                                          initiator="owner", verify=False)
+        self.assertFalse(r.ok)
+        self.assertIn("only close a position", r.note)
+
+
+class TestTheCostWalksBackToZero(Base):
+    """A position's cost carries the sign of its quantity (owner,
+    2026-09-12), so a basis is always a price a share. A crossing fill
+    has to move the cost with the shares or the next round trip learns a
+    nonsense number."""
+
+    def test_a_sale_takes_its_proceeds_out_of_the_basis(self):
+        self.touch_absorbs(3.0)                  # 3 of 6 sell at 5c
+        self.sweep.run(self.r.now)
+        inv = self.r.fam.inventory[A]
+        self.assertEqual(inv["qty"], 3.0)
+        self.assertAlmostEqual(inv["cost"], 0.30 - 3.0 * 0.05, places=4)
+        self.assertGreater(inv["cost"] / inv["qty"], 0.0)   # still a price a share
+
+    def test_covering_a_short_walks_its_basis_back_toward_zero(self):
+        self.r.fam.inventory[A] = {"qty": -6.0, "cost": -0.30}
+        self.r.positions[A] = (-6.0, -0.30)
+        self.touch_absorbs(3.0)                  # 3 of 6 bought back at 8c
+        self.sweep.run(self.r.now)
+        inv = self.r.fam.inventory[A]
+        self.assertEqual(inv["qty"], -3.0)
+        self.assertAlmostEqual(inv["cost"], -0.30 + 3.0 * 0.08, places=4)
+        self.assertGreater(inv["cost"] / inv["qty"], 0.0)   # sign still matches

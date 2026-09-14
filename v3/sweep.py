@@ -1,27 +1,39 @@
 """The dust sweep (owner, 2026-09-13).
 
 "Let's just do the holdings that are less than 1 dollar when valued at
-a midpoint price between the bid and the ask. If the difference between
-the bid and the ask is 1 cent, then sell at the ask. Otherwise list at
-the midpoint. If the midpoint is not a whole number you can round
-toward the price that it could be sold at." Then: "Replace all my hand
-orders" and "Place once and leave it. Give me a button to run it again."
+a midpoint price between the bid and the ask." Then: "Replace all my
+hand orders" and "Place once and leave it. Give me a button to run it
+again."
 
-Every held position, in every family, whose shares x live midpoint is
-under SWEEP_MAX_VALUE_USD gets ONE exit at the rule's price: a long
-sells at the ask on a one-tick spread, else at the midpoint rounded
-DOWN to the tick (toward the bid, the side it could be sold at); a
-short buys back at the bid on a one-tick spread, else at the midpoint
-rounded UP (toward the ask). Sized to the whole lot, post-only, never
-inside the touch. Every order already on that side comes off first --
+THE SHARES CROSS (owner, 2026-09-14, correcting my reading of the rule:
+"The original intent of my request for the sweep process was to have
+these shares cross the midpoint to sell because resting will do
+nothing"). The first build read the rule as a resting price and laid
+every order on the passive side of the touch, where it earned nothing
+and sold nothing: of 96 orders placed on 2026-09-14 at 00:08Z, 27 were
+still sitting there two and a half hours later and the exchange's
+position count had fallen by five. Crossing all 27 would have cost
+$1.09 -- 26 of them sat on a one-cent spread.
+
+So the midpoint decides WHICH lots go, and nothing else: every held
+position, in every family, whose shares x live midpoint is under
+SWEEP_MAX_VALUE_USD is sold across the spread -- a long SELLS AT THE
+BID, a short BUYS BACK AT THE ASK, the whole lot, taking whatever rests
+there. That is a taker order, the THIRD carved exception to post-only
+placement (the 2026-08-22 taker dump and the bond rail are the others),
+and it runs on HIS TAP ALONE, never worse than the touch. Anything the
+touch cannot absorb rests at that same price, which is the most
+aggressive resting price there is -- strictly better than the midpoint
+it used to sit at. Every order already on that side comes off first --
 the engine's, the tender's and his hand's (his carve-out) -- except his
 qualifying walls, which by the house convention offer none of the lot.
 Each order is priced on a book read the second it goes on, never on the
 plan's (owner, 2026-09-13 "Can you read the book immediately before
 placing": the first run placed 7 and was refused 95, "no book fresher
 than 120s", because the placing loop outlived the plan's reads).
-Placed once and left; the button runs another pass. Frozen ground and
-close-out ground are skipped. The order rests as purpose "sweep": the
+Placed once and left; the button runs another pass -- what the touch
+could not absorb is still resting at the crossing price. Frozen ground
+and close-out ground are skipped. The order rests as purpose "sweep": the
 engine treats it as hands-off like his own and nets it out of every
 exit it sizes, and the tender counts it as cover on the exit side, so
 the lot is never offered twice. Nothing here runs on its own -- only
@@ -30,7 +42,6 @@ his tap.
 
 from __future__ import annotations
 
-import math
 import threading
 import time
 
@@ -50,26 +61,17 @@ PURPOSE = "sweep"
 LOG_KEEP = 40
 
 
-def _floor_tick(x: float, tick: float) -> float:
-    return round(math.floor(x / tick + 1e-9) * tick, 4)
-
-
-def _ceil_tick(x: float, tick: float) -> float:
-    return round(math.ceil(x / tick - 1e-9) * tick, 4)
-
-
 def price_for(qty: float, bid: float, ask: float, tick: float) -> tuple[str, float, str]:
     """The owner's rule for one holding. Returns (book side, price,
-    intent). A one-tick spread has no inside, so the exit joins the far
-    side of the touch; a wider one sits at the midpoint, rounded toward
-    the side the position could be closed at right now."""
-    tick = float(tick or 0.01)
-    one_tick = (ask - bid) <= tick * 1.0001
+    intent). The lot CROSSES (owner, 2026-09-14 "have these shares cross
+    the midpoint to sell because resting will do nothing"): a long sells
+    at the bid, a short buys back at the ask. The midpoint decides which
+    lots qualify; it is never the price. `tick` is kept for the caller's
+    snap and is not needed here -- both prices come off the book and are
+    already on the grid."""
     if qty > 0:
-        px = ask if one_tick else _floor_tick((bid + ask) / 2.0, tick)
-        return "SELL", round(px, 4), SELL_LONG
-    px = bid if one_tick else _ceil_tick((bid + ask) / 2.0, tick)
-    return "BUY", round(px, 4), SELL_SHORT
+        return "SELL", round(float(bid), 4), SELL_LONG
+    return "BUY", round(float(ask), 4), SELL_SHORT
 
 
 class Sweep:
@@ -146,16 +148,57 @@ class Sweep:
                     "key": key, "market": slug, "name": name, "qty": qty,
                     "bid": bid, "ask": ask, "mid": round(mid, 4),
                     "value": round(value, 2), "side": side, "price": px,
+                    # what crossing gives up against the midpoint it used
+                    # to rest at — shown on the card BEFORE he taps Place,
+                    # because a taker order spends money a resting one does not
+                    "concession": round(abs(qty) * abs(px - mid), 4),
                     "intent": intent, "replace": [o.id for o in replace],
                     "hand": sum(1 for o in replace if o.purpose == "manual")})
         plan = {"at": round(now, 1), "rows": rows, "skipped": skipped,
                 "n": len(rows), "value": round(sum(r["value"] for r in rows), 2),
+                "concession": round(sum(r["concession"] for r in rows), 2),
                 "replace": sum(len(r["replace"]) for r in rows),
                 "hand": sum(r["hand"] for r in rows)}
         self.preview = plan
         return plan
 
     # -- the run -------------------------------------------------------------
+
+    def _book_fill(self, fam, slug: str, qty: float, side: str, price: float,
+                   filled: float, intent: str, oid: str | None, now: float) -> None:
+        """Book what the crossing order executed the moment it was placed:
+        the position moves, its cost moves with it, and the fill goes in
+        the journal so the fills page and the evidence see it. A position
+        that reaches flat leaves the book entirely. The position feed
+        lags a fill by a read or more, which is exactly why this is done
+        here and not left to the feed."""
+        inv = fam.inventory.get(slug)
+        if inv is None:
+            return
+        signed = -filled if qty > 0 else filled      # a sale reduces, a cover adds
+        before = float(inv.get("qty") or 0.0)
+        inv["qty"] = round(before + signed, 4)
+        # the cost carries the sign of the quantity (owner, 2026-09-12), so
+        # the money leaving is the shares leaving at the price they went at
+        inv["cost"] = round(float(inv.get("cost") or 0.0) + signed * price, 4)
+        left = round(inv["qty"], 2)
+        if abs(inv["qty"]) < 0.005:
+            fam.inventory.pop(slug, None)
+            fam.inv_since.pop(slug, None)
+            left = 0.0
+        try:
+            fam._journal_fill(FamilyOrder(
+                id=oid or f"sweep{int(now)}", market=slug, side=side,
+                price=price, qty=filled, intent=intent, placed_ts=now,
+                purpose=PURPOSE,
+                why="the dust sweep crossed the spread (owner, 2026-09-14)"),
+                filled, now, left)
+        except Exception:  # noqa: BLE001 — the fill is booked either way
+            pass
+        fam._log(event="sweep_filled", market=slug, side=side, price=price,
+                 qty=filled,
+                 note=(f"crossed and filled at once — {left:g} left"
+                       if abs(left) >= 0.01 else "crossed and filled at once — flat"))
 
     def _book_to_place_on(self, fam, slug: str):
         """The book this order is priced and placed on, read RIGHT NOW.
@@ -223,7 +266,8 @@ class Sweep:
             tick = float(getattr(book, "tick", 0.0) or 0.01)
             side, px, intent = price_for(qty, bid, ask, tick)
             row.update(bid=bid, ask=ask, mid=round(mid, 4),
-                       value=round(value, 2), side=side, price=px)
+                       value=round(value, 2), side=side, price=px,
+                       concession=round(abs(qty) * abs(px - mid), 4))
             # his dollar, tested on the same read the price comes from
             if value >= SWEEP_MAX_VALUE_USD:
                 skipped.append({
@@ -253,9 +297,11 @@ class Sweep:
                     except Exception:  # noqa: BLE001
                         pass
                     gone.append(oid)
+            # crossing on purpose (owner, 2026-09-14): the carved taker
+            # rail for the sweep, his tap only, never worse than the touch
             res = fam.desk.place_resting(
                 slug, side, px, abs(qty),
-                net_position=qty, intent=intent,
+                net_position=qty, intent=intent, taker="sweep",
                 close_short=(side == "BUY"), initiator="owner", verify=False)
             row["replaced"] = gone
             if not res.ok or not res.order_id:
@@ -265,24 +311,52 @@ class Sweep:
                          price=px, qty=abs(qty), note=str(res.note)[:120])
                 continue
             got = float(res.price or px)
-            fam.orders[res.order_id] = FamilyOrder(
-                id=res.order_id, market=slug, side=side, price=got,
-                qty=abs(qty), intent=intent, placed_ts=self._clock(), purpose=PURPOSE,
-                why=(f"the dust sweep (owner, 2026-09-13): {abs(qty):g} sh worth "
-                     f"${value:.2f} at the midpoint, listed at the rule's price"))
+            # A CROSSING ORDER FILLS AS IT IS PLACED, so what the exchange
+            # says executed is booked here and only the remainder is
+            # recorded as resting. Booking only what the answer's own
+            # executions list carries is the 2026-09-12 close-out lesson
+            # (a sale into our own ghost bid was booked as sold twenty
+            # times); an answer that carries no list at all books nothing
+            # and leaves the whole lot resting, and the open list and the
+            # position feed correct it either way within a cycle.
+            filled = float(res.filled or 0.0)
+            filled = min(filled, abs(qty))
+            rest = round(abs(qty) - filled, 2)
+            row["filled"] = round(filled, 2)
+            row["resting"] = rest if rest >= 0.01 else 0.0
             row["id"] = res.order_id
             row["price"] = got
+            if filled >= 0.01:
+                self._book_fill(fam, slug, qty, side, got, filled, intent,
+                                res.order_id, now)
+            if rest >= 0.01 and res.order_id:
+                fam.orders[res.order_id] = FamilyOrder(
+                    id=res.order_id, market=slug, side=side, price=got,
+                    qty=rest, intent=intent, placed_ts=self._clock(), purpose=PURPOSE,
+                    why=(f"the dust sweep (owner, 2026-09-13): {abs(qty):g} sh worth "
+                         f"${value:.2f} at the midpoint, crossed at "
+                         f"{'the bid' if side == 'SELL' else 'the ask'}"
+                         + (f"; {filled:g} went at once, {rest:g} left resting"
+                            if filled >= 0.01 else "")))
             placed.append(row)
             fam._log(event="sweep", market=slug, side=side, price=got,
                      qty=abs(qty),
                      note=(f"worth ${value:.2f} at mid {mid * 100:.1f}c on a book read "
-                           f"now; replaced {len(gone)} ({row['hand']} yours)"))
+                           f"now; crossed at {got * 100:.1f}c — {filled:g} filled, "
+                           f"{rest:g} resting; replaced {len(gone)} "
+                           f"({row['hand']} yours)"))
         self.last = {"at": round(now, 1), "placed": placed, "failed": failed,
                      "skipped": skipped, "n": len(placed),
                      "value": round(sum(r["value"] for r in placed), 2),
+                     "filled": round(sum(r.get("filled") or 0.0 for r in placed), 2),
+                     "resting": sum(1 for r in placed if (r.get("resting") or 0.0) >= 0.01),
+                     "concession": round(sum(r.get("concession") or 0.0
+                                             for r in placed), 2),
                      "hand": sum(r["hand"] for r in placed)}
         self.log.append({"ts": round(now, 1), "placed": len(placed), "failed": len(failed),
-                         "value": self.last["value"], "hand": self.last["hand"]})
+                         "value": self.last["value"], "hand": self.last["hand"],
+                         "filled": self.last["filled"],
+                         "concession": self.last["concession"]})
         del self.log[:-LOG_KEEP]
         self.preview = {}
         return self.last
