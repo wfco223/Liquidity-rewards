@@ -44,6 +44,7 @@ from .state import StateStore
 from .switch import MasterSwitch
 from .focus import ENGINE_WS_CAP, FOCUS_CYCLE_S, FOCUS_WS_CAP, Focus
 from .sweep import Sweep
+from .maintenance import Maintenance
 from .ws import STREAM_SHARDS, Stream
 
 try:
@@ -1022,7 +1023,8 @@ class Monitor:
                 health=self.place_health,
                 whitelist=fam.knows,
                 switch_on=lambda s=sw: (self.master.on and s.on
-                                        and self._floor_ok),
+                                        and self._floor_ok
+                                        and not self.maint.holding()),
                 fresh_book=lambda slug, c=cache: c.fresh(slug, 120.0, time.time()),
                 # the price grid, resolved apart from book freshness:
                 # the exchange's own figure where we have it, else the
@@ -1068,10 +1070,18 @@ class Monitor:
         # the dust sweep (owner, 2026-09-13): every family's holdings,
         # his tap only — see v3/sweep.py
         self.sweep = Sweep(self.families, self.client)
+        # scheduled maintenance (owner, 2026-09-14): the orders come off
+        # fifteen minutes before the window and go back after it, his
+        # hand's and his qualifying walls included — the 2026-09-11
+        # maintenance cancelled every one of them and nothing re-places
+        # a wall on its own.
+        self.maint = Maintenance(self.families, self.client,
+                                 alert=self.alerts.notify)
         self.focus = Focus(self.families["politics"], self.client, self.bonds,
                            fair=self.silver.model_fair, alert=self.alerts.notify,
                            switch_on=lambda: (self.master.on
-                                              and self.switches["focus"].on),
+                                              and self.switches["focus"].on
+                                              and not self.maint.holding()),
                            buying_power=self.client.buying_power)
         self.focus.wall_note = self._wall_note      # the qualify button's run line
         self.focus.balances_fn = lambda: getattr(self.client, "balances_last", None)
@@ -1231,6 +1241,12 @@ class Monitor:
             # a snapshot taken mid-mutation is caught below and skipped, and
             # the next tick is 20 s away.
             self._verify_probe(now)
+            # the maintenance window runs off THIS clock, never the
+            # cycle's: the pull has a deadline and the cycle does not
+            try:
+                self.maint.tick(now)
+            except Exception as e:  # noqa: BLE001 — said, never fatal
+                self._note(f"maintenance tick: {type(e).__name__}: {e}")
             for key, fam in self.families.items():
                 try:
                     try:
@@ -1482,6 +1498,8 @@ class Monitor:
             self.switches["focus"].restore(saved["sw_focus"])
         if saved.get("sweep"):
             self.sweep.restore(saved["sweep"])
+        if isinstance(saved.get("maint"), dict):
+            self.maint.restore_state(saved["maint"])
         if saved.get("focus"):
             self.focus.restore(saved["focus"])
         self.ladder_seen = {str(k): str(v) for k, v in
@@ -1625,6 +1643,7 @@ class Monitor:
             "sw_bonds": self.switches["bonds"].to_dict(),
             "sw_focus": self.switches["focus"].to_dict(),
             "sweep": self.sweep.to_dict(),
+            "maint": self.maint.to_dict(),
             "focus": self.focus.to_dict(),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
@@ -4021,6 +4040,7 @@ class Monitor:
     def public_state(self) -> dict:
         st = dict(self.last_state) if self.last_state else {"saved_at": 0}
         st["sweep"] = self.sweep.view()
+        st["maint"] = self.maint.view()
         st["switch_view"] = {
             "master": self.master.state(),
             **({"bonds": self.switches["bonds"].state()}

@@ -914,6 +914,7 @@ function render(d){
  var ph=d.place_health||{};
  if(ph.blocked){var t=new Date((ph.since||0)*1000);out+='<div class="card"><div class="warn"><b>The exchange is refusing this server\\'s orders</b> \\u2014 "your connection looks like a VPN", since '+('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+', '+(ph.refused||0)+' refused.</div><div class="muted">Nothing is cancelled that could not come back: moves, step-ups and re-prices are paused; one placement a minute probes for recovery. Cancels that only reduce risk still run. The fix is a new outbound address: tap Deploy on DigitalOcean.</div></div>';}
  out+=placesCard(d.places||{});
+ out+=maintCard(d.maint||{});
  out+=sweepCard(window._sweep||d.sweep||{});
  var order=['master'];for(var k in sv){if(k!=='master')order.push(k);}
  order.forEach(function(k){
@@ -976,6 +977,18 @@ function placesCard(pl){
  return out+'</div>';
 }
 function tap(op,which){post({op:'switch_'+op,which:which});}
+function maintCard(m){
+ if(!m||!m.windows||!m.windows.length)return '';
+ var ph=m.phase||'idle';
+ if(ph==='idle'&&!m.n)
+  return '<div class="card"><b>Scheduled maintenance</b><div class="muted">Next window '+esc(m.windows[0].start)+' to '+esc(m.windows[0].end)+' (your time). Every order comes off 15 minutes before it — yours and your qualifying walls included, because the exchange cancels them anyway and only this puts them back. Nothing places while it runs.</div></div>';
+ var cls=(ph==='restoring')?'warn':(ph==='done'?'ok':'warn');
+ var h='<div class="card"><b>Scheduled maintenance</b> <span class="'+cls+'">'+esc(ph)+'</span>';
+ h+='<div class="sub">'+esc(m.note||'')+'</div>';
+ if(m.n){h+='<div class="sub">'+m.n+' pulled · <b>'+(m.restored||0)+'</b> back on · '+(m.left||0)+' to go'+(m.failed?' · <span class="warn">'+m.failed+' refused</span>':'')+'</div>';}
+ if((m.log||[]).length){h+='<details class="how"><summary class="muted">what happened</summary>'+m.log.map(function(r){return '<div class="muted">'+when(r.ts)+' — '+esc(r.note||'')+'</div>';}).join('')+'</details>';}
+ return h+'</div>';
+}
 function sweepCard(sw){
  var last=sw.last||{},pv=sw.preview||{},busy=sw.busy||null;
  var h='<div class="card"><b>Sweep dust</b><div class="muted">Every holding worth under '+usd(sw.max_value||1)+' at the midpoint is <b>sold across the spread</b>: a long sells at the bid, a short buys back at the ask, the whole lot, taking whatever rests there. The midpoint only decides which lots go — it is never the price. It replaces every order on that side — the engine\\'s, the tender\\'s and your hand\\'s — but not your qualifying walls. Anything the touch cannot absorb is left resting at that same price; tap again for another pass.</div>';
