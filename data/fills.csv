@@ -3803,3 +3803,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789463166.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,88,0.526,backfill,,3.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGH5C84XYVB9
 1789463166.9,politics,usgubewc-usgub-ar-2026-11-03-rep,SELL,0.89,0.98,backfill,,19.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG3421ZHRVB3
 1789463858.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,3,0.526,sell,0.0528,4.03,0.5,52,54,0.878,0.526,0.527,0.026,0,an exit — its fill reduces the position it sits on,CGH5C84XYVB9
+1789472194.9,politics,ushrewc-ushr-me-02-2026-11-03-rep,SELL,89,0.51,focus,4.2076,2.95,,47,51,0,0.5,0.51,-0.02,-89,focus entry: ~$3.71/day; fill odds 71%/day; EV +1.28/day,CGM2BM3J8VB7
+1789474070.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-34,0.493,fix,,0.92,,,,,,,,,size trimmed by 34 to the exchange's count (order CG325K3XPVB5),CG325K3XPVB5
