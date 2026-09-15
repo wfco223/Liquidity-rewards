@@ -10853,6 +10853,7 @@ date,market,program_type,reward_usd,status
 2026-09-13,aqc-nfl-nfc-2027-01-24-champq-nyg,liquidityProgram,0.26,PENDING
 2026-09-13,ewc-usgub-ia-2026-11-03-rep,liquidityProgram,0.96,PENDING
 2026-09-13,ewc-usse-nc-2026-11-03-rep,liquidityProgram,10.08,PENDING
+2026-09-13,ewc-usse-ne-2026-11-03-dem,liquidityProgram,0.6,PENDING
 2026-09-13,ewc-usse-nh-2026-11-03-dem,liquidityProgram,6.08,PENDING
 2026-09-13,ewc-usse-nh-2026-11-03-rep,liquidityProgram,5.58,PENDING
 2026-09-13,ftsc-nfl-kmostfp-2027-01-10-jakell,liquidityProgram,0.02,PENDING
