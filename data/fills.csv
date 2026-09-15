@@ -3877,3 +3877,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789491720.1,politics,scc-hrep-rep-2026-11-03-gte185,SELL,-48.2,0.99,fix,0,3.48,0.889175,88,94,0.445,0.98,0.99,-0.1008,-105.57,size trimmed by 48.2 to the exchange's count (order CG340FNH2VB6),CG340FNH2VB6
 1789491720.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,84,0.527,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3H4596VB7
 1789491720.1,politics,scc-hrep-rep-2026-11-03-gte215,SELL,37.72,0.34,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV3J4Z38VB6
+1789492094.9,cfb,aachc-cfb-wins-2026-11-28-missr-7pt5wins,SELL,0.1,0.4,manual,0.0136,28.28,,32,40,0,0.39,0.99,-0.03,-0.1,the owner's own order — the engine leaves it alone,CG321FGFCVB7
+1789492154.9,cfb,aachc-cfb-wins-2026-11-28-missr-7pt5wins,BUY,0.1,0.98,sell,0,0.02,,36,41,0.455,0.36,0.99,0.59,0,buying back the short at or under what it sold for — the bid earns while it wait,CGVBQ74K4VB6
+1789492214.9,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,32.82,0.03,focus,15.3279,0.27,0.01535,1,5,0,0.02,0.03,-0.0146,-32.82,focus entry: ~$15.33/day; fill odds 48%/day; EV +13.22/day,CGV5C229GVB9
+1789492226.7,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,0.18,0.03,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV5C229GVB9
+1789492925.7,politics,ussewc-usse-nj-2026-11-03-dem,BUY,5,0.98,sell,1.6049,2.64,0.995975,97,99,0.689,0.94,0.99,-0.016,5,buying back the short at or under what it sold for — the bid earns while it wait,CGS9C9NBPVB4
+1789493278.1,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,BUY,1,0.76,sell,0.5841,1.75,,70,77,0.44,0.7,0.71,0.03,2,buying back the short at or under what it sold for — the bid earns while it wait,CGT48FPWTVB6
+1789495356.9,politics,ewc-usgub-ia-2026-11-03-rep,BUY,-12,0.27,fix,23.2044,2.15,0.192925,23,27,0.287,0.26,0.27,0.0771,0,size trimmed by 12 to the exchange's count (order CG2YZJMMEVB7),CG2YZJMMEVB7
+1789495356.9,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,-5.5,0.24,fix,20.7092,0.04,0.29155,22,25,0.798,0.21,0.24,-0.0516,181,size trimmed by 5.5 to the exchange's count (order CG4S3PW3WVB4),CG4S3PW3WVB4
+1789495356.9,politics,scc-hrep-rep-2026-11-03-gte215,SELL,38,0.99,void,0,0.02,0.2063,26,34,0.002,0.33,0.34,-0.7837,-38,voided: the exchange has no trade for order CGV3CG0D0VB4 — the row of 09-15 16:5,CGV3CG0D0VB4
+1789495356.9,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,0.18,0.03,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV5C229GVB9
