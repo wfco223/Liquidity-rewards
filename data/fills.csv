@@ -3731,3 +3731,17 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789434060.4,politics,paccc-usho-midterms-2026-11-03-dem,BUY,277,0.853,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGD9Z8BS8VB8
 1789434060.4,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,0.1,0.23,hand,,11.48,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG308Z0T6VB7
 1789434060.4,nfl,aqc-nfl-nfc-2027-01-24-champq-was,SELL,0.01,0.02,hand,,12.18,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2RKTAN8VB6
+1789434133.8,nfl,aqc-nfl-2027-01-10-playoffq-was,BUY,0.31,0.25,hand,,12.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2YGZZ4WVB2
+1789434133.8,nfl,aqc-nfl-2027-01-10-playoffq-was,BUY,1,0.25,hand,,12.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2YEZGHEVBA
+1789434641.6,cfb,aachc-cfb-wins-ou-2026-11-28-hou,BUY,0.81,0.54,probe,0,2.36,,46,60,0.021,0.54,0.64,0,0.81,a scout — this market's pool could pay; but I don't know enough yet; what happen,CGBNGREDPVB4
+1789434701.6,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,BUY,1,0.57,manual,0.4868,12.5,,57,64,0.551,0.55,0.63,-0.04,0,the owner's own order — the engine leaves it alone,CG2VBWWKMVB5
+1789434701.6,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,SELL,1,0.55,sell,0,0,,54,61,0.673,0.55,0.57,0.03,0,taker dump — sold into the bid (the carved exception),CGDQ129WGVB8
+1789434832.1,politics,paccc-balpow-2026-11-03-dsweep,SELL,3,0.47,sell,0.1906,0.12,,45,52,0,0.46,0.47,0.02,0,an exit — its fill reduces the position it sits on,CGDMT0FZRVB3
+1789434832.1,cfb,aachc-cfb-wins-ou-2026-11-28-hou,BUY,0.19,0.54,probe,0.0937,2.42,,44,55,0.461,0.54,0.64,0.03,1.19,a scout — this market's pool could pay; but I don't know enough yet; what happen,CGBNGREDPVB4
+1789434937.3,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,BUY,0.1,0.54,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGDQC27SCVB8
+1789435675.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,19,0.853,focus,5.3449,0.13,0.8563,85,86,0.941,0.853,0.854,-0.0033,32,focus entry: ~$4.43/day; fill odds 64%/day; EV +4.00/day,CGDTEMSJ6VBA
+1789436877.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,42,0.527,sell,1.9004,1.14,0.5,52,53,0.909,0.526,0.527,-0.027,0,an exit — its fill reduces the position it sits on,CGD8QM93WVB4
+1789437693.0,politics,paccc-usho-midterms-2026-11-03-dem,BUY,-277,0.853,fix,65.576,0.32,0.8563,86,87,0.944,0.853,0.854,-0.0033,13,size trimmed by 277 to the exchange's count (order CGD9Z8BS8VB8),CGD9Z8BS8VB8
+1789437693.0,cfb,aachc-cfb-wins-ou-2026-11-28-bayl,BUY,0.1,0.54,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGDQC27SCVB8
+1789437693.0,nfl,aqc-nfl-2027-01-10-playoffq-was,BUY,0.31,0.25,hand,,12.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2YGZZ4WVB2
+1789437693.0,nfl,aqc-nfl-2027-01-10-playoffq-was,BUY,1,0.25,hand,,12.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2YEZGHEVBA
