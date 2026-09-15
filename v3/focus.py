@@ -158,6 +158,31 @@ FOCUS_DISPLACE_MAX = 3
 FOCUS_DISPLACE_GRACE_S = 1800.0
 FOCUS_DISPLACED_REST_S = 3600.0
 FOCUS_STAKE_FRAC = 0.10         # the list's entry: 10% of his buying power
+# THE BEST ENTRIES MAY GROW PAST THE 10% (owner, 2026-09-15: "Make it so
+# the top 25% of ev entries can go above the 10% entry cap to 25% so long
+# as the marginal share along the way would be in the top 25%"). The 10%
+# is a flat cap that treats a slot worth $12 a day on $100 of collateral
+# like one worth 20c, and on 2026-09-15 it was the binding constraint on
+# size: the near-touch collateral was $4,791 against a stake basis of
+# $360, and the Senate-50 bid that would have claimed 29% of its side for
+# $36 was refused for it. So an entry in the TOP QUARTILE by the cap's
+# own currency — expected value a day per dollar of expected loss — may
+# grow from FOCUS_STAKE_FRAC toward FOCUS_STAKE_FRAC_TOP, and it grows
+# one slice at a time: each added slice is valued on its own (the change
+# in EV over the change in expected loss) and must ITSELF still clear the
+# top-quartile cut, so growth stops where the reward claim saturates.
+# The cut is the 75th percentile of the entry values seen over
+# FOCUS_VALUE_WINDOW_S; under FOCUS_VALUE_MIN_N samples there is no cut
+# yet and every entry stays at the 10%. Three bounds are untouched and
+# still bind first: the $20 on a 2028 book, a stake he set by hand, and
+# the money gate (an entry whose collateral is more than the buying power
+# free is not sent, so growth can never overcommit him).
+FOCUS_STAKE_FRAC_TOP = 0.25
+FOCUS_TOP_QUANTILE = 0.75       # "the top 25%"
+FOCUS_VALUE_WINDOW_S = 1800.0   # the cut is drawn from the last half hour of entry values
+FOCUS_VALUE_KEEP = 600          # ...and at most this many of them
+FOCUS_VALUE_MIN_N = 20          # under this many, no cut and no growth
+FOCUS_GROW_SLICES = 6           # the slices the walk from 10% to 25% is taken in
 FOCUS_COC_DAY = 0.005           # cost of capital: per dollar tied up, a day
 FOCUS_FILL_COST_MIN = 0.02      # $/share a fill's cost never reads under
 FOCUS_FILL_COST_MAX = 0.25      # ...nor over (a broken measure must not read as $2)
@@ -307,6 +332,9 @@ class Focus:
         self.terms = TermsStore()
         self.fairs: dict[str, float] = {}        # his fair, YES price
         self.stakes: dict[str, float] = {}       # his stake per side, $
+        # (ts, value) for every entry plan scored, newest last: the
+        # top-quartile cut a growing entry must clear is read off this
+        self._vals: list[tuple[float, float]] = []
         self.paused: set[str] = set()
         # markets he took off his hand's list (owner, 2026-09-10 "Give me
         # a button to take a market off of the hand tended list"): the
@@ -473,6 +501,42 @@ class Focus:
         if any(t in slug for t in FOCUS_MID_FAIR_TOKENS) and stake > FOCUS_2028_STAKE_USD:
             return FOCUS_2028_STAKE_USD, f"${FOCUS_2028_STAKE_USD:g} max loss — no model (2028)"
         return stake, f"{FOCUS_STAKE_FRAC * 100:g}% of buying power"
+
+    def stake_top(self, slug: str, bp: float | None) -> float:
+        """The most an entry on this side may use once it has earned the
+        room — FOCUS_STAKE_FRAC_TOP of the same basis (owner, 2026-09-15).
+        A stake he set by hand stands as he set it, and a 2028 book keeps
+        its $20, so for those this is the base stake and nothing grows."""
+        if self.stakes.get(slug) is not None:
+            return float(self.stakes[slug])
+        if bp is None:
+            return 0.0
+        top = round(FOCUS_STAKE_FRAC_TOP * bp, 2)
+        if any(t in slug for t in FOCUS_MID_FAIR_TOKENS):
+            return min(top, FOCUS_2028_STAKE_USD)
+        return top
+
+    def _note_value(self, now: float, ev: float, risk: float) -> None:
+        """Every entry plan's value goes on the record the cut is read
+        from. Entries only: an exit is the position leaving, it is never
+        sized by the stake and never grows."""
+        v = self._value(float(ev), float(risk))
+        if v == float("inf") or v != v:           # no risk, or not a number
+            return
+        self._vals.append((now, v))
+        cut = now - FOCUS_VALUE_WINDOW_S
+        if len(self._vals) > FOCUS_VALUE_KEEP or (self._vals and self._vals[0][0] < cut):
+            self._vals = [r for r in self._vals if r[0] >= cut][-FOCUS_VALUE_KEEP:]
+
+    def top_cut(self, now: float) -> float | None:
+        """The top-quartile line: the FOCUS_TOP_QUANTILE percentile of the
+        entry values of the last half hour, or None while the sample is
+        too thin to call a quartile — and with no cut nothing grows."""
+        vals = sorted(v for t, v in self._vals if t >= now - FOCUS_VALUE_WINDOW_S)
+        if len(vals) < FOCUS_VALUE_MIN_N:
+            return None
+        i = min(int(FOCUS_TOP_QUANTILE * (len(vals) - 1) + 0.5), len(vals) - 1)
+        return vals[i]
 
     # -- the ground ------------------------------------------------------------
 
@@ -1172,9 +1236,13 @@ class Focus:
         return list(dict.fromkeys(out))
 
     def _entry_plan(self, slug: str, side: str, book, prog, pool: float,
-                    fair: float | None, stake: float) -> dict | None:
+                    fair: float | None, stake: float, stake_max: float = 0.0,
+                    now: float = 0.0) -> dict | None:
         """The best resting order of `stake` dollars on this side, or
-        None with no price within the fair bound."""
+        None with no price within the fair bound.
+
+        `stake_max` (owner, 2026-09-15) lets a TOP-QUARTILE entry grow
+        past `stake` toward it, one slice at a time — see _grow."""
         if stake < 1.0:
             return None
         levels = self._levels_net(slug, side, book)
@@ -1199,7 +1267,78 @@ class Focus:
                 s = self._score(slug, side, book, prog, pool, fair, px, qty, levels)
                 if best is None or s["ev"] > best["ev"] + 1e-9:
                     best = s
+        if best is not None:
+            self._note_value(now or time.time(), best["ev"], best["risk"])
+            if stake_max > stake + 1.0:
+                best = self._grow(slug, side, book, prog, pool, fair, levels,
+                                  best, stake, stake_max, now or time.time())
         return best
+
+    def _grow(self, slug: str, side: str, book, prog, pool: float,
+              fair: float | None, levels: list, best: dict, stake: float,
+              stake_max: float, now: float) -> dict:
+        """Grow a top-quartile entry past the 10% cap, a slice at a time
+        (owner, 2026-09-15: "Make it so the top 25% of ev entries can go
+        above the 10% entry cap to 25% so long as the marginal share
+        along the way would be in the top 25%").
+
+        The order has to be in the top quartile to start, and then EVERY
+        added slice has to be worth the top quartile ON ITS OWN: the
+        slice's value is the change in expected value over the change in
+        expected loss, which is the cap's own currency measured at the
+        margin. The reward claim saturates with size (our share is our
+        size over the side's, so the second dollar buys less than the
+        first) while the fill's cost and the capital's do not, so the
+        marginal value falls as the order grows and the walk stops by
+        itself — usually before the 25%. A slice that does not raise the
+        expected value at all stops it too.
+
+        Price is held at the slot the plan already chose: this decides
+        SIZE, not where the order rests."""
+        cut = self.top_cut(now)
+        if cut is None:
+            return best
+        if self._value(float(best["ev"]), float(best["risk"])) < cut:
+            return best                           # not a top-quartile entry
+        px = float(best["px"])
+        cost_ps = px if side == "BUY" else 1.0 - px
+        if cost_ps <= 0:
+            return best
+        step = (stake_max - stake) / max(FOCUS_GROW_SLICES, 1)
+        if step < 0.01:
+            return best
+        cur = best
+        coll = max(float(best["coll"]), stake)
+        slices = 0
+        while slices < FOCUS_GROW_SLICES:
+            coll += step
+            if coll > stake_max + 1e-9:
+                break
+            qty = float(math.floor(coll / cost_ps))
+            if qty <= float(cur["qty"]):
+                continue                          # the slice buys no whole share yet
+            s = self._score(slug, side, book, prog, pool, fair, px, qty, levels)
+            d_ev = s["ev"] - cur["ev"]
+            d_risk = s["risk"] - cur["risk"]
+            if d_ev <= 1e-9 or d_risk <= 1e-9:
+                break                             # the slice adds nothing, or no risk to price
+            if self._value(d_ev, d_risk) < cut:
+                break                             # the slice is not top-quartile: stop here
+            cur = s
+            slices += 1
+        if cur is best:
+            return best
+        cur = dict(cur)
+        cur["grew_from"] = round(float(best["qty"]), 2)
+        cur["grew_coll_from"] = round(float(best["coll"]), 2)
+        cur["grew_slices"] = slices
+        cur["grow_note"] = (
+            f"grown {slices} slice{'s' if slices != 1 else ''} past the "
+            f"{FOCUS_STAKE_FRAC * 100:g}% cap — {best['qty']:,.0f} shares "
+            f"(${best['coll']:,.2f}) to {cur['qty']:,.0f} (${cur['coll']:,.2f}); "
+            f"every slice cleared the top-quartile line of "
+            f"${cut:,.2f} a day per dollar of expected loss")
+        return cur
 
     def _exit_plan(self, slug: str, side: str, book, prog, pool: float,
                    fair: float | None, qty: float, basis: float | None) -> dict | None:
@@ -1328,12 +1467,14 @@ class Focus:
         except Exception:  # noqa: BLE001
             pass
         stake, stake_src = self.stake(slug, bp)
+        stake_top = self.stake_top(slug, bp)
         net, cost = (positions.get(slug) or (0.0, 0.0))[:2] if positions.get(slug) else (0.0, 0.0)
         net, cost = float(net or 0.0), float(cost or 0.0)
         book = self.fam.cache.any_age(slug)
         age = self.fam.cache.age(slug, now)
         row = {"market": slug, "name": self._label(slug),
                "fair": fair, "silver": silver, "stake": stake, "stake_src": stake_src,
+               "stake_top": stake_top, "top_cut": self.top_cut(now),
                "paused": slug in self.paused,
                "by_hand": self.by_hand(slug),
                "released": slug in self.released,
@@ -1448,7 +1589,8 @@ class Focus:
         if book is not None and prog is not None and pool and age <= 3600.0:
             for side in ("BUY", "SELL"):
                 use_fair = fair if fair is not None else silver
-                plan = self._entry_plan(slug, side, book, prog, pool, use_fair, stake)
+                plan = self._entry_plan(slug, side, book, prog, pool, use_fair,
+                                        stake, stake_top, now)
                 if plan is None:
                     row["sides"][side] = {"note": ("nothing earns on this side"
                                                    if stake >= 1.0 else "no stake")}
@@ -1486,7 +1628,13 @@ class Focus:
                 if fair is None:
                     row["tend"][side] = {"note": "no fair set", "hold": True}
                     continue
-                plan = self._entry_plan(slug, side, book, prog, pool, fair, room)
+                # the room a grown entry may reach takes the SAME position
+                # bound and refill ramp as the base room, so growth never
+                # walks around the standoff after a fill or the rule that
+                # an entry may not add to a position past its stake
+                room_top = self._entry_room(key, side, stake_top, net, cost, now)
+                plan = self._entry_plan(slug, side, book, prog, pool, fair,
+                                        room, room_top, now)
                 if plan and scale < 1.0:
                     plan["scale"] = round(scale, 2)
                     plan["scale_note"] = (f"{scale * 100:.0f}% of the stake — filled "
