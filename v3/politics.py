@@ -192,15 +192,25 @@ def config() -> FamilyConfig:
                       "cranc-uspres28", "ussep-mov-ma-dem"),
         # owner, 2026-08-24: "Don't sell my gop governor count race
         # orders. In fact don't touch those." Frozen, not avoided —
-        # whatever rests there stays exactly where it is.
-        # owner, 2026-09-13: "Keep the tender out of the seat markets" —
-        # the senate and house seat counts join the governor ones on the
-        # same footing. Frozen is the whole answer: the tender reads the
-        # ground "frozen — hands off", so it rests nothing new there AND
-        # its own orders come off, while the engine places nothing, rests
-        # no exits and cancels nothing. His hand's orders are touched by
-        # neither. Nothing automated works these books now; they are his.
-        freeze_tokens=("usgovcc", "scc-senate-gop", "scc-hrep-rep"),
+        # whatever rests there stays exactly where it is. usgovcc, the
+        # GOP governor seat counts, has been frozen since and stays so.
+        # THE SEAT BOOKS ARE UNFROZEN (owner, 2026-09-15: "Unfreeze
+        # house and senate seat markets"), reversing the freeze of
+        # 2026-09-13 ("Keep the tender out of the seat markets"):
+        # scc-senate-gop (Republican Senate Seats) and scc-hrep-rep
+        # (Republican House Seats) come off this list, so the tender
+        # works them with its OWN orders and rests exits on the
+        # positions held there again. Two things do NOT come back with
+        # them. His hand's orders there are still never adopted
+        # (FOCUS_HAND_KEEP_TOKENS in focus.py, owner 2026-09-13 "You can
+        # stop cancelling my hand placed orders on the seat markets") —
+        # that rule was separate from the freeze and is untouched, so
+        # every order of his on these books, his qualifying walls
+        # included, stays exactly as he left it. And the OLD ENGINE
+        # still places nothing there: these books are on the tender's
+        # board, and the tender writes its whole board into
+        # fam.freeze_dyn, so the engine is held off by that instead.
+        freeze_tokens=("usgovcc",),
         # owner, 2026-08-27: "Take me out of all buy position on Ron
         # desantis in 2028 markets" — sell the stock into the bid
         # until flat, never buy DeSantis 2028 again
