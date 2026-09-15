@@ -3865,3 +3865,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789488112.8,politics,ussewc-usse-tn-2026-11-03-rep,SELL,66.57,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGT37201PVBE
 1789488112.8,politics,ussewc-usse-tn-2026-11-03-rep,SELL,1,0.96,hand,,12.86,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGF2EVNQWVB3
 1789488112.8,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,SELL,1,0.71,backfill,,1.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRZTGBEAVBA
+1789489234.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,84,0.527,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3H4596VB7
+1789490269.0,politics,ewc-usgub-ga-2026-11-03-rep,SELL,12,0.4,focus,1.083,0,0.3559,37,42,0,0.4,0.41,-0.0441,-58,focus entry: ~$1.08/day; fill odds 48%/day; EV +0.26/day,CGTXCRNSMVB3
+1789491038.5,politics,scc-hrep-rep-2026-11-03-gte215,SELL,37.72,0.34,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV3J4Z38VB6
+1789491066.3,politics,scc-hrep-rep-2026-11-03-gte215,SELL,38,0.99,manual,0,0.02,0.2063,26,34,0.002,0.33,0.34,-0.7837,-38,the owner's qualify-ask wall,CGV3CG0D0VB4
+1789491720.1,politics,ushrewc-ushr-me-02-2026-11-03-dem,SELL,-30,0.39,fix,17.7141,0.98,,43,48,0.804,0.38,0.39,0.06,0,size trimmed by 30 to the exchange's count (order CG3R4C4VTVB4),CG3R4C4VTVB4
+1789491720.1,politics,ewc-usse-me-2026-11-03-rep,SELL,-68,0.33,fix,3.8485,3.01,0.3273,32,35,0.794,0.32,0.33,-0.0027,0,size trimmed by 68 to the exchange's count (order CG2R7Y26JVBE),CG2R7Y26JVBE
+1789491720.1,politics,ewc-usse-me-2026-11-03-rep,SELL,-114,0.33,fix,4.5468,1.84,0.3273,31,34,0.757,0.32,0.33,-0.0027,68,size trimmed by 114 to the exchange's count (order CG2R7Y26JVBE),CG2R7Y26JVBE
+1789491720.1,politics,ewc-usgub-ia-2026-11-03-rep,BUY,-1,0.27,fix,23.2044,2.15,0.192925,23,27,0.287,0.26,0.27,0.0771,0,size trimmed by 1 to the exchange's count (order CG2YZJMMEVB7),CG2YZJMMEVB7
+1789491720.1,politics,scc-hrep-rep-2026-11-03-gte185,SELL,-0.1,0.99,fix,,3.7,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CG340FNH2VB6),CG340FNH2VB6
+1789491720.1,politics,scc-hrep-rep-2026-11-03-gte185,SELL,-48.2,0.99,fix,0,3.48,0.889175,88,94,0.445,0.98,0.99,-0.1008,-105.57,size trimmed by 48.2 to the exchange's count (order CG340FNH2VB6),CG340FNH2VB6
+1789491720.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,84,0.527,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3H4596VB7
+1789491720.1,politics,scc-hrep-rep-2026-11-03-gte215,SELL,37.72,0.34,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV3J4Z38VB6
