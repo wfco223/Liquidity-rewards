@@ -3782,3 +3782,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789446252.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,11,0.527,sell,0.5682,0.63,0.5,52,54,0.895,0.526,0.527,-0.027,0,an exit — its fill reduces the position it sits on,CGFWRCHKTVBE
 1789448633.1,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,-6,0.01,fix,0.0024,15.12,,1,2,0.579,,0.01,0,40,size trimmed by 6 to the exchange's count (order CG33CNY3YVB2),CG33CNY3YVB2
 1789448633.1,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,BUY,-1.77,0.44,fix,4.6254,4.98,,39,47,0,0.01,0.45,0.01,1.77,size trimmed by 1.77 to the exchange's count (order CGBW3EACAVB2),CGBW3EACAVB2
+1789449154.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,91,0.527,backfill,,0.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGGE6YNR0VB9
+1789449702.7,politics,ussewc-usse-nj-2026-11-03-dem,BUY,20,0.98,earn,0.5443,6.38,0.995975,96,99,0.51,0.98,0.99,-0.016,20,1 tick in front of the touch — we would hold 83% of the bid side,CGBST3E0AVB5
+1789452254.4,politics,ushrewc-ushr-ia-01-2026-11-03-dem,SELL,-10,0.68,fix,,0,,,,,,,,,size trimmed by 10 to the exchange's count (order CG2ZZTHECVB2),CG2ZZTHECVB2
+1789452254.4,politics,paccc-usse-midterms-2026-11-03-dem,SELL,91,0.527,backfill,,0.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGGE6YNR0VB9
