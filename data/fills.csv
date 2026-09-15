@@ -3762,3 +3762,20 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789441326.5,politics,paccc-usho-midterms-2026-11-03-dem,SELL,25,0.854,backfill,,0.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGDYMZA6MVB2
 1789441326.5,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,142,0.77,backfill,,0.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGE979PY2VB3
 1789441326.5,politics,ewc-usgub-nv-2026-11-03-dem,SELL,25,0.46,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGESDMJ9WVB6
+1789441557.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,12,0.853,focus,3.4321,0.01,0.8563,85,86,0.948,0.853,0.854,-0.0033,25,focus entry: ~$3.02/day; fill odds 64%/day; EV +2.75/day,CGF99R748VBA
+1789441977.6,politics,paccc-balpow-2026-11-03-dsweep,SELL,83,0.47,focus,4.956,0.25,,47,51,0.445,0.47,0.48,0.02,-83,focus entry: ~$9.48/day; fill odds 73%/day; EV +7.15/day,CGF6JT8SYVB5
+1789442073.2,politics,paccc-usse-midterms-2026-11-03-rep,SELL,98,0.483,sell,12.0681,4.06,0.4137,47,49,0.921,0.482,0.483,-0.0693,206,an exit — its fill reduces the position it sits on,CGBZ5T4YCVBE
+1789442997.9,politics,ussewc-usse-ky-2026-11-03-dem,SELL,1,0.03,earn,0.0671,4.61,0.00335,2,6,0.392,0.03,0.07,-0.0267,-1,4 ticks in front of the touch — we would hold 100% of the ask side,CGBQ7HVJ8VB3
+1789443062.4,politics,paccc-usho-midterms-2026-11-03-dem,BUY,14,0.853,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGFKW5VB2VB3
+1789443081.5,politics,paccc-usho-midterms-2026-11-03-dem,BUY,11,0.853,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGFNVZS0GVB8
+1789443117.9,politics,paccc-usho-midterms-2026-11-03-dem,SELL,25,0.854,sell,0.4461,0.43,0.8563,85,86,0.945,0.853,0.854,0.0023,0,an exit — its fill reduces the position it sits on,CGFA5RB5RVB4
+1789443117.9,politics,paccc-usho-midterms-2026-11-03-dem,BUY,5,0.853,focus,3.0848,0.02,0.8563,85,86,0.945,0.853,0.854,-0.0033,5,focus entry: ~$3.16/day; fill odds 64%/day; EV +2.79/day,CGFNVZS0GVB8
+1789443967.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,11,0.526,focus,12.6989,0.47,0.5,53,54,0.903,0.526,0.527,0.026,11,focus entry: ~$5.74/day; fill odds 60%/day; EV +4.40/day,CGFFYHZVRVB4
+1789444944.4,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,BUY,2,0.44,backfill,,4.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGBW3EACAVB2
+1789444965.2,politics,ewc-usgub-wi-2026-11-03-rep,SELL,-11,0.14,fix,16.6992,0.05,0.22,15,20,0,0.11,0.14,0.08,-15,size trimmed by 11 to the exchange's count (order CG2YYERGCVB2),CG2YYERGCVB2
+1789444965.2,politics,ewc-usgub-wi-2026-11-03-rep,SELL,-4,0.14,fix,,0,,,,,,,,,size trimmed by 4 to the exchange's count (order CG2YYERGCVB2),CG2YYERGCVB2
+1789444965.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,14,0.853,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGFKW5VB2VB3
+1789444965.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,11,0.853,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGFNVZS0GVB8
+1789444965.2,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,6.47,0.01,backfill,,15.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG33CNY3YVB2
+1789444965.2,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,BUY,2,0.44,backfill,,4.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGBW3EACAVB2
+1789444986.2,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,6.47,0.01,backfill,,15.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG33CNY3YVB2
