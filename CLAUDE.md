@@ -72,17 +72,18 @@ long and accreted, so search it rather than reading it through.
   list (three were, at 21:46:06Z — the log had ten adoptions on that
   ground in the twelve minutes before he asked). Then, an hour later
   ("Keep the tender out of the seat markets"), the ground went
-  FROZEN outright — see the frozen bullet below. Nothing automated
-  works these books now.
+  FROZEN outright; on 2026-09-15 he UNFROZE it again ("Unfreeze
+  house and senate seat markets") — see the frozen bullet below.
+  THIS RULE SURVIVED BOTH: through the freeze and the unfreeze his
+  hand's orders on these two books have never been adopted, and are
+  not now. The unfreeze hands the tender its OWN orders there, not
+  his.
 - FROZEN ground — the engine does NOTHING there (owner, 2026-08-24
   "Don't sell my gop governor count race orders. In fact don't touch
   those"): places nothing, rests no exits, reprices nothing, cancels
   nothing. Whatever is resting stays exactly as it is. This is
   stricter than the avoid list, which PULLS the engine's orders out.
-  Currently frozen: usgovcc (GOP governor seat counts), and from
-  2026-09-13 the other two seat-count books — scc-senate-gop
-  (Republican Senate Seats) and scc-hrep-rep (Republican House
-  Seats), owner: "Keep the tender out of the seat markets".
+  Currently frozen: usgovcc (GOP governor seat counts) ALONE.
   FROZEN IS THE WHOLE ANSWER, and it binds BOTH desks: the tender
   reads the ground "frozen — hands off", so it rests nothing new
   there and its own orders already resting come off; the engine
@@ -90,8 +91,25 @@ long and accreted, so search it rather than reading it through.
   orders are touched by neither. The engine does NOT step into the
   ground the tender leaves — freeze_tokens holds it whether or not
   the tender still claims the market (a test pins that). The
-  consequence to know: NOTHING RESTS AN EXIT on a seat market any
-  more, so a position he holds there is his to work.
+  consequence to know: NOTHING RESTS AN EXIT on frozen ground, so a
+  position he holds there is his to work.
+  THE SEAT BOOKS ARE UNFROZEN (owner, 2026-09-15: "Unfreeze house
+  and senate seat markets"), reversing the freeze he set on
+  2026-09-13: scc-senate-gop (Republican Senate Seats) and
+  scc-hrep-rep (Republican House Seats) come off the frozen list and
+  the tender works them with its OWN orders, exits included — so
+  exits rest again on the positions held there, which under the
+  freeze had been his alone to work. Two things did NOT come back
+  with them. His hand's orders on these two books are still never
+  ADOPTED (the 2026-09-13 rule above was separate from the freeze
+  and is untouched), so every order of his there, his qualifying
+  walls included, stays exactly as he left it. And the OLD ENGINE
+  still places nothing there: both books are on the tender's board,
+  and the tender writes its whole board into fam.freeze_dyn, so the
+  engine is held off by the tender's claim rather than by
+  freeze_tokens. One consequence to know: a dust lot on a seat book
+  is now the sweep's like any other (it skips freeze_tokens alone),
+  and on 2026-09-15 that was one lot, House (R) ≥195 at $0.84.
 - Order-touching endpoints keep: auth, X-Reprice CSRF header, known-market
   whitelist, 0.1–99.9c price bounds, post-only placement.
   ONE carved exception (owner, 2026-08-22 "Carve it"): the taker dump —
@@ -861,6 +879,20 @@ long and accreted, so search it rather than reading it through.
   placement and never cause one. The live run also confirmed the hold:
   60 placements and 260 exits were refused "master switch is off" in the
   quarter hour after the pull, and nothing rested.
+  AND AN EMPTY BOOK IS NOT CHASED (the 12:32Z restore, same day): a
+  106-share bid went back at 14c where he had it at 42c, and its ask at
+  62c where he had it at 43c, because the North Carolina House 01 book
+  had come back 14c/62c with almost nothing resting on it. Nothing was
+  at risk — of the first 48 restored, NOT ONE moved against him, and the
+  collateral on the restored bids fell from $344.90 to $308.12 — but a
+  48c spread is not a price, and "approximately their correct spot" is
+  what he asked for. Past MAINT_TRUST_SPREAD (10c) the touch is not
+  trusted and HIS OWN price stands, clamped as ever so it cannot cross.
+  This is his own rule from the 2026-09-11 maintenance ("Be careful of
+  placing orders after the maintenance. Don't sell everything for
+  pennies there might not be any orders resting") applied to the way
+  back in. The median move over those 48 was 1c, so this changes only
+  the tail: 11 of 48 had moved more than 10c and 4 more than 25c.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

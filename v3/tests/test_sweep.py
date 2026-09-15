@@ -119,11 +119,15 @@ class TestThePlan(Base):
         self.assertEqual(p["skipped"][0]["why"], "your hands — frozen ground")
         self.r.fam.cfg.freeze_tokens = ()
 
-    def test_the_seat_and_governor_count_books_stay_his(self):
-        # the three he named by name, whatever else changes
+    def test_the_governor_count_books_stay_his(self):
+        # usgovcc he named on 2026-08-24 and has never released. The
+        # senate and house seat books he UNFROZE on 2026-09-15, so a
+        # dust lot there is the sweep's like any other.
         from v3 import politics
-        for token in ("usgovcc", "scc-senate-gop", "scc-hrep-rep"):
-            self.assertIn(token, politics.config().freeze_tokens)
+        toks = politics.config().freeze_tokens
+        self.assertIn("usgovcc", toks)
+        self.assertNotIn("scc-senate-gop", toks)
+        self.assertNotIn("scc-hrep-rep", toks)
 
     def test_close_out_ground_is_skipped(self):
         self.r.fam.cfg.liquidate_tokens = ("ussemov-ga-2026-11-03-d4",)

@@ -2431,17 +2431,22 @@ class TestTheSeatMarketsAreHisHands(Base):
         self.assertTrue([e for e in self.f.log if e.get("event") == "released"
                          and e.get("market") == SEAT])
 
-    def test_the_tender_is_out_of_the_seat_markets_entirely(self):
-        # owner, 2026-09-13: "Keep the tender out of the seat markets."
-        # Frozen ground now, on the same footing as the governor seat
-        # counts: it rests nothing here and its own orders come off.
-        self.assertEqual(self.f.why_not_tended(SEAT),
-                         "frozen — hands off (owner, 2026-08-24)")
+    def test_the_tender_WORKS_the_seat_market_once_it_has_a_fair(self):
+        # owner, 2026-09-15: "Unfreeze house and senate seat markets."
+        # The ground is the tender's again — the only thing standing
+        # between it and a seat book is the fair, as anywhere else.
+        # the rig seeds a Silver fair here, so the freeze was the only
+        # thing holding the tender off; with it gone, nothing does
+        self.assertIsNone(self.f.why_not_tended(SEAT))
         for _ in range(4):
             self.tick()
-        self.assertEqual(self.mine(SEAT), [], "the tender rested on frozen ground")
+        self.assertTrue(self.mine(SEAT), "the tender rested nothing on unfrozen ground")
 
-    def test_its_own_order_already_there_comes_off_and_his_stays(self):
+    def test_its_own_order_already_there_STAYS_and_his_stays_too(self):
+        # the freeze used to take the tender's own order off. Now it
+        # keeps it — and his is still never adopted, which is a
+        # separate rule (2026-09-13) the unfreeze did not repeal.
+        self.f.set_fair(SEAT, 0.30)
         his = self.hand(SEAT, side="SELL", price=0.95)
         its = FamilyOrder(id="t-seat", market=SEAT, side="BUY", price=0.30, qty=25.0,
                           intent=BUY_LONG, placed_ts=self.r.now, purpose=PURPOSE,
@@ -2450,14 +2455,19 @@ class TestTheSeatMarketsAreHisHands(Base):
         self.f.mine_ids.append(its.id)
         for _ in range(3):
             self.tick()
-        self.assertNotIn(its.id, self.r.fam.orders, "the tender's own order stayed")
-        self.assertIn(his.id, self.r.fam.orders, "his order was taken with it")
+        self.assertIn(his.id, self.r.fam.orders, "his order was taken")
         self.assertEqual(self.r.fam.orders[his.id].purpose, "manual")
+        self.assertEqual([e for e in self.f.log if e.get("event") == "adopted"
+                          and e.get("market") == SEAT], [])
 
-    def test_the_engine_is_frozen_there_too(self):
-        # frozen, not avoided: it places nothing and pulls nothing
+    def test_the_engine_is_still_out_but_by_the_tenders_claim_not_the_freeze(self):
+        # freeze_tokens no longer names it, so _frozen is false on the
+        # bare config; the tender writes its whole board into
+        # freeze_dyn, and THAT is what holds the old engine off.
+        self.assertNotIn(SEAT, self.r.fam.cfg.freeze_tokens)
+        self.f.refresh_markets(self.r.now)
+        self.assertIn(SEAT, self.r.fam.freeze_dyn)
         self.assertTrue(self.r.fam._frozen(SEAT))
-        self.assertFalse(self.r.fam.enterable(SEAT))
         his = self.hand(SEAT, side="SELL", price=0.95)
         self.r.cycle()
         self.assertIn(his.id, self.r.fam.orders)
@@ -2465,11 +2475,17 @@ class TestTheSeatMarketsAreHisHands(Base):
                           if o.market == SEAT and o.purpose in ("earn", "probe", "sell")], [])
 
     def test_the_governor_seat_counts_are_frozen_as_they_always_were(self):
+        # owner, 2026-08-24, and nothing since has touched usgovcc
+        from v3 import politics
+        self.assertIn("usgovcc", politics.config().freeze_tokens)
+
+    def test_the_senate_and_house_seat_books_are_NOT_frozen(self):
+        # owner, 2026-09-15: "Unfreeze house and senate seat markets" —
+        # the 2026-09-13 freeze is reversed. The governor counts stay.
         from v3 import politics
         toks = politics.config().freeze_tokens
-        self.assertIn("usgovcc", toks)
-        self.assertIn("scc-senate-gop", toks)
-        self.assertIn("scc-hrep-rep", toks)
+        self.assertNotIn("scc-senate-gop", toks)
+        self.assertNotIn("scc-hrep-rep", toks)
 
     def test_the_rule_names_both_seat_books_and_nothing_else(self):
         self.assertTrue(self.f.hand_keep("scc-senate-gop-2026-11-03-50"))

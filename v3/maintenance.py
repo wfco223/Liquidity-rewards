@@ -62,6 +62,19 @@ MAINT_BOOK_MAX_AGE_S = 30.0
 # orders it takes at the same price — the book sees the same size, which
 # is all the program counts.
 MAINT_CHUNK_MAX = 19_990.0
+# A book that has not refilled after the window has a touch that means
+# nothing — the 12:32Z restore of 2026-09-14 put a 106-share bid back at
+# 14c where he had it at 42c, and an ask at 62c where he had it at 43c,
+# because the North Carolina House 01 book had come back 14c/62c with
+# almost nothing on it. His own rule from the 2026-09-11 maintenance is
+# the one that applies ("Be careful of placing orders after the
+# maintenance. Don't sell everything for pennies there might not be any
+# orders resting"): past this spread the touch is not trusted and the
+# order goes back where HE had it, which on an empty book is the better
+# estimate of fair. Nothing is at risk either way — the touch is only
+# ever taken when it is better for him — but "approximately their
+# correct spot" is what he asked for.
+MAINT_TRUST_SPREAD = 0.10
 MAINT_LIVE_RECHECK_S = 30.0    # how often the restore re-reads what is
                                # actually resting, so an order that never
                                # left is never placed a second time
@@ -99,15 +112,19 @@ def restore_price(side: str, was: float, bid: float | None,
                   ask: float | None, tick: float) -> float | None:
     """Where an order goes back. His old price, or the touch when the
     touch is better for him — never across it, never worse than where he
-    was. Returns None when the book cannot support the order at all."""
+    was. On a book that has not refilled (a spread wider than
+    MAINT_TRUST_SPREAD) the touch is not trusted and his own price
+    stands. Returns None when the book cannot support the order."""
     tick = float(tick or 0.01)
     was = float(was)
+    wide = (bid is not None and ask is not None
+            and (ask - bid) > MAINT_TRUST_SPREAD + 1e-12)
     if side == "BUY":
-        px = min(was, bid) if bid is not None else was
+        px = was if wide else (min(was, bid) if bid is not None else was)
         if ask is not None and px >= ask - 1e-12:
             px = round(ask - tick, 4)          # never cross
         return px if px > 0 else None
-    px = max(was, ask) if ask is not None else was
+    px = was if wide else (max(was, ask) if ask is not None else was)
     if bid is not None and px <= bid + 1e-12:
         px = round(bid + tick, 4)
     return px if px < 1.0 else None
