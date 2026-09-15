@@ -3779,3 +3779,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789444965.2,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,6.47,0.01,backfill,,15.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG33CNY3YVB2
 1789444965.2,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,BUY,2,0.44,backfill,,4.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGBW3EACAVB2
 1789444986.2,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,6.47,0.01,backfill,,15.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG33CNY3YVB2
+1789446252.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,11,0.527,sell,0.5682,0.63,0.5,52,54,0.895,0.526,0.527,-0.027,0,an exit — its fill reduces the position it sits on,CGFWRCHKTVBE
+1789448633.1,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,-6,0.01,fix,0.0024,15.12,,1,2,0.579,,0.01,0,40,size trimmed by 6 to the exchange's count (order CG33CNY3YVB2),CG33CNY3YVB2
+1789448633.1,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,BUY,-1.77,0.44,fix,4.6254,4.98,,39,47,0,0.01,0.45,0.01,1.77,size trimmed by 1.77 to the exchange's count (order CGBW3EACAVB2),CGBW3EACAVB2
