@@ -558,6 +558,39 @@ long and accreted, so search it rather than reading it through.
   shown with Silver's number as a suggestion and nothing is tended
   ("Yes for 5"). The fill cost never reads under 2c a share ("The fill
   cost for politics has been high recently. Keep that in mind").
+  THE BEST ENTRIES MAY GROW PAST THE 10% (owner, 2026-09-15: "Make it
+  so the top 25% of ev entries can go above the 10% entry cap to 25% so
+  long as the marginal share along the way would be in the top 25%").
+  The 10% stake was a flat cap that priced a slot worth $12 a day on
+  $100 of collateral like one worth 20c, and on 2026-09-15 it was the
+  binding constraint on size: the near-touch collateral was $4,791
+  against a stake basis of $360, and the Senate-50 bid that would have
+  claimed 29% of its side for $36 was refused "holding $67 here already
+  — no entry that adds to it". So an entry in the TOP QUARTILE by the
+  cap's own currency — expected value a day per dollar of expected loss,
+  the same measure the 2026-09-11 value-ranked cap allocation uses — may
+  grow from FOCUS_STAKE_FRAC (10%) toward FOCUS_STAKE_FRAC_TOP (25%) of
+  the same basis. It grows ONE SLICE AT A TIME and each slice must clear
+  the top-quartile line ON ITS OWN, valued at the margin (the change in
+  expected value over the change in expected loss). The reward claim
+  saturates with size — our share is our size over the side's, so the
+  second dollar buys less than the first — while the fill's cost and the
+  capital's do not, so the marginal value falls as the order grows and
+  the walk stops by itself, usually well before the 25%; a slice that
+  does not raise the expected value at all stops it too. The cut is the
+  75th percentile of the entry values of the last half hour
+  (FOCUS_VALUE_WINDOW_S), and under FOCUS_VALUE_MIN_N readings there is
+  no cut and NOTHING grows. Price is never touched: this decides SIZE at
+  the slot the plan already chose. Growth takes the same position bound
+  and refill ramp as the base stake (room_top runs through _entry_room),
+  so it cannot walk around the standoff after a fill or the rule that an
+  entry may not add to a position past its stake. Three bounds are
+  untouched and still bind first: the $20 on a 2028 book, a stake he set
+  by hand (for those the ceiling IS the base and nothing grows), and the
+  money gate — an entry whose collateral is more than the buying power
+  free is not sent, so growth can never overcommit him. The card says
+  what grew, from what size to what, in how many slices, and the line
+  it cleared.
   A POSITION'S COST CARRIES THE SIGN OF ITS QUANTITY, so a basis is
   always a price a share (owner, 2026-09-12 "Yes fix that", after the
   audit he asked for): the exchange reports the cost as the money tied

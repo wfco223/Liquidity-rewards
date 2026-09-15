@@ -3805,3 +3805,111 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789463858.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,3,0.526,sell,0.0528,4.03,0.5,52,54,0.878,0.526,0.527,0.026,0,an exit — its fill reduces the position it sits on,CGH5C84XYVB9
 1789472194.9,politics,ushrewc-ushr-me-02-2026-11-03-rep,SELL,89,0.51,focus,4.2076,2.95,,47,51,0,0.5,0.51,-0.02,-89,focus entry: ~$3.71/day; fill odds 71%/day; EV +1.28/day,CGM2BM3J8VB7
 1789474070.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-34,0.493,fix,,0.92,,,,,,,,,size trimmed by 34 to the exchange's count (order CG325K3XPVB5),CG325K3XPVB5
+1789474374.7,politics,usgubewc-usgub-hi-2026-11-03-dem,BUY,2,0.98,earn,5.8286,0.02,0.99995,94,99,0.367,0.94,0.99,-0.02,2,4 ticks in front of the touch — we would hold 93% of the bid side,CGQ3BK6WYVB9
+1789475278.7,politics,ussewc-usse-or-2026-11-03-rep,BUY,2,0.03,manual,0.0635,23.84,0.0014,3,6,0.671,0.03,0.04,0.0286,-3,the owner's own order — the engine leaves it alone,CG2TKQDE8VB7
+1789475514.3,politics,usgubewc-usgub-ar-2026-11-03-rep,SELL,1.11,0.98,manual,0.0021,23.59,0.9814,96,99,0.527,0.95,0.98,0.0014,0.89,the owner's own order — the engine leaves it alone,CG3421ZHRVB3
+1789475514.3,politics,ussewc-usse-ky-2026-11-03-rep,BUY,14.98,0.95,earn,0.2489,0.1,0.99665,92,97,0.484,0.95,0.96,-0.0467,14.98,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CGQA6J224VB2
+1789477130.0,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,85.58,0.0696,hand,,11.78,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CEPG57V3ETN5
+1789477130.0,politics,usgubewc-usgub-ri-2026-11-03-dem,SELL,1.05,0.95,hand,,13.45,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CEP9G0DDMTMY
+1789477130.0,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,42.77,0.22,hand,,36.31,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE2EGZ1FETMM
+1789477130.0,politics,ussewc-usse-ma-2026-11-03-dem,BUY,0.06,0.96,hand,,27.96,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CEAEVGARMTMM
+1789477130.0,politics,enwc-uspres-nom-dem-2028-petbut,SELL,0.97,0.05,hand,,36.19,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE7XM29WPTMP
+1789477130.0,politics,ewc-usp-2028-11-07-dontru,SELL,3.11,0.06,hand,,27.24,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CEST16XACTN3
+1789477130.0,politics,ewc-usp-2028-11-07-tuccar,SELL,47.61,0.03,hand,,54.95,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE5RSSB2PTMP
+1789477130.0,politics,ussewc-usse-ma-2026-11-03-dem,SELL,3.9,0.96,hand,,11.34,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFD5F48D4TMM
+1789477130.0,politics,paccc-usse-midterms-2026-11-03-rep,BUY,27,0.531,hand,,0.6,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFPVEH5E4TMY
+1789477130.0,politics,scc-senate-gop-2026-11-03-50,BUY,69.02,0.22,hand,,0.69,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFPSMPGV4TMP
+1789477130.0,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,33.11,0.93,hand,,22.16,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CF4TZZYBGTN0
+1789477130.0,politics,scc-senate-gop-2026-11-03-50,SELL,54.03,0.18,hand,,2.33,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFQDYB3M6TN0
+1789477130.0,politics,usgubewc-usgub-wy-2026-11-03-dem,SELL,30.66,0.03,hand,,64.98,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE3VTVRDCTMM
+1789477130.0,politics,ussewc-usse-sd-2026-11-03-rep,SELL,2.18,0.91,hand,,27.17,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CF4RE10D2TN1
+1789477130.0,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,5.35,0.94,hand,,59.14,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CE9BJ6DWTTN5
+1789477130.0,politics,ushrewc-ushr-ia-01-2026-11-03-dem,SELL,10,0.68,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2ZZTHECVB2
+1789477130.0,politics,ewc-usgub-wi-2026-11-03-rep,SELL,15,0.14,hand,,0.07,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2YYERGCVB2
+1789477130.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,34,0.493,hand,,0.92,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG325K3XPVB5
+1789477130.0,cfb,aachc-cfb-wins-2026-11-28-stan-5pt5wins,SELL,0.1,0.18,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVK968DWTMX
+1789477130.0,nfl,tec-nfl-afceast-2027-01-10-w-ne,SELL,0.1,0.3,backfill,,2.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFRAQB086TN2
+1789477369.4,cfb,aachc-cfb-wins-2026-11-28-txst-6pt5wins,SELL,0.1,0.5,earn,0.2737,0.02,,29,49,0.003,0.17,0.5,-0.1,-0.1,1 tick in front of the touch — we would hold 4% of the ask side,CGQSMS42PVBE
+1789477953.6,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,2,0.98,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGQZM2B16VB7
+1789478345.4,politics,ushrewc-ushr-nj-07-2026-11-03-dem,SELL,20.62,0.77,focus,6.4085,2.46,,73,79,0,0.76,0.77,-0.01,-20.62,focus entry: ~$12.75/day; fill odds 70%/day; EV +9.72/day,CGNYR3M6GVBE
+1789480143.1,politics,ussewc-usse-wv-2026-11-03-rep,BUY,10,0.97,earn,0.9514,0.02,0.999975,95,99,0.451,0.96,0.98,-0.03,10,1 tick in front of the touch — we would hold 15% of the bid side,CGRFKCNCWVB3
+1789480812.1,politics,ushrewc-ushr-me-02-2026-11-03-dem,SELL,-5,0.39,fix,14.9522,0.42,,40,46,0.453,0.38,0.39,0.04,215,size trimmed by 5 to the exchange's count (order CG37F396AVBE),CG37F396AVBE
+1789480812.1,politics,paccc-usse-midterms-2026-11-03-rep,SELL,-4,0.51,fix,2.0457,0.55,0.4309,51,54,0.825,0.509,0.51,-0.0791,0,size trimmed by 4 to the exchange's count (order CG2Z697PTVB2),CG2Z697PTVB2
+1789480812.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-37,0.165,fix,10.7228,1.56,0.1363,17,18,0.889,0.164,0.165,-0.0287,0,size trimmed by 37 to the exchange's count (order CG35ZZ4YJVB2),CG35ZZ4YJVB2
+1789480812.1,politics,ushrewc-ushr-wa-03-2026-11-03-dem,SELL,-17.75,0.85,fix,2.9728,0.08,,84,89,0.452,0.84,0.85,0.01,-106,size trimmed by 17.75 to the exchange's count (order CG3BA2YPGVB8),CG3BA2YPGVB8
+1789480812.1,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-98,0.493,fix,,0.92,,,,,,,,,size trimmed by 98 to the exchange's count (order CG325K3XPVB5),CG325K3XPVB5
+1789480812.1,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,2,0.98,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGQZM2B16VB7
+1789481974.9,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,BUY,0.5,0.81,earn,0.0731,0.04,,72,84,0,0.7,0.82,0.03,0.5,joins the touch — the book has been quiet,CGRX5M68PVB9
+1789482720.2,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,0.63,0.21,backfill,,8.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGHX2AC42VB2
+1789482739.7,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,3,0.21,sell,0.1876,8.4,0.2901,21,25,0.728,0.2,0.21,0.0801,164,an exit — its fill reduces the position it sits on,CGHX2AC42VB2
+1789482860.3,politics,ewc-usse-oh-2026-11-03-dem,BUY,85,0.53,sell,0.4689,26.05,0.649175,52,57,0.358,0.53,0.54,-0.1192,0,buying back the short at or under what it sold for — the bid earns while it wait,CG2RA3E6RVB6
+1789483431.2,politics,ussewc-usse-nj-2026-11-03-dem,SELL,20,0.99,sell,0.0054,9.37,0.995975,96,99,0.6,0.94,0.99,0.006,0,selling filled stock — it earns while it waits,CGH888MZAVB3
+1789483431.2,politics,ussewc-usse-nj-2026-11-03-dem,SELL,5.37,0.99,sell,0,0.02,0.995975,96,99,0.6,0.94,0.99,0.006,-5.37,selling filled stock — it earns while it waits,CGS90SA7GVB6
+1789484182.9,politics,paccc-usse-midterms-2026-11-03-rep,SELL,10,0.483,sell,1.6638,11.69,0.4137,47,49,0.909,0.482,0.483,-0.0693,196,an exit — its fill reduces the position it sits on,CGFEN69CJVB9
+1789484182.9,politics,ussewc-usse-ks-2026-11-03-dem,SELL,2.99,0.24,earn,3.4196,1.12,0.209625,20,24,0.452,0.23,0.24,-0.0304,-2.99,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CGRG0QEBGVB5
+1789484182.9,cfb,aachc-cfb-wins-2026-11-28-kan-6pt5wins,BUY,2,0.28,earn,0.2728,0.18,,25,33,0,0.26,0.27,-0.01,2,joins the touch — the book has been quiet,CGSAFYV7RVB2
+1789484271.5,politics,paccc-usse-midterms-2026-11-03-rep,SELL,118,0.483,sell,1.5871,11.72,0.4137,47,49,0.916,0.482,0.483,-0.0693,78,an exit — its fill reduces the position it sits on,CGFEN69CJVB9
+1789484271.5,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,SELL,0.5,0.42,earn,0.1995,1.58,,33,43,0,0.41,0.42,-0.03,-0.5,2 ticks behind the touch — we would hold 2% of the ask side,CGR4FS0EAVB2
+1789484482.9,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,-6.47,0.01,fix,,15.16,,,,,,,,,size trimmed by 6.47 to the exchange's count (order CG33CNY3YVB2),CG33CNY3YVB2
+1789484482.9,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,-2.53,0.01,fix,0.0905,7.52,,1,2,0.431,,0.01,0,46,size trimmed by 2.53 to the exchange's count (order CG33CNY3YVB2),CG33CNY3YVB2
+1789484482.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-1,0.493,fix,,0.92,,,,,,,,,size trimmed by 1 to the exchange's count (order CG325K3XPVB5),CG325K3XPVB5
+1789484482.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-10,0.493,fix,,0.92,,,,,,,,,size trimmed by 10 to the exchange's count (order CG325K3XPVB5),CG325K3XPVB5
+1789484482.9,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,0.63,0.21,backfill,,8.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGHX2AC42VB2
+1789485022.0,cfb,aachc-cfb-wins-2026-11-28-aubrn-8pt5wins,BUY,1,0.2,probe,0.0283,0.36,,14,30,0.096,0.15,0.16,-0.01,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CGSBVX46YVB3
+1789485349.9,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,2,0.98,sell,0,0,0.9988,94,98,0.603,0.98,0.99,0.0188,0,taker dump — sold into the bid (the carved exception),CGSR32Q4WVB5
+1789485784.5,politics,ewc-usse-tx-2026-11-03-rep,BUY,15,0.51,focus,5.4315,0.43,0.400775,48,52,0.455,0.5,0.51,0.1092,125,focus entry: ~$0.97/day; fill odds 61%/day; EV +0.30/day,CGSFHG7YRVB3
+1789486795.3,politics,ussewc-usse-tn-2026-11-03-rep,SELL,66.57,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGT37201PVBE
+1789486795.3,politics,ussewc-usse-tn-2026-11-03-rep,SELL,1,0.96,hand,,12.86,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGF2EVNQWVB3
+1789486904.6,cfb,aachc-cfb-wins-2026-11-28-txst-6pt5wins,BUY,1,0.27,sell,0,2.35,,48,57,0.443,0.01,0.28,-0.25,1,buying back the short at or under what it sold for — the bid earns while it wait,CGR2ZQC9AVB5
+1789486939.8,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,SELL,1,0.71,backfill,,1.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRZTGBEAVBA
+1789488112.8,politics,ussewc-usse-tn-2026-11-03-rep,SELL,66.57,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGT37201PVBE
+1789488112.8,politics,ussewc-usse-tn-2026-11-03-rep,SELL,1,0.96,hand,,12.86,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGF2EVNQWVB3
+1789488112.8,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,SELL,1,0.71,backfill,,1.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRZTGBEAVBA
+1789489234.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,84,0.527,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3H4596VB7
+1789490269.0,politics,ewc-usgub-ga-2026-11-03-rep,SELL,12,0.4,focus,1.083,0,0.3559,37,42,0,0.4,0.41,-0.0441,-58,focus entry: ~$1.08/day; fill odds 48%/day; EV +0.26/day,CGTXCRNSMVB3
+1789491038.5,politics,scc-hrep-rep-2026-11-03-gte215,SELL,37.72,0.34,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV3J4Z38VB6
+1789491066.3,politics,scc-hrep-rep-2026-11-03-gte215,SELL,38,0.99,manual,0,0.02,0.2063,26,34,0.002,0.33,0.34,-0.7837,-38,the owner's qualify-ask wall,CGV3CG0D0VB4
+1789491720.1,politics,ushrewc-ushr-me-02-2026-11-03-dem,SELL,-30,0.39,fix,17.7141,0.98,,43,48,0.804,0.38,0.39,0.06,0,size trimmed by 30 to the exchange's count (order CG3R4C4VTVB4),CG3R4C4VTVB4
+1789491720.1,politics,ewc-usse-me-2026-11-03-rep,SELL,-68,0.33,fix,3.8485,3.01,0.3273,32,35,0.794,0.32,0.33,-0.0027,0,size trimmed by 68 to the exchange's count (order CG2R7Y26JVBE),CG2R7Y26JVBE
+1789491720.1,politics,ewc-usse-me-2026-11-03-rep,SELL,-114,0.33,fix,4.5468,1.84,0.3273,31,34,0.757,0.32,0.33,-0.0027,68,size trimmed by 114 to the exchange's count (order CG2R7Y26JVBE),CG2R7Y26JVBE
+1789491720.1,politics,ewc-usgub-ia-2026-11-03-rep,BUY,-1,0.27,fix,23.2044,2.15,0.192925,23,27,0.287,0.26,0.27,0.0771,0,size trimmed by 1 to the exchange's count (order CG2YZJMMEVB7),CG2YZJMMEVB7
+1789491720.1,politics,scc-hrep-rep-2026-11-03-gte185,SELL,-0.1,0.99,fix,,3.7,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CG340FNH2VB6),CG340FNH2VB6
+1789491720.1,politics,scc-hrep-rep-2026-11-03-gte185,SELL,-48.2,0.99,fix,0,3.48,0.889175,88,94,0.445,0.98,0.99,-0.1008,-105.57,size trimmed by 48.2 to the exchange's count (order CG340FNH2VB6),CG340FNH2VB6
+1789491720.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,84,0.527,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3H4596VB7
+1789491720.1,politics,scc-hrep-rep-2026-11-03-gte215,SELL,37.72,0.34,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV3J4Z38VB6
+1789492094.9,cfb,aachc-cfb-wins-2026-11-28-missr-7pt5wins,SELL,0.1,0.4,manual,0.0136,28.28,,32,40,0,0.39,0.99,-0.03,-0.1,the owner's own order — the engine leaves it alone,CG321FGFCVB7
+1789492154.9,cfb,aachc-cfb-wins-2026-11-28-missr-7pt5wins,BUY,0.1,0.98,sell,0,0.02,,36,41,0.455,0.36,0.99,0.59,0,buying back the short at or under what it sold for — the bid earns while it wait,CGVBQ74K4VB6
+1789492214.9,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,32.82,0.03,focus,15.3279,0.27,0.01535,1,5,0,0.02,0.03,-0.0146,-32.82,focus entry: ~$15.33/day; fill odds 48%/day; EV +13.22/day,CGV5C229GVB9
+1789492226.7,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,0.18,0.03,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV5C229GVB9
+1789492925.7,politics,ussewc-usse-nj-2026-11-03-dem,BUY,5,0.98,sell,1.6049,2.64,0.995975,97,99,0.689,0.94,0.99,-0.016,5,buying back the short at or under what it sold for — the bid earns while it wait,CGS9C9NBPVB4
+1789493278.1,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,BUY,1,0.76,sell,0.5841,1.75,,70,77,0.44,0.7,0.71,0.03,2,buying back the short at or under what it sold for — the bid earns while it wait,CGT48FPWTVB6
+1789495356.9,politics,ewc-usgub-ia-2026-11-03-rep,BUY,-12,0.27,fix,23.2044,2.15,0.192925,23,27,0.287,0.26,0.27,0.0771,0,size trimmed by 12 to the exchange's count (order CG2YZJMMEVB7),CG2YZJMMEVB7
+1789495356.9,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,-5.5,0.24,fix,20.7092,0.04,0.29155,22,25,0.798,0.21,0.24,-0.0516,181,size trimmed by 5.5 to the exchange's count (order CG4S3PW3WVB4),CG4S3PW3WVB4
+1789495356.9,politics,scc-hrep-rep-2026-11-03-gte215,SELL,38,0.99,void,0,0.02,0.2063,26,34,0.002,0.33,0.34,-0.7837,-38,voided: the exchange has no trade for order CGV3CG0D0VB4 — the row of 09-15 16:5,CGV3CG0D0VB4
+1789495356.9,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,0.18,0.03,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV5C229GVB9
+1789496017.1,politics,ussewc-usse-ar-2026-11-03-dem,BUY,31.74,0.08,manual,1.0976,29.17,0.01695,8,12,0.592,0.08,0.09,0.063,0.74,the owner's own order — the engine leaves it alone,CG37V2802VB8
+1789496289.4,cfb,aachc-cfb-wins-2026-11-28-miss-9pt5wins,BUY,2,0.34,backfill,,4.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRH2N8GPVB3
+1789497992.1,politics,ussewc-usse-ky-2026-11-03-dem,SELL,20,0.03,earn,6.2484,3.77,0.00335,1,5,0.641,0.01,0.07,-0.0267,-20,1 tick behind the touch — we would hold 5% of the ask side,CGSGTM3PRVB5
+1789498021.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-chrola,SELL,0.01,0.02,hand,,29.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG37V2860VB8
+1789498145.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,197,0.164,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGWN8VW5JVB8
+1789498744.7,politics,scc-senate-gop-2026-11-03-lte45,SELL,28,0.05,focus,5.4026,0.15,0.096175,3,7,0.196,0.04,0.05,0.0462,-28,focus entry: ~$0.92/day; fill odds 63%/day; EV +0.44/day,CGWSJ9NYAVB3
+1789499007.1,politics,ewc-usgub-ia-2026-11-03-rep,BUY,-37,0.27,fix,38.0987,0.02,0.192925,23,27,0.287,0.26,0.27,0.0771,175,size trimmed by 37 to the exchange's count (order CG4T3YPPYVB7),CG4T3YPPYVB7
+1789499007.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,197,0.164,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGWN8VW5JVB8
+1789499007.1,cfb,aachc-cfb-wins-2026-11-28-miss-9pt5wins,BUY,2,0.34,backfill,,4.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRH2N8GPVB3
+1789499007.1,nfl,ftsc-nfl-flexmostfp-2027-01-10-chrola,SELL,0.01,0.02,hand,,29.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG37V2860VB8
+1789499801.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,84,0.57,sell,182.081,0.9,0.5,52,54,0.846,0.57,0.571,0.07,0,an exit — its fill reduces the position it sits on,CGWDH77F6VB4
+1789500116.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,54,0.57,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGX6J3EN0VB7
+1789500484.6,politics,ussewc-usse-ok-2026-11-03-rep,SELL,14,0.97,sell,0,0,0.99945,95,99,0.092,0.97,0.98,0.0294,0,taker dump — sold into the bid (the carved exception),CGXCBJP4EVBE
+1789500602.3,politics,ussewc-usse-ok-2026-11-03-rep,SELL,14.07,0.99,manual,0.0019,30.78,0.99945,95,99,0.092,0.97,0.99,0.0094,-14.07,the owner's own order — the engine leaves it alone,CG2XWN032VB5
+1789500602.3,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,8,0.03,sell,0.0061,11.05,0.001275,2,6,0.487,0.03,0.04,0.0287,0,buying back the short at or under what it sold for — the bid earns while it wait,CGKWNEBD4VBE
+1789500602.3,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,1,0.98,earn,6.2409,0.03,0.998725,93,97,0.583,0.92,0.99,-0.0187,1,6 ticks in front of the touch — we would hold 100% of the bid side,CGXCH89J2VB2
+1789500741.0,politics,ussewc-usse-ok-2026-11-03-rep,BUY,14,0.98,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGXE58HTAVB7
+1789500803.6,politics,ussewc-usse-ok-2026-11-03-rep,BUY,14,0.98,sell,0,0.06,0.99945,96,99,0.483,0.97,0.99,-0.0194,0,buying back the short at or under what it sold for — the bid earns while it wait,CGXD7AXZGVBA
+1789501370.1,politics,ewc-usgub-mi-2026-11-03-rep,BUY,131,0.1,hand,,27.44,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG5ZG34T6VB5
+1789501660.3,politics,ussewc-usse-fl-2026-11-03-rep,SELL,1,0.89,earn,0.5888,0.29,0.858675,84,89,0.446,0.88,0.89,-0.0313,-1,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CGXD26TKJVB6
+1789501808.3,politics,ussewc-usse-fl-2026-11-03-rep,SELL,9,0.89,earn,0.5781,0.34,0.858675,87,91,0.621,0.88,0.89,-0.0313,-10,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CGXD26TKJVB6
+1789502303.0,cfb,aachc-cfb-wins-2026-11-28-miss-9pt5wins,SELL,2,0.21,sell,7.4995,0.63,,29,38,0,0.2,0.29,0.13,0,selling filled stock — it earns while it waits,CGX8P90VJVB9
+1789502599.0,politics,ewc-usgub-ga-2026-11-03-rep,BUY,58,0.43,sell,1.3069,3.15,0.3499,40,44,0.438,0.42,0.43,0.0801,0,an exit — its fill reduces the position it sits on,CGV5JQ1V0VB7
+1789502659.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,54,0.57,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGX6J3EN0VB7
+1789502659.0,politics,ussewc-usse-ok-2026-11-03-rep,BUY,14,0.98,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGXE58HTAVB7
+1789502659.0,politics,ewc-usgub-mi-2026-11-03-rep,BUY,131,0.1,hand,,27.44,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG5ZG34T6VB5
