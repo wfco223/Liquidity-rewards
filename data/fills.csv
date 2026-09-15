@@ -3943,3 +3943,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789507148.4,politics,ussewc-usse-sc-2026-11-03-rep,BUY,4,0.84,hand,,11.99,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CF133SQ8ATMP
 1789507148.4,politics,ussewc-usse-or-2026-11-03-dem,BUY,0.86,0.94,backfill,,5.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGSXKJSECVB4
 1789507148.4,politics,paccc-usse-midterms-2026-11-03-dem,SELL,88,0.554,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGYWCFFN0VNG
+1789507353.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,27,0.554,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGYZWK0RAVNH
+1789507448.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,42,0.554,focus,23.133,0.07,0.5,53,55,0.858,0.554,0.555,0.054,88,focus exit: ~$21.15/day; fill odds 61%/day; EV +22.06/day,CGYYQBD1YVNA
+1789507448.2,politics,ussewc-usse-or-2026-11-03-dem,SELL,21,0.94,sell,0,0.08,0.998775,94,98,0.684,0.93,0.97,0.0588,0,selling filled stock — it earns while it waits,CGZ04W3T6VNA
+1789507680.2,politics,ewc-usp-2028-11-07-tulgab,SELL,10,0.01,hand,,15.89,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGHE8Z6KCVB2
+1789509864.2,politics,ewc-usse-tx-2026-11-03-rep,SELL,39,0.5,sell,0.3349,0.82,0.397125,48,51,0.595,0.49,0.5,-0.1029,86,an exit — its fill reduces the position it sits on,CGYWKGCK4VNN
+1789510178.4,politics,paccc-usse-midterms-2026-11-03-dem,SELL,18,0.554,sell,3.9091,0.22,0.5,53,55,0.871,0.553,0.554,-0.054,97,an exit — its fill reduces the position it sits on,CGZFV1AAWVNJ
+1789510240.6,politics,ewc-usse-tx-2026-11-03-rep,SELL,86,0.5,sell,0.2337,0.93,0.397125,49,52,0.697,0.49,0.5,-0.1029,0,an exit — its fill reduces the position it sits on,CGYWKGCK4VNN
+1789510674.7,politics,paccc-balpow-2026-11-03-dsweep,SELL,151,0.5,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CGZS9JV8PVNQ
+1789510750.3,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,-9,0.01,fix,,15.16,,,,,,,,,size trimmed by 9 to the exchange's count (order CG33CNY3YVB2),CG33CNY3YVB2
+1789510750.3,politics,ewc-usse-me-2026-11-03-rep,SELL,-182,0.33,fix,,3,,,,,,,,,size trimmed by 182 to the exchange's count (order CG2R7Y26JVBE),CG2R7Y26JVBE
+1789510750.3,politics,scc-hrep-rep-2026-11-03-gte185,SELL,-48.3,0.99,fix,,3.7,,,,,,,,,size trimmed by 48.3 to the exchange's count (order CG340FNH2VB6),CG340FNH2VB6
+1789510750.3,politics,ussewc-usse-ky-2026-11-03-rep,SELL,15,0.99,void,0,0.11,0.996575,91,95,0.591,0.9,0.91,0.0066,0,voided: the exchange has no trade for order CGYFWTNTAVNP — the row of 09-15 20:5,CGYFWTNTAVNP
+1789510750.3,politics,ewc-usp-2028-11-07-tulgab,SELL,10,0.51,void,0,32.15,,1,4,0,0.01,0.02,-0.49,0,voided: the exchange has no trade for order CG2Z6EJRMVB3 — the row of 09-15 20:5,CG2Z6EJRMVB3
+1789510750.3,politics,enwc-uspres-nom-dem-2028-markel,BUY,20,0.04,void,0.0473,32.06,,4,8,0.216,0.04,0.06,-0.02,0,voided: the exchange has no trade for order CG32PNY7AVB4 — the row of 09-15 20:5,CG32PNY7AVB4
+1789510750.3,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,190,0.37,void,0.1476,27.44,,36,40,0.739,0.36,0.37,0.01,0,voided: the exchange has no trade for order CG71XWAQ4VB3 — the row of 09-15 20:5,CG71XWAQ4VB3
+1789510750.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,54,0.555,void,1.7151,0.28,0.5,51,53,0.833,0.554,0.555,-0.055,0,voided: the exchange has no trade for order CGYD73200VB5 — the row of 09-15 20:5,CGYD73200VB5
+1789510750.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,27,0.554,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGYZWK0RAVNH
+1789510750.3,politics,ewc-usp-2028-11-07-tulgab,SELL,10,0.01,hand,,15.89,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGHE8Z6KCVB2
+1789510750.3,politics,paccc-balpow-2026-11-03-dsweep,SELL,151,0.5,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CGZS9JV8PVNQ
+1789510750.3,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,SELL,2,0.41,void,0.0002,1.7,,33,41,0.376,0.35,0.36,-0.04,0,voided: the exchange has no trade for order CGX617ZG6VBE — the row of 09-15 20:5,CGX617ZG6VBE
