@@ -3887,3 +3887,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789495356.9,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,-5.5,0.24,fix,20.7092,0.04,0.29155,22,25,0.798,0.21,0.24,-0.0516,181,size trimmed by 5.5 to the exchange's count (order CG4S3PW3WVB4),CG4S3PW3WVB4
 1789495356.9,politics,scc-hrep-rep-2026-11-03-gte215,SELL,38,0.99,void,0,0.02,0.2063,26,34,0.002,0.33,0.34,-0.7837,-38,voided: the exchange has no trade for order CGV3CG0D0VB4 — the row of 09-15 16:5,CGV3CG0D0VB4
 1789495356.9,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,0.18,0.03,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGV5C229GVB9
+1789496017.1,politics,ussewc-usse-ar-2026-11-03-dem,BUY,31.74,0.08,manual,1.0976,29.17,0.01695,8,12,0.592,0.08,0.09,0.063,0.74,the owner's own order — the engine leaves it alone,CG37V2802VB8
+1789496289.4,cfb,aachc-cfb-wins-2026-11-28-miss-9pt5wins,BUY,2,0.34,backfill,,4.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRH2N8GPVB3
+1789497992.1,politics,ussewc-usse-ky-2026-11-03-dem,SELL,20,0.03,earn,6.2484,3.77,0.00335,1,5,0.641,0.01,0.07,-0.0267,-20,1 tick behind the touch — we would hold 5% of the ask side,CGSGTM3PRVB5
+1789498021.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-chrola,SELL,0.01,0.02,hand,,29.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG37V2860VB8
+1789498145.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,197,0.164,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGWN8VW5JVB8
+1789498744.7,politics,scc-senate-gop-2026-11-03-lte45,SELL,28,0.05,focus,5.4026,0.15,0.096175,3,7,0.196,0.04,0.05,0.0462,-28,focus entry: ~$0.92/day; fill odds 63%/day; EV +0.44/day,CGWSJ9NYAVB3
+1789499007.1,politics,ewc-usgub-ia-2026-11-03-rep,BUY,-37,0.27,fix,38.0987,0.02,0.192925,23,27,0.287,0.26,0.27,0.0771,175,size trimmed by 37 to the exchange's count (order CG4T3YPPYVB7),CG4T3YPPYVB7
+1789499007.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,197,0.164,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGWN8VW5JVB8
+1789499007.1,cfb,aachc-cfb-wins-2026-11-28-miss-9pt5wins,BUY,2,0.34,backfill,,4.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRH2N8GPVB3
+1789499007.1,nfl,ftsc-nfl-flexmostfp-2027-01-10-chrola,SELL,0.01,0.02,hand,,29.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG37V2860VB8
