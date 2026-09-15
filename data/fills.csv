@@ -3963,3 +3963,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789510750.3,politics,ewc-usp-2028-11-07-tulgab,SELL,10,0.01,hand,,15.89,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGHE8Z6KCVB2
 1789510750.3,politics,paccc-balpow-2026-11-03-dsweep,SELL,151,0.5,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CGZS9JV8PVNQ
 1789510750.3,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,SELL,2,0.41,void,0.0002,1.7,,33,41,0.376,0.35,0.36,-0.04,0,voided: the exchange has no trade for order CGX617ZG6VBE — the row of 09-15 20:5,CGX617ZG6VBE
+1789511125.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,97,0.554,sell,62.9325,0.49,0.5,54,56,0.883,0.553,0.554,-0.054,0,an exit — its fill reduces the position it sits on,CGZFV1AAWVNJ
+1789511125.1,politics,ussewc-usse-id-2026-11-03-rep,SELL,20,0.97,sell,0.0198,1.1,0.997675,94,97,0.667,0.96,0.98,0.0277,0,selling filled stock — it earns while it waits,CGZ04W4DWVNA
+1789512147.6,politics,ussewc-usse-or-2026-11-03-rep,BUY,2,0.03,manual,0.061,34.08,0.001225,2,5,0.702,0.03,0.04,0.0288,-1,the owner's own order — the engine leaves it alone,CG2TKQDE8VB7
+1789512147.6,cfb,aachc-cfb-wins-2026-11-28-nw-7pt5wins,SELL,0.01,0.02,earn,0.0556,2.12,,3,18,0,0.01,0.03,0.07,-0.01,joins the touch — the book has been quiet,CGYB3KXM8VB5
+1789512400.9,politics,ushrewc-ushr-tx-15-2026-11-03-dem,SELL,111,0.57,backfill,,0.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGZWXN1WMVNH
+1789512422.1,politics,ushrewc-ushr-tx-15-2026-11-03-dem,SELL,49.76,0.58,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH072GQK2VNR
+1789512595.6,politics,ewc-usse-ia-2026-11-03-dem,SELL,68,0.37,focus,4.8627,0.05,0.468925,34,38,0,0.37,0.38,0.0989,-68,focus entry: ~$2.46/day; fill odds 54%/day; EV +1.14/day,CH0753DECVNK
+1789512640.6,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,0.1,0.23,hand,,34.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG308Z0T6VB7
+1789512655.7,politics,ussewc-usse-or-2026-11-03-rep,BUY,2,0.03,manual,0.0459,34.22,0.001225,2,5,0.761,0.03,0.04,0.0288,1,the owner's own order — the engine leaves it alone,CG2TKQDE8VB7
+1789512655.7,politics,ussewc-usse-or-2026-11-03-rep,SELL,1,0.03,sell,0,0,0.001225,1,4,0.801,0.03,0.04,-0.0288,0,taker dump — sold into the bid (the carved exception),CH0979KZJVNH
+1789513848.2,cfb,aachc-cfb-wins-2026-11-28-gtech-7pt5wins,SELL,0.01,0.12,earn,0.0739,0.17,,10,20,0,0.11,0.12,0.03,-0.01,joins the touch — the book has been quiet,CH0DVAF8GVNH
+1789514425.1,politics,ewc-usse-mn-2026-11-03-rep,SELL,-155,0.13,fix,7.408,5.89,0.066575,10,15,0.5,0.12,0.13,-0.0634,0,size trimmed by 155 to the exchange's count (order CG2RBQ6R8VB9),CG2RBQ6R8VB9
+1789514425.1,politics,ewc-usse-mn-2026-11-03-rep,SELL,-52,0.13,fix,11.6772,3.17,0.066575,9,13,0.292,0.12,0.13,-0.0634,155,size trimmed by 52 to the exchange's count (order CG2RBQ6R8VB9),CG2RBQ6R8VB9
+1789514425.1,politics,ushrewc-ushr-tx-15-2026-11-03-dem,SELL,111,0.57,backfill,,0.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGZWXN1WMVNH
+1789514425.1,politics,ushrewc-ushr-tx-15-2026-11-03-dem,SELL,49.76,0.58,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH072GQK2VNR
+1789514425.1,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,0.1,0.23,hand,,34.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG308Z0T6VB7
