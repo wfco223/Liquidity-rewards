@@ -47,6 +47,152 @@ def wide_book(now, bid=0.44, ask=0.47, bid_q=300.0, ask_q=300.0):
                 tick=0.01, fetched_at=now)
 
 
+class TestTheBestEntriesGrowPastTheCap(unittest.TestCase):
+    """Owner, 2026-09-15: "Make it so the top 25% of ev entries can go
+    above the 10% entry cap to 25% so long as the marginal share along
+    the way would be in the top 25%." The 10% was a flat cap that
+    treated a slot worth $12 a day on $100 like one worth 20c. A
+    top-quartile entry now grows a slice at a time, each slice valued on
+    its own at the margin, and stops where the reward claim saturates."""
+
+    def setUp(self):
+        self.r = Rig(cfg=politics.config())
+        self.silver = {NC: 0.45}
+        self.b = Bonds(self.r.fam, self.r.exchange, lambda s: None,
+                       clock=lambda: self.r.now, sleep=lambda s: None)
+        self.f = Focus(self.r.fam, self.r.exchange, self.b,
+                       fair=lambda s: self.silver.get(s),
+                       alert=lambda t, m: None,
+                       clock=lambda: self.r.now, switch_on=lambda: True,
+                       buying_power=lambda: 2000.0)
+        self.r.add_market(NC, wide_book(self.r.now), event="nc", prog=T1)
+        self.r.switch = False
+        self.r.cycle()
+        self.f.seed(self.r.now)
+        self.r.switch = True
+        # bp 2000 less the $300 kept free = a $1,700 basis
+        self.bp = self.f.stake_bp(self.r.now)
+
+    def fill_record(self, value, n=focus_mod.FOCUS_VALUE_MIN_N):
+        """A value record whose top-quartile cut is `value`."""
+        self.f._vals = [(self.r.now, value) for _ in range(n)]
+
+    # -- the ceiling ---------------------------------------------------------
+
+    def test_the_base_is_ten_percent_and_the_ceiling_twenty_five(self):
+        base, src = self.f.stake(NC, self.bp)
+        self.assertAlmostEqual(base, round(0.10 * self.bp, 2))
+        self.assertIn("10%", src)
+        self.assertAlmostEqual(self.f.stake_top(NC, self.bp), round(0.25 * self.bp, 2))
+
+    def test_a_stake_he_set_by_hand_does_not_grow(self):
+        self.f.stakes[NC] = 88.0
+        self.assertEqual(self.f.stake(NC, self.bp)[0], 88.0)
+        self.assertEqual(self.f.stake_top(NC, self.bp), 88.0)
+
+    def test_a_2028_book_keeps_its_twenty_dollars(self):
+        slug = "ewc-usp-2028-11-07-andbes"
+        self.assertEqual(self.f.stake_top(slug, self.bp), focus_mod.FOCUS_2028_STAKE_USD)
+
+    # -- the cut -------------------------------------------------------------
+
+    def test_there_is_no_cut_until_the_sample_is_thick_enough(self):
+        self.assertIsNone(self.f.top_cut(self.r.now))
+        self.fill_record(1.0, focus_mod.FOCUS_VALUE_MIN_N - 1)
+        self.assertIsNone(self.f.top_cut(self.r.now))
+        self.fill_record(1.0, focus_mod.FOCUS_VALUE_MIN_N)
+        self.assertIsNotNone(self.f.top_cut(self.r.now))
+
+    def test_the_cut_is_the_seventy_fifth_percentile(self):
+        self.f._vals = [(self.r.now, float(i)) for i in range(1, 101)]
+        # 75 of the 100 values are at or under the cut, 25 above it
+        self.assertEqual(self.f.top_cut(self.r.now), 75.0)
+
+    def test_values_older_than_the_window_fall_out(self):
+        self.fill_record(5.0)
+        self.r.now += focus_mod.FOCUS_VALUE_WINDOW_S + 1
+        self.assertIsNone(self.f.top_cut(self.r.now))
+
+    # -- the growth ----------------------------------------------------------
+
+    def plan(self, cut=None, stake=None, top=None):
+        book = self.r.cache.any_age(NC)
+        prog = self.f.terms.get(NC)
+        pool = self.r.fam._side_pool(NC, prog)
+        if cut is not None:
+            self.fill_record(cut)
+        base = stake if stake is not None else self.f.stake(NC, self.bp)[0]
+        ceil = top if top is not None else self.f.stake_top(NC, self.bp)
+        return self.f._entry_plan(NC, "BUY", book, prog, pool, 0.45,
+                                  base, ceil, self.r.now)
+
+    def test_with_no_cut_nothing_grows(self):
+        self.f._vals = []
+        p = self.plan()
+        self.assertIsNotNone(p)
+        self.assertNotIn("grow_note", p)
+
+    def test_an_entry_under_the_cut_does_not_grow(self):
+        p0 = self.plan(cut=None)
+        self.assertIsNotNone(p0)
+        # a cut far above anything this book can pay
+        p = self.plan(cut=1e9)
+        self.assertNotIn("grow_note", p)
+        self.assertEqual(p["qty"], p0["qty"])
+
+    def test_a_top_quartile_entry_grows_and_says_so(self):
+        p0 = self.plan()                       # no record yet: the base size
+        base_qty = p0["qty"]
+        p = self.plan(cut=0.0)                 # every slice clears a zero cut
+        self.assertIn("grow_note", p)
+        self.assertGreater(p["qty"], base_qty)
+        self.assertEqual(p["grew_from"], base_qty)
+        self.assertIn("past the 10% cap", p["grow_note"])
+
+    def test_growth_never_passes_the_ceiling(self):
+        p = self.plan(cut=0.0)
+        self.assertLessEqual(p["coll"], self.f.stake_top(NC, self.bp) + 1e-6)
+
+    def test_growth_does_not_move_the_price(self):
+        p0 = self.plan()
+        p = self.plan(cut=0.0)
+        self.assertEqual(p["px"], p0["px"])
+
+    def test_the_walk_stops_where_the_marginal_slice_stops_clearing(self):
+        # the cut set just under the FIRST slice's own value: one slice
+        # goes on and the next does not
+        p0 = self.plan()
+        loose = self.plan(cut=0.0)
+        self.assertGreater(loose["grew_slices"], 1,
+                           "need room for more than one slice to test the stop")
+        # walk the cut up until fewer slices survive
+        fewer = None
+        for c in (0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0):
+            p = self.plan(cut=c)
+            n = p.get("grew_slices", 0)
+            if 0 < n < loose["grew_slices"]:
+                fewer = p
+                break
+        self.assertIsNotNone(fewer, "a tighter cut never shortened the walk")
+        self.assertLess(fewer["qty"], loose["qty"])
+        self.assertGreater(fewer["qty"], p0["qty"])
+
+    def test_every_slice_is_ev_positive_so_growth_never_lowers_the_ev(self):
+        p0 = self.plan()
+        p = self.plan(cut=0.0)
+        self.assertGreaterEqual(p["ev"], p0["ev"] - 1e-9)
+
+    def test_an_exit_is_never_grown(self):
+        # exits are the position leaving: they are not sized by the stake
+        # and never enter the value record
+        self.f._vals = []
+        book = self.r.cache.any_age(NC)
+        prog = self.f.terms.get(NC)
+        pool = self.r.fam._side_pool(NC, prog)
+        self.f._exit_plan(NC, "SELL", book, prog, pool, 0.45, 200.0, 0.40)
+        self.assertEqual(self.f._vals, [], "an exit wrote to the entry value record")
+
+
 class Base(unittest.TestCase):
     def setUp(self):
         self.r = Rig(cfg=politics.config())
