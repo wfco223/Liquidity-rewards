@@ -3712,3 +3712,22 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789430403.9,politics,usgubewc-usgub-ct-2026-11-03-dem,SELL,10,0.98,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGBPBNEJ8VB4
 1789430403.9,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,4,0.16,hand,,10.38,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG35M99CMVB5
 1789430403.9,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,4,0.16,hand,,10.38,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG35SG8CPVB2
+1789430601.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,12,0.854,sell,1.1225,0.15,0.8563,85,86,0.941,0.853,0.854,0.0023,0,an exit — its fill reduces the position it sits on,CGCKMF2KPVB5
+1789431107.4,politics,usgubewc-usgub-or-2026-11-03-dem,BUY,20,0.82,earn,0.3264,1.4,0.936025,83,89,0.266,0.82,0.83,-0.116,49,at the touch — a fill here is 10 ticks inside value (Silver + evidence),CGBMW5WERVB3
+1789431392.5,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,0.1,0.23,hand,,11.48,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG308Z0T6VB7
+1789431400.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,11,0.853,focus,2.1572,0.12,0.8563,85,87,0.939,0.853,0.854,-0.0033,22,focus entry: ~$2.63/day; fill odds 63%/day; EV +2.38/day,CGCTGKAP4VB5
+1789431400.2,politics,paccc-usho-midterms-2026-11-03-dem,BUY,2,0.853,focus,2.6238,0.02,0.8563,85,87,0.939,0.853,0.854,-0.0033,24,focus entry: ~$2.32/day; fill odds 63%/day; EV +2.05/day,CGCXK2SSMVB9
+1789431812.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,10,0.527,sell,5.5458,0.65,0.5,51,52,0.912,0.526,0.527,-0.027,87,an exit — its fill reduces the position it sits on,CGCF1ZM92VB7
+1789432270.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,87,0.527,sell,4.4171,0.78,0.5,51,53,0.917,0.526,0.527,-0.027,0,an exit — its fill reduces the position it sits on,CGCF1ZM92VB7
+1789432487.8,politics,paccc-usho-midterms-2026-11-03-dem,SELL,13,0.854,sell,0.8293,0.3,0.8563,85,86,0.941,0.853,0.854,0.0023,0,an exit — its fill reduces the position it sits on,CGCY5TEDWVB9
+1789432784.6,politics,paccc-usse-midterms-2026-11-03-dem,BUY,42,0.526,focus,10.7384,0.05,0.5,51,53,0.919,0.526,0.527,0.026,84,focus entry: ~$4.53/day; fill odds 59%/day; EV +3.41/day,CGD7GM8N2VB9
+1789432834.0,politics,paccc-usho-midterms-2026-11-03-dem,SELL,1,0.854,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGD8881CMVB3
+1789432889.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,277,0.854,focus,34.1691,0.05,0.8563,86,87,0.939,0.853,0.854,0.0023,-277,focus entry: ~$133.73/day; fill odds 74%/day; EV +129.42/day,CGD8881CMVB3
+1789432949.6,politics,paccc-usho-midterms-2026-11-03-dem,BUY,14,0.853,focus,3.3591,0.1,0.8563,86,87,0.942,0.853,0.854,-0.0033,-250,focus entry: ~$1.13/day; fill odds 64%/day; EV +0.82/day,CGD7E56G4VB8
+1789432972.1,nfl,aqc-nfl-nfc-2027-01-24-champq-was,SELL,0.01,0.02,hand,,12.18,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2RKTAN8VB6
+1789433863.0,politics,ussewc-usse-ar-2026-11-03-dem,BUY,0.26,0.09,manual,0.007,11.91,0.01695,8,11,0.556,0.09,0.11,0.0731,-31.74,the owner's own order — the engine leaves it alone,CG37V282TVB8
+1789434039.0,politics,paccc-usho-midterms-2026-11-03-dem,BUY,277,0.853,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGD9Z8BS8VB8
+1789434060.4,politics,paccc-usho-midterms-2026-11-03-dem,SELL,1,0.854,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGD8881CMVB3
+1789434060.4,politics,paccc-usho-midterms-2026-11-03-dem,BUY,277,0.853,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGD9Z8BS8VB8
+1789434060.4,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,0.1,0.23,hand,,11.48,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG308Z0T6VB7
+1789434060.4,nfl,aqc-nfl-nfc-2027-01-24-champq-was,SELL,0.01,0.02,hand,,12.18,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2RKTAN8VB6
