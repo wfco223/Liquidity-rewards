@@ -3855,3 +3855,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789484482.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-1,0.493,fix,,0.92,,,,,,,,,size trimmed by 1 to the exchange's count (order CG325K3XPVB5),CG325K3XPVB5
 1789484482.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-10,0.493,fix,,0.92,,,,,,,,,size trimmed by 10 to the exchange's count (order CG325K3XPVB5),CG325K3XPVB5
 1789484482.9,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,0.63,0.21,backfill,,8.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGHX2AC42VB2
+1789485022.0,cfb,aachc-cfb-wins-2026-11-28-aubrn-8pt5wins,BUY,1,0.2,probe,0.0283,0.36,,14,30,0.096,0.15,0.16,-0.01,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CGSBVX46YVB3
+1789485349.9,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,2,0.98,sell,0,0,0.9988,94,98,0.603,0.98,0.99,0.0188,0,taker dump — sold into the bid (the carved exception),CGSR32Q4WVB5
+1789485784.5,politics,ewc-usse-tx-2026-11-03-rep,BUY,15,0.51,focus,5.4315,0.43,0.400775,48,52,0.455,0.5,0.51,0.1092,125,focus entry: ~$0.97/day; fill odds 61%/day; EV +0.30/day,CGSFHG7YRVB3
+1789486795.3,politics,ussewc-usse-tn-2026-11-03-rep,SELL,66.57,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGT37201PVBE
+1789486795.3,politics,ussewc-usse-tn-2026-11-03-rep,SELL,1,0.96,hand,,12.86,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGF2EVNQWVB3
+1789486904.6,cfb,aachc-cfb-wins-2026-11-28-txst-6pt5wins,BUY,1,0.27,sell,0,2.35,,48,57,0.443,0.01,0.28,-0.25,1,buying back the short at or under what it sold for — the bid earns while it wait,CGR2ZQC9AVB5
+1789486939.8,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,SELL,1,0.71,backfill,,1.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRZTGBEAVBA
+1789488112.8,politics,ussewc-usse-tn-2026-11-03-rep,SELL,66.57,0.96,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGT37201PVBE
+1789488112.8,politics,ussewc-usse-tn-2026-11-03-rep,SELL,1,0.96,hand,,12.86,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CGF2EVNQWVB3
+1789488112.8,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,SELL,1,0.71,backfill,,1.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGRZTGBEAVBA
