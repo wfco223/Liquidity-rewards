@@ -4171,3 +4171,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789566075.9,politics,usgubewc-usgub-il-2026-11-03-dem,BUY,5.12,0.92,backfill,,21.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3A8F5RVB4
 1789566075.9,cfb,aachc-cfb-wins-2026-11-28-col-2pt5wins,BUY,-0.01,0.95,fix,0.0669,2.42,,89,96,0,0.88,0.9,0.02,0.01,size trimmed by 0.01 to the exchange's count (order CHA05YBH6VNM),CHA05YBH6VNM
 1789566075.9,cfb,aachc-cfb-wins-2026-11-28-clmsn-5pt5wins,SELL,-0.1,0.74,fix,1.09,1.23,,70,76,0.449,0.73,0.74,-0.01,0.9,size trimmed by 0.1 to the exchange's count (order CHBFP31EWVNR),CHBFP31EWVNR
+1789567196.8,cfb,aachc-cfb-wins-2026-11-28-ill-7pt5wins,BUY,1,0.27,earn,0.1841,6.75,,26,33,0.218,0.24,0.25,-0.02,1,1 tick behind the touch — we would hold 3% of the bid side,CH7EJ0108VNR
+1789569596.5,politics,usgubewc-usgub-ne-2026-11-03-rep,SELL,0.01,0.93,sell,0,17.26,0.95645,89,94,0.06,0.92,0.94,0.0264,19.99,selling filled stock — it earns while it waits,CGZ0XRNDRVNP
+1789569596.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,126,0.15,sell,3.1534,9.82,0.1373,16,18,0.837,0.149,0.15,-0.0127,0,an exit — its fill reduces the position it sits on,CH5D2TYKRVNM
+1789570737.7,politics,ushrewc-ushr-nj-07-2026-11-03-dem,SELL,-93,0.77,fix,33.3019,0.28,,75,80,0.343,0.78,0.79,0,-114,size trimmed by 93 to the exchange's count (order CHCRCV2QPVNJ),CHCRCV2QPVNJ
+1789570737.7,politics,usgubewc-usgub-il-2026-11-03-dem,BUY,-5,0.92,fix,0.0016,21.99,0.9987,92,97,0.234,0.92,0.96,-0.0787,38,size trimmed by 5 to the exchange's count (order CGT3A8F5RVB4),CGT3A8F5RVB4
+1789570737.7,politics,scc-senate-gop-2026-11-03-52,SELL,46,0.07,void,5.2432,0,0.076225,8,11,0.737,0.06,0.07,0.0062,-46,voided: the exchange has no trade for order CHD029CM0VNM — the row of 09-16 13:4,CHD029CM0VNM
+1789570737.7,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.1,0.23,fix,,34.05,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
