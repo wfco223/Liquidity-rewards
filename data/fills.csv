@@ -4115,3 +4115,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789546247.9,politics,usgubewc-usgub-sd-2026-11-03-dem,SELL,0.8,0.02,manual,0.009,43.29,0.004925,1,3,0.042,0.01,0.02,-0.0151,-0.8,the owner's own order — the engine leaves it alone,CG333REKAVB8
 1789546549.6,politics,usgubewc-usgub-sd-2026-11-03-dem,BUY,1,0.05,sell,0,0.03,0.004925,1,3,0.467,0.01,0.03,0.0451,1,buying back the short at or under what it sold for — the bid earns while it wait,CH88J1R0TVNK
 1789546549.6,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,2,0.98,earn,1.6827,4.15,0.995075,97,99,0.483,0.98,,-0.0151,2,joins the touch — the book has been quiet,CH4RC0TDJVNQ
+1789547930.0,politics,ussewc-usse-tn-2026-11-03-dem,SELL,0.97,0.03,earn,0.9397,0.13,0.000425,1,3,0.776,0.01,0.03,-0.0296,-0.97,1 tick behind the touch — we would hold 13% of the ask side,CH8HDV93GVNN
+1789549076.3,politics,ussewc-usse-tn-2026-11-03-dem,BUY,1,0.06,sell,0.208,0.32,0.000425,2,4,0.81,0.06,0.07,0.0596,0,buying back the short at or under what it sold for — the bid earns while it wait,CH8NK6KYAVNA
+1789550889.4,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,BUY,1,0.13,backfill,,5.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH51CZNPPVNR
+1789550904.3,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,BUY,1,0.13,backfill,,5.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH51CZNPPVNR
