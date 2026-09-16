@@ -4153,3 +4153,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789562260.8,cfb,aachc-cfb-wins-2026-11-28-col-2pt5wins,BUY,0.01,0.95,backfill,,2.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHA05YBH6VNM
 1789562260.8,cfb,aachc-cfb-wins-2026-11-28-clmsn-5pt5wins,SELL,0.1,0.74,backfill,,0.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHBFP31EWVNR
 1789562283.2,cfb,aachc-cfb-wins-2026-11-28-clmsn-5pt5wins,SELL,0.1,0.74,backfill,,0.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHBFP31EWVNR
+1789563880.0,politics,scc-senate-gop-2026-11-03-52,SELL,422,0.07,sell,22.676,9.59,0.076225,8,10,0.669,0.06,0.07,0.0062,0,an exit — its fill reduces the position it sits on,CH475KSYPVNK
+1789563880.0,politics,usgubewc-usgub-hi-2026-11-03-dem,BUY,10,0.95,earn,1.5124,0.45,0.999925,94,99,0.467,0.95,0.97,-0.0499,12,1 tick in front of the touch — we would hold 24% of the bid side,CHC3K1B5JVNJ
+1789565047.5,politics,ushrewc-ushr-nj-07-2026-11-03-rep,BUY,160,0.22,backfill,,0.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHC8KQW7PVNQ
+1789565168.7,politics,ewc-usse-mi-2026-11-03-dem,SELL,155,0.6,focus,121.559,0.02,0.732625,59,66,0,0.59,0.6,0.1326,-155,focus entry: ~$113.41/day; fill odds 54%/day; EV +103.04/day,CHCRMVRX6VNP
+1789565265.3,politics,ushrewc-ushr-nj-07-2026-11-03-dem,SELL,93,0.77,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHCRCV2QPVNJ
+1789565434.3,politics,ewc-usse-mi-2026-11-03-rep,BUY,144,0.41,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CHCTMRJMGVNJ
+1789565716.2,politics,usgubewc-usgub-il-2026-11-03-dem,BUY,5.12,0.92,backfill,,21.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3A8F5RVB4
+1789566075.9,politics,ewc-usgub-ga-2026-11-03-rep,BUY,-165,0.42,fix,0.3056,8.11,0.3499,41,44,0.653,0.42,0.43,0.0701,0,size trimmed by 165 to the exchange's count (order CH53DXX00VNR),CH53DXX00VNR
+1789566075.9,politics,ussewc-usse-ms-2026-11-03-dem,SELL,-20,0.06,fix,0.8581,4.59,0.02435,2,7,0.298,0.05,0.1,-0.0357,-20,size trimmed by 20 to the exchange's count (order CH82G8PP0VNH),CH82G8PP0VNH
+1789566075.9,politics,paccc-balpow-2026-11-03-dhou-rsen,SELL,-190,0.34,fix,3.7421,0.46,,35,40,0.73,0.33,0.34,0.04,0,size trimmed by 190 to the exchange's count (order CHBPASFX2VNM),CHBPASFX2VNM
+1789566075.9,politics,ussewc-usse-sd-2026-11-03-rep,BUY,-10,0.94,fix,0,1.18,0.987475,91,95,0.73,0.89,0.94,-0.0475,10,size trimmed by 10 to the exchange's count (order CHB1B0A7AVNA),CHB1B0A7AVNA
+1789566075.9,politics,ussewc-usse-nj-2026-11-03-dem,BUY,-6,0.97,fix,0.8122,2.72,0.995975,97,99,0.678,0.97,0.98,-0.026,6,size trimmed by 6 to the exchange's count (order CH9QN7MR4VNJ),CH9QN7MR4VNJ
+1789566075.9,politics,ushrewc-ushr-nj-07-2026-11-03-rep,BUY,160,0.22,backfill,,0.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHC8KQW7PVNQ
+1789566075.9,politics,ushrewc-ushr-nj-07-2026-11-03-dem,SELL,93,0.77,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHCRCV2QPVNJ
+1789566075.9,politics,ewc-usse-mi-2026-11-03-rep,BUY,144,0.41,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CHCTMRJMGVNJ
+1789566075.9,politics,usgubewc-usgub-il-2026-11-03-dem,BUY,5.12,0.92,backfill,,21.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3A8F5RVB4
+1789566075.9,cfb,aachc-cfb-wins-2026-11-28-col-2pt5wins,BUY,-0.01,0.95,fix,0.0669,2.42,,89,96,0,0.88,0.9,0.02,0.01,size trimmed by 0.01 to the exchange's count (order CHA05YBH6VNM),CHA05YBH6VNM
+1789566075.9,cfb,aachc-cfb-wins-2026-11-28-clmsn-5pt5wins,SELL,-0.1,0.74,fix,1.09,1.23,,70,76,0.449,0.73,0.74,-0.01,0.9,size trimmed by 0.1 to the exchange's count (order CHBFP31EWVNR),CHBFP31EWVNR
