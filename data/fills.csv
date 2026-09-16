@@ -4049,3 +4049,31 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789525362.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,9,0.581,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH2QHNWJGVNM
 1789525362.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,55,0.144,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH37J69V2VNM
 1789525362.5,cfb,aachc-cfb-wins-2026-11-28-cah-5pt5wins,SELL,-1,0.54,fix,1.0559,0.46,,60,70,0,0.53,0.62,0.1,0,size trimmed by 1 to the exchange's count (order CH22C0D9MVNH),CH22C0D9MVNH
+1789525881.3,politics,ussewc-usse-or-2026-11-03-dem,SELL,1,0.95,sell,0.1461,0.95,0.998775,94,97,0.78,0.94,0.95,0.0488,0,selling filled stock — it earns while it waits,CH2M0CBW8VNK
+1789526113.0,politics,paccc-usho-midterms-2026-11-03-rep,BUY,45,0.149,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH3BW2FWRVNG
+1789526624.9,cfb,aachc-cfb-wins-2026-11-28-minnst-8pt5wins,BUY,1,0.07,probe,0,0.04,,9,18,0.185,0.1,0.14,-0.07,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CH3JNTRTRVNN
+1789526981.7,cfb,aachc-cfb-wins-2026-11-28-mary-6pt5wins,BUY,0.01,0.42,sell,0,0.18,,33,42,0.451,0.3,0.43,0.05,0.01,buying back the short at or under what it sold for — the bid earns while it wait,CH3HDHY1EVNA
+1789527214.3,politics,ewc-usgub-ia-2026-11-03-rep,SELL,88,0.27,sell,0.1332,34.99,0.1915,23,27,0.382,0.26,0.27,-0.0785,252,an exit — its fill reduces the position it sits on,CG5P00KZCVBA
+1789527274.4,politics,ussewc-usse-ky-2026-11-03-dem,BUY,20,0.06,sell,0.4752,5.59,0.003425,2,6,0.691,0.06,0.07,0.0566,0,buying back the short at or under what it sold for — the bid earns while it wait,CGZ0C755JVNQ
+1789528336.3,politics,ussewc-usse-fl-2026-11-03-rep,BUY,10,0.88,sell,2.4733,5.8,0.858675,88,92,0.682,0.88,0.89,0.0213,0,buying back the short at or under what it sold for — the bid earns while it wait,CGZ12APXWVNH
+1789528336.3,politics,scc-senate-gop-2026-11-03-52,BUY,402,0.1,focus,22.2974,0.09,0.076225,9,11,0.619,0.1,0.11,0.0238,824,focus entry: ~$9.01/day; fill odds 38%/day; EV +3.50/day,CH3WG2WV2VNH
+1789528336.3,cfb,aachc-cfb-wins-2026-11-28-minnst-8pt5wins,SELL,1,0.02,sell,1.25,0.09,,3,9,0.512,0.01,0.02,0.04,0,selling filled stock — it earns while it waits,CH3WRF45YVNH
+1789528634.9,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.13,0.02,backfill,,5.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGZRSPFEYVNM
+1789528653.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,19,0.58,sell,3.0711,1.5,0.5,56,58,0.885,0.58,0.581,0.08,0,an exit — its fill reduces the position it sits on,CH2TEJFBTVNP
+1789528653.5,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,3,0.02,earn,6.2487,5.03,7.5e-05,1,4,0,0.01,0.02,-0.0199,-3,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CGZRSPFEYVNM
+1789528653.5,politics,ussewc-usse-tn-2026-11-03-dem,SELL,1,0.02,earn,5.4965,1.81,0.000425,1,3,0.299,0.01,0.02,-0.0196,-1,at the touch — a fill here is 1 ticks inside value (Silver + evidence),CH2HPGYAYVNR
+1789528653.5,politics,usgubewc-usgub-ok-2026-11-03-dem,SELL,20,0.07,earn,2.6089,0.22,0.039,3,8,0.043,0.09,0.12,-0.031,-20,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CH3VGTX48VNJ
+1789528739.3,politics,ussewc-usse-ma-2026-11-03-rep,SELL,1,0.03,earn,6.2337,0.09,0.000225,1,4,0.255,0.02,0.03,-0.0298,-1,5 ticks in front of the touch — we would hold 100% of the ask side,CH4039H4MVNK
+1789528768.5,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,0.3,0.96,backfill,,0.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH3WRF3J8VNH
+1789528799.3,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,9,0.96,earn,3.5064,0.21,0.999925,96,99,0.373,0.96,0.97,-0.0399,9,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CH3WRF3J8VNH
+1789528876.5,politics,ussewc-usse-mt-2026-11-03-setbod,SELL,0.28,0.11,backfill,,38.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2XZ9K5EVB8
+1789528882.9,politics,usgubewc-usgub-md-2026-11-03-rep,BUY,3,0.06,sell,0,0.04,7.5e-05,1,4,0.454,0.04,0.06,0.0599,0,buying back the short at or under what it sold for — the bid earns while it wait,CH42PDC2MVNJ
+1789528882.9,politics,ussewc-usse-mt-2026-11-03-setbod,SELL,15,0.11,manual,1.1965,38.63,,6,11,0.289,0.1,0.11,-0.03,82,the owner's own order — the engine leaves it alone,CG2XZ9K5EVB8
+1789528925.1,politics,ewc-usgub-ia-2026-11-03-rep,SELL,233,0.27,backfill,,35.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG5P00KZCVBA
+1789529017.1,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,-6.47,0.01,fix,0.0905,7.52,,1,2,0.431,,0.01,0,46,size trimmed by 6.47 to the exchange's count (order CG33CNY3YVB2),CG33CNY3YVB2
+1789529017.1,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,-2.53,0.01,fix,0.7831,0.5,,1,2,0.034,,0.01,0,55,size trimmed by 2.53 to the exchange's count (order CG33CNY3YVB2),CG33CNY3YVB2
+1789529017.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,45,0.149,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH3BW2FWRVNG
+1789529017.1,politics,usgubewc-usgub-md-2026-11-03-rep,SELL,0.13,0.02,backfill,,5.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGZRSPFEYVNM
+1789529017.1,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,0.3,0.96,backfill,,0.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH3WRF3J8VNH
+1789529017.1,politics,ussewc-usse-mt-2026-11-03-setbod,SELL,0.28,0.11,backfill,,38.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2XZ9K5EVB8
+1789529017.1,politics,ewc-usgub-ia-2026-11-03-rep,SELL,233,0.27,backfill,,35.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG5P00KZCVBA
