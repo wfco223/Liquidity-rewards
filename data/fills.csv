@@ -4001,3 +4001,30 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789518090.2,politics,ussewc-usse-or-2026-11-03-rep,SELL,1,0.03,void,0,0,0.001225,1,4,0.801,0.03,0.04,-0.0288,0,voided: the exchange has no trade for order CH0979KZJVNH — the row of 09-15 22:5,CH0979KZJVNH
 1789518090.2,politics,scc-hrep-rep-2026-11-03-gte220,BUY,5,0.15,backfill,,0.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH02X5JKJVNH
 1789518090.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,66,0.144,backfill,,0.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH194EE56VNN
+1789518090.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,33,0.144,sell,8.9142,0.38,0.1373,16,19,0.713,0.143,0.144,-0.0067,43,an exit — its fill reduces the position it sits on,CH194EE56VNN
+1789519424.1,cfb,aachc-cfb-wins-2026-11-28-iowast-3pt5wins,BUY,0.5,0.97,earn,0.8588,4.21,,95,99,0,0.65,0.99,-0.01,0.5,1 tick behind the touch — we would hold 11% of the bid side,CGY8VMY86VB3
+1789519424.1,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,SELL,0.5,0.04,earn,0.2949,0.98,,1,8,0,0.02,0.14,0,-0.5,1 tick behind the touch — we would hold 60% of the ask side,CH12QVKSCVNN
+1789519527.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,265,0.554,backfill,,0.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH1QFVME0VNJ
+1789519935.5,cfb,aachc-cfb-wins-ou-2026-11-28-mary,SELL,1,0.49,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH1ZDW9SAVNJ
+1789519981.2,politics,ewc-usse-nc-2026-11-03-rep,SELL,496,0.1,hand,,36.58,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2JWFTF4VB3
+1789520009.7,cfb,aachc-cfb-wins-2026-11-28-mspst-6pt5wins,BUY,1,0.51,earn,0.3686,12.66,,48,54,0,0.38,0.5,0,1,joins the touch — the book has been quiet,CGQ3JNCMRVBA
+1789520009.7,cfb,aachc-cfb-wins-2026-11-28-ucf-7pt5wins,BUY,2,0.21,earn,0.3161,3.57,,21,33,0,0.19,0.22,-0.05,2,joins the touch — the book has been quiet,CGZ0KFZA4VNH
+1789520009.7,cfb,aachc-cfb-wins-2026-11-28-frest-7pt5wins,BUY,1,0.35,earn,0.3947,2.57,,30,36,0,0.21,0.32,0.02,1,joins the touch — the book has been quiet,CGZTW7H10VNK
+1789520023.1,cfb,aachc-cfb-wins-2026-11-28-cah-5pt5wins,BUY,1,0.63,backfill,,5.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGXFWJ614VBA
+1789520070.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,10,0.144,sell,23.4618,0.02,0.1373,18,23,0.805,0.143,0.144,-0.0067,0,an exit — its fill reduces the position it sits on,CH21JH1S6VNR
+1789520311.3,politics,ewc-usse-nc-2026-11-03-rep,SELL,496,0.17,sell,0,13.59,0.118,9,12,0.738,0.1,0.11,-0.052,0,an exit — its fill reduces the position it sits on,CGPDW58PMVB6
+1789520973.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,65,0.144,focus,45.0255,0.25,0.1373,17,21,0.831,0.143,0.144,-0.0067,-65,focus entry: ~$156.45/day; fill odds 68%/day; EV +137.24/day,CH227JJSAVNR
+1789521048.9,politics,scc-hrep-rep-2026-11-03-gte235,SELL,25,0.04,manual,16.8526,11.22,0.004675,2,6,0.058,0.03,0.04,-0.0353,-72,placed by you on the focus page,CGRM5WYK4VB4
+1789521624.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,265,0.58,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH2BT8NBTVNM
+1789521664.5,cfb,aachc-cfb-wins-2026-11-28-cah-5pt5wins,SELL,1,0.54,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH22C0D9MVNH
+1789521733.8,politics,ewc-usse-nc-2026-11-03-rep,SELL,-86,0.11,fix,3.764,9.06,0.120375,9,12,0.788,0.1,0.11,0.0104,496,size trimmed by 86 to the exchange's count (order CG4V9GR2GVB3),CG4V9GR2GVB3
+1789521733.8,politics,ewc-usse-nc-2026-11-03-rep,SELL,-14,0.11,fix,4.4042,9.03,0.120375,9,12,0.743,0.1,0.11,0.0104,582,size trimmed by 14 to the exchange's count (order CG4V9GR2GVB3),CG4V9GR2GVB3
+1789521733.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-33,0.144,fix,51.043,0.87,0.1373,17,21,0.767,0.143,0.144,-0.0067,10,size trimmed by 33 to the exchange's count (order CH194EE56VNN),CH194EE56VNN
+1789521733.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-33,0.144,fix,8.9142,0.38,0.1373,16,19,0.713,0.143,0.144,-0.0067,43,size trimmed by 33 to the exchange's count (order CH194EE56VNN),CH194EE56VNN
+1789521733.8,politics,paccc-usse-midterms-2026-11-03-dem,SELL,265,0.554,backfill,,0.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH1QFVME0VNJ
+1789521733.8,politics,ewc-usse-nc-2026-11-03-rep,SELL,496,0.1,hand,,36.58,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CG2JWFTF4VB3
+1789521733.8,politics,paccc-usse-midterms-2026-11-03-dem,BUY,265,0.58,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH2BT8NBTVNM
+1789521733.8,cfb,aachc-cfb-wins-ou-2026-11-28-mary,SELL,1,0.49,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH1ZDW9SAVNJ
+1789521733.8,cfb,aachc-cfb-wins-2026-11-28-cah-5pt5wins,BUY,1,0.63,backfill,,5.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGXFWJ614VBA
+1789521733.8,cfb,aachc-cfb-wins-2026-11-28-cah-5pt5wins,SELL,1,0.54,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH22C0D9MVNH
+1789521733.8,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,-0.1,0.15,fix,,6.17,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CG3648PEMVB8),CG3648PEMVB8
