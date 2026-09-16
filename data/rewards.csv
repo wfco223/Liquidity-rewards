@@ -11095,6 +11095,7 @@ date,market,program_type,reward_usd,status
 2026-09-14,ewc-usse-nh-2026-11-03-dem,liquidityProgram,1.84,PENDING
 2026-09-14,ewc-usse-nh-2026-11-03-rep,liquidityProgram,3.88,PENDING
 2026-09-14,ewc-usse-oh-2026-11-03-dem,liquidityProgram,2.35,PENDING
+2026-09-14,ewc-usse-oh-2026-11-03-rep,liquidityProgram,0.03,PENDING
 2026-09-14,ewc-usse-tx-2026-11-03-rep,liquidityProgram,2.64,PENDING
 2026-09-14,fptc-nfl-rbfpou-2027-01-10-bhatut,liquidityProgram,0.01,PENDING
 2026-09-14,fptc-nfl-tefpou-2027-01-10-brobow,liquidityProgram,0.04,PENDING
