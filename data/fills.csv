@@ -4093,3 +4093,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789532670.6,cfb,aachc-cfb-wins-2026-11-28-sdst-8pt5wins,SELL,0.1,0.2,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH3V5MRJWVNQ
 1789532670.6,cfb,aachc-cfb-wins-2026-11-28-mst-6pt5wins,BUY,1,0.33,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH49H5BH2VNG
 1789532670.6,cfb,aachc-cfb-wins-2026-11-28-iowast-3pt5wins,BUY,0.2,0.82,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH42TDKKEVNM
+1789533055.2,politics,ewc-usgub-ga-2026-11-03-rep,SELL,165,0.4,focus,20.2747,0,0.3499,40,43,0.578,0.42,0.43,-0.0501,-165,focus entry: ~$20.27/day; fill odds 49%/day; EV +13.97/day,CH538PNNRVNG
+1789533774.8,politics,paccc-balpow-2026-11-03-dsweep,BUY,122,0.57,backfill,,0.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH52D3ES2VNH
+1789534159.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,126,0.149,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH59TTGXMVNG
+1789535935.3,politics,ussewc-usse-tn-2026-11-03-rep,BUY,1,0.96,earn,1.7083,1.01,0.999575,96,99,0.357,0.96,0.97,-0.0396,1,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CH4X8YX1GVNP
+1789535935.3,politics,ewc-usse-tx-2026-11-03-rep,BUY,111,0.47,focus,16.7026,0.04,0.397125,49,52,0.729,0.46,0.47,0.0729,111,focus entry: ~$8.83/day; fill odds 61%/day; EV +4.13/day,CH5RM44SYVNH
+1789536046.6,politics,ussewc-usse-tn-2026-11-03-rep,BUY,9,0.96,earn,3.9427,1.04,0.999575,94,98,0.581,0.94,0.97,-0.0396,10,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CH4X8YX1GVNP
+1789536106.6,politics,ussewc-usse-tn-2026-11-03-dem,BUY,1,0.05,sell,0,0.05,0.000425,1,4,0.669,0.05,0.07,0.0496,0,buying back the short at or under what it sold for — the bid earns while it wait,CH5T1J2TAVNJ
+1789536311.3,politics,paccc-balpow-2026-11-03-dsweep,BUY,122,0.57,backfill,,0.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH52D3ES2VNH
+1789536311.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,126,0.149,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH59TTGXMVNG
