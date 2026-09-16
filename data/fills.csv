@@ -4217,3 +4217,59 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789578313.5,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,BUY,0.5,0.84,backfill,,3.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHCGCWQC8VNQ
 1789578313.5,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,BUY,0.5,0.83,backfill,,0.21,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHFCF1HG2VNN
 1789578313.5,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,0.32,0.23,hand,,51.9,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG308Z0T6VB7
+1789578339.0,politics,ewc-usgub-mi-2026-11-03-dem,SELL,175,0.88,sell,0,0,0.94385,87,92,0,0.88,0.89,0.0639,0,closed out by the owner from the live card — sold into the bid,CHFYAXQB6VNJ
+1789578563.6,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,1,0.92,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0AXSDYVNJ
+1789578564.1,politics,pvwc-usgub-ny-nas-2026-11-03-kathoc,SELL,5,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0AXSREVNJ
+1789578564.2,politics,usgubewc-usgub-ak-2026-11-03-davbro,BUY,33,0.03,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0GEY9MVNR
+1789578564.3,politics,scc-hrep-rep-2026-11-03-gte225,BUY,16,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0DJAYAVNQ
+1789578564.6,politics,usgubewc-usgub-ak-2026-11-03-tombeg,SELL,3,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0C0KCWVNP
+1789578580.9,politics,scc-hrep-rep-2026-11-03-gte230,BUY,5,0.04,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J99PTVNP
+1789578581.3,politics,usgubewc-usgub-ak-2026-11-03-adacru,SELL,1,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0R2KQ8VNK
+1789578582.5,politics,scc-senate-gop-2026-11-03-48,BUY,4,0.16,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0GFDSAVNR
+1789578582.6,politics,ussewc-usse-al-2026-11-03-dem,BUY,10,0.03,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0RS61EVNH
+1789578582.8,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,1,0.42,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0H627JVNJ
+1789578582.9,cfb,aachc-cfb-wins-2026-11-28-vir-5pt5wins,BUY,1,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J9BYRVNP
+1789578583.0,cfb,aachc-cfb-wins-2026-11-28-washst-4pt5wins,BUY,2,0.46,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0P4MJRVNG
+1789578583.5,cfb,aachc-cfb-wins-2026-11-28-aubrn-8pt5wins,SELL,1,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0H62YEVNJ
+1789579585.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,385,0.148,focus,31.9277,0.35,0.1373,16,19,0.849,0.147,0.148,-0.0107,653,yours — the tender tends it like its own,CHFSSHK0JVNG
+1789579585.9,politics,usgubewc-usgub-ok-2026-11-03-rep,BUY,10,0.92,earn,1.2602,0.35,0.961,89,95,0.178,0.88,0.89,-0.041,10,1 tick in front of the touch — we would hold 20% of the bid side,CHFZ7RBFAVNQ
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-nd-8pt5wins,SELL,1,0.89,sweep,0,0.28,,90,97,0.374,0.89,0.9,0.05,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.90 at the midpoint; crossed at,CHG0DC4R2VNM
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,SELL,1,0.7,sweep,0,0.28,,69,75,0.505,0.7,0.71,0.02,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.70 at the midpoint; crossed at,CHG0GFDYMVNR
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.56,sweep,0,0.28,,55,63,0.269,0.55,0.56,-0.02,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.56 at the midpoint; crossed at,CHG0J9CVRVNP
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,SELL,2,0.01,sweep,0,0.26,,39,52,0.491,0.01,0.02,0.44,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.03 at the midpoint; crossed at,CHG10GGNRVNM
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-bayl-7pt5wins,SELL,4,0.2,sweep,0,0.26,,20,27,0.051,0.2,0.21,0.03,0,the dust sweep (owner; 2026-09-13): 4 sh worth $0.82 at the midpoint; crossed at,CHG12SFNAVNN
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-sc-6pt5wins,SELL,0.01,0.5,sweep,0,0.26,,49,59,0.373,0.47,0.48,0.03,0,the dust sweep (owner; 2026-09-13): 0.01 sh worth $0.01 at the midpoint; crossed,CHG13G95CVNJ
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-iowast-3pt5wins,SELL,1,0.83,sweep,0,0.26,,86,96,0.376,0.83,0.84,0.08,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.83 at the midpoint; crossed at,CHG12SH9WVNN
+1789579585.9,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,SELL,1,0.05,sweep,0,0.26,,3,10,0.569,0.07,0.08,0.01,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.07 at the midpoint; crossed at,CHG13JY1JVNA
+1789579585.9,cfb,aachc-cfb-wins-ou-2026-11-28-mary,BUY,1,0.5,sweep,0,0.26,,44,50,0,0.49,0.5,0.03,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.49 at the midpoint; crossed at,CHG10QDEEVNQ
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-mst-6pt5wins,SELL,1,0.2,sweep,0,0.26,,18,31,0,0.2,0.21,0.04,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.21 at the midpoint; crossed at,CHG18D9YJVNK
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-col-2pt5wins,SELL,0.01,0.95,sweep,0,0.26,,89,95,0.431,0.95,0.96,-0.03,0,the dust sweep (owner; 2026-09-13): 0.01 sh worth $0.01 at the midpoint; crossed,CHG1808JJVNG
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-ill-7pt5wins,SELL,1,0.24,sweep,0,0.26,,25,30,0.51,0.24,0.25,0.04,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.24 at the midpoint; crossed at,CHG18DB8MVNK
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,SELL,0.5,0.82,sweep,0,0.26,,83,87,0.453,0.82,0.83,0.03,0,the dust sweep (owner; 2026-09-13): 0.5 sh worth $0.41 at the midpoint; crossed ,CHG10GMNAVNM
+1789579585.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.55,sell,0,0,,54,59,0.546,0.55,0.56,0.02,0,taker dump — sold into the bid (the carved exception),CHG9GB1CYVNA
+1789579585.9,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.02,sweep,0,0.26,,1,6,0.028,0.02,0.03,0.01,0,the dust sweep (owner; 2026-09-13): 0.01 sh worth $0.00 at the midpoint; crossed,CHG188CCGVNN
+1789579585.9,nfl,ftsc-nfl-qbmostfp-2027-01-10-dramay,SELL,2,0.04,sweep,0,0.26,,2,12,0.033,0.04,0.05,0.02,0,the dust sweep (owner; 2026-09-13): 2 sh worth $0.09 at the midpoint; crossed at,CHG180A9PVNG
+1789579585.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-camska,SELL,1,0.01,sweep,0,0.26,,4,18,0.233,0.01,0.02,0.1,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.01 at the midpoint; crossed at,CHG1D0ACTVNG
+1789579585.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-ashjea,SELL,1,0.01,sweep,0,0.26,,4,16,0.233,0.01,0.02,0.09,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.01 at the midpoint; crossed at,CHG1BPQWTVNM
+1789579585.9,nfl,ftsc-nfl-dstmostfp-2027-01-10-jax,SELL,1,0.01,sweep,0,0.25,,2,10,0.046,0.01,0.02,0.04,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.01 at the midpoint; crossed at,CHG19VDVGVNP
+1789579585.9,nfl,ftsc-nfl-kmostfp-2027-01-10-jassan,SELL,1,0.01,sweep,0,0.25,,1,5,0.049,0.01,0.02,0.01,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.01 at the midpoint; crossed at,CHG1E83RGVNJ
+1789579585.9,nfl,ftsc-nfl-flexmostfp-2027-01-10-abro,SELL,1,0.02,sweep,0,0.25,,7,18,0.235,0.02,0.03,0.1,0,the dust sweep (owner; 2026-09-13): 1 sh worth $0.03 at the midpoint; crossed at,CHG1D0BKCVNG
+1789580352.0,cfb,aachc-cfb-wins-2026-11-28-vir-5pt5wins,SELL,1,0.93,sell,0,0,,89,95,0.226,0.93,0.94,-0.01,0,taker dump — sold into the bid (the carved exception),CHGEYMNTRVNM
+1789582179.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,450,0.148,backfill,,1.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHFSSHK0JVNG
+1789582301.8,politics,ussewc-usse-or-2026-11-03-rep,BUY,-2,0.03,fix,0.047,36.95,0.001225,2,5,0.792,0.03,0.04,0.0288,3.52,size trimmed by 2 to the exchange's count (order CG2TKQDE8VB7),CG2TKQDE8VB7
+1789582301.8,politics,usgubewc-usgub-sd-2026-11-03-rep,SELL,-2,0.99,fix,0.0045,2.1,0.995075,95,98,0.699,0.93,0.94,0.0051,6,size trimmed by 2 to the exchange's count (order CHE4SS5FYVNQ),CHE4SS5FYVNQ
+1789582301.8,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,1,0.92,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0AXSDYVNJ
+1789582301.8,politics,pvwc-usgub-ny-nas-2026-11-03-kathoc,SELL,5,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0AXSREVNJ
+1789582301.8,politics,usgubewc-usgub-ak-2026-11-03-davbro,BUY,33,0.03,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0GEY9MVNR
+1789582301.8,politics,scc-hrep-rep-2026-11-03-gte225,BUY,16,0.05,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0DJAYAVNQ
+1789582301.8,politics,usgubewc-usgub-ak-2026-11-03-tombeg,SELL,3,0.01,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0C0KCWVNP
+1789582301.8,politics,scc-hrep-rep-2026-11-03-gte230,BUY,5,0.04,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J99PTVNP
+1789582301.8,politics,usgubewc-usgub-ak-2026-11-03-adacru,SELL,1,0.02,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0R2KQ8VNK
+1789582301.8,politics,scc-senate-gop-2026-11-03-48,BUY,4,0.16,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0GFDSAVNR
+1789582301.8,politics,ussewc-usse-al-2026-11-03-dem,BUY,10,0.03,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0RS61EVNH
+1789582301.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,450,0.148,backfill,,1.25,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHFSSHK0JVNG
+1789582301.8,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,BUY,-0.5,0.83,fix,0.5657,0.66,,84,90,0,0.82,0.83,-0.03,0.5,size trimmed by 0.5 to the exchange's count (order CHFCF1HG2VNN),CHFCF1HG2VNN
+1789582301.8,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,1,0.42,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0H627JVNJ
+1789582301.8,cfb,aachc-cfb-wins-2026-11-28-vir-5pt5wins,BUY,1,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J9BYRVNP
+1789582301.8,cfb,aachc-cfb-wins-2026-11-28-washst-4pt5wins,BUY,2,0.46,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0P4MJRVNG
+1789582301.8,cfb,aachc-cfb-wins-2026-11-28-aubrn-8pt5wins,SELL,1,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0H62YEVNJ
