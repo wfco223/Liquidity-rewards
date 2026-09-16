@@ -4102,3 +4102,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789536106.6,politics,ussewc-usse-tn-2026-11-03-dem,BUY,1,0.05,sell,0,0.05,0.000425,1,4,0.669,0.05,0.07,0.0496,0,buying back the short at or under what it sold for — the bid earns while it wait,CH5T1J2TAVNJ
 1789536311.3,politics,paccc-balpow-2026-11-03-dsweep,BUY,122,0.57,backfill,,0.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH52D3ES2VNH
 1789536311.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,126,0.149,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH59TTGXMVNG
+1789536985.3,politics,ussewc-usse-tn-2026-11-03-dem,BUY,1,0.05,sell,0.1712,0.26,0.000425,1,4,0.74,0.05,0.07,0.0496,0,buying back the short at or under what it sold for — the bid earns while it wait,CH5TPBZ3CVNK
+1789537481.0,politics,ussewc-usse-ks-2026-11-03-dem,BUY,3,0.26,sell,0,0.04,0.2148,22,26,0.555,0.25,0.27,0.0452,0,buying back the short at or under what it sold for — the bid earns while it wait,CH64JW0NYVNG
+1789537481.0,politics,ussewc-usse-ks-2026-11-03-dem,BUY,3,0.26,sell,0,0.02,0.2148,22,26,0.555,0.25,0.27,0.0452,3,buying back the short at or under what it sold for — the bid earns while it wait,CH64S8BXAVNN
+1789538008.3,cfb,aachc-cfb-wins-2026-11-28-kan-6pt5wins,SELL,2,0.26,sell,0,0,,25,30,0.385,0.26,0.27,0.02,0,taker dump — sold into the bid (the carved exception),CH69JNFSRVNA
+1789538399.2,politics,ewc-usse-tx-2026-11-03-rep,SELL,54,0.45,sell,12.2668,0.37,0.397125,48,52,0.774,0.44,0.45,-0.0529,57,an exit — its fill reduces the position it sits on,CH61YKSV0VNH
+1789539046.6,politics,scc-senate-gop-2026-11-03-48,SELL,3.95,0.16,backfill,,0.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH5RTQ52TVNM
+1789539946.3,politics,paccc-usho-midterms-2026-11-03-dem,SELL,-1,0.856,fix,15.5555,0.28,0.8563,85,87,0.922,0.855,0.856,0.0003,25,size trimmed by 1 to the exchange's count (order CGBDPN2DJVB2),CGBDPN2DJVB2
+1789539946.3,politics,scc-senate-gop-2026-11-03-48,SELL,3.95,0.16,backfill,,0.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CH5RTQ52TVNM
