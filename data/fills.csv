@@ -4273,3 +4273,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789582301.8,cfb,aachc-cfb-wins-2026-11-28-vir-5pt5wins,BUY,1,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J9BYRVNP
 1789582301.8,cfb,aachc-cfb-wins-2026-11-28-washst-4pt5wins,BUY,2,0.46,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0P4MJRVNG
 1789582301.8,cfb,aachc-cfb-wins-2026-11-28-aubrn-8pt5wins,SELL,1,0.15,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0H62YEVNJ
+1789583496.0,cfb,aachc-cfb-wins-2026-11-28-washst-5pt5wins,BUY,0.47,0.38,backfill,,0.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHGNTEGREVNR
+1789583592.1,politics,ussewc-usse-sc-2026-11-03-dem,SELL,10,0.14,earn,3.6609,1.75,0.103525,10,15,0.519,0.14,0.15,-0.0365,-20,1 tick behind the touch — we would hold 28% of the ask side,CHFPY5N04VNR
+1789585116.9,politics,paccc-balpow-2026-11-03-dsweep,SELL,32,0.53,backfill,,2.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHF2R4HCTVNK
+1789585502.2,cfb,aachc-cfb-wins-2026-11-28-col-2pt5wins,BUY,0.1,0.93,backfill,,0.51,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHH7745ZRVNK
+1789585639.3,politics,ussewc-usse-nj-2026-11-03-dem,SELL,0.01,0.96,backfill,,3.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHEV78370VNJ
+1789586093.8,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,2,0.05,backfill,,0.69,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHH6W1YSWVNA
+1789586201.9,politics,paccc-usse-midterms-2026-11-03-rep,SELL,-10,0.483,fix,1.5871,11.72,0.4137,47,49,0.916,0.482,0.483,-0.0693,78,size trimmed by 10 to the exchange's count (order CGFEN69CJVB9),CGFEN69CJVB9
+1789586201.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-450,0.148,fix,25.1543,1.11,0.1373,16,19,0.865,0.147,0.148,-0.0107,203,size trimmed by 450 to the exchange's count (order CHFSSHK0JVNG),CHFSSHK0JVNG
+1789586201.9,politics,paccc-balpow-2026-11-03-dsweep,SELL,32,0.53,backfill,,2.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHF2R4HCTVNK
+1789586201.9,politics,ussewc-usse-nj-2026-11-03-dem,SELL,0.01,0.96,backfill,,3.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHEV78370VNJ
+1789586201.9,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,2,0.05,backfill,,0.69,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHH6W1YSWVNA
+1789586201.9,cfb,aachc-cfb-wins-2026-11-28-washst-5pt5wins,BUY,0.47,0.38,backfill,,0.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHGNTEGREVNR
+1789586201.9,cfb,aachc-cfb-wins-2026-11-28-col-2pt5wins,BUY,0.1,0.93,backfill,,0.51,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHH7745ZRVNK
