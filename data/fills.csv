@@ -4716,3 +4716,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789675577.0,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,8.03,0.4,hand,,0.16,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ6VSW0K8VNG
 1789675577.0,cfb,aachc-cfb-wins-2026-11-28-clmsn-5pt5wins,SELL,1,0.57,backfill,,7.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ02WNM30VNQ
 1789675577.0,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.2,0.23,fix,,71.05,,,,,,,,,size trimmed by 0.2 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
+1789677692.3,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,1,0.68,hand,,0.53,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CJ74RFC96VNN
+1789677891.3,politics,ussewc-usse-co-2026-11-03-rep,SELL,18.79,0.05,sell,0.1023,47.5,0.00415,1,5,0.152,0.04,0.05,-0.0459,366.21,an exit — its fill reduces the position it sits on,CGYWF5JCYVNM
+1789677891.3,politics,ussewc-usse-nm-2026-11-03-rep,SELL,20,0.03,earn,0.5729,26.84,0.003575,1,4,0.226,0.02,0.03,-0.0264,-20,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CHGN8B8HRVNN
+1789677891.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,32,0.121,sell,0.9212,3.74,0.1228,13,16,0.809,0.121,0.122,-0.0018,0,an exit — its fill reduces the position it sits on,CJ4EGDM5JVNG
+1789677891.3,politics,ussewc-usse-fl-2026-11-03-rep,SELL,24,0.89,manual,2.1445,3.21,0.8511,87,90,0.679,0.88,0.89,-0.0389,-67,the owner's own order — the engine leaves it alone,CJ4X9PRPJVNN
+1789677906.5,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,1,0.44,backfill,,0.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ73K7QNGVNN
+1789677971.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,63,0.586,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ7MSW69TVNG
+1789680201.1,politics,ussewc-usse-nj-2026-11-03-dem,SELL,-1,0.98,fix,0.0019,1.47,0.996475,96,99,0.685,0.95,0.98,0.0165,0,size trimmed by 1 to the exchange's count (order CJ5WD3NVEVNM),CJ5WD3NVEVNM
+1789680201.1,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,1,0.68,hand,,0.53,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CJ74RFC96VNN
+1789680201.1,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,1,0.44,backfill,,0.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ73K7QNGVNN
+1789680201.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,63,0.586,hand,,0.02,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ7MSW69TVNG
+1789680201.1,cfb,aachc-cfb-wins-2026-11-28-clmsn-5pt5wins,SELL,-1,0.57,fix,1.004,8.19,,70,74,0.618,0.7,0.71,0.15,0,size trimmed by 1 to the exchange's count (order CJ02WNM30VNQ),CJ02WNM30VNQ
