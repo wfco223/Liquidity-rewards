@@ -2040,10 +2040,9 @@ class Monitor:
         for fam in self.families.values():
             if not fam.knows(market):
                 continue
-            prog = fam.terms.get(market)
+            prog = self._terms_for(fam, market)
             if prog is None or not prog.target:
-                return {"ok": False, "note": "no Target Size on record "
-                        "here — reward terms not read yet"}
+                return {"ok": False, "note": self._no_terms_note(fam, market)}
             try:
                 book = self.client.book(market, fetched_at=time.time())
             except Exception as e:  # noqa: BLE001
@@ -2085,6 +2084,35 @@ class Monitor:
                     f"Running in the background — tap again for progress."}
         return {"ok": False,
                 "note": "no family knows this market — check the slug"}
+
+    def _terms_for(self, fam, market: str):
+        """The market's reward terms from whichever ledger has them —
+        the tender's first, then the family's. Owner, 2026-09-17: the
+        twelve Texas/Maine Senate combos were on the focus page at
+        $1,000/day (the tender read the program at 15:43) while this
+        button said "reward terms not read yet". It read the family's
+        ledger alone; the family had read those markets the hour they
+        were listed (09-16 21:40), before the boost was attached, marked
+        them "no program", and would not look again until its rotation
+        came round — 6,465 markets at 300 a half hour, about eleven
+        hours."""
+        focus = getattr(self, "focus", None)
+        prog = None
+        if focus is not None and getattr(focus, "terms", None) is not None:
+            prog = focus.terms.get(market)
+        if prog is None or not prog.target:
+            prog = fam.terms.get(market) or prog
+        return prog
+
+    def _no_terms_note(self, fam, market: str) -> str:
+        """Say which of two things happened: never read, or read and no
+        program found. The seat-count families read empty on 2026-08-21
+        and were shown as "not read yet" forever — the same wrong words."""
+        if market in (getattr(fam, "known_dead", None) or ()):
+            return ("no Target Size on record here — the last read of the "
+                    "reward terms found no program on this market; it is "
+                    "read again on rotation")
+        return "no Target Size on record here — reward terms not read yet"
 
     @staticmethod
     def _qualify_note(job: dict) -> str:

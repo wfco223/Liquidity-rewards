@@ -6789,6 +6789,8 @@ class TestQualifyAskButton(unittest.TestCase):
         m._qualify_run = types.MethodType(Monitor._qualify_run, m)
         m.qualify_side = types.MethodType(Monitor.qualify_side, m)
         m.qualify_ask = types.MethodType(Monitor.qualify_ask, m)
+        m._terms_for = types.MethodType(Monitor._terms_for, m)
+        m._no_terms_note = types.MethodType(Monitor._no_terms_note, m)
         # a real exchange puts our rested order INTO the book, on the
         # side its intent rests on; the fake one must too, or the gap
         # never closes
@@ -6919,4 +6921,7 @@ class TestQualifyAskButton(unittest.TestCase):
         r.cycle()
         out = self._mon(r).qualify_ask("vmc-x-unknown")
         self.assertFalse(out["ok"])
-        self.assertIn("terms not read", out["note"])
+        self.assertIn("no Target Size on record", out["note"])
+        # the cycle READ it and found nothing — the words say so now
+        # (2026-09-17), where "not read yet" was the wrong claim
+        self.assertIn("found no program", out["note"])
