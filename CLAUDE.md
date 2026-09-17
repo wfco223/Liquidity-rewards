@@ -975,6 +975,31 @@ long and accreted, so search it rather than reading it through.
   first. The card says it: "sized to carry the ask side over its
   10,000 Target Size: the stake's 49 shares left it 50 short, 100
   closes it".
+- THE BOOT NEVER WAITS ON THE THROTTLE, AND NEVER SAVES A FRAGMENT
+  (owner, 2026-09-17 "The meter is busted. Nothing is showing up. It's
+  been like this for a while", the quick look stuck on "starting up —
+  Game day: discovering, reading terms, scoring books"). Both deploys
+  that afternoon booted into a gateway answering 429s every pass (the
+  tender's own line: "read 3-6 of ~65 due, held off after a 429"), and
+  the families' first cycle — politics' 24 book reads, gameday's eight
+  event pages a tag, each through the four-try ladder waiting out
+  holds of up to 120 s, each failure swallowed and the next read
+  begun — ran 45 minutes twice, the page hiding the meter behind the
+  boot card the whole time. Worse: a focus-page tap during that boot
+  saved {focus, fam_politics, saved_at} over the 72-key state on
+  GitHub, because before the first cycle there was no last_state to
+  build on, and load_best takes the newest file — a restart would have
+  come back with every switch off and the bonds, journals, actuals and
+  pay records empty (the full 16:32Z copy was rebuilt and pushed by
+  hand before the fix deployed). Three things hold now. Every save
+  and every page builds on _base_state(): the last full cycle's state,
+  else the one restored at boot, never nothing. The first cycle after
+  a boot reads the gateway ONE-TRY like the tender (client.boot_one_try,
+  set for that cycle alone): a read under a hold is refused at once,
+  the family moves on and rests nothing blind, and the ladder resumes
+  from the second cycle — the signed trade api (orders, positions,
+  balances) keeps its ladder throughout. And the boot card says how
+  many minutes it has sat on a step.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

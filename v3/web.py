@@ -201,7 +201,8 @@ function post(body,cb){
 function bootCard(d){
  var b=(d.boot||{});
  return '<div class="card"><b>starting up</b>'
-  +'<div class="sub">'+esc(b.stage||'reading the board')+'</div>'
+  +'<div class="sub">'+esc(b.stage||'reading the board')
+  +(b.ts?' \u2014 '+Math.max(0,Math.round((Date.now()/1000-b.ts)/60))+' min on this step':'')+'</div>'
   +'<div class="mtrack"><div class="mfill" style="width:'+(b.pct||5)+'%"></div></div>'
   +'<div class="muted">The first pass after a restart reads the board before the pages fill in. This refreshes itself.</div></div>';
 }

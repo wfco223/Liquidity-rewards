@@ -135,6 +135,7 @@ class Client:
         self._gw_lock = threading.Lock()
         self._gw_next = 0.0          # the next gateway slot (the pace)
         self._gw_hold = 0.0          # no gateway read before this (a 429's wait)
+        self.boot_one_try = False    # the first cycle after a boot: gateway reads one-try
         self._gw_prio_waiting = 0    # priority reads waiting for a slot
         self.throttles: list[dict] = []   # every 429 answered, oldest first
         self.on_throttle = None      # called as on_throttle(rec) when the hold is set or grows
@@ -237,6 +238,10 @@ class Client:
         if path is None:
             path = "/" + url.split("://", 1)[-1].split("/", 1)[-1].split("?")[0]
         gateway = url.startswith(GATEWAY)
+        if gateway and self.boot_one_try and tries > 1:
+            # the first cycle after a boot (owner, 2026-09-17): a read the
+            # throttle holds is refused now, not waited out four times
+            tries = 1
         delay = 2.0
         last_exc: Exception | None = None
         for attempt in range(tries):
