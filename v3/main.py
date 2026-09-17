@@ -982,6 +982,7 @@ class Monitor:
         self.backfilled = False        # one-shot journal recovery
         self.evidence_seeded = False   # one-shot evidence seed
         self._first_cycle_done = False
+        self.restored_state: dict = {}
         self.silver = SilverFairs(client=self.client)
         self.samplers: dict[str, Estimator] = {}
         self.actuals_by_day: dict[str, float] = {}
@@ -1436,6 +1437,10 @@ class Monitor:
 
     def _restore(self) -> None:
         saved = self.store.load_best()
+        # kept whole for every save made before the first cycle (owner,
+        # 2026-09-17: a focus tap during a 45-minute boot saved next to
+        # nothing — see _base_state)
+        self.restored_state = dict(saved) if saved else {}
         if not saved:
             self._note(f"booted build {self.build}; fresh state — "
                        "every switch is off")
@@ -1709,7 +1714,7 @@ class Monitor:
         sw = self.switches.get(which, self.master)
         s = sw.op(op)
         self.floor.write_want(self.master.on or self.flatten)
-        st = dict(self.last_state) if self.last_state else {}
+        st = self._base_state()
         st["master_switch"] = self.master.to_dict()
         for key in self.families:
             st[f"sw_{key}"] = self.switches[key].to_dict()
@@ -1806,7 +1811,7 @@ class Monitor:
         self._audit({"op": "active_until", "family": which,
                      "until": fam.active_until, "initiator": "owner", "ts": now})
         self._note(note)
-        st = dict(self.last_state) if self.last_state else {}
+        st = self._base_state()
         st[f"fam_{which}"] = fam.to_dict()
         st["saved_at"] = now
         self.last_state = st
@@ -1871,7 +1876,7 @@ class Monitor:
         self._audit({"op": "graduate" if approve else "ungraduate", "family": which,
                      "market": slug, "initiator": "owner", "ts": now})
         self._note(note)
-        st = dict(self.last_state) if self.last_state else {}
+        st = self._base_state()
         st[f"fam_{which}"] = fam.to_dict()
         st["saved_at"] = now
         self.last_state = st
@@ -1897,7 +1902,7 @@ class Monitor:
         self._audit({"op": "open_market", "family": which, "market": slug,
                      "initiator": "owner", "ts": now})
         self._note(f"{fam.cfg.name}: {fam._label(slug)} opened for orders by the owner")
-        st = dict(self.last_state) if self.last_state else {}
+        st = self._base_state()
         st[f"fam_{which}"] = fam.to_dict()
         st["saved_at"] = now
         self.last_state = st
@@ -1939,7 +1944,7 @@ class Monitor:
         self._note(f"{note} ({market})")
         # persisted IMMEDIATELY, like a switch flip — a restart between
         # the tap and the next save must not undo it
-        st = dict(self.last_state) if self.last_state else {}
+        st = self._base_state()
         st["owner_fairs"] = dict(self.owner_fairs)
         st["saved_at"] = time.time()
         self.last_state = st
@@ -3289,7 +3294,7 @@ class Monitor:
                      "ok": bool(r.get("ok")), "ts": now})
         if r.get("ok"):
             t1 = time.time()
-            st = dict(self.last_state) if self.last_state else {}
+            st = self._base_state()
             st["bonds"] = self.bonds.to_dict()
             st["saved_at"] = now
             self.last_state = st
@@ -4065,8 +4070,21 @@ class Monitor:
                     "ladder": fam.ladder_view(slug)}
         return {"ok": False, "note": "no book cached for this market yet"}
 
+    def _base_state(self) -> dict:
+        """The state a save or a page builds on: the last full cycle's,
+        else the one restored at boot, never nothing. Owner, 2026-09-17
+        ("The meter is busted"): a focus-page tap during a boot that
+        the gateway's throttle had stretched to 45 minutes saved a
+        three-key fragment — focus, fam_politics, saved_at — over the
+        72-key state on GitHub, because before the first cycle there
+        was no last_state to build on. A restart picks the newest file,
+        and that fragment would have come back as every switch off and
+        the bonds, journals, actuals and pay records empty."""
+        return dict(getattr(self, "last_state", None)
+                    or getattr(self, "restored_state", None) or {})
+
     def public_state(self) -> dict:
-        st = dict(self.last_state) if self.last_state else {"saved_at": 0}
+        st = self._base_state() or {"saved_at": 0}
         st["sweep"] = self.sweep.view()
         st["maint"] = self.maint.view()
         st["switch_view"] = {
@@ -4259,7 +4277,17 @@ class Monitor:
     def cycle(self, now: float | None = None) -> dict:
         now = now or time.time()
         with self._lock:
-            return self._cycle_locked(now)
+            # the first cycle after a boot keeps time like the tender:
+            # a gateway read under a 429 hold is refused at once and the
+            # family moves on, so the board is up in seconds and the
+            # ladder resumes from the second cycle (owner, 2026-09-17:
+            # two boots that day ran 45 minutes each behind the throttle,
+            # the page hiding the meter the whole time)
+            self.client.boot_one_try = not self._first_cycle_done
+            try:
+                return self._cycle_locked(now)
+            finally:
+                self.client.boot_one_try = False
 
     HEAP_CENSUS_S = 300.0
 
@@ -4764,7 +4792,7 @@ class Monitor:
         except Exception:  # noqa: BLE001
             pass
         try:
-            st = dict(self.last_state) if self.last_state else {}
+            st = self._base_state()
             st["sweep"] = self.sweep.to_dict()
             st["saved_at"] = time.time()
             self.last_state = st
@@ -4828,7 +4856,7 @@ class Monitor:
         self._audit({"op": op, "market": market, "initiator": "owner",
                      "ok": bool(r.get("ok")), "ts": now})
         if r.get("ok"):
-            st = dict(self.last_state) if self.last_state else {}
+            st = self._base_state()
             st["focus"] = self.focus.to_dict()
             st["fam_politics"] = self.families["politics"].to_dict()
             st["saved_at"] = now
