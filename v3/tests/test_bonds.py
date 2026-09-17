@@ -3546,7 +3546,7 @@ class TestQualifyTheSide(Base):
         m._qualify_note = Monitor._qualify_note
         for name in ("_rested_size", "_qualify_run", "qualify_side",
                      "qualify_ask", "qualify_bond", "_note_walls",
-                     "_terms_for", "_no_terms_note"):
+                     "_terms_for", "_no_terms_note", "_base_state"):
             setattr(m, name, types.MethodType(getattr(Monitor, name), m))
         # a real exchange puts our rested order INTO the book, on the
         # side its intent rests on; the fake one must too
@@ -3762,6 +3762,7 @@ class TestQualifyTheSide(Base):
             qualify_bond=lambda market: (calls.append(("qualify", market))
                                          or {"ok": True, "note": "building"}))
         m.bonds_op = types.MethodType(Monitor.bonds_op, m)
+        m._base_state = types.MethodType(Monitor._base_state, m)
         out = m.bonds_op("bonds_qualify", AL)
         self.assertTrue(out["ok"])
         self.assertIn(("qualify", AL), calls)

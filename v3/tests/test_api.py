@@ -340,3 +340,36 @@ class TestParsing(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTheFirstCycleReadsTheGatewayOneTry(unittest.TestCase):
+    """Owner, 2026-09-17 ("The meter is busted"): two boots ran 45 minutes
+    each behind a throttled gateway, every family read waiting out four
+    holds in turn. With client.boot_one_try set for the first cycle a
+    held read is refused at once, like the tender's; cleared, the ladder
+    is back."""
+
+    def test_a_held_read_is_refused_at_once_during_the_first_cycle(self):
+        c, t, slept = paced_client(
+            FakeResponse(429, headers={"Retry-After": "30"}, text="Too Many Requests"),
+            FakeResponse(200, {"ok": 1}),
+            FakeResponse(200, {"ok": 2}))
+        with self.assertRaises(ApiError):
+            c.get(GW_BOOK, tries=1)                    # the hold is set: 30 s
+        self.assertAlmostEqual(c.gateway_hold(), 30.0)
+        before = list(slept)
+        c.boot_one_try = True
+        with self.assertRaises(ApiError) as ctx:
+            c.get(GW_BOOK)                             # default tries=4, but the boot keeps time
+        self.assertEqual(ctx.exception.status, 429)
+        self.assertIn("every gateway read held 30s", str(ctx.exception))
+        self.assertEqual(list(slept), before)          # it did not wait the hold out
+        # the signed trade api is not a gateway read: its ladder stands
+        c.boot_one_try = False
+        j = c.get(GW_BOOK)                             # cleared: waits the hold, then reads
+        self.assertEqual(j, {"ok": 1})
+        self.assertTrue(any(abs(x - 30.0) < 1e-6 for x in slept[len(before):]))
+
+    def test_the_flag_is_off_by_default(self):
+        c, _t, _slept = paced_client(FakeResponse(200, {"ok": 1}))
+        self.assertFalse(c.boot_one_try)
