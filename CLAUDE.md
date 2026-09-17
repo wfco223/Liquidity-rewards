@@ -1000,6 +1000,25 @@ long and accreted, so search it rather than reading it through.
   from the second cycle — the signed trade api (orders, positions,
   balances) keeps its ladder throughout. And the boot card says how
   many minutes it has sat on a step.
+  AND EVERY ORDINARY GATEWAY READ IS ONE-TRY WHILE A HOLD STANDS
+  (owner, 2026-09-17 "Yes, ship it", from the 22:10Z check on the new
+  build): the boot was 37 s, the next cycles 80-167 s, and then every
+  cycle from 18:51Z ran 37-43 minutes — five in a row, 2548 of 2585 s
+  in the families' lap — because the gateway was answering 429s on
+  /book reads about twice a minute (Retry-After 10 or 0) and each
+  family read waited the hold out and retried into the next one, four
+  tries deep; the tender's own pass line read "held off after a 429 —
+  read 0 of 77" three passes running, and the position purge, which
+  runs once a cycle, let a phantom stand 39 minutes (House control
+  rep, 20:44Z). Now, while a hold stands, a gateway read without
+  priority is refused at once with the hold in its words — the
+  families and the bonds keep their cached book and place nothing
+  blind — and the ladder is back the moment the hold clears; a
+  priority read (the sweep's, maintenance's, the tender's
+  placement-time read, his taps) keeps its ladder always, and the
+  signed trade api is never touched. This is the boot rule made
+  standing, and it also stops the families' retries from feeding the
+  hold they are waiting on.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
