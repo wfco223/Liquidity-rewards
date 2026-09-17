@@ -4393,3 +4393,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789610782.7,politics,usgubewc-usgub-hi-2026-11-03-dem,SELL,-12,0.93,fix,0.7793,2.03,0.999975,92,97,0.576,0.93,0.99,0.07,0,size trimmed by 12 to the exchange's count (order CHN1DV23EVNM),CHN1DV23EVNM
 1789610782.7,politics,ushrewc-ushr-pa-01-2026-11-03-rep,BUY,36,0.65,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CHQ16EM5YVNN
 1789610782.7,politics,ushrewc-ushr-pa-01-2026-11-03-rep,BUY,45,0.63,hand,,0.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CHQ3CW65CVNJ
+1789611609.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,64,0.581,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHQSHVHJWVNH
+1789611661.0,politics,paccc-usse-midterms-2026-11-03-dem,SELL,11,0.581,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CHQVWE8KYVNH
+1789612870.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,73,0.135,sell,361.466,1.92,0.1215,17,19,0.885,0.13,0.131,0.0135,0,an exit — its fill reduces the position it sits on,CHPHN64ZJVNP
+1789612870.7,politics,ussewc-usse-sd-2026-11-03-rep,SELL,10,0.9,sell,4.7346,3.71,0.98765,91,95,0.729,0.89,0.95,0.0877,0,selling filled stock — it earns while it waits,CHN18GZ3WVNJ
+1789613071.6,politics,ussewc-usse-ma-2026-11-03-dem,SELL,0.04,0.96,backfill,,61.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG373AKJCVB8
+1789613569.8,politics,ussewc-usse-ma-2026-11-03-dem,SELL,1,0.96,manual,1.6143,61.84,0.99975,94,98,0.453,0.95,0.96,0.0397,9,the owner's own order — the engine leaves it alone,CG373AKJCVB8
+1789613569.8,politics,ewc-usse-mi-2026-11-03-rep,SELL,144,0.39,sell,0.3343,2.84,0.2623,35,40,0,0.38,0.39,-0.1277,0,an exit — its fill reduces the position it sits on,CHNXRQXWAVNM
+1789614563.6,politics,ussewc-usse-or-2026-11-03-dem,BUY,20,0.97,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHRAT9PPTVNH
+1789615042.3,politics,ussewc-usse-or-2026-11-03-rep,BUY,-0.52,0.03,fix,0.0459,34.22,0.001225,2,5,0.761,0.03,0.04,0.0288,1,size trimmed by 0.52 to the exchange's count (order CG2TKQDE8VB7),CG2TKQDE8VB7
+1789615042.3,politics,ussewc-usse-or-2026-11-03-rep,BUY,-1.48,0.03,fix,0.061,34.08,0.001225,2,5,0.702,0.03,0.04,0.0288,-1,size trimmed by 1.48 to the exchange's count (order CG2TKQDE8VB7),CG2TKQDE8VB7
+1789615042.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,64,0.581,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHQSHVHJWVNH
+1789615042.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,11,0.581,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CHQVWE8KYVNH
+1789615042.3,politics,ussewc-usse-ma-2026-11-03-dem,SELL,0.04,0.96,backfill,,61.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG373AKJCVB8
+1789615042.3,politics,ussewc-usse-or-2026-11-03-dem,BUY,20,0.97,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHRAT9PPTVNH
+1789615042.3,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.1,0.23,fix,,51.9,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
