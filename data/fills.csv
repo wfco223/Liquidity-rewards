@@ -4408,3 +4408,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789615042.3,politics,ussewc-usse-ma-2026-11-03-dem,SELL,0.04,0.96,backfill,,61.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG373AKJCVB8
 1789615042.3,politics,ussewc-usse-or-2026-11-03-dem,BUY,20,0.97,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHRAT9PPTVNH
 1789615042.3,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.1,0.23,fix,,51.9,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
+1789615938.0,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,2,0.95,earn,4.1345,0.25,0.996725,93,97,0.297,0.91,0.96,-0.0467,2,4 ticks in front of the touch — we would hold 99% of the bid side,CHRPYBG9RVNM
+1789616316.6,politics,ewc-usgub-ia-2026-11-03-rep,BUY,282,0.26,backfill,,0.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHR840F76VNP
+1789618569.3,politics,ussewc-usse-la-2026-11-03-dem,SELL,2,0.06,hand,,0.11,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CHSD4Q902VNR
+1789618902.2,politics,ussewc-usse-or-2026-11-03-dem,BUY,-20,0.97,fix,2.1667,0.41,0.99835,95,98,0.731,0.95,0.97,-0.0283,20,size trimmed by 20 to the exchange's count (order CHRAT9PPTVNH),CHRAT9PPTVNH
+1789618902.2,politics,ewc-usgub-ia-2026-11-03-rep,BUY,282,0.26,backfill,,0.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHR840F76VNP
+1789618902.2,politics,ussewc-usse-la-2026-11-03-dem,SELL,2,0.06,hand,,0.11,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CHSD4Q902VNR
