@@ -242,6 +242,17 @@ class Client:
             # the first cycle after a boot (owner, 2026-09-17): a read the
             # throttle holds is refused now, not waited out four times
             tries = 1
+        if gateway and tries > 1 and not priority and self.gateway_hold() > 0:
+            # and every ordinary gateway read while a 429 hold stands
+            # (owner, 2026-09-17 "Yes, ship it"): the families' book reads
+            # had each waited out the hold and retried into the next one,
+            # four tries deep, and every cycle from 18:51Z ran 37-43
+            # minutes — exits, cancels and the phantom purge all that
+            # late. A held read is refused at once, like the tender's; the
+            # family keeps its cached book and places nothing blind. The
+            # ladder is back the moment the hold clears, and a priority
+            # read (the sweep's, maintenance's, a tap's) keeps it always.
+            tries = 1
         delay = 2.0
         last_exc: Exception | None = None
         for attempt in range(tries):

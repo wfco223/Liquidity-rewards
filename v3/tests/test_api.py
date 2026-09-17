@@ -108,8 +108,13 @@ class TestTheGatewayThrottle(unittest.TestCase):
         # the api host is not held
         self.assertEqual(c.get(API_BAL), {"ok": 1})
         self.assertEqual(len(c.session.calls), 2)
-        # a retried gateway read waits the hold out, then sends
-        self.assertEqual(c.get(GW_BOOK)["book"]["bids"], [])
+        # an ordinary retried read is refused at once too (2026-09-17: the
+        # families' reads waiting out holds four tries deep ran every
+        # cycle 37-43 minutes); a PRIORITY read waits the hold out, then sends
+        with self.assertRaises(ApiError):
+            c.get(GW_BOOK)
+        self.assertEqual(len(c.session.calls), 2)
+        self.assertEqual(c.get(GW_BOOK, priority=True)["book"]["bids"], [])
         self.assertIn(30.0, slept)
         self.assertEqual(c.gateway_hold(), 0.0)
         self.assertEqual(len(c.throttles), 1)
@@ -364,12 +369,57 @@ class TestTheFirstCycleReadsTheGatewayOneTry(unittest.TestCase):
         self.assertEqual(ctx.exception.status, 429)
         self.assertIn("every gateway read held 30s", str(ctx.exception))
         self.assertEqual(list(slept), before)          # it did not wait the hold out
-        # the signed trade api is not a gateway read: its ladder stands
         c.boot_one_try = False
-        j = c.get(GW_BOOK)                             # cleared: waits the hold, then reads
+        t["now"] += 31.0                               # the hold expires on its own
+        j = c.get(GW_BOOK)                             # cleared and open: an ordinary read
         self.assertEqual(j, {"ok": 1})
-        self.assertTrue(any(abs(x - 30.0) < 1e-6 for x in slept[len(before):]))
 
     def test_the_flag_is_off_by_default(self):
         c, _t, _slept = paced_client(FakeResponse(200, {"ok": 1}))
         self.assertFalse(c.boot_one_try)
+
+
+class TestAnOrdinaryReadUnderAHoldIsOneTry(unittest.TestCase):
+    """Owner, 2026-09-17 "Yes, ship it": every cycle from 18:51Z ran 37-43
+    minutes because each family book read waited out the 429 hold and
+    retried into the next one, four tries deep. While a hold stands an
+    ordinary gateway read is refused at once; a priority read keeps its
+    ladder; and once the hold clears the ladder is back for everyone."""
+
+    def test_refused_at_once_while_the_hold_stands(self):
+        c, t, slept = paced_client(
+            FakeResponse(429, headers={"Retry-After": "30"}, text="Too Many Requests"),
+            FakeResponse(200, {"ok": 1}))
+        with self.assertRaises(ApiError):
+            c.get(GW_BOOK, tries=1)                    # the hold is set: 30 s
+        before = list(slept)
+        with self.assertRaises(ApiError) as ctx:
+            c.get(GW_BOOK)                             # default tries=4, no priority
+        self.assertEqual(ctx.exception.status, 429)
+        self.assertIn("every gateway read held", str(ctx.exception))
+        self.assertEqual(list(slept), before)          # no wait at all
+        self.assertFalse(c.boot_one_try)               # not the boot rule: the hold rule
+
+    def test_a_priority_read_still_waits_the_hold_out(self):
+        c, t, slept = paced_client(
+            FakeResponse(429, headers={"Retry-After": "30"}, text="Too Many Requests"),
+            FakeResponse(200, {"ok": 1}))
+        with self.assertRaises(ApiError):
+            c.get(GW_BOOK, tries=1)
+        j = c.get(GW_BOOK, priority=True)              # the sweep's kind of read
+        self.assertEqual(j, {"ok": 1})
+        self.assertTrue(any(abs(x - 30.0) < 1e-6 for x in slept))
+
+    def test_the_ladder_is_back_once_the_hold_clears(self):
+        c, t, slept = paced_client(
+            FakeResponse(429, headers={"Retry-After": "30"}, text="Too Many Requests"),
+            FakeResponse(429, headers={"Retry-After": "5"}, text="Too Many Requests"),
+            FakeResponse(200, {"ok": 2}))
+        with self.assertRaises(ApiError):
+            c.get(GW_BOOK, tries=1)                    # hold: 30 s
+        t["now"] += 31.0                               # the hold expires on its own
+        self.assertEqual(c.gateway_hold(), 0.0)
+        n0 = len(slept)
+        j = c.get(GW_BOOK)                             # open gateway: a fresh 429 is retried
+        self.assertEqual(j, {"ok": 2})
+        self.assertGreater(len(slept), n0)             # it waited and tried again
