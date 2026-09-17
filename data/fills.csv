@@ -4530,3 +4530,34 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789651300.2,politics,ussewc-usse-ar-2026-11-03-rep,SELL,1.07,0.92,backfill,,0.68,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MV86TTVNH
 1789651300.2,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,BUY,-1,0.82,fix,0.1729,18.85,,82,87,0.536,0.82,0.83,-0.03,1,size trimmed by 1 to the exchange's count (order CHG9E3P04VNJ),CHG9E3P04VNJ
 1789651300.2,cfb,aachc-cfb-wins-2026-11-28-boscol-1pt5wins,BUY,-0.5,0.97,fix,0.32,12.31,,96,99,0,0.97,0.98,-0.01,0.5,size trimmed by 0.5 to the exchange's count (order CHNWQCPN4VNR),CHNWQCPN4VNR
+1789651601.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,79,0.587,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0X637A2VNG
+1789651817.1,politics,ussewc-usse-il-2026-11-03-dem,SELL,0.03,0.97,backfill,,2.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHZMSVNXGVNG
+1789652065.6,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,195,0.1,hand,,0.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ1DRF884VNQ
+1789652637.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,31,0.587,hand,,0.15,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ1F1HWGPVNJ
+1789653938.8,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,20,0.1,sell,0.0781,15.67,0.01245,4,10,0.484,0.03,0.05,0.0876,0,buying back the short at or under what it sold for — the bid earns while it wait,CHMGE38D4VNK
+1789653938.8,politics,ewc-usse-nc-2026-11-03-rep,BUY,198,0.1,focus,9.1075,0.28,0.11335,9,13,0.624,0.1,0.11,-0.0134,198,focus entry: ~$11.02/day; fill odds 62%/day; EV +6.00/day,CJ1N9NHVAVNG
+1789654311.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,47,0.587,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ1R9ENQ8VNM
+1789655087.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,8,0.587,hand,,0.12,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ22MTQ44VNP
+1789655465.8,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,1,0.04,hand,,0.41,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ1Y13MXJVNM
+1789655657.8,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,55,0.08,hand,,0.09,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ27G0JN4VNP
+1789655840.7,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,0.03,0.99,backfill,,74.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2TYCFVCVBE
+1789655849.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,1,0.587,hand,,0.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ2B69PACVNA
+1789656003.8,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,SELL,1,0.11,hand,,0.55,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ1YGQRVWVNP
+1789656013.3,politics,ewc-usgub-ia-2026-11-03-rep,SELL,-164,0.27,fix,,35.46,,,,,,,,,size trimmed by 164 to the exchange's count (order CG5P00KZCVBA),CG5P00KZCVBA
+1789656013.3,politics,ewc-usgub-ia-2026-11-03-rep,SELL,-69,0.27,fix,0.1332,34.99,0.1915,23,27,0.382,0.26,0.27,-0.0785,252,size trimmed by 69 to the exchange's count (order CG5P00KZCVBA),CG5P00KZCVBA
+1789656013.3,politics,ussewc-usse-mt-2026-11-03-setbod,SELL,-15.93,0.11,fix,,58.08,,,,,,,,,size trimmed by 15.93 to the exchange's count (order CG2XZ9K5EVB8),CG2XZ9K5EVB8
+1789656013.3,politics,ussewc-usse-ma-2026-11-03-dem,SELL,-1,0.96,fix,1.6385,72.33,0.99975,94,98,0.57,0.95,0.96,0.0397,8,size trimmed by 1 to the exchange's count (order CG373AKJCVB8),CG373AKJCVB8
+1789656013.3,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,-1,0.93,fix,0,0.74,0.99835,92,96,0.641,0.9,0.93,0.0683,0,size trimmed by 1 to the exchange's count (order CJ0MQ68B8VNP),CJ0MQ68B8VNP
+1789656013.3,politics,ussewc-usse-tn-2026-11-03-rep,SELL,-30,0.93,fix,0,0.74,0.999725,93,97,0.665,0.92,0.94,0.0697,0,size trimmed by 30 to the exchange's count (order CJ0MS8ABEVNR),CJ0MS8ABEVNR
+1789656013.3,politics,ussewc-usse-ar-2026-11-03-rep,SELL,-1,0.92,fix,1.6058,0.74,0.9819,89,95,0.533,0.87,0.92,0.0619,9,size trimmed by 1 to the exchange's count (order CJ0MV86TTVNH),CJ0MV86TTVNH
+1789656013.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,79,0.587,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0X637A2VNG
+1789656013.3,politics,ussewc-usse-il-2026-11-03-dem,SELL,0.03,0.97,backfill,,2.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHZMSVNXGVNG
+1789656013.3,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,195,0.1,hand,,0.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ1DRF884VNQ
+1789656013.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,31,0.587,hand,,0.15,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ1F1HWGPVNJ
+1789656013.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,47,0.587,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ1R9ENQ8VNM
+1789656013.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,8,0.587,hand,,0.12,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ22MTQ44VNP
+1789656013.3,politics,usgubewc-usgub-nm-2026-11-03-rep,BUY,1,0.04,hand,,0.41,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ1Y13MXJVNM
+1789656013.3,politics,usgubewc-usgub-ny-2026-11-03-rep,BUY,55,0.08,hand,,0.09,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ27G0JN4VNP
+1789656013.3,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,0.03,0.99,backfill,,74.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG2TYCFVCVBE
+1789656013.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,1,0.587,hand,,0.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ2B69PACVNA
+1789656013.3,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,SELL,1,0.11,hand,,0.55,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJ1YGQRVWVNP
