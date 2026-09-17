@@ -723,6 +723,34 @@ class Focus:
                     c.slug in self.markets or self.is_boosted(c.slug)):
                 self._log(event="terms_change", market=c.slug, field=c.field,
                           old=c.old, new=c.new)
+        # What this read found goes to the family's ledger too (owner,
+        # 2026-09-17: the twelve Texas/Maine combos, on the board at
+        # $1,000/day since 15:43, read "reward terms not read yet" on
+        # the qualify button, which consults the family's ledger — the
+        # family had read them the hour they were listed, before the
+        # boost was attached, and a market read once as empty waits a
+        # full rotation, ~11 h over 6,465 markets, to be read again).
+        # One read of the exchange updates both books — only where the
+        # family holds nothing, never over a program it has — and the
+        # family's ledger is the one saved with the state, so after a
+        # restart the seed hands these markets straight back to the
+        # board instead of waiting for the walk to find them again.
+        handed = []
+        for s in batch:
+            prog = self.terms.get(s)
+            if prog is None or self.fam.terms.get(s) is not None:
+                continue
+            self.fam.terms.current[s] = prog
+            self.fam.terms.updated_at[s] = now
+            self.fam.terms.seeded_at.setdefault(s, now)
+            try:
+                self.fam.known_dead.discard(s)
+            except AttributeError:
+                pass
+            handed.append(s)
+        if handed:
+            self._log(event="terms_handed", n=len(handed), markets=handed[:12],
+                      note="programs this read found that the family's ledger lacked")
 
     # -- books -------------------------------------------------------------------
 

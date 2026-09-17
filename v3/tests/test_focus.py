@@ -2641,5 +2641,67 @@ class TestTheSeatMarketsAreHisHands(Base):
         self.assertFalse(self.f.hand_keep("paccc-usse-midterms-2026-11-03-dem"))
 
 
+
+class TestTheTenderHandsProgramsBackToTheFamily(Base):
+    """Owner, 2026-09-17: the twelve Texas/Maine Senate combos were listed
+    on 09-16 21:40 with no program, the family read them empty within the
+    hour, the exchange attached Elections Boosted High later, and the
+    tender's own walk found it at 15:43 — but the family's ledger, which
+    the qualify button and the engine read, would not look again for a
+    full rotation (~11 h). One read now updates both books."""
+
+    NEW = "cpoc-ussec-tx-me-2026-11-03-dsweep"
+    BOOST = {"timePeriods": [{"programId": "elections_boosted_high_20260827",
+                              "rewardPool": 1000.0, "targetSize": 10000, "discountFactor": 0.2,
+                              "status": "LIVE", "start": "2026-08-27T00:00:00Z",
+                              "end": "2026-11-04T00:00:00Z"}]}
+
+    def _listed_before_the_boost(self):
+        # listed with no program; the family reads it and records "no program"
+        self.r.add_market(self.NEW, wide_book(self.r.now), event="Senate Combo: Texas and Maine",
+                          prog={"timePeriods": []})
+        self.r.fam.universe[self.NEW] = {"event_n": 2, "name": "Senate Combo: Texas and Maine — dsweep"}
+        self.r.fam.last_terms_full = 0.0
+        self.r.cycle()
+        self.assertIsNone(self.r.fam.terms.get(self.NEW))
+        self.assertIn(self.NEW, self.r.fam.known_dead)
+
+    def _the_boost_arrives_and_the_tender_walks(self):
+        self.r.exchange.prog_raw[self.NEW] = copy.deepcopy(self.BOOST)
+        self.f.last_terms_own = 0.0
+        self.f._rotor = 0
+        for _ in range(4):
+            self.tick()
+
+    def test_a_program_the_tender_reads_reaches_the_familys_ledger(self):
+        self._listed_before_the_boost()
+        self._the_boost_arrives_and_the_tender_walks()
+        self.assertIn(self.NEW, self.f.markets)                   # the tender seats it
+        prog = self.r.fam.terms.get(self.NEW)                     # and the family has it too
+        self.assertIsNotNone(prog)
+        self.assertEqual(prog.pid, "elections_boosted_high_20260827")
+        self.assertEqual(prog.target, 10000.0)
+        self.assertNotIn(self.NEW, self.r.fam.known_dead)
+        handed = [e for e in self.f.log if e.get("event") == "terms_handed"]
+        self.assertTrue(handed)
+        self.assertIn(self.NEW, handed[0].get("markets") or [])
+
+    def test_it_never_overwrites_a_program_the_family_holds(self):
+        before = self.r.fam.terms.get(NC)
+        self.assertIsNotNone(before)
+        self.r.exchange.prog_raw[NC] = copy.deepcopy(self.BOOST)
+        self.f.last_terms_own = 0.0
+        self.tick()
+        self.assertEqual(self.r.fam.terms.get(NC).pid, before.pid)   # the family's own read decides
+
+    def test_the_board_comes_back_at_boot_from_the_familys_ledger(self):
+        self._listed_before_the_boost()
+        self._the_boost_arrives_and_the_tender_walks()
+        self.assertIn(self.NEW, self.f.markets)
+        g = Focus(self.r.fam, self.r.exchange, self.b, clock=lambda: self.r.now)
+        g.seed(self.r.now)                                        # a restart: seeded from the family
+        self.assertIn(self.NEW, g.markets)
+
+
 if __name__ == "__main__":
     unittest.main()
