@@ -183,6 +183,7 @@ FOCUS_VALUE_WINDOW_S = 1800.0   # the cut is drawn from the last half hour of en
 FOCUS_VALUE_KEEP = 600          # ...and at most this many of them
 FOCUS_VALUE_MIN_N = 20          # under this many, no cut and no growth
 FOCUS_GROW_SLICES = 6           # the slices the walk from 10% to 25% is taken in
+FOCUS_GAP_CUSHION = 1.0         # shares over the Target Size a gap-closing entry carries
 FOCUS_COC_DAY = 0.005           # cost of capital: per dollar tied up, a day
 FOCUS_FILL_COST_MIN = 0.02      # $/share a fill's cost never reads under
 FOCUS_FILL_COST_MAX = 0.25      # ...nor over (a broken measure must not read as $2)
@@ -1274,7 +1275,9 @@ class Focus:
         if stake < 1.0:
             return None
         levels = self._levels_net(slug, side, book)
+        tick = book.tick or 0.01
         best = None
+        close_best = None          # the size that carries the side over the target
         for px in self._cands(side, book, fair):
             cost_ps = px if side == "BUY" else 1.0 - px
             if cost_ps <= 0:
@@ -1284,7 +1287,7 @@ class Focus:
                 continue
             # past his fair on a bare side: no, at any size
             if fair is not None and ((px > fair) if side == "BUY" else (px < fair)):
-                if self._bare(levels, book.tick or 0.01, full):
+                if self._bare(levels, tick, full):
                     continue
             tried: set[float] = set()
             for frac in FOCUS_SIZE_FRACS:
@@ -1295,11 +1298,50 @@ class Focus:
                 s = self._score(slug, side, book, prog, pool, fair, px, qty, levels)
                 if best is None or s["ev"] > best["ev"] + 1e-9:
                     best = s
+            # A side under the Target Size pays nobody, so every size the
+            # stake buys reads $0.00 here — but our own order counts
+            # toward the target, and the one that carries the side over
+            # it takes the reward it unlocks (owner, 2026-09-17, the
+            # Texas/Maine Senate combo: asks 9,900 of 10,000, the stake's
+            # 49 shares left it 50 short and the ask side read $0.00 while
+            # 100 shares would have taken 99% of $125 a day for $23 of
+            # collateral: "When there is this much money on the table,
+            # and the book is this thin, I think it makes sense to try
+            # and get some of it"). The closing size is tried where it
+            # fits inside the growth ceiling; whether it rests is decided
+            # below by the same top-quartile line growth answers to.
+            if stake_max > stake + 1.0 and prog.target:
+                j = estimate_join(side, levels, tick, float(prog.df),
+                                  float(prog.target), px, full)
+                if not j.qualifies and j.gap > 0:
+                    qty_c = float(math.ceil(full + j.gap + FOCUS_GAP_CUSHION))
+                    if qty_c * cost_ps <= stake_max + 1e-9:
+                        s = self._score(slug, side, book, prog, pool, fair, px, qty_c, levels)
+                        s["gap_full"] = full
+                        s["gap_short"] = round(float(j.gap), 2)
+                        if close_best is None or s["ev"] > close_best["ev"] + 1e-9:
+                            close_best = s
         if best is not None:
             self._note_value(now or time.time(), best["ev"], best["risk"])
             if stake_max > stake + 1.0:
                 best = self._grow(slug, side, book, prog, pool, fair, levels,
                                   best, stake, stake_max, now or time.time())
+        if close_best is not None and (best is None or close_best["ev"] > best["ev"] + 1e-9):
+            cut = self.top_cut(now or time.time())
+            if cut is not None and self._value(float(close_best["ev"]),
+                                               float(close_best["risk"])) >= cut:
+                word = "bid" if side == "BUY" else "ask"
+                c = dict(close_best)
+                c["grew_from"] = round(float(c.pop("gap_full")), 2)
+                c["grew_coll_from"] = round(float(c["grew_from"]) * (float(c["px"]) if side == "BUY" else 1.0 - float(c["px"])), 2)
+                c["grew_slices"] = 0
+                c["grow_note"] = (
+                    f"sized to carry the {word} side over its {float(prog.target):,.0f} "
+                    f"Target Size: the stake's {c['grew_from']:,.0f} shares left it "
+                    f"{c.pop('gap_short'):,.0f} short, {float(c['qty']):,.0f} closes it "
+                    f"(${float(c['coll']):,.2f}; top-quartile line {cut:.2f}, this "
+                    f"{self._value(float(c['ev']), float(c['risk'])):.2f})")
+                best = c
         return best
 
     def _grow(self, slug: str, side: str, book, prog, pool: float,
