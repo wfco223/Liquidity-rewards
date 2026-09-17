@@ -2705,3 +2705,84 @@ class TestTheTenderHandsProgramsBackToTheFamily(Base):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTheTenderClosesATargetGap(Base):
+    """Owner, 2026-09-17, Senate Combo Texas and Maine: asks 9,900 of a
+    10,000 Target Size, the touch 77c x1, his fair 40c. The stake's 49
+    shares left the side 50 short, so every ask read "$0.00 a day" while
+    100 shares would have carried the side over the line and taken 99%
+    of its $125 a day for $23 of collateral. "When there is this much
+    money on the table, and the book is this thin, I think it makes
+    sense to try and get some of it." The closing size is tried where it
+    fits inside the 25% ceiling and rests when it clears the same
+    top-quartile line growth answers to."""
+
+    M = "cpoc-ussec-tx-me-2026-11-03-dsweep"
+    BOOST = {"timePeriods": [{"programId": "elections_boosted_high_20260827",
+                              "rewardPool": 1000.0, "targetSize": 10000, "discountFactor": 0.2,
+                              "status": "LIVE", "start": "2026-08-27T00:00:00Z",
+                              "end": "2026-11-04T00:00:00Z"}]}
+
+    def _thin(self, asks_wall=9900.0):
+        return Book(bids=((0.45, 1.0), (0.01, 22500.0)),
+                    asks=((0.77, 1.0), (0.99, asks_wall)), tick=0.01, fetched_at=self.r.now)
+
+    def _seat(self, bp=414.0, asks_wall=9900.0, vals=None):
+        self.r.add_market(self.M, self._thin(asks_wall), event="Senate Combo: Texas and Maine",
+                          prog=copy.deepcopy(self.BOOST))
+        self.r.fam.universe[self.M] = {"event_n": 4, "name": "Senate Combo: Texas and Maine — dsweep"}
+        self.f._bp_fn = lambda: bp                         # basis $114: 10% $11.40, 25% $28.50
+        self.f.last_terms_own = 0.0
+        self.f._rotor = 0
+        for _ in range(3):
+            self.tick()
+        self.assertIn(self.M, self.f.markets)
+        self.f.set_fair(self.M, 40)
+        if vals is not None:
+            self.f._vals = [(self.r.now, v) for v in vals]
+        for _ in range(3):
+            self.tick()
+
+    def test_the_closing_size_rests_where_it_fits_and_clears_the_line(self):
+        self._seat(vals=[0.5] * 20)                         # a cut of 0.5 a day per dollar
+        asks = self.mine(self.M, "SELL")
+        self.assertEqual(len(asks), 1, [o.why for o in self.r.fam.orders.values()])
+        o = asks[0]
+        self.assertGreaterEqual(o.qty, 99.0)                 # the stake's ~49 plus the 50 short
+        self.assertLessEqual(o.qty * (1.0 - o.price), 28.5 + 1.0)   # inside the 25% ceiling
+        self.assertGreaterEqual(o.price, 0.40)               # never past his fair
+        plan = (self.f.rows[self.M].get("tend") or {}).get("SELL") or {}
+        self.assertIn("Target Size", plan.get("grow_note") or "")
+        self.assertIn("closes it", plan.get("grow_note") or "")
+
+    def test_under_the_readings_floor_nothing_closes(self):
+        self._seat(vals=None)                                # no cut: nothing grows, nothing closes
+        self.assertEqual(self.mine(self.M, "SELL"), [])
+        idle = self.f.view(self.r.now, 414.0, True)["idle"]
+        rows = [d for d in idle if d["market"] == self.M]
+        self.assertTrue(any("$0.00" in d["why"] for d in rows), rows)   # the side still reads zero
+
+    def test_a_closing_size_under_the_line_does_not_rest(self):
+        self._seat(vals=[10000.0] * 20)                      # a line nothing here can clear
+        self.assertEqual(self.mine(self.M, "SELL"), [])
+
+    def test_a_gap_past_the_ceiling_is_left_alone(self):
+        self._seat(asks_wall=9700.0, vals=[0.5] * 20)        # 300 short: ~350 shares, $80 > $28.50
+        self.assertEqual(self.mine(self.M, "SELL"), [])
+
+    def test_a_hand_set_stake_never_closes_a_gap(self):
+        self.r.add_market(self.M, self._thin(), event="Senate Combo: Texas and Maine",
+                          prog=copy.deepcopy(self.BOOST))
+        self.r.fam.universe[self.M] = {"event_n": 4, "name": self.M}
+        self.f._bp_fn = lambda: 414.0
+        self.f.set_stake(self.M, 11.4)                       # his number: the ceiling IS the base
+        self.f.last_terms_own = 0.0
+        self.f._rotor = 0
+        for _ in range(3):
+            self.tick()
+        self.f.set_fair(self.M, 40)
+        self.f._vals = [(self.r.now, 0.5)] * 20
+        for _ in range(3):
+            self.tick()
+        self.assertEqual(self.mine(self.M, "SELL"), [])
