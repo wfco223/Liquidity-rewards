@@ -926,6 +926,29 @@ long and accreted, so search it rather than reading it through.
   pennies there might not be any orders resting") applied to the way
   back in. The median move over those 48 was 1c, so this changes only
   the tail: 11 of 48 had moved more than 10c and 4 more than 25c.
+- THE QUALIFY BUTTON READS BOTH LEDGERS (owner, 2026-09-17, with the
+  focus page in front of him: "When I try to qualify the sides on these
+  markets I get the error ... no Target Size on record here — reward
+  terms not read yet. The target sizes for these markets is 10,000").
+  The twelve Texas/Maine and Texas/Michigan/Maine Senate combos
+  (cpoc-ussec-tx-…) were listed on 09-16 21:40 with no program; the
+  politics family read them within the hour, found nothing, and marked
+  them "read — no program", which sends a market to the back of its
+  rotation (6,465 markets at 300 a half hour, ~11 h). The exchange then
+  put them in Elections Boosted High ($1,000/day), and the tender's OWN
+  walk read that at 15:43 and seated them — while the button, which
+  read the family's ledger alone, said "not read yet" on the very page
+  showing $1,000/day. Three things now hold. The button takes the terms
+  from whichever ledger has them, the tender's first. The tender hands
+  every program its read finds to the family's ledger where the family
+  holds nothing (never over a program it has) — one read of the
+  exchange updates both books, logged "terms_handed" — and since the
+  family's ledger is the one saved with the state, a restart seeds the
+  board from it at once instead of waiting a walk. And the words say
+  which thing happened: "the last read found no program on this
+  market" when it was read, "not read yet" only when it was not. The
+  target is never typed in: it is whatever the exchange's program
+  record says.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

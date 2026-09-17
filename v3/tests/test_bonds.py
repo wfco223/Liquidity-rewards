@@ -809,6 +809,7 @@ class TestEngineHandsOff(unittest.TestCase):
         self.assertIn("self.bond_qty.get(slug, 0.0)", src)
 
 
+
 if __name__ == "__main__":
     unittest.main()
 
@@ -3544,7 +3545,8 @@ class TestQualifyTheSide(Base):
             _qualify_jobs={})
         m._qualify_note = Monitor._qualify_note
         for name in ("_rested_size", "_qualify_run", "qualify_side",
-                     "qualify_ask", "qualify_bond", "_note_walls"):
+                     "qualify_ask", "qualify_bond", "_note_walls",
+                     "_terms_for", "_no_terms_note"):
             setattr(m, name, types.MethodType(getattr(Monitor, name), m))
         # a real exchange puts our rested order INTO the book, on the
         # side its intent rests on; the fake one must too
@@ -4942,3 +4944,52 @@ class TestTheAmplifierIsKilled(Base):
         self.assertTrue(self.b._orders(AL, "SELL", decoy=False))
 
 
+class TestTheButtonReadsBothLedgers(TestQualifyTheSide):
+    """Owner, 2026-09-17: the Texas/Maine Senate combos were on the focus
+    page at $1,000/day and the qualify button said "reward terms not read
+    yet" — it read the family's ledger alone, which had read the markets
+    the hour they were listed, before the boost was attached."""
+
+    def _boost(self, target=10000.0):
+        from v3.programs import Program, with_event_n
+        return with_event_n(Program(pool=1000.0, target=target, df=0.2, status="LIVE",
+                                    pid="elections_boosted_high_20260827",
+                                    tier="high", start="", end=""), 4)
+
+    def _mon_with_tender(self):
+        import types
+        from v3.terms import TermsStore
+        m = self._mon()
+        m.focus = types.SimpleNamespace(terms=TermsStore())
+        return m
+
+    def test_the_tenders_terms_carry_the_button_when_the_family_has_none(self):
+        self.seed(AL, self.thin_yes_book())
+        m = self._mon_with_tender()
+        self.r.fam.terms.current.pop(AL, None)          # the family read it before the boost
+        self.r.fam.known_dead.add(AL)
+        m.focus.terms.current[AL] = self._boost()       # the tender read it after
+        out = m.qualify_side(AL, "SELL")
+        self.assertTrue(out["ok"], out["note"])
+        self.assertIn("ask wall", out["note"])
+        self.assertEqual(m._qualify_jobs[AL]["target"], 10000.0)
+
+    def test_the_family_still_answers_when_the_tender_has_nothing(self):
+        self.seed(AL, self.thin_yes_book())
+        m = self._mon_with_tender()
+        self.assertIsNotNone(self.r.fam.terms.get(AL))
+        out = m.qualify_side(AL, "SELL")
+        self.assertTrue(out["ok"], out["note"])
+
+    def test_the_note_says_which_thing_happened(self):
+        self.seed(AL, self.thin_yes_book())
+        m = self._mon_with_tender()
+        self.r.fam.terms.current.pop(AL, None)
+        self.r.fam.known_dead.discard(AL)
+        out = m.qualify_side(AL, "SELL")
+        self.assertFalse(out["ok"])
+        self.assertIn("not read yet", out["note"])
+        self.r.fam.known_dead.add(AL)
+        out = m.qualify_side(AL, "SELL")
+        self.assertFalse(out["ok"])
+        self.assertIn("found no program", out["note"])
