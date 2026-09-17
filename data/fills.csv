@@ -4423,3 +4423,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789622939.1,politics,paccc-balpow-2026-11-03-dsweep,BUY,-18.9,0.59,fix,15.0427,0.03,,56,61,0.523,0.58,0.59,0.01,0,size trimmed by 18.9 to the exchange's count (order CH1A6ERPPVNN),CH1A6ERPPVNN
 1789622939.1,politics,ussewc-usse-la-2026-11-03-dem,SELL,-2,0.06,fix,3.2339,0.2,0.041175,2,7,0.162,0.05,0.06,-0.0188,-2,size trimmed by 2 to the exchange's count (order CHSD4Q902VNR),CHSD4Q902VNR
 1789622939.1,politics,paccc-usho-midterms-2026-11-03-dem,BUY,99,0.88,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHT1PJM9WVNQ
+1789625252.1,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,220,0.93,sell,0,0.44,0.996725,92,96,0.544,0.91,0.94,-0.0667,442,buying back the short at or under what it sold for — the bid earns while it wait,CHTPNSWKGVNA
+1789625516.9,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.03,hand,,65.41,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG30986Q4VB2
+1789625516.9,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.03,hand,,65.41,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG300VR5YVB8
+1789626753.7,politics,paccc-balpow-2026-11-03-dsweep,BUY,-140,0.59,fix,15.0427,0.03,,56,61,0.523,0.58,0.59,0.01,0,size trimmed by 140 to the exchange's count (order CH1A6ERPPVNN),CH1A6ERPPVNN
+1789626753.7,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.03,hand,,65.41,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG30986Q4VB2
+1789626753.7,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.03,hand,,65.41,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG300VR5YVB8
