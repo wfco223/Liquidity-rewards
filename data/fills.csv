@@ -4441,3 +4441,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789634684.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-1,0.144,fix,8.9142,0.38,0.1373,16,19,0.713,0.143,0.144,-0.0067,43,size trimmed by 1 to the exchange's count (order CH194EE56VNN),CH194EE56VNN
 1789634684.9,politics,scc-senate-gop-2026-11-03-lte45,SELL,19.55,0.09,backfill,,8.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHP1N2KGRVNH
 1789634684.9,cfb,aachc-cfb-wins-2026-11-28-lsu-6pt5wins,SELL,4.78,0.86,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHWYPJW1YVNR
+1789635670.3,cfb,aachc-cfb-wins-2026-11-28-cin-3pt5wins,SELL,5,0.87,earn,0.3257,4.86,,78,88,0,0.94,0.95,-0.03,-5,joins the touch — the book has been quiet,CHSDXHJA6VNH
+1789635670.3,cfb,aachc-cfb-wins-2026-11-28-iowast-2pt5wins,SELL,5,0.91,earn,2.579,1.12,,88,97,0,0.91,0.98,0.01,-5,joins the touch — the book has been quiet,CHWKA3RQWVNG
+1789638678.6,politics,ussewc-usse-il-2026-11-03-dem,BUY,-0.53,0.93,fix,0,3.52,0.99655,95,99,0.599,0.93,0.98,-0.0665,5,size trimmed by 0.53 to the exchange's count (order CG2Z6EJVRVB3),CG2Z6EJVRVB3
+1789638678.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-11,0.144,fix,8.9142,0.38,0.1373,16,19,0.713,0.143,0.144,-0.0067,43,size trimmed by 11 to the exchange's count (order CH194EE56VNN),CH194EE56VNN
+1789638678.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-66,0.144,fix,,0.37,,,,,,,,,size trimmed by 66 to the exchange's count (order CH194EE56VNN),CH194EE56VNN
+1789638678.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-55,0.144,fix,14.1087,0.33,0.1373,15,19,0.624,0.143,0.144,-0.0067,109,size trimmed by 55 to the exchange's count (order CH194EE56VNN),CH194EE56VNN
+1789638678.6,politics,scc-senate-gop-2026-11-03-lte45,SELL,-19.55,0.09,fix,5.2402,8.56,0.09795,6,10,0.647,0.08,0.09,0.0079,264.45,size trimmed by 19.55 to the exchange's count (order CHP1N2KGRVNH),CHP1N2KGRVNH
+1789638678.6,cfb,aachc-cfb-wins-2026-11-28-lsu-6pt5wins,SELL,-4.78,0.86,fix,0,0.39,,75,88,0,0.85,0.86,-0.05,-4.78,size trimmed by 4.78 to the exchange's count (order CHWYPJW1YVNR),CHWYPJW1YVNR
