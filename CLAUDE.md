@@ -949,6 +949,32 @@ long and accreted, so search it rather than reading it through.
   market" when it was read, "not read yet" only when it was not. The
   target is never typed in: it is whatever the exchange's program
   record says.
+- THE TENDER CLOSES A TARGET SIZE GAP (owner, 2026-09-17, Senate Combo
+  Texas and Maine, the page in front of him: "When there is this much
+  money on the table, and the book is this thin, I think it makes sense
+  to try and get some of it. Why isn't some portion of the tender
+  offering a little above fair?"). The ask side held 9,900 of a 10,000
+  Target Size, the touch was 77c x1 and his fair 40c. It was never the
+  fair: an ask at 77c is 37c above it. It was the target: a side under
+  it pays nobody (his own 2026-09-11 rule), the stake's $11.40 bought 49
+  shares at 77c, which left the side 50 short, so every ask read "$0.00
+  a day" (the log said so twice) — while 100 shares would have carried
+  the side over the line and taken 99% of its $125 a day for $23 of
+  collateral, and the 25% ceiling ($28.50) allowed it. The growth walk
+  could not find that: it only extends a plan that already scores, and
+  a $0.00 plan never starts it. Now _entry_plan also tries, at each
+  candidate price, THE SIZE THAT CARRIES THE SIDE OVER THE TARGET (the
+  stake's full size plus the shortfall estimate_join reports, plus
+  FOCUS_GAP_CUSHION) wherever that fits inside the growth ceiling
+  (stake_max, which already carries the position bound and the refill
+  ramp), and takes it over the base plan only when it clears the same
+  top-quartile line growth answers to — under FOCUS_VALUE_MIN_N
+  readings there is no line and nothing closes. Price is the plan's
+  own choice as before; the fair bound, the bare-side rule, the money
+  gate, the $20 on a 2028 book and a hand-set stake all still bind
+  first. The card says it: "sized to carry the ask side over its
+  10,000 Target Size: the stake's 49 shares left it 50 short, 100
+  closes it".
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
