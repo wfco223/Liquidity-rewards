@@ -4510,3 +4510,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789647431.1,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,BUY,1,0.82,backfill,,18.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG9E3P04VNJ
 1789647431.1,cfb,aachc-cfb-wins-2026-11-28-boscol-1pt5wins,BUY,0.5,0.97,backfill,,11.98,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHNWQCPN4VNR
 1789647431.1,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,0.48,0.23,hand,,71.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG308Z0T6VB7
+1789648635.2,politics,ewc-usse-mi-2026-11-03-rep,BUY,86,0.38,focus,8.0139,0.49,0.2623,37,40,0.409,0.37,0.38,0.1177,86,focus entry: ~$8.99/day; fill odds 62%/day; EV +5.09/day,CJ07HWH4WVNM
+1789649358.2,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,1,0.93,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MQ68B8VNP
+1789649775.3,politics,ussewc-usse-tn-2026-11-03-rep,SELL,30,0.93,backfill,,0.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MS8ABEVNR
+1789649798.7,politics,scc-senate-gop-2026-11-03-49,SELL,27,0.17,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MGC8RYVNK
+1789649809.6,politics,scc-senate-gop-2026-11-03-50,SELL,0.1,0.17,backfill,,42.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGWTR4GX2VBA
+1789650000.7,politics,scc-senate-gop-2026-11-03-50,SELL,35,0.17,sell,1.295,42.13,0.131075,14,18,0.512,0.16,0.17,-0.0389,230,an exit — its fill reduces the position it sits on,CGWTR4GX2VBA
+1789651101.5,politics,ussewc-usse-ma-2026-11-03-dem,SELL,1.04,0.96,backfill,,72.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG373AKJCVB8
+1789651146.7,politics,ussewc-usse-ar-2026-11-03-rep,SELL,1.07,0.92,backfill,,0.68,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MV86TTVNH
+1789651300.2,politics,ussewc-usse-tn-2026-11-03-dem,SELL,-1,0.02,fix,3.6382,2.45,0.000425,1,4,0.554,0.01,0.02,-0.0196,-2,size trimmed by 1 to the exchange's count (order CH2HPGYAYVNR),CH2HPGYAYVNR
+1789651300.2,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,-3.05,0.96,fix,3.5064,0.21,0.999925,96,99,0.373,0.96,0.97,-0.0399,9,size trimmed by 3.05 to the exchange's count (order CH3WRF3J8VNH),CH3WRF3J8VNH
+1789651300.2,politics,usgubewc-usgub-hi-2026-11-03-dem,BUY,-20,0.97,fix,6.231,3.27,0.999975,94,98,0.638,0.93,0.95,-0.03,20,size trimmed by 20 to the exchange's count (order CHXGSDCXEVNR),CHXGSDCXEVNR
+1789651300.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,-6,0.587,fix,6.269,0.42,0.5,58,60,0.731,0.586,0.587,-0.087,0,size trimmed by 6 to the exchange's count (order CJ00Q4YM6VNH),CJ00Q4YM6VNH
+1789651300.2,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,1,0.93,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MQ68B8VNP
+1789651300.2,politics,ussewc-usse-tn-2026-11-03-rep,SELL,30,0.93,backfill,,0.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MS8ABEVNR
+1789651300.2,politics,scc-senate-gop-2026-11-03-49,SELL,27,0.17,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MGC8RYVNK
+1789651300.2,politics,scc-senate-gop-2026-11-03-50,SELL,0.1,0.17,backfill,,42.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGWTR4GX2VBA
+1789651300.2,politics,ussewc-usse-ma-2026-11-03-dem,SELL,1.04,0.96,backfill,,72.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG373AKJCVB8
+1789651300.2,politics,ussewc-usse-ar-2026-11-03-rep,SELL,1.07,0.92,backfill,,0.68,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ0MV86TTVNH
+1789651300.2,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,BUY,-1,0.82,fix,0.1729,18.85,,82,87,0.536,0.82,0.83,-0.03,1,size trimmed by 1 to the exchange's count (order CHG9E3P04VNJ),CHG9E3P04VNJ
+1789651300.2,cfb,aachc-cfb-wins-2026-11-28-boscol-1pt5wins,BUY,-0.5,0.97,fix,0.32,12.31,,96,99,0,0.97,0.98,-0.01,0.5,size trimmed by 0.5 to the exchange's count (order CHNWQCPN4VNR),CHNWQCPN4VNR
