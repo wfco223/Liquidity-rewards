@@ -4833,3 +4833,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789695177.7,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.02,void,0,0.26,,1,6,0.028,0.02,0.03,0.01,0,voided: the exchange has no trade for order CHG188CCGVNN — the row of 09-16 17:2,CHG188CCGVNN
 1789695177.7,nfl,ftsc-nfl-qbmostfp-2027-01-10-dramay,SELL,2,0.04,void,0,0.26,,2,12,0.033,0.04,0.05,0.02,0,voided: the exchange has no trade for order CHG180A9PVNG — the row of 09-16 17:2,CHG180A9PVNG
 1789695177.7,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,SELL,2,0.17,hand,,84.06,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2RKTAWYVB6
+1789695417.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.55,sell,0.0018,30.34,,54,60,0.393,0.55,0.56,-0.02,2,buying back the short at or under what it sold for — the bid earns while it wait,CHHW1EVDCVNQ
+1789698233.5,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,4.64,0.64,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJBY5XH0JVNG
+1789698356.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,0.15,0.44,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJBKZYKBCVNK
+1789698459.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,47,0.592,backfill,,1.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJAWQXT6YVNG
+1789698537.8,politics,ewc-usse-me-2026-11-03-rep,BUY,69,0.35,sell,3.2336,2.6,0.34385,34,38,0.535,0.34,0.35,0.0061,0,an exit — its fill reduces the position it sits on,CJABH5EDAVNP
+1789698777.8,politics,scc-senate-gop-2026-11-03-48,BUY,4,0.16,void,1.4868,0,0.13865,13,15,0.757,0.16,0.17,0.0214,4,voided: the exchange has no trade for order CJBMB9PB0VNK — the row of 09-18 01:2,CJBMB9PB0VNK
+1789698777.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,4.64,0.64,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJBY5XH0JVNG
+1789698777.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,0.15,0.44,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJBKZYKBCVNK
+1789698777.8,politics,paccc-usse-midterms-2026-11-03-dem,BUY,47,0.592,backfill,,1.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJAWQXT6YVNG
