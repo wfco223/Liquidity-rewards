@@ -4868,3 +4868,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789708798.0,politics,scc-senate-gop-2026-11-03-48,BUY,4,0.15,focus,0.7902,0,0.13865,13,15,0.785,0.16,0.17,0.0113,4,focus entry: ~$0.79/day; fill odds 14%/day; EV +0.15/day,CJEYT0Q5TVNN
 1789709652.0,politics,ussewc-usse-ar-2026-11-03-dem,SELL,10,0.06,void,3.3227,0.33,0.01815,6,10,0.568,0.05,0.07,-0.0418,-10,voided: the exchange has no trade for order CHK3Q43SYVNJ — the row of 09-16 21:0,CHK3Q43SYVNJ
 1789709652.0,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,0.79,0.41,backfill,,5.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJA7JGQX2VNK
+1789709839.5,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,28,0.81,backfill,,40.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHC45GGRWVNG
+1789710072.0,politics,scc-senate-gop-2026-11-03-51,BUY,52,0.14,manual,2.2924,7.17,0.1048,12,16,0,0.13,0.14,0.0352,52,the owner's own order — the engine leaves it alone,CJ91BEBCAVNN
+1789710072.0,politics,scc-senate-gop-2026-11-03-51,BUY,113,0.14,focus,4.4617,0.06,0.1048,12,16,0,0.13,0.14,0.0352,165,focus entry: ~$2.85/day; fill odds 58%/day; EV +0.31/day,CJF6MKTKCVNK
+1789710672.1,politics,scc-hrep-rep-2026-11-03-gte205,SELL,238,0.28,focus,24.6115,0.02,0.440125,30,38,0.234,0.28,0.29,0.1601,0,focus exit: ~$24.38/day; fill odds 17%/day; EV +21.48/day,CJFD7Q27AVNA
+1789710732.1,politics,ussewc-usse-fl-2026-11-03-dem,BUY,50,0.11,earn,1.1711,5.35,0.1489,10,15,0.504,0.11,0.12,-0.0389,50,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CJAXYCYP8VNP
+1789710732.1,politics,ussewc-usse-ms-2026-11-03-rep,SELL,20,0.9,sell,2.3108,0.3,0.974875,92,96,0.484,0.89,0.92,0.0749,0,selling filled stock — it earns while it waits,CJF59BBGWVNM
+1789710852.1,politics,ushrewc-ushr-tx-15-2026-11-03-rep,BUY,45,0.37,focus,18.5655,0.08,,36,44,0,0.36,0.37,-0.03,54,focus entry: ~$18.54/day; fill odds 59%/day; EV +13.89/day,CJFDGFW28VNP
+1789710852.1,politics,ewc-usse-tx-2026-11-03-dem,SELL,48,0.57,focus,4.1337,0.07,0.6246,55,61,0.213,0.57,0.58,0.0546,-48,focus entry: ~$21.15/day; fill odds 55%/day; EV +19.86/day,CJFD8ZG02VNK
+1789713201.9,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,0.06,0.41,backfill,,6.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJA7JGQX2VNK
+1789713252.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-1,0.147,fix,,0,,,,,,,,,size trimmed by 1 to the exchange's count (order CHKTN70CJVNJ),CHKTN70CJVNJ
+1789713252.8,politics,scc-senate-gop-2026-11-03-48,BUY,4,0.15,void,0.7902,0,0.13865,13,15,0.785,0.16,0.17,0.0113,4,voided: the exchange has no trade for order CJEYT0Q5TVNN — the row of 09-18 05:1,CJEYT0Q5TVNN
+1789713252.8,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,28,0.81,backfill,,40.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHC45GGRWVNG
+1789713252.8,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,0.06,0.41,backfill,,6.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJA7JGQX2VNK
