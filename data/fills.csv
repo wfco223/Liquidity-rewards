@@ -5291,3 +5291,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789764359.2,politics,ewc-usgub-nv-2026-11-03-dem,BUY,32,0.46,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVY27J56W7H
 1789764359.2,politics,ushrewc-ushr-ny-17-2026-11-03-dem,BUY,0.01,0.65,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJW3K4EVJWM9
 1789764359.2,politics,scc-senate-gop-2026-11-03-lte45,BUY,39.9,0.09,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJW7P1W38W1Z
+1789764539.2,politics,scc-senate-gop-2026-11-03-lte45,BUY,1.1,0.09,sell,0.8378,0.13,0.104675,7,12,0.756,0.09,0.1,-0.0147,0.1,an exit — its fill reduces the position it sits on,CJW7P1W38W1Z
+1789764539.2,politics,scc-senate-gop-2026-11-03-lte45,BUY,79.89,0.09,focus,17.0173,0.02,0.104675,7,12,0.756,0.09,0.1,-0.0147,79.99,focus entry: ~$16.87/day; fill odds 64%/day; EV +11.89/day,CJWAVH35CW0Y
+1789766764.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,150,0.112,focus,310.389,0.08,0.1253,11,14,0.863,0.111,0.112,0.0133,-150,focus entry: ~$38.82/day; fill odds 66%/day; EV +33.90/day,CJWSB7SV8W0Y
+1789767184.4,politics,paccc-usho-midterms-2026-11-03-rep,BUY,150,0.112,sell,23.2942,0.06,0.1253,12,14,0.877,0.115,0.116,-0.0133,0,an exit — its fill reduces the position it sits on,CJWXGCC0CW22
+1789767184.4,politics,scc-hrep-rep-2026-11-03-gte185,BUY,106,0.93,focus,12.5886,0,0.8723,84,89,0,0.92,0.95,0.0577,0,focus exit: ~$12.59/day; fill odds 42%/day; EV +11.69/day,CJWYK7FZMWM9
+1789767196.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,150,0.116,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWYP51Q2W22
+1789767244.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,32,0.116,focus,263.034,0.03,0.1253,11,13,0.888,0.116,0.117,0.0093,-182,focus entry: ~$218.29/day; fill odds 66%/day; EV +214.36/day,CJWYP51Q2W22
+1789767898.4,politics,scc-hrep-rep-2026-11-03-gte185,BUY,72,0.94,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJX3JNGPTW1Z
+1789767964.4,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,11,0.59,void,11.015,0,,52,56,0.72,0.59,0.6,0.05,11,voided: the exchange has no trade for order CJW3KK73RW20 — the row of 09-18 20:3,CJW3KK73RW20
+1789767964.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,150,0.116,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWYP51Q2W22
+1789767964.4,politics,scc-hrep-rep-2026-11-03-gte185,BUY,72,0.94,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJX3JNGPTW1Z
