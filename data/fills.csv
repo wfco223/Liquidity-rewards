@@ -4862,3 +4862,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789706019.9,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,4.99,0.81,backfill,,39.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHC45GGRWVNG
 1789706019.9,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,0.39,0.92,backfill,,60.2,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGT3FA6TWVB9
 1789706019.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,8,0.593,backfill,,0.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJDR885RCVNH
+1789707897.9,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,2,0.41,sell,13.7386,5.35,,37,43,0.685,0.4,0.41,-0.01,55,an exit — its fill reduces the position it sits on,CJA7JGQX2VNK
+1789707919.8,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,0.79,0.41,backfill,,5.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJA7JGQX2VNK
+1789707957.9,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,2.78,0.41,sell,13.1366,5.36,,39,44,0.751,0.4,0.41,0,52.22,an exit — its fill reduces the position it sits on,CJA7JGQX2VNK
+1789708798.0,politics,scc-senate-gop-2026-11-03-48,BUY,4,0.15,focus,0.7902,0,0.13865,13,15,0.785,0.16,0.17,0.0113,4,focus entry: ~$0.79/day; fill odds 14%/day; EV +0.15/day,CJEYT0Q5TVNN
+1789709652.0,politics,ussewc-usse-ar-2026-11-03-dem,SELL,10,0.06,void,3.3227,0.33,0.01815,6,10,0.568,0.05,0.07,-0.0418,-10,voided: the exchange has no trade for order CHK3Q43SYVNJ — the row of 09-16 21:0,CHK3Q43SYVNJ
+1789709652.0,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,0.79,0.41,backfill,,5.35,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJA7JGQX2VNK
