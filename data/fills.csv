@@ -4896,3 +4896,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789720470.6,politics,usgubewc-usgub-ma-2026-11-03-rep,BUY,1.07,0.07,backfill,,4.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJDBABXYYVNP
 1789720470.6,nfl,fptc-nfl-wrfpou-2027-01-10-tetmcm,SELL,0.93,0.36,hand,,91.44,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG31VY91CVB5
 1789720470.6,nfl,fptc-nfl-wrfpou-2027-01-10-tetmcm,SELL,0.07,0.38,hand,,91.45,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG31VY8ZWVB5
+1789730773.2,politics,paccc-usho-midterms-2026-11-03-dem,SELL,98,0.859,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHM31KRSMVNQ
