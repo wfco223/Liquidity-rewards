@@ -4793,3 +4793,25 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789687931.6,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.28,0.23,fix,,71.05,,,,,,,,,size trimmed by 0.28 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
 1789687931.6,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.2,0.23,fix,,71.05,,,,,,,,,size trimmed by 0.2 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
 1789687931.6,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.04,0.23,fix,,71.05,,,,,,,,,size trimmed by 0.04 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
+1789688244.9,cfb,aachc-cfb-wins-2026-11-28-cin-3pt5wins,BUY,5,0.94,sell,0.5026,8.29,,82,89,0.386,0.86,0.93,0.09,0,buying back the short at or under what it sold for — the bid earns while it wait,CJ30N7CDTVNA
+1789688500.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,96,0.592,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ9S6D1M2VNH
+1789688604.9,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,0.03,0.98,sell,0.0001,7.88,0.9974,93,98,0.233,0.97,0.98,0.0174,3.97,selling filled stock — it earns while it waits,CJ3EGC1AGVNJ
+1789688800.2,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,78,0.81,backfill,,35.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHC45GGRWVNG
+1789688964.9,politics,ewc-usse-me-2026-11-03-rep,SELL,69,0.34,focus,68.0296,0.02,0.34385,32,38,0.275,0.33,0.34,0.0038,-69,focus entry: ~$8.56/day; fill odds 56%/day; EV +6.55/day,CJA9M2W0YVNM
+1789689564.9,politics,usgubewc-usgub-sd-2026-11-03-rep,BUY,10,0.97,earn,3.5604,0.02,0.996125,96,99,0.635,0.96,0.97,-0.0261,10,1 tick in front of the touch — we would hold 57% of the bid side,CJAEF7C1JVNN
+1789689984.9,cfb,aachc-cfb-wins-2026-11-28-iowast-2pt5wins,BUY,5,0.97,sell,4.2584,13.98,,90,97,0.384,0.87,0.98,0.03,0,buying back the short at or under what it sold for — the bid earns while it wait,CHYHE7SREVNA
+1789691277.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,107,0.593,focus,15.3267,0.6,0.5,58,60,0.835,0.592,0.593,-0.093,-108,focus entry: ~$246.72/day; fill odds 56%/day; EV +244.55/day,CJAB1Y1QAVNR
+1789691577.6,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,-46,0.49,fix,125,0.01,,38,46,0.614,0.4,0.5,0.07,57,size trimmed by 46 to the exchange's count (order CJA0Z7NA0VNM),CJA0Z7NA0VNM
+1789691577.6,politics,usgubewc-usgub-il-2026-11-03-dem,SELL,33,0.99,void,0,82.35,0.998875,93,97,0.528,0.93,0.94,0.0089,0,voided: the exchange has no trade for order CG33CCHSTVB8 — the row of 09-17 23:1,CG33CCHSTVB8
+1789691577.6,politics,scc-senate-gop-2026-11-03-48,BUY,4,0.16,void,1.7199,0,0.13865,13,15,0.707,0.16,0.17,0.0214,4,voided: the exchange has no trade for order CJ9T7MDS0VNA — the row of 09-17 23:1,CJ9T7MDS0VNA
+1789691577.6,politics,paccc-usse-midterms-2026-11-03-dem,BUY,96,0.592,backfill,,0.44,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ9S6D1M2VNH
+1789691577.6,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,78,0.81,backfill,,35.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHC45GGRWVNG
+1789691577.6,cfb,aachc-cfb-wins-ou-2026-11-28-mary,BUY,-0.1,0.5,fix,0,0.26,,44,50,0,0.49,0.5,0.03,0,size trimmed by 0.1 to the exchange's count (order CHG10QDEEVNQ),CHG10QDEEVNQ
+1789691577.6,cfb,aachc-cfb-wins-2026-11-28-nd-8pt5wins,SELL,1,0.89,void,0,0.28,,90,97,0.374,0.89,0.9,0.05,0,voided: the exchange has no trade for order CHG0DC4R2VNM — the row of 09-16 17:2,CHG0DC4R2VNM
+1789691577.6,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,SELL,1,0.7,void,0,0.28,,69,75,0.505,0.7,0.71,0.02,0,voided: the exchange has no trade for order CHG0GFDYMVNR — the row of 09-16 17:2,CHG0GFDYMVNR
+1789691577.6,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.56,void,0,0.28,,55,63,0.269,0.55,0.56,-0.02,0,voided: the exchange has no trade for order CHG0J9CVRVNP — the row of 09-16 17:2,CHG0J9CVRVNP
+1789691577.6,cfb,aachc-cfb-wins-2026-11-28-frest-8pt5wins,SELL,2,0.01,void,0,0.26,,39,52,0.491,0.01,0.02,0.44,0,voided: the exchange has no trade for order CHG10GGNRVNM — the row of 09-16 17:2,CHG10GGNRVNM
+1789691577.6,cfb,aachc-cfb-wins-2026-11-28-bayl-7pt5wins,SELL,4,0.2,void,0,0.26,,20,27,0.051,0.2,0.21,0.03,0,voided: the exchange has no trade for order CHG12SFNAVNN — the row of 09-16 17:2,CHG12SFNAVNN
+1789691577.6,cfb,aachc-cfb-wins-2026-11-28-sc-6pt5wins,SELL,0.01,0.5,void,0,0.26,,49,59,0.373,0.47,0.48,0.03,0,voided: the exchange has no trade for order CHG13G95CVNJ — the row of 09-16 17:2,CHG13G95CVNJ
+1789691577.6,cfb,aachc-cfb-wins-2026-11-28-iowast-3pt5wins,SELL,1,0.83,void,0,0.26,,86,96,0.376,0.83,0.84,0.08,0,voided: the exchange has no trade for order CHG12SH9WVNN — the row of 09-16 17:2,CHG12SH9WVNN
+1789691577.6,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,SELL,1,0.05,void,0,0.26,,3,10,0.569,0.07,0.08,0.01,0,voided: the exchange has no trade for order CHG13JY1JVNA — the row of 09-16 17:2,CHG13JY1JVNA
