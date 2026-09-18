@@ -4815,3 +4815,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789691577.6,cfb,aachc-cfb-wins-2026-11-28-sc-6pt5wins,SELL,0.01,0.5,void,0,0.26,,49,59,0.373,0.47,0.48,0.03,0,voided: the exchange has no trade for order CHG13G95CVNJ — the row of 09-16 17:2,CHG13G95CVNJ
 1789691577.6,cfb,aachc-cfb-wins-2026-11-28-iowast-3pt5wins,SELL,1,0.83,void,0,0.26,,86,96,0.376,0.83,0.84,0.08,0,voided: the exchange has no trade for order CHG12SH9WVNN — the row of 09-16 17:2,CHG12SH9WVNN
 1789691577.6,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,SELL,1,0.05,void,0,0.26,,3,10,0.569,0.07,0.08,0.01,0,voided: the exchange has no trade for order CHG13JY1JVNA — the row of 09-16 17:2,CHG13JY1JVNA
+1789691750.8,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,SELL,2,0.17,hand,,84.06,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2RKTAWYVB6
+1789691843.5,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,5.84,0.65,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJAZ9X6GPVNM
+1789692117.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,SELL,6,0.65,sell,8.7088,0.06,,47,66,0,0.64,0.66,-0.05,0,an exit — its fill reduces the position it sits on,CJB1NFJCMVNG
+1789692957.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,SELL,12,0.65,focus,46.2718,0.23,,61,68,0.453,0.64,0.65,0,-12,focus entry: ~$48.63/day; fill odds 56%/day; EV +46.95/day,CJB3B6NQMVNQ
+1789693802.7,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,32.52,0.43,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJB7Z0M4YVNK
+1789694037.6,politics,paccc-usho-midterms-2026-11-03-dem,SELL,55,0.889,focus,19.1199,0.05,0.8772,86,90,0.332,0.888,0.889,-0.0118,-55,focus entry: ~$163.61/day; fill odds 67%/day; EV +136.72/day,CJBGDTA9GVNH
+1789694397.6,politics,usgubewc-usgub-tn-2026-11-03-dem,SELL,20,0.04,earn,0.4845,23.69,0.00135,1,6,0.387,0.05,0.11,-0.0387,-20,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CHQAC1NB0VNN
+1789694457.6,politics,scc-senate-gop-2026-11-03-48,BUY,4,0.16,focus,1.4868,0,0.13865,13,15,0.757,0.16,0.17,0.0214,4,focus entry: ~$1.49/day; fill odds 56%/day; EV +0.11/day,CJBMB9PB0VNK
+1789695177.7,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,5.84,0.65,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJAZ9X6GPVNM
+1789695177.7,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,32.52,0.43,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJB7Z0M4YVNK
+1789695177.7,cfb,aachc-cfb-wins-ou-2026-11-28-mary,BUY,0.9,0.5,void,0,0.26,,44,50,0,0.49,0.5,0.03,0,voided: the exchange has no trade for order CHG10QDEEVNQ — the row of 09-16 17:2,CHG10QDEEVNQ
+1789695177.7,cfb,aachc-cfb-wins-2026-11-28-mst-6pt5wins,SELL,1,0.2,void,0,0.26,,18,31,0,0.2,0.21,0.04,0,voided: the exchange has no trade for order CHG18D9YJVNK — the row of 09-16 17:2,CHG18D9YJVNK
+1789695177.7,cfb,aachc-cfb-wins-2026-11-28-col-2pt5wins,SELL,0.01,0.95,void,0,0.26,,89,95,0.431,0.95,0.96,-0.03,0,voided: the exchange has no trade for order CHG1808JJVNG — the row of 09-16 17:2,CHG1808JJVNG
+1789695177.7,cfb,aachc-cfb-wins-2026-11-28-ill-7pt5wins,SELL,1,0.24,void,0,0.26,,25,30,0.51,0.24,0.25,0.04,0,voided: the exchange has no trade for order CHG18DB8MVNK — the row of 09-16 17:2,CHG18DB8MVNK
+1789695177.7,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,SELL,0.5,0.82,void,0,0.26,,83,87,0.453,0.82,0.83,0.03,0,voided: the exchange has no trade for order CHG10GMNAVNM — the row of 09-16 17:2,CHG10GMNAVNM
+1789695177.7,nfl,tec-nfl-coty-2027-02-11-w-mikmcc,SELL,0.01,0.02,void,0,0.26,,1,6,0.028,0.02,0.03,0.01,0,voided: the exchange has no trade for order CHG188CCGVNN — the row of 09-16 17:2,CHG188CCGVNN
+1789695177.7,nfl,ftsc-nfl-qbmostfp-2027-01-10-dramay,SELL,2,0.04,void,0,0.26,,2,12,0.033,0.04,0.05,0.02,0,voided: the exchange has no trade for order CHG180A9PVNG — the row of 09-16 17:2,CHG180A9PVNG
+1789695177.7,nfl,ftsc-nfl-kmostfp-2027-01-10-matgay,SELL,2,0.17,hand,,84.06,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CG2RKTAWYVB6
