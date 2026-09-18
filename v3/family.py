@@ -84,6 +84,15 @@ REPLACE_PLAN_TTL_S = 300.0
 PAGE_LOSS_USD = 1.0    # only losses bigger than this reach the phone
 PAGE_SETTLE_S = 20.0   # let the book settle before marking an open
 GONE_GRACE_S = 300.0
+# The exchange's position feed lags a fill by a read or more. For this
+# long after a fill WE booked, the feed's number does not overwrite the
+# book (owner, 2026-09-18 "Yes, ship both"): on 2026-09-18 the feed
+# still showed the old short for one read after eleven covers filled,
+# the book snapped back to it ("exchange wins"), and a second cover
+# rested on the phantom and filled (Louisiana senate dem, 2 @ 11c).
+# The purge path already gave a fresh fill this grace; this is the
+# same grace on the overwrite path.
+FEED_LAG_GRACE_S = 180.0
 # An exit that has earned NOTHING for this long is not waiting for a
 # better price — it is dead capital. Measured 2026-08-24: 18 of 39
 # stuck politics exits were earning zero against $49.40 of the owner's
@@ -553,6 +562,8 @@ class Family:
         self._money_out_last = False
         self.recent_paid: dict[str, tuple] = {}   # mkt -> (avg $/day, paid days), last 7d
         self.inv_since: dict[str, float] = {}  # market -> first-fill ts
+        self.fill_at: dict[str, float] = {}    # market -> last fill WE booked
+        self._feed_lag_noted: dict[str, float] = {}
         self._exit_rate_ps = 0.0               # $/share/day our exits earn
         self.triage_feed: list[dict] = []     # the sweep's recent verdicts
         self._clock = clock or time.time
@@ -2120,6 +2131,20 @@ class Family:
                 inv = self.inventory.get(m)
                 have = (inv or {}).get("qty", 0.0)
                 if abs(feed_qty - have) > 0.01:
+                    since_fill = now - self.fill_at.get(m, 0.0)
+                    if 0.0 <= since_fill < FEED_LAG_GRACE_S:
+                        # the feed lags the fill we just booked: the
+                        # book stands for the grace, said once a window
+                        if now - self._feed_lag_noted.get(m, 0.0) >= FEED_LAG_GRACE_S:
+                            self._feed_lag_noted[m] = now
+                            self._log(event="feed_lag", market=m,
+                                      qty=feed_qty,
+                                      note=f"the exchange says {feed_qty:g}, "
+                                           f"the book {have:g} — a fill was "
+                                           f"booked {since_fill:.0f}s ago; the "
+                                           f"book stands for "
+                                           f"{FEED_LAG_GRACE_S - since_fill:.0f}s more")
+                        continue
                     if abs(feed_qty) < 0.005:
                         if inv is not None:
                             self.inventory.pop(m, None)
@@ -2148,7 +2173,7 @@ class Family:
         for m in list(self.inventory):
             if m in positions:
                 continue
-            if now - self.inv_since.get(m, 0.0) < 180.0:
+            if now - self.inv_since.get(m, 0.0) < FEED_LAG_GRACE_S:
                 continue
             gone_qty = self.inventory[m].get("qty", 0.0)
             self.inventory.pop(m, None)
@@ -2162,6 +2187,7 @@ class Family:
                 self.positions_seen.pop(m, None)
 
     def _on_fill(self, rec: FamilyOrder, filled: float, now: float) -> None:
+        self.fill_at[rec.market] = now
         if rec.market not in self.inventory:
             self.inv_since[rec.market] = now
         inv = self.inventory.setdefault(rec.market, {"qty": 0.0, "cost": 0.0})
@@ -2189,6 +2215,16 @@ class Family:
         else:
             inv["qty"] -= filled
             inv["cost"] -= filled * rec.price
+        if q0 * inv["qty"] < -1e-9:
+            # the fill FLIPPED the position: what is held now was opened
+            # by THIS fill, so its basis is this fill's price (owner,
+            # 2026-09-18 "Yes, ship both"). Carried through, the old
+            # side's cost had become the new side's basis: the 2028
+            # Dwayne Johnson lot flipped long -> short through 1c sales,
+            # the short kept the long's 45c basis, and the dead-short
+            # step-up, bounded to 5 ticks over "what the short sold
+            # for", bought 15 back at 50c on a book with no bid.
+            inv["cost"] = round(inv["qty"] * rec.price, 4)
         qty_after = round(inv["qty"], 2)
         if abs(inv["qty"]) < 0.005:
             self._float_forget(rec.market)
@@ -4848,7 +4884,11 @@ class Family:
                 # post-only. An unmeasured exit (live_est None) is
                 # not dead — a zero READING is required, not absence
                 # of one.
+                # never on close-out ground (owner, 2026-09-18 "Yes, ship
+                # both"): there the engine sells into the bid and rests
+                # covers, and never bids up for anything
                 dead_s = (self.cfg.dead_drain_s > 0 and bool(mine)
+                          and not self._liquidating(slug)
                           and all(o.live_est is not None
                                   and o.live_est < 0.005 for o in mine))
                 # the step-up's TARGET, computed BEFORE any cancel
@@ -5759,6 +5799,8 @@ class Family:
             "wind_down": self.wind_down[-400:],
             "seen_pids": sorted(self.seen_pids),
             "inv_since": self.inv_since,
+            "fill_at": {m: t for m, t in self.fill_at.items()
+                        if self._clock() - t < 3600.0},
             "fillmodel": self.fillmodel.to_dict(),
             "exp_fills": self.exp_fills,
             "pending_marks": self.pending_marks[-60:],
@@ -5823,6 +5865,8 @@ class Family:
         self.wind_down = list(d.get("wind_down") or ())
         self.seen_pids = set(d.get("seen_pids") or ())
         self.inv_since = dict(d.get("inv_since") or {})
+        self.fill_at = {str(k): float(v) for k, v in
+                        (d.get("fill_at") or {}).items()}
         self.pos_value = {str(k): [float(v[0]), float(v[1]), float(v[2])]
                           for k, v in (d.get("pos_value") or {}).items()
                           if isinstance(v, (list, tuple)) and len(v) >= 3}

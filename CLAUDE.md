@@ -1019,6 +1019,31 @@ long and accreted, so search it rather than reading it through.
   signed trade api is never touched. This is the boot rule made
   standing, and it also stops the families' retries from feeding the
   hold they are waiting on.
+- THE FEED DOES NOT OVERWRITE A FRESH FILL, AND A FLIP TAKES THE
+  FILL'S PRICE (owner, 2026-09-18 "Yes, ship both", after the morning
+  the exchange wiped every resting order). The exchange's position
+  feed lags a fill by a read or more: eleven times that day a cover
+  filled, the feed still showed the old short, the book snapped back
+  to it ("exchange wins") and purged it a minute later, and in one of
+  those windows the engine rested a second cover on the phantom short
+  and it filled (Louisiana senate dem, 2 @ 11c). Now, for
+  FEED_LAG_GRACE_S (180 s) after a fill WE booked in a market, the
+  feed's number does not overwrite the book there — logged
+  "feed_lag" once a window — and after the grace the exchange wins
+  as before; the purge path already had the same grace on a fresh
+  position. The stamp (fam.fill_at) is saved with the state. And a
+  fill that FLIPS a position through zero opens the other side, so
+  the new side's basis is that fill's price: the 2028 Dwayne Johnson
+  lot flipped long -> short through 1c sales, the short kept the
+  long's 45c basis, and the dead-short step-up, bounded to 5 ticks
+  over "what the short sold for", bought 15 back at 50c on a book
+  with no bid and a 51c ask (about $7.35 lost on a penny contract).
+  The step-up also never runs on close-out ground now: there the
+  engine sells into the bid and rests covers at break-even, and
+  never bids up. Still open: a short whose basis came from the
+  exchange's cost field rather than our own fills carries whatever
+  that field means, and the step-up's ceiling for it is still 5
+  ticks over that basis, capped at the bid touch and fair + 3 ticks.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
