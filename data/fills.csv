@@ -5064,3 +5064,36 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789741640.9,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,139.01,0.81,backfill,,1.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNCEJDAMWM9
 1789741640.9,politics,ushrewc-ushr-me-02-2026-11-03-rep,BUY,7.01,0.63,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJPS0E9TWW0Y
 1789741640.9,politics,ewc-usse-tx-2026-11-03-dem,BUY,36,0.58,backfill,,2.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJMC6X3FTW1Z
+1789741940.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,6,0.599,focus,8.0126,0.08,0.5,58,60,0.852,0.599,0.6,0.099,6,focus entry: ~$7.93/day; fill odds 61%/day; EV +7.68/day,CJPWGP5S2W0Y
+1789742060.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,100,0.112,sell,32.3302,0.09,0.1228,10,13,0.731,0.114,0.115,0.0108,0,an exit — its fill reduces the position it sits on,CJPX2K9FYW7H
+1789742660.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,6,0.115,focus,11.2859,0.1,0.1228,10,13,0.758,0.114,0.115,0.0078,-6,focus entry: ~$31.79/day; fill odds 67%/day; EV +31.43/day,CJQ1ATN6AW7E
+1789742840.9,politics,scc-senate-gop-2026-11-03-lte45,SELL,160,0.02,sell,8.4475,3.17,0.0982,6,10,0.649,0.01,0.07,0.0782,0,an exit — its fill reduces the position it sits on,CJMDV4TFRW7H
+1789742840.9,politics,scc-senate-gop-2026-11-03-lte45,SELL,6,0.02,focus,22.8877,0.02,0.0982,6,10,0.649,0.01,0.07,0.0782,-6,focus entry: ~$5.88/day; fill odds 73%/day; EV +5.76/day,CJQ5AH2GYW21
+1789743738.2,politics,scc-senate-gop-2026-11-03-51,SELL,0.1,0.1,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJQAD55M2W7H
+1789743740.9,politics,ewc-usse-oh-2026-11-03-dem,SELL,2,0.55,sell,0.1048,0.09,0.67565,53,57,0.529,0.54,0.55,0.1256,0,an exit — its fill reduces the position it sits on,CJQ9H0CNPWM9
+1789743740.9,politics,scc-senate-gop-2026-11-03-51,SELL,94,0.1,sell,4.3625,0.06,0.1048,9,13,0.41,0.08,0.1,0.0048,71,an exit — its fill reduces the position it sits on,CJQAD55M2W7H
+1789743823.7,politics,scc-senate-gop-2026-11-03-51,SELL,71,0.09,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJQCNQZDEW20
+1789743920.9,politics,scc-senate-gop-2026-11-03-50,SELL,230,0.14,sell,23.0769,1.19,0.131725,13,18,0.532,0.13,0.14,-0.0083,0,an exit — its fill reduces the position it sits on,CJPD7B4J6W7E
+1789743920.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,6,0.114,sell,3.3909,0.35,0.1228,11,14,0.779,0.12,0.121,-0.0088,0,an exit — its fill reduces the position it sits on,CJQ49DBX2W20
+1789743920.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,3,0.114,focus,364.685,0.03,0.1228,11,14,0.779,0.12,0.121,0.0088,-3,focus entry: ~$0.58/day; fill odds 67%/day; EV +0.39/day,CJQD552QMW1Y
+1789744280.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,3,0.12,sell,6.92,0.1,0.1228,11,13,0.838,0.12,0.121,-0.0028,0,an exit — its fill reduces the position it sits on,CJQDHNX4AWM9
+1789744298.5,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,31,0.81,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJPT1RVARWM9
+1789744324.7,politics,scc-senate-gop-2026-11-03-lte45,SELL,1.97,0.02,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJQE7BQ6MW22
+1789744478.5,politics,scc-senate-gop-2026-11-03-lte45,SELL,4,0.02,focus,22.8068,0.04,0.0982,6,10,0.727,0.01,0.07,0.0782,-12,focus entry: ~$22.43/day; fill odds 74%/day; EV +22.25/day,CJQGK58YEW1Y
+1789744538.5,politics,ewc-usse-tx-2026-11-03-dem,BUY,12,0.58,sell,0.3787,3.69,0.6246,57,61,0.48,0.58,0.59,-0.0446,0,an exit — its fill reduces the position it sits on,CJMC6X3FTW1Z
+1789744598.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,6,0.6,sell,0.4198,0.74,0.5,58,60,0.866,0.599,0.6,-0.1,0,an exit — its fill reduces the position it sits on,CJPYJPBTWW7E
+1789744958.6,politics,enwc-uspres-nom-rep-2028-dontru,BUY,1,0.01,sell,0.0002,3.76,,1,4,0.624,0.01,0.03,-0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CJME3ZRFTW1Z
+1789744958.6,politics,usgubewc-usgub-sd-2026-11-03-rep,SELL,10,0.93,sell,3.0998,0.94,0.996125,96,99,0.657,0.97,0.98,0.0661,0,selling filled stock — it earns while it waits,CJPVXGH0AW21
+1789744958.6,politics,scc-hrep-rep-2026-11-03-gte205,BUY,31,0.28,focus,0,0.08,0.440125,27,35,0.41,0.14,0.28,-0.1601,31,focus entry: ~$2.24/day; fill odds 42%/day; EV +0.90/day,CJQKDXH5GW22
+1789745056.5,politics,enwc-uspres-nom-dem-2028-dwajoh,BUY,13.46,0.01,backfill,,1.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJP3764XPW0Y
+1789745138.6,politics,ussewc-usse-ky-2026-11-03-rep,SELL,10,0.91,sell,0,0.15,0.9957,93,97,0.605,0.91,0.97,0.0857,0,selling filled stock — it earns while it waits,CJQJE0C90WM9
+1789745138.6,politics,ewc-usse-oh-2026-11-03-dem,SELL,20,0.55,focus,3.2189,0.2,0.67565,54,59,0.66,0.55,0.56,0.1256,-20,focus entry: ~$1.12/day; fill odds 55%/day; EV +0.04/day,CJQH3TD02W22
+1789745225.8,politics,scc-hrep-rep-2026-11-03-gte205,SELL,31,0.23,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJQP6FZPYWM9
+1789745267.5,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,-5.98,0.42,fix,,0.08,,,,,,,,,size trimmed by 5.98 to the exchange's count (order CJ6W2MYDJVNN),CJ6W2MYDJVNN
+1789745267.5,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,-4.99,0.4,fix,,0.16,,,,,,,,,size trimmed by 4.99 to the exchange's count (order CJ6VSW0K8VNG),CJ6VSW0K8VNG
+1789745267.5,politics,scc-senate-gop-2026-11-03-51,SELL,0.1,0.1,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJQAD55M2W7H
+1789745267.5,politics,scc-senate-gop-2026-11-03-51,SELL,71,0.09,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJQCNQZDEW20
+1789745267.5,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,31,0.81,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJPT1RVARWM9
+1789745267.5,politics,scc-senate-gop-2026-11-03-lte45,SELL,1.97,0.02,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJQE7BQ6MW22
+1789745267.5,politics,enwc-uspres-nom-dem-2028-dwajoh,BUY,13.46,0.01,backfill,,1.88,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJP3764XPW0Y
+1789745267.5,politics,scc-hrep-rep-2026-11-03-gte205,SELL,31,0.23,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJQP6FZPYWM9
