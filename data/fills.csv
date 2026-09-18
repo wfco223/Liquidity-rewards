@@ -5302,3 +5302,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789767964.4,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,11,0.59,void,11.015,0,,52,56,0.72,0.59,0.6,0.05,11,voided: the exchange has no trade for order CJW3KK73RW20 — the row of 09-18 20:3,CJW3KK73RW20
 1789767964.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,150,0.116,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWYP51Q2W22
 1789767964.4,politics,scc-hrep-rep-2026-11-03-gte185,BUY,72,0.94,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJX3JNGPTW1Z
+1789768520.8,politics,scc-senate-gop-2026-11-03-lte45,SELL,0.12,0.09,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWBEJ1YJW22
+1789768541.9,politics,scc-hrep-rep-2026-11-03-gte180,SELL,0.66,0.94,backfill,,0.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWYSPCEMWM9
+1789768569.5,politics,scc-senate-gop-2026-11-03-lte45,SELL,52,0.09,sell,22.1627,1.11,0.104675,7,10,0.793,0.08,0.09,0.0147,28,an exit — its fill reduces the position it sits on,CJWBEJ1YJW22
+1789769949.6,politics,scc-senate-gop-2026-11-03-54,SELL,38,0.04,focus,3.4766,0.39,0.02495,4,7,0.46,0.03,0.04,-0.0151,-49,focus entry: ~$2.29/day; fill odds 75%/day; EV +0.62/day,CJX93EJFGW7H
+1789770682.6,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,0.03,0.06,backfill,,3.74,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJTKKPE6AW20
+1789770849.6,politics,paccc-usse-midterms-2026-11-03-rep,SELL,59,0.414,sell,1.8784,1.84,0.4015,38,42,0.423,0.413,0.414,-0.0125,0,an exit — its fill reduces the position it sits on,CJW8ZA8H4WM9
+1789771569.6,politics,scc-hrep-rep-2026-11-03-gte185,BUY,-72,0.94,fix,19.5914,0.05,0.8723,85,90,0.454,0.94,0.95,0.0677,144,size trimmed by 72 to the exchange's count (order CJX3JNGPTW1Z),CJX3JNGPTW1Z
+1789771569.6,politics,scc-senate-gop-2026-11-03-lte45,SELL,0.12,0.09,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWBEJ1YJW22
+1789771569.6,politics,scc-hrep-rep-2026-11-03-gte180,SELL,0.66,0.94,backfill,,0.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWYSPCEMWM9
+1789771569.6,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,0.03,0.06,backfill,,3.74,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJTKKPE6AW20
