@@ -4842,3 +4842,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789698777.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,4.64,0.64,backfill,,0.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJBY5XH0JVNG
 1789698777.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,0.15,0.44,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJBKZYKBCVNK
 1789698777.8,politics,paccc-usse-midterms-2026-11-03-dem,BUY,47,0.592,backfill,,1.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJAWQXT6YVNG
+1789699488.7,politics,ussewc-usse-ma-2026-11-03-dem,SELL,0.01,0.96,backfill,,85.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG373AKJCVB8
+1789700226.1,politics,ussewc-usse-fl-2026-11-03-rep,SELL,0.11,0.89,backfill,,9.43,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ4X9PRPJVNN
+1789700259.8,politics,ussewc-usse-fl-2026-11-03-rep,SELL,1,0.89,manual,1.0212,9.42,0.8511,87,91,0.723,0.88,0.89,-0.0389,-68,the owner's own order — the engine leaves it alone,CJ4X9PRPJVNN
+1789700859.8,politics,ussewc-usse-ri-2026-11-03-dem,BUY,10,0.97,earn,0.1687,2.1,0.999375,97,99,0.535,0.97,0.98,-0.0294,10,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CJBCGXF0AVNG
+1789701759.8,politics,usgubewc-usgub-ma-2026-11-03-rep,SELL,10,0.06,earn,0.2489,4.34,0.00035,3,8,0.522,0.05,0.08,-0.0596,-10,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CJ9JPE3T0VNR
+1789701879.8,politics,ussewc-usse-ma-2026-11-03-rep,SELL,20,0.03,earn,0.7613,23.25,0.000275,1,4,0.444,0.02,0.07,-0.0297,-20,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CHSD2EJEWVNA
+1789702179.9,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,2.92,0.92,manual,0.0825,59.8,0.9825,92,95,0.611,0.92,0.95,-0.0625,81.92,the owner's own order — the engine leaves it alone,CGT3FA6TWVB9
+1789702179.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,61,0.592,sell,2.7442,3.03,0.5,58,60,0.847,0.592,0.593,0.092,0,an exit — its fill reduces the position it sits on,CJAWQXT6YVNG
+1789702419.9,politics,ussewc-usse-ma-2026-11-03-dem,SELL,0.01,0.96,backfill,,85.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CG373AKJCVB8
+1789702419.9,politics,ussewc-usse-fl-2026-11-03-rep,SELL,0.11,0.89,backfill,,9.43,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ4X9PRPJVNN
