@@ -5312,3 +5312,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789771569.6,politics,scc-senate-gop-2026-11-03-lte45,SELL,0.12,0.09,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWBEJ1YJW22
 1789771569.6,politics,scc-hrep-rep-2026-11-03-gte180,SELL,0.66,0.94,backfill,,0.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWYSPCEMWM9
 1789771569.6,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,0.03,0.06,backfill,,3.74,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJTKKPE6AW20
+1789773249.7,politics,ussewc-usse-fl-2026-11-03-rep,BUY,68,0.88,sell,0.0085,10.43,0.83835,87,91,0.7,0.89,0.9,0.0417,0,buying back the short at or under what it sold for — the bid earns while it wait,CJNDR5A3YWM9
+1789773525.7,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,7,0.95,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJYD3DJS2W21
+1789775169.9,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,7,0.95,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJYD3DJS2W21
