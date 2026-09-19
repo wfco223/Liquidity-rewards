@@ -5370,3 +5370,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789825833.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,21,0.44,void,18.3995,0,,48,52,0,0.44,0.47,-0.06,21,voided: the exchange has no trade for order CKAFZVCARWP7 — the row of 09-19 13:1,CKAFZVCARWP7
 1789825833.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,115,0.51,backfill,,1.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CK9KSQP6GWPD
 1789826313.9,politics,cpoc-ussec-tx-me-2026-11-03-rsweep,SELL,10.21,0.28,sell,4.5601,18.28,,22,27,0.369,0.27,0.28,-0.03,91.79,an exit — its fill reduces the position it sits on,CJVCQD0ZPW1Y
+1789830622.2,politics,ussewc-usse-fl-2026-11-03-dem,SELL,0.55,0.1,backfill,,0.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKBCE1Y4CWPC
+1789830647.7,politics,ussewc-usse-fl-2026-11-03-dem,SELL,6,0.1,sell,0.6782,0.84,0.16165,9,14,0.493,0.09,0.1,0.0616,44,selling filled stock — it earns while it waits,CKBCE1Y4CWPC
+1789833047.9,politics,ussewc-usse-fl-2026-11-03-dem,SELL,0.55,0.1,backfill,,0.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKBCE1Y4CWPC
