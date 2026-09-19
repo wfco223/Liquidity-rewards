@@ -5380,3 +5380,26 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789836648.2,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,0.66,0.78,backfill,,21.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJV9M856AW21
 1789837713.8,politics,ussewc-usse-fl-2026-11-03-dem,SELL,44,0.11,sell,0.536,1.95,0.16165,11,16,0.635,0.1,0.11,0.0516,0,selling filled stock — it earns while it waits,CKC3BYEMRWPB
 1789837773.8,politics,ussewc-usse-fl-2026-11-03-dem,SELL,44,0.11,sell,1.2336,0.03,0.16165,12,17,0.72,0.11,0.12,0.0516,0,selling filled stock — it earns while it waits,CKDT4KQSMWPB
+1789840713.1,politics,scc-hrep-rep-2026-11-03-gte180,SELL,8,0.97,sell,0.0059,20.03,0.920325,92,97,0,0.96,0.97,-0.0497,0,an exit — its fill reduces the position it sits on,CJX9VWF8JW1Z
+1789842273.2,politics,usgubewc-usgub-co-2026-11-03-dem,SELL,4,0.93,sell,0.0995,0.45,0.997375,93,98,0.333,0.92,0.98,0.0674,0,selling filled stock — it earns while it waits,CKEGTYRA0WPA
+1789842333.2,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,19,0.06,sell,0.0119,15.61,0.004525,2,7,0.399,0.06,0.08,0.0555,0,buying back the short at or under what it sold for — the bid earns while it wait,CK1H5JZT0WP6
+1789842333.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,SELL,31,0.21,focus,2.5398,0,,19,22,0,0.2,0.21,0,-31,focus entry: ~$2.27/day; fill odds 53%/day; EV +1.44/day,CKEX57BDYWPA
+1789842393.2,politics,ussewc-usse-sc-2026-11-03-rep,SELL,10,0.85,sell,0.2049,0.81,0.893575,87,93,0.398,0.87,0.98,0.0436,0,selling filled stock — it earns while it waits,CKE81FT8YWPB
+1789842393.2,politics,usgubewc-usgub-tn-2026-11-03-dem,BUY,19,0.07,sell,0,0.02,0.004525,2,6,0.6,0.06,0.08,0.0655,0,buying back the short at or under what it sold for — the bid earns while it wait,CKEXA7D0WWPF
+1789842412.6,politics,ussewc-usse-sc-2026-11-03-dem,BUY,44.06,0.14,backfill,,29.66,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDPN4XTW22
+1789842513.3,politics,usgubewc-usgub-hi-2026-11-03-dem,SELL,1,0.96,sell,0.011,0.28,0.999925,95,99,0.623,0.95,0.96,0.0399,0,selling filled stock — it earns while it waits,CKEQ1ZZYAWP6
+1789842513.3,politics,ussewc-usse-or-2026-11-03-dem,SELL,20,0.98,sell,0.029,28.14,0.99835,95,99,0.512,0.97,0.98,0.0183,0,selling filled stock — it earns while it waits,CJPSDQ1YWW1N
+1789842513.3,politics,ussewc-usse-or-2026-11-03-dem,SELL,20,0.97,sell,0,0,0.99835,96,99,0.653,0.97,0.98,0.0283,0,taker dump — sold into the bid (the carved exception),CKEYEQNPAWPC
+1789842693.3,politics,usgubewc-usgub-mn-2026-11-03-rep,BUY,20,0.08,sell,0.2742,29.64,0.018175,4,10,0.232,0.08,0.09,0.0618,0,buying back the short at or under what it sold for — the bid earns while it wait,CJNGN7ATRW7H
+1789842693.3,politics,ussewc-usse-fl-2026-11-03-dem,BUY,44,0.12,sell,0.5613,1.37,0.16165,13,17,0.768,0.12,0.13,-0.0416,44,buying back the short at or under what it sold for — the bid earns while it wait,CKDV1FBJRWPE
+1789843140.5,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,1,0.03,backfill,,22.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVK6K11EW1N
+1789843533.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,20,0.112,focus,2.4371,0.03,0.1253,13,15,0.934,0.111,0.112,0.0133,-20,focus entry: ~$2.31/day; fill odds 66%/day; EV +0.02/day,CKF5E3M5EWPB
+1789843804.5,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,54.21,0.2,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKF640K88WPD
+1789843893.4,politics,ussewc-usse-nm-2026-11-03-dem,SELL,-2.96,0.94,fix,0.9519,2.98,0.9963,92,96,0.506,0.96,0.97,0.0563,0.04,size trimmed by 2.96 to the exchange's count (order CJNDRNJ7YW20),CJNDRNJ7YW20
+1789843893.4,politics,ussewc-usse-nm-2026-11-03-dem,SELL,-5.08,0.94,fix,0,0.5,0.996425,86,94,0.196,0.67,0.94,0.0564,3,size trimmed by 5.08 to the exchange's count (order CJNDRNJ7YW20),CJNDRNJ7YW20
+1789843893.4,politics,ewc-usgub-wi-2026-11-03-dem,SELL,-5,0.84,fix,0.0147,4.98,0.7876,82,86,0.432,0.83,0.84,-0.0524,20,size trimmed by 5 to the exchange's count (order CJNRR9RWMW7E),CJNRR9RWMW7E
+1789843893.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,SELL,-0.11,0.46,fix,,0.05,,,,,,,,,size trimmed by 0.11 to the exchange's count (order CJP184KD2WM9),CJP184KD2WM9
+1789843893.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,SELL,-0.09,0.26,fix,62.5,0.04,,31,36,0,0.01,0.26,0.07,-0.63,size trimmed by 0.09 to the exchange's count (order CJP1KV9M4W7E),CJP1KV9M4W7E
+1789843893.4,politics,ussewc-usse-sc-2026-11-03-dem,BUY,44.06,0.14,backfill,,29.66,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDPN4XTW22
+1789843893.4,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,1,0.03,backfill,,22.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVK6K11EW1N
+1789843893.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,54.21,0.2,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKF640K88WPD
