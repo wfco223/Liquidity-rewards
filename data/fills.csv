@@ -5344,3 +5344,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789785970.9,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-6,0.117,fix,10.9718,1.49,0.1253,12,13,0.929,0.113,0.117,0.0083,900,size trimmed by 6 to the exchange's count (order CJZVEH1APW1N),CJZVEH1APW1N
 1789785970.9,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,42,0.8,void,4.3313,0,0.827625,78,83,0,0.8,0.81,-0.0276,42,voided: the exchange has no trade for order CK0P674KMW7H — the row of 09-19 01:5,CK0P674KMW7H
 1789785970.9,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,41.74,0.8,backfill,,0.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJZXDZ1WYW1N
+1789788877.5,politics,scc-senate-gop-2026-11-03-50,BUY,6,0.16,sell,1.7817,8.17,0.12955,13,18,0.407,0.15,0.16,0.0305,0,an exit — its fill reduces the position it sits on,CJV4XDFK6W22
+1789789057.5,politics,ewc-usgub-az-2026-11-03-rep,SELL,149,0.14,sell,0.496,15.74,0.04755,11,15,0.509,0.13,0.14,-0.0925,0,an exit — its fill reduces the position it sits on,CJMNEN8XEW22
