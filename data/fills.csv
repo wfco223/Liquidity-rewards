@@ -5426,3 +5426,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789851129.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,-0.29,0.24,fix,5.1139,0.04,,34,43,0,0.01,0.24,0.16,-0.67,size trimmed by 0.29 to the exchange's count (order CJP2GG6PGW21),CJP2GG6PGW21
 1789851129.3,politics,scc-senate-gop-2026-11-03-54,BUY,49,0.04,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKG94011CWP7
 1789851129.3,politics,scc-senate-gop-2026-11-03-54,SELL,49,0.04,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGBZV6Z2WPC
+1789851384.9,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,39,0.95,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGXE8QQAWPC
+1789853539.1,politics,scc-senate-gop-2026-11-03-51,BUY,61,0.11,focus,0.5812,0,0.10605,10,14,0.673,0.12,0.13,0.0039,61,focus entry: ~$0.58/day; fill odds 18%/day; EV +0.02/day,CKHK664E0WPD
+1789853559.5,politics,scc-senate-gop-2026-11-03-52,BUY,4.19,0.09,backfill,,1.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGA2C85GWPC
+1789854770.0,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,SELL,-0.11,0.26,fix,62.5,0.04,,31,36,0,0.01,0.26,0.07,-0.63,size trimmed by 0.11 to the exchange's count (order CJP1KV9M4W7E),CJP1KV9M4W7E
+1789854770.0,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,-0.29,0.24,fix,5.1139,0.04,,34,43,0,0.01,0.24,0.16,-0.67,size trimmed by 0.29 to the exchange's count (order CJP2GG6PGW21),CJP2GG6PGW21
+1789854770.0,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,39,0.95,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGXE8QQAWPC
+1789854770.0,politics,scc-senate-gop-2026-11-03-52,BUY,4.19,0.09,backfill,,1.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGA2C85GWPC
