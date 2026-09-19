@@ -11586,3 +11586,7 @@ date,market,program_type,reward_usd,status
 2026-09-16,ussewc-usse-wv-2026-11-03-dem,liquidityProgram,0.41,PAID
 2026-09-16,ussewc-usse-wv-2026-11-03-rep,liquidityProgram,0.29,PAID
 2026-09-16,ussewc-usse-wy-2026-11-03-rep,liquidityProgram,0.08,PAID
+2026-09-17,aachc-cfb-wins-2026-11-28-oregst-3pt5wins,liquidityProgram,0.14,PENDING
+2026-09-17,ewc-usgub-az-2026-11-03-rep,liquidityProgram,0.34,PENDING
+2026-09-17,usgubewc-usgub-ak-2026-11-03-davbro,liquidityProgram,2.1,PENDING
+2026-09-17,usgubewc-usgub-nm-2026-11-03-dem,liquidityProgram,0.23,PENDING
