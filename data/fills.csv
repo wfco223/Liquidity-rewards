@@ -5440,3 +5440,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789857350.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,70,0.114,focus,3.4044,0.08,0.1053,13,15,0.939,0.113,0.114,-0.0087,-140,focus entry: ~$10.22/day; fill odds 67%/day; EV +7.45/day,CKJDWE768WP9
 1789858370.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,SELL,-0.14,0.22,fix,0,0.27,,24,37,0.455,,0.22,0.07,31,size trimmed by 0.14 to the exchange's count (order CJNY09JA8W1Y),CJNY09JA8W1Y
 1789858370.3,politics,scc-senate-gop-2026-11-03-51,BUY,61,0.11,void,0.5812,0,0.10605,10,14,0.673,0.12,0.13,0.0039,61,voided: the exchange has no trade for order CKHK664E0WPD — the row of 09-19 21:3,CKHK664E0WPD
+1789860830.5,politics,scc-hrep-rep-2026-11-03-gte185,BUY,30,0.94,focus,25,0.03,0.860125,82,88,0.503,0.83,0.84,0.0799,102,focus entry: ~$3.48/day; fill odds 42%/day; EV +0.54/day,CKKA57VR6WPC
+1789862009.7,politics,scc-senate-gop-2026-11-03-51,BUY,61,0.11,void,0.3725,0,0.09025,9,12,0.699,0.12,0.13,0.0198,61,voided: the exchange has no trade for order CKJYG3MXAWPF — the row of 09-19 23:0,CKJYG3MXAWPF
