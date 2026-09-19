@@ -5369,3 +5369,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789824693.8,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,5,0.03,sell,19.6711,16.71,0.0082,1,4,0.654,0.02,0.03,-0.0218,152,an exit — its fill reduces the position it sits on,CJWB6WACPW7E
 1789825833.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,21,0.44,void,18.3995,0,,48,52,0,0.44,0.47,-0.06,21,voided: the exchange has no trade for order CKAFZVCARWP7 — the row of 09-19 13:1,CKAFZVCARWP7
 1789825833.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,115,0.51,backfill,,1.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CK9KSQP6GWPD
+1789826313.9,politics,cpoc-ussec-tx-me-2026-11-03-rsweep,SELL,10.21,0.28,sell,4.5601,18.28,,22,27,0.369,0.27,0.28,-0.03,91.79,an exit — its fill reduces the position it sits on,CJVCQD0ZPW1Y
