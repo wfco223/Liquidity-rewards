@@ -5315,3 +5315,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789773249.7,politics,ussewc-usse-fl-2026-11-03-rep,BUY,68,0.88,sell,0.0085,10.43,0.83835,87,91,0.7,0.89,0.9,0.0417,0,buying back the short at or under what it sold for — the bid earns while it wait,CJNDR5A3YWM9
 1789773525.7,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,7,0.95,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJYD3DJS2W21
 1789775169.9,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,7,0.95,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJYD3DJS2W21
+1789776250.0,politics,paccc-usho-midterms-2026-11-03-rep,BUY,182,0.118,sell,21.992,2.15,0.1253,11,13,0.893,0.118,0.119,-0.0073,0,an exit — its fill reduces the position it sits on,CJX8QZ8HPW7E
+1789776310.0,politics,paccc-usho-midterms-2026-11-03-rep,BUY,636,0.118,sell,373.007,0.03,0.1253,11,13,0.902,0.118,0.119,-0.0073,454,an exit — its fill reduces the position it sits on,CJZ4ZKWECW22
+1789777090.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,32,0.117,focus,295.15,0.01,0.1253,11,13,0.909,0.116,0.117,0.0083,604,focus exit: ~$256.03/day; fill odds 66%/day; EV +254.98/day,CJZBEE460W0Y
+1789777330.1,politics,scc-hrep-rep-2026-11-03-gte215,SELL,75,0.05,sell,6.9273,5.36,0.18255,5,14,0.29,0.04,0.05,0.1326,153,an exit — its fill reduces the position it sits on,CJTS2TMJ4W7H
+1789777990.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,604,0.117,sell,173.343,0.26,0.1253,11,13,0.915,0.116,0.117,0.0083,0,an exit — its fill reduces the position it sits on,CJZBEE460W0Y
+1789778470.2,politics,scc-hrep-rep-2026-11-03-gte215,SELL,153,0.05,sell,6.3346,5.68,0.18255,6,15,0.552,0.04,0.05,0.1326,0,an exit — its fill reduces the position it sits on,CJTS2TMJ4W7H
+1789778770.2,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,11,0.59,void,14.5033,0,,55,58,0.691,0.59,0.6,0.02,11,voided: the exchange has no trade for order CJZ4TE2X8W1N — the row of 09-19 00:0,CJZ4TE2X8W1N
