@@ -5433,3 +5433,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789854770.0,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,-0.29,0.24,fix,5.1139,0.04,,34,43,0,0.01,0.24,0.16,-0.67,size trimmed by 0.29 to the exchange's count (order CJP2GG6PGW21),CJP2GG6PGW21
 1789854770.0,politics,ewc-usgub-ca-2026-11-03-xavbec,BUY,39,0.95,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGXE8QQAWPC
 1789854770.0,politics,scc-senate-gop-2026-11-03-52,BUY,4.19,0.09,backfill,,1.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGA2C85GWPC
+1789855490.0,politics,paccc-usho-midterms-2026-11-03-dem,SELL,35,0.899,sell,0.1263,12.2,0.8947,87,90,0.763,0.898,0.899,-0.0043,29,an exit — its fill reduces the position it sits on,CK7GJ6M74WP7
+1789855910.0,politics,paccc-usho-midterms-2026-11-03-dem,SELL,1,0.899,sell,0.0572,12.31,0.8947,87,90,0.802,0.898,0.899,-0.0043,28,an exit — its fill reduces the position it sits on,CK7GJ6M74WP7
+1789856450.1,politics,paccc-usho-midterms-2026-11-03-dem,SELL,28,0.899,sell,0.0555,12.46,0.8947,88,90,0.83,0.898,0.899,-0.0043,0,an exit — its fill reduces the position it sits on,CK7GJ6M74WP7
+1789857110.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,97,0.113,sell,0.9075,1.74,0.1053,14,16,0.938,0.113,0.114,0.0077,0,an exit — its fill reduces the position it sits on,CKGYF523TWP9
+1789857350.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,70,0.114,focus,3.4044,0.08,0.1053,13,15,0.939,0.113,0.114,-0.0087,-140,focus entry: ~$10.22/day; fill odds 67%/day; EV +7.45/day,CKJDWE768WP9
+1789858370.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,SELL,-0.14,0.22,fix,0,0.27,,24,37,0.455,,0.22,0.07,31,size trimmed by 0.14 to the exchange's count (order CJNY09JA8W1Y),CJNY09JA8W1Y
+1789858370.3,politics,scc-senate-gop-2026-11-03-51,BUY,61,0.11,void,0.5812,0,0.10605,10,14,0.673,0.12,0.13,0.0039,61,voided: the exchange has no trade for order CKHK664E0WPD — the row of 09-19 21:3,CKHK664E0WPD
