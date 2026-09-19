@@ -5403,3 +5403,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789843893.4,politics,ussewc-usse-sc-2026-11-03-dem,BUY,44.06,0.14,backfill,,29.66,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDPN4XTW22
 1789843893.4,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,1,0.03,backfill,,22.72,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVK6K11EW1N
 1789843893.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,54.21,0.2,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKF640K88WPD
+1789844465.1,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,1.5,0.2,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKFB0KHZ0WPD
+1789845666.7,politics,ussewc-usse-sc-2026-11-03-dem,BUY,3.33,0.14,backfill,,30.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDPN4XTW22
+1789846613.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,37,0.112,focus,36.4615,0.08,0.1253,13,15,0.936,0.111,0.113,0.0133,-57,focus entry: ~$2.59/day; fill odds 66%/day; EV +0.09/day,CKFVTBTVCWPF
+1789847513.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,SELL,-0.05,0.26,fix,62.5,0.04,,31,36,0,0.01,0.26,0.07,-0.63,size trimmed by 0.05 to the exchange's count (order CJP1KV9M4W7E),CJP1KV9M4W7E
+1789847513.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,-0.05,0.24,fix,5.1139,0.04,,34,43,0,0.01,0.24,0.16,-0.67,size trimmed by 0.05 to the exchange's count (order CJP2GG6PGW21),CJP2GG6PGW21
+1789847513.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,SELL,31,0.21,void,2.5398,0,,19,22,0,0.2,0.21,0,-31,voided: the exchange has no trade for order CKEX57BDYWPA — the row of 09-19 18:2,CKEX57BDYWPA
+1789847513.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,1.5,0.2,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKFB0KHZ0WPD
+1789847513.8,politics,ussewc-usse-sc-2026-11-03-dem,BUY,3.33,0.14,backfill,,30.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDPN4XTW22
