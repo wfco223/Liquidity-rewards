@@ -5373,3 +5373,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789830622.2,politics,ussewc-usse-fl-2026-11-03-dem,SELL,0.55,0.1,backfill,,0.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKBCE1Y4CWPC
 1789830647.7,politics,ussewc-usse-fl-2026-11-03-dem,SELL,6,0.1,sell,0.6782,0.84,0.16165,9,14,0.493,0.09,0.1,0.0616,44,selling filled stock — it earns while it waits,CKBCE1Y4CWPC
 1789833047.9,politics,ussewc-usse-fl-2026-11-03-dem,SELL,0.55,0.1,backfill,,0.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKBCE1Y4CWPC
+1789834728.0,politics,ewc-usse-nc-2026-11-03-rep,SELL,116,0.07,sell,4.0673,27.56,0.1066,6,10,0.482,0.06,0.07,0.0366,82,an exit — its fill reduces the position it sits on,CJNCYYBE0W20
+1789834788.1,politics,scc-senate-gop-2026-11-03-51,SELL,54,0.11,focus,21.0847,0.08,0.10605,8,13,0.352,0.11,0.12,-0.0039,-61,focus entry: ~$1.79/day; fill odds 74%/day; EV +0.17/day,CKD286N28WP7
+1789836167.6,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,0.66,0.78,backfill,,21.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJV9M856AW21
+1789836648.2,politics,ewc-usgub-nv-2026-11-03-dem,BUY,-11,0.51,fix,10.1493,0.02,0.325525,45,51,0.6,0.5,0.51,0.1845,17,size trimmed by 11 to the exchange's count (order CJNNH4EM4W20),CJNNH4EM4W20
+1789836648.2,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,0.66,0.78,backfill,,21.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJV9M856AW21
