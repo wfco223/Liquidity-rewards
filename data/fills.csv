@@ -5346,3 +5346,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789785970.9,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,41.74,0.8,backfill,,0.9,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJZXDZ1WYW1N
 1789788877.5,politics,scc-senate-gop-2026-11-03-50,BUY,6,0.16,sell,1.7817,8.17,0.12955,13,18,0.407,0.15,0.16,0.0305,0,an exit — its fill reduces the position it sits on,CJV4XDFK6W22
 1789789057.5,politics,ewc-usgub-az-2026-11-03-rep,SELL,149,0.14,sell,0.496,15.74,0.04755,11,15,0.509,0.13,0.14,-0.0925,0,an exit — its fill reduces the position it sits on,CJMNEN8XEW22
+1789791975.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,40,0.116,sell,17.0843,2.01,0.1253,12,14,0.93,0.115,0.116,0.0093,860,an exit — its fill reduces the position it sits on,CK16GKRK2WP7
