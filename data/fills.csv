@@ -5351,3 +5351,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789798693.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,8,0.116,sell,10.9268,3.88,0.1253,12,14,0.936,0.115,0.116,0.0093,568,an exit — its fill reduces the position it sits on,CK16GKRK2WP7
 1789808393.9,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,8,0.03,sell,17.8115,12.18,0.0082,1,4,0.551,0.02,0.03,-0.0218,157,an exit — its fill reduces the position it sits on,CJWB6WACPW7E
 1789811394.8,politics,paccc-balpow-2026-11-03-rsweep,BUY,-26.29,0.16,fix,,0.08,,,,,,,,,size trimmed by 26.29 to the exchange's count (order CJMWX41TPW7H),CJMWX41TPW7H
+1789811574.8,politics,paccc-usho-midterms-2026-11-03-dem,BUY,12,0.898,focus,2.6105,1.4,0.8747,87,90,0.764,0.898,0.899,0.0233,64,focus entry: ~$3.07/day; fill odds 59%/day; EV +1.13/day,CK6A9X0SEWPA
+1789814994.8,politics,paccc-balpow-2026-11-03-rsweep,BUY,-80,0.16,fix,,0.08,,,,,,,,,size trimmed by 80 to the exchange's count (order CJMWX41TPW7H),CJMWX41TPW7H
