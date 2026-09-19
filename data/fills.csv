@@ -5322,3 +5322,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789777990.2,politics,paccc-usho-midterms-2026-11-03-rep,SELL,604,0.117,sell,173.343,0.26,0.1253,11,13,0.915,0.116,0.117,0.0083,0,an exit — its fill reduces the position it sits on,CJZBEE460W0Y
 1789778470.2,politics,scc-hrep-rep-2026-11-03-gte215,SELL,153,0.05,sell,6.3346,5.68,0.18255,6,15,0.552,0.04,0.05,0.1326,0,an exit — its fill reduces the position it sits on,CJTS2TMJ4W7H
 1789778770.2,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,11,0.59,void,14.5033,0,,55,58,0.691,0.59,0.6,0.02,11,voided: the exchange has no trade for order CJZ4TE2X8W1N — the row of 09-19 00:0,CJZ4TE2X8W1N
+1789779016.5,politics,paccc-usho-midterms-2026-11-03-rep,BUY,658,0.116,backfill,,0.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJZJNZHH0W20
+1789779070.2,politics,scc-hrep-rep-2026-11-03-gte195,SELL,51,0.51,sell,25,2.51,0.702325,64,73,0.186,0.69,0.71,0.1923,0.01,an exit — its fill reduces the position it sits on,CJXMFJ89PW21
+1789779070.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,497,0.116,focus,336.526,0.01,0.1253,11,13,0.915,0.116,0.117,-0.0093,497,focus entry: ~$363.55/day; fill odds 59%/day; EV +357.37/day,CJZV1FSZRW22
+1789782010.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,69,0.117,sell,118.973,0.81,0.1253,11,13,0.915,0.116,0.117,0.0083,1086,an exit — its fill reduces the position it sits on,CJZVEH1APW1N
+1789782370.6,politics,enwc-uspres-nom-dem-2028-dwajoh,SELL,-10,0.01,fix,,0,,,,,,,,,size trimmed by 10 to the exchange's count (order CJMG42J8MW20),CJMG42J8MW20
+1789782370.6,politics,ewc-usse-mn-2026-11-03-dem,SELL,-38,0.86,fix,0,0.04,0.894,84,90,0,0.84,0.86,0.034,-94,size trimmed by 38 to the exchange's count (order CJMG1K07TW22),CJMG1K07TW22
+1789782370.6,politics,ewc-usse-mn-2026-11-03-dem,SELL,-18,0.86,fix,,0.01,,,,,,,,,size trimmed by 18 to the exchange's count (order CJMG1K07TW22),CJMG1K07TW22
+1789782370.6,politics,scc-hrep-rep-2026-11-03-gte215,SELL,43,0.1,void,11.3134,0,0.18255,10,19,0.673,0.04,0.1,0.0825,-43,voided: the exchange has no trade for order CJZVQQ0G6W1Y — the row of 09-19 00:5,CJZVQQ0G6W1Y
+1789782370.6,politics,paccc-usho-midterms-2026-11-03-rep,BUY,658,0.116,backfill,,0.3,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJZJNZHH0W20
+1789782370.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,6,0.117,backfill,,0.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJZVEH1APW1N
+1789782374.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,6,0.117,backfill,,0.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJZVEH1APW1N
