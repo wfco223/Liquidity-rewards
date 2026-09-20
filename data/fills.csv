@@ -5442,3 +5442,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789858370.3,politics,scc-senate-gop-2026-11-03-51,BUY,61,0.11,void,0.5812,0,0.10605,10,14,0.673,0.12,0.13,0.0039,61,voided: the exchange has no trade for order CKHK664E0WPD — the row of 09-19 21:3,CKHK664E0WPD
 1789860830.5,politics,scc-hrep-rep-2026-11-03-gte185,BUY,30,0.94,focus,25,0.03,0.860125,82,88,0.503,0.83,0.84,0.0799,102,focus entry: ~$3.48/day; fill odds 42%/day; EV +0.54/day,CKKA57VR6WPC
 1789862009.7,politics,scc-senate-gop-2026-11-03-51,BUY,61,0.11,void,0.3725,0,0.09025,9,12,0.699,0.12,0.13,0.0198,61,voided: the exchange has no trade for order CKJYG3MXAWPF — the row of 09-19 23:0,CKJYG3MXAWPF
+1789862691.2,politics,scc-hrep-rep-2026-11-03-gte180,BUY,54,0.91,focus,3.2451,0.04,0.91345,90,96,0.426,0.91,0.92,-0.0034,54,focus entry: ~$6.92/day; fill odds 44%/day; EV +2.01/day,CKKR0NQFJWP6
+1789862931.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,70,0.113,sell,1.9448,1.56,0.1053,14,16,0.937,0.113,0.114,0.0077,0,an exit — its fill reduces the position it sits on,CKJFTNBH2WPD
+1789865183.9,politics,ewc-usgub-oh-2026-11-03-rep,BUY,2,0.4,backfill,,28.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVSPDRWWW0Y
+1789865211.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,15,0.114,backfill,,0.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKM25CCBTWPB
+1789865418.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,26,0.114,focus,3.2891,0.05,0.1053,12,14,0.923,0.113,0.114,-0.0087,-41,focus entry: ~$3.26/day; fill odds 67%/day; EV +1.01/day,CKMCKMK4AWPF
+1789865658.1,politics,ushrewc-ushr-me-02-2026-11-03-rep,BUY,-7.43,0.63,fix,,1.3,,,,,,,,,size trimmed by 7.43 to the exchange's count (order CJNKGW098W7H),CJNKGW098W7H
+1789865658.1,politics,scc-senate-gop-2026-11-03-51,BUY,61,0.12,void,2.2676,0,0.09025,8,11,0.755,0.12,0.13,0.0297,61,voided: the exchange has no trade for order CKKZNQFHCWPC — the row of 09-20 00:1,CKKZNQFHCWPC
+1789865658.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,70,0.112,void,3.8777,-0,0.1053,13,15,0.936,0.113,0.114,0.0067,70,voided: the exchange has no trade for order CKKZQ6RT2WPA — the row of 09-20 00:1,CKKZQ6RT2WPA
+1789865658.1,politics,ewc-usgub-oh-2026-11-03-rep,BUY,2,0.4,backfill,,28.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVSPDRWWW0Y
+1789865658.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,15,0.114,backfill,,0.37,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKM25CCBTWPB
