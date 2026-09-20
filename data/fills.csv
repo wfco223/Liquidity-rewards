@@ -5489,3 +5489,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789905374.4,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,SELL,-0.05,0.56,fix,,0.1,,,,,,,,,size trimmed by 0.05 to the exchange's count (order CJPBF855WWM9),CJPBF855WWM9
 1789905374.4,cfb,aachc-cfb-wins-2026-11-28-lsu-6pt5wins,BUY,5,0.89,backfill,,5.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKRRT474JWPF
 1789908989.6,cfb,aachc-cfb-wins-2026-11-28-lsu-6pt5wins,BUY,-5,0.89,fix,1.5872,5.95,,84,91,0.164,0.89,0.9,0.01,0,size trimmed by 5 to the exchange's count (order CKRRT474JWPF),CKRRT474JWPF
+1789912904.9,cfb,aachc-cfb-wins-2026-11-28-nw-6pt5wins,SELL,1,0.33,sell,0,0,,31,38,0.186,0.33,0.34,0.01,0,taker dump — sold into the bid (the carved exception),CKZNRPPHRWPC
+1789913024.9,politics,scc-senate-gop-2026-11-03-55,SELL,32,0.05,focus,3.617,2.77,0.010875,2,6,0.405,0.05,0.06,-0.0391,-50,focus entry: ~$1.48/day; fill odds 74%/day; EV +0.81/day,CKX9RQTW4WP7
+1789914451.2,politics,ushrewc-ushr-tx-34-2026-11-03-rep,BUY,111,0.29,backfill,,3.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKX99HT58WPA
+1789914885.3,politics,scc-senate-gop-2026-11-03-51,BUY,60,0.12,sell,1.0124,13.09,0.09025,9,12,0.784,0.12,0.13,0.0297,0,an exit — its fill reduces the position it sits on,CKMZMVY7GWPH
+1789914885.3,politics,scc-senate-gop-2026-11-03-52,BUY,35,0.09,sell,0.7002,3.55,0.06205,6,10,0.454,0.09,0.1,0.0279,0,an exit — its fill reduces the position it sits on,CKX1X6TDJWPD
+1789916207.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,-0.02,0.11,fix,,0.25,,,,,,,,,size trimmed by 0.02 to the exchange's count (order CJPAR78STWM9),CJPAR78STWM9
+1789916207.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,-0.02,0.2,fix,,0.05,,,,,,,,,size trimmed by 0.02 to the exchange's count (order CJPDNHQ74W7H),CJPDNHQ74W7H
+1789916207.2,politics,ushrewc-ushr-tx-34-2026-11-03-rep,BUY,111,0.29,backfill,,3.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKX99HT58WPA
