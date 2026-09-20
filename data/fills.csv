@@ -5488,3 +5488,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789905374.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,-0.25,0.11,fix,,0.25,,,,,,,,,size trimmed by 0.25 to the exchange's count (order CJPAR78STWM9),CJPAR78STWM9
 1789905374.4,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,SELL,-0.05,0.56,fix,,0.1,,,,,,,,,size trimmed by 0.05 to the exchange's count (order CJPBF855WWM9),CJPBF855WWM9
 1789905374.4,cfb,aachc-cfb-wins-2026-11-28-lsu-6pt5wins,BUY,5,0.89,backfill,,5.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKRRT474JWPF
+1789908989.6,cfb,aachc-cfb-wins-2026-11-28-lsu-6pt5wins,BUY,-5,0.89,fix,1.5872,5.95,,84,91,0.164,0.89,0.9,0.01,0,size trimmed by 5 to the exchange's count (order CKRRT474JWPF),CKRRT474JWPF
