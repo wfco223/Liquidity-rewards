@@ -5482,3 +5482,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789890974.0,politics,paccc-usse-midterms-2026-11-03-dem,SELL,113,0.594,backfill,,2.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKQX98P56WPC
 1789899212.5,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,BUY,0.71,0.78,backfill,,4.22,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKRRYM0Q4WPA
 1789901774.4,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,BUY,0.71,0.78,backfill,,4.22,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKRRYM0Q4WPA
+1789902374.4,politics,ewc-usgub-wi-2026-11-03-rep,BUY,157,0.19,focus,68.5239,0.01,0.278,16,21,0.364,0.17,0.18,-0.088,181,focus entry: ~$17.00/day; fill odds 48%/day; EV +15.12/day,CKX3TM470WPE
+1789903094.4,politics,paccc-usho-midterms-2026-11-03-rep,BUY,97,0.113,sell,9.7903,8.55,0.1053,11,13,0.887,0.113,0.114,0.0077,0,an exit — its fill reduces the position it sits on,CKP1FYBJGWPF
+1789905335.6,cfb,aachc-cfb-wins-2026-11-28-lsu-6pt5wins,BUY,5,0.89,backfill,,5.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKRRT474JWPF
+1789905374.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,-0.25,0.11,fix,,0.25,,,,,,,,,size trimmed by 0.25 to the exchange's count (order CJPAR78STWM9),CJPAR78STWM9
+1789905374.4,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,SELL,-0.05,0.56,fix,,0.1,,,,,,,,,size trimmed by 0.05 to the exchange's count (order CJPBF855WWM9),CJPBF855WWM9
+1789905374.4,cfb,aachc-cfb-wins-2026-11-28-lsu-6pt5wins,BUY,5,0.89,backfill,,5.92,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKRRT474JWPF
