@@ -11753,9 +11753,11 @@ date,market,program_type,reward_usd,status
 2026-09-18,aachc-cfb-wins-2026-11-28-clmsn-7pt5wins,liquidityProgram,0.06,PENDING
 2026-09-18,aachc-cfb-wins-2026-11-28-iowast-2pt5wins,liquidityProgram,0.01,PENDING
 2026-09-18,cpoc-ussec-tx-me-2026-11-03-dtx-rme,liquidityProgram,4.81,PENDING
+2026-09-18,cpoc-ussec-tx-me-2026-11-03-rsweep,liquidityProgram,6.67,PENDING
 2026-09-18,cpoc-ussec-tx-me-2026-11-03-rtx-dme,liquidityProgram,16.11,PENDING
 2026-09-18,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,liquidityProgram,5.11,PENDING
 2026-09-18,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,liquidityProgram,5.4,PENDING
+2026-09-18,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-dme,liquidityProgram,5.93,PENDING
 2026-09-18,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,liquidityProgram,5.49,PENDING
 2026-09-18,ewc-usgub-az-2026-11-03-rep,liquidityProgram,2.24,PENDING
 2026-09-18,ewc-usgub-ca-2026-11-03-xavbec,liquidityProgram,0.46,PENDING
@@ -11808,6 +11810,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,usgubewc-usgub-sc-2026-11-03-rep,liquidityProgram,0.08,PENDING
 2026-09-18,usgubewc-usgub-sd-2026-11-03-dem,liquidityProgram,0.04,PENDING
 2026-09-18,usgubewc-usgub-tx-2026-11-03-rep,liquidityProgram,5.79,PENDING
+2026-09-18,usgubewc-usgub-vt-2026-11-03-dem,liquidityProgram,0.16,PENDING
 2026-09-18,usgubewc-usgub-vt-2026-11-03-rep,liquidityProgram,0.18,PENDING
 2026-09-18,ushrewc-ushr-ca-45-2026-11-03-dem,liquidityProgram,0.12,PENDING
 2026-09-18,ushrewc-ushr-ia-01-2026-11-03-dem,liquidityProgram,0.96,PENDING
@@ -11828,6 +11831,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,ussewc-usse-al-2026-11-03-rep,liquidityProgram,0.02,PENDING
 2026-09-18,ussewc-usse-ar-2026-11-03-dem,liquidityProgram,0.55,PENDING
 2026-09-18,ussewc-usse-co-2026-11-03-rep,liquidityProgram,2.83,PENDING
+2026-09-18,ussewc-usse-de-2026-11-03-rep,liquidityProgram,0.38,PENDING
 2026-09-18,ussewc-usse-fl-2026-11-03-dem,liquidityProgram,1.16,PENDING
 2026-09-18,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.2,PENDING
 2026-09-18,ussewc-usse-ms-2026-11-03-dem,liquidityProgram,1.53,PENDING
