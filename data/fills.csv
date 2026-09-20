@@ -5480,3 +5480,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789887372.2,politics,scc-senate-gop-2026-11-03-49,SELL,0.59,0.15,backfill,,10.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGHNK96RWP6
 1789889250.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,113,0.594,backfill,,2.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKQX98P56WPC
 1789890974.0,politics,paccc-usse-midterms-2026-11-03-dem,SELL,113,0.594,backfill,,2.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKQX98P56WPC
+1789899212.5,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,BUY,0.71,0.78,backfill,,4.22,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKRRYM0Q4WPA
+1789901774.4,cfb,aachc-cfb-wins-2026-11-28-ore-7pt5wins,BUY,0.71,0.78,backfill,,4.22,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKRRYM0Q4WPA
