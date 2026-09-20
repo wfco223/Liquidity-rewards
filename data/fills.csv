@@ -5471,3 +5471,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789872918.1,politics,cpoc-ussec-tx-me-2026-11-03-rsweep,SELL,0.03,0.28,backfill,,30.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVCQD0ZPW1Y
 1789878972.0,politics,scc-senate-gop-2026-11-03-49,SELL,15.39,0.15,sell,1.5226,8.29,0.13965,12,16,0.414,0.14,0.15,-0.0103,138.61,an exit — its fill reduces the position it sits on,CKGHNK96RWP6
 1789880172.1,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,SELL,-0.04,0.67,fix,7.4733,0.08,,64,68,0.565,0.66,0.67,-0.01,-8.21,size trimmed by 0.04 to the exchange's count (order CJP95086CW1Y),CJP95086CW1Y
+1789884012.2,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.49,sell,0,0,,49,56,0.351,0.49,0.5,0.03,0,taker dump — sold into the bid (the carved exception),CKRRT46JAWPF
+1789886251.6,politics,scc-senate-gop-2026-11-03-49,SELL,0.59,0.15,backfill,,10.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGHNK96RWP6
+1789886292.2,politics,scc-senate-gop-2026-11-03-49,SELL,12,0.15,sell,1.6284,10.32,0.13965,13,16,0.597,0.14,0.15,-0.0103,126,an exit — its fill reduces the position it sits on,CKGHNK96RWP6
+1789887372.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,-0.04,0.11,fix,,0.07,,,,,,,,,size trimmed by 0.04 to the exchange's count (order CJP8DEDQRW7E),CJP8DEDQRW7E
+1789887372.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,SELL,-0.13,0.67,fix,7.4733,0.08,,64,68,0.565,0.66,0.67,-0.01,-8.21,size trimmed by 0.13 to the exchange's count (order CJP95086CW1Y),CJP95086CW1Y
+1789887372.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,SELL,-0.07,0.67,fix,,0.07,,,,,,,,,size trimmed by 0.07 to the exchange's count (order CJP95086CW1Y),CJP95086CW1Y
+1789887372.2,politics,scc-senate-gop-2026-11-03-49,SELL,0.59,0.15,backfill,,10.31,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGHNK96RWP6
