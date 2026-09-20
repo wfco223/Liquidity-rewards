@@ -5555,3 +5555,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789934296.7,politics,ushrewc-ushr-ny-17-2026-11-03-dem,BUY,69,0.62,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM4KSP9XPWPB
 1789934296.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,94,0.599,backfill,,0.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM43WK370WP9
 1789934296.7,politics,ushrewc-ushr-ny-17-2026-11-03-dem,BUY,30.08,0.62,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM4P2SWVAWPE
+1789936524.3,politics,ewc-usgub-oh-2026-11-03-rep,BUY,8,0.4,backfill,,48.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVSPDRWWW0Y
+1789936758.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,93,0.6,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM596FQ3RWPB
+1789937099.0,politics,usgubewc-usgub-sc-2026-11-03-rep,SELL,2,0.95,manual,0.005,53.03,0.9746,91,95,0.021,0.94,0.95,0.0246,0,the owner's own order — the engine leaves it alone,CJQYXNG3EW21
+1789937606.1,politics,ussewc-usse-sc-2026-11-03-dem,BUY,2.3,0.14,backfill,,56.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDPN4XTW22
+1789937699.3,politics,ewc-usgub-wi-2026-11-03-dem,SELL,5,0.83,sell,0.1214,48.63,0.722,81,85,0.375,0.82,0.83,-0.108,15,an exit — its fill reduces the position it sits on,CJVWP40J8W1Y
+1789937939.3,politics,ewc-usgub-oh-2026-11-03-rep,BUY,8,0.4,backfill,,48.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVSPDRWWW0Y
+1789937939.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,93,0.6,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM596FQ3RWPB
+1789937939.3,politics,ussewc-usse-sc-2026-11-03-dem,BUY,2.3,0.14,backfill,,56.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDPN4XTW22
