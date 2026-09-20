@@ -11796,6 +11796,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,scc-senate-gop-2026-11-03-50,liquidityProgram,2.76,PENDING
 2026-09-18,scc-senate-gop-2026-11-03-51,liquidityProgram,2.07,PENDING
 2026-09-18,scc-senate-gop-2026-11-03-52,liquidityProgram,0.32,PENDING
+2026-09-18,scc-senate-gop-2026-11-03-54,liquidityProgram,0.11,PENDING
 2026-09-18,scc-senate-gop-2026-11-03-55,liquidityProgram,0.45,PENDING
 2026-09-18,usgubewc-usgub-ak-2026-11-03-davbro,liquidityProgram,8.95,PENDING
 2026-09-18,usgubewc-usgub-ak-2026-11-03-jonkre,liquidityProgram,3.38,PENDING
@@ -11804,6 +11805,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,usgubewc-usgub-ct-2026-11-03-rep,liquidityProgram,0.09,PENDING
 2026-09-18,usgubewc-usgub-fl-2026-11-03-dem,liquidityProgram,1.19,PENDING
 2026-09-18,usgubewc-usgub-ma-2026-11-03-rep,liquidityProgram,1.08,PENDING
+2026-09-18,usgubewc-usgub-md-2026-11-03-dem,liquidityProgram,0.57,PENDING
 2026-09-18,usgubewc-usgub-md-2026-11-03-rep,liquidityProgram,0.33,PENDING
 2026-09-18,usgubewc-usgub-mn-2026-11-03-dem,liquidityProgram,0.34,PENDING
 2026-09-18,usgubewc-usgub-mn-2026-11-03-rep,liquidityProgram,0.23,PENDING
@@ -11842,10 +11844,12 @@ date,market,program_type,reward_usd,status
 2026-09-18,ushrewc-ushr-wa-03-2026-11-03-rep,liquidityProgram,0.99,PENDING
 2026-09-18,ussewc-usse-al-2026-11-03-rep,liquidityProgram,0.02,PENDING
 2026-09-18,ussewc-usse-ar-2026-11-03-dem,liquidityProgram,0.55,PENDING
+2026-09-18,ussewc-usse-ar-2026-11-03-rep,liquidityProgram,0.17,PENDING
 2026-09-18,ussewc-usse-co-2026-11-03-rep,liquidityProgram,2.83,PENDING
 2026-09-18,ussewc-usse-de-2026-11-03-rep,liquidityProgram,0.38,PENDING
 2026-09-18,ussewc-usse-fl-2026-11-03-dem,liquidityProgram,1.16,PENDING
 2026-09-18,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.2,PENDING
+2026-09-18,ussewc-usse-ky-2026-11-03-dem,liquidityProgram,0.19,PENDING
 2026-09-18,ussewc-usse-la-2026-11-03-dem,liquidityProgram,0.35,PENDING
 2026-09-18,ussewc-usse-la-2026-11-03-rep,liquidityProgram,0.27,PENDING
 2026-09-18,ussewc-usse-ma-2026-11-03-rep,liquidityProgram,1.5,PENDING
