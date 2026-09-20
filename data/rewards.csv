@@ -11798,8 +11798,10 @@ date,market,program_type,reward_usd,status
 2026-09-18,scc-hrep-rep-2026-11-03-gte210,liquidityProgram,7.93,PENDING
 2026-09-18,scc-hrep-rep-2026-11-03-gte215,liquidityProgram,3.55,PENDING
 2026-09-18,scc-hrep-rep-2026-11-03-gte220,liquidityProgram,0.12,PENDING
+2026-09-18,scc-hrep-rep-2026-11-03-gte225,liquidityProgram,4.67,PENDING
 2026-09-18,scc-hrep-rep-2026-11-03-gte235,liquidityProgram,0.1,PENDING
 2026-09-18,scc-senate-gop-2026-11-03-48,liquidityProgram,5.39,PENDING
+2026-09-18,scc-senate-gop-2026-11-03-49,liquidityProgram,0.48,PENDING
 2026-09-18,scc-senate-gop-2026-11-03-50,liquidityProgram,2.76,PENDING
 2026-09-18,scc-senate-gop-2026-11-03-51,liquidityProgram,2.07,PENDING
 2026-09-18,scc-senate-gop-2026-11-03-52,liquidityProgram,0.32,PENDING
@@ -11814,6 +11816,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,usgubewc-usgub-fl-2026-11-03-rep,liquidityProgram,12.43,PENDING
 2026-09-18,usgubewc-usgub-id-2026-11-03-rep,liquidityProgram,0.17,PENDING
 2026-09-18,usgubewc-usgub-il-2026-11-03-dem,liquidityProgram,0.1,PENDING
+2026-09-18,usgubewc-usgub-il-2026-11-03-rep,liquidityProgram,0.19,PENDING
 2026-09-18,usgubewc-usgub-ma-2026-11-03-rep,liquidityProgram,1.08,PENDING
 2026-09-18,usgubewc-usgub-md-2026-11-03-dem,liquidityProgram,0.57,PENDING
 2026-09-18,usgubewc-usgub-md-2026-11-03-rep,liquidityProgram,0.33,PENDING
@@ -11833,6 +11836,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,usgubewc-usgub-sc-2026-11-03-rep,liquidityProgram,0.08,PENDING
 2026-09-18,usgubewc-usgub-sd-2026-11-03-dem,liquidityProgram,0.04,PENDING
 2026-09-18,usgubewc-usgub-tn-2026-11-03-dem,liquidityProgram,0.72,PENDING
+2026-09-18,usgubewc-usgub-tx-2026-11-03-dem,liquidityProgram,1.23,PENDING
 2026-09-18,usgubewc-usgub-tx-2026-11-03-rep,liquidityProgram,5.79,PENDING
 2026-09-18,usgubewc-usgub-vt-2026-11-03-dem,liquidityProgram,0.16,PENDING
 2026-09-18,usgubewc-usgub-vt-2026-11-03-rep,liquidityProgram,0.18,PENDING
@@ -11858,13 +11862,16 @@ date,market,program_type,reward_usd,status
 2026-09-18,ushrewc-ushr-va-02-2026-11-03-rep,liquidityProgram,0.97,PENDING
 2026-09-18,ushrewc-ushr-wa-03-2026-11-03-dem,liquidityProgram,0.93,PENDING
 2026-09-18,ushrewc-ushr-wa-03-2026-11-03-rep,liquidityProgram,0.99,PENDING
+2026-09-18,ussewc-usse-al-2026-11-03-dem,liquidityProgram,0.45,PENDING
 2026-09-18,ussewc-usse-al-2026-11-03-rep,liquidityProgram,0.02,PENDING
 2026-09-18,ussewc-usse-ar-2026-11-03-dem,liquidityProgram,0.55,PENDING
 2026-09-18,ussewc-usse-ar-2026-11-03-rep,liquidityProgram,0.17,PENDING
+2026-09-18,ussewc-usse-co-2026-11-03-dem,liquidityProgram,1.66,PENDING
 2026-09-18,ussewc-usse-co-2026-11-03-rep,liquidityProgram,2.83,PENDING
 2026-09-18,ussewc-usse-de-2026-11-03-dem,liquidityProgram,0.06,PENDING
 2026-09-18,ussewc-usse-de-2026-11-03-rep,liquidityProgram,0.38,PENDING
 2026-09-18,ussewc-usse-fl-2026-11-03-dem,liquidityProgram,1.16,PENDING
+2026-09-18,ussewc-usse-fl-2026-11-03-rep,liquidityProgram,2.22,PENDING
 2026-09-18,ussewc-usse-ks-2026-11-03-dem,liquidityProgram,0.4,PENDING
 2026-09-18,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.2,PENDING
 2026-09-18,ussewc-usse-ky-2026-11-03-dem,liquidityProgram,0.19,PENDING
