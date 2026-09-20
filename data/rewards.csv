@@ -11864,6 +11864,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,ushrewc-ushr-ia-01-2026-11-03-rep,liquidityProgram,1.73,PENDING
 2026-09-18,ushrewc-ushr-me-02-2026-11-03-dem,liquidityProgram,2.95,PENDING
 2026-09-18,ushrewc-ushr-me-02-2026-11-03-rep,liquidityProgram,4.86,PENDING
+2026-09-18,ushrewc-ushr-mi-07-2026-11-03-dem,liquidityProgram,1.71,PENDING
 2026-09-18,ushrewc-ushr-nc-01-2026-11-03-rep,liquidityProgram,0.45,PENDING
 2026-09-18,ushrewc-ushr-ne-02-2026-11-03-dem,liquidityProgram,0.1,PENDING
 2026-09-18,ushrewc-ushr-ne-02-2026-11-03-rep,liquidityProgram,3.12,PENDING
