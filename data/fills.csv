@@ -5563,3 +5563,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789937939.3,politics,ewc-usgub-oh-2026-11-03-rep,BUY,8,0.4,backfill,,48.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVSPDRWWW0Y
 1789937939.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,93,0.6,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM596FQ3RWPB
 1789937939.3,politics,ussewc-usse-sc-2026-11-03-dem,BUY,2.3,0.14,backfill,,56.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDPN4XTW22
+1789938026.7,politics,scc-hrep-rep-2026-11-03-gte180,SELL,0.16,0.8,backfill,,4.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM1SAZ9P0WPF
+1789938037.7,politics,scc-hrep-rep-2026-11-03-gte180,SELL,6,0.8,sell,3.2149,4.53,0.91345,81,88,0.513,0.79,0.8,0.1134,48,an exit — its fill reduces the position it sits on,CM1SAZ9P0WPF
+1789940617.8,politics,scc-senate-gop-2026-11-03-lte45,SELL,21,0.04,sell,0.767,2.26,0.124375,6,10,0.723,0.03,0.04,0.0844,0,an exit — its fill reduces the position it sits on,CM4DJPMXGWP9
+1789940857.8,politics,scc-senate-gop-2026-11-03-lte45,SELL,21,0.04,focus,1.2862,0,0.12235,6,10,0.775,0.03,0.04,0.0824,-21,focus entry: ~$1.29/day; fill odds 74%/day; EV +0.08/day,CM6DF28MYWPE
+1789941577.8,politics,enwc-uspres-nom-dem-2028-dwajoh,BUY,-8.46,0.01,fix,,1.88,,,,,,,,,size trimmed by 8.46 to the exchange's count (order CJP3764XPW0Y),CJP3764XPW0Y
+1789941577.8,politics,scc-hrep-rep-2026-11-03-gte180,SELL,0.16,0.8,backfill,,4.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM1SAZ9P0WPF
