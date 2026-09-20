@@ -5497,3 +5497,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789916207.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,-0.02,0.11,fix,,0.25,,,,,,,,,size trimmed by 0.02 to the exchange's count (order CJPAR78STWM9),CJPAR78STWM9
 1789916207.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,-0.02,0.2,fix,,0.05,,,,,,,,,size trimmed by 0.02 to the exchange's count (order CJPDNHQ74W7H),CJPDNHQ74W7H
 1789916207.2,politics,ushrewc-ushr-tx-34-2026-11-03-rep,BUY,111,0.29,backfill,,3.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKX99HT58WPA
+1789917587.4,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,73.73,0.08,sell,0.741,50.58,0.011575,4,9,0,0.07,0.08,-0.0684,176.27,an exit — its fill reduces the position it sits on,CJNCPXYBAW1N
+1789919507.5,politics,ussewc-usse-ar-2026-11-03-rep,SELL,9,0.93,sell,0.2159,47.48,0.981025,92,97,0.32,0.92,0.93,0.051,0,selling filled stock — it earns while it waits,CJRGEG11TW7H
+1789919749.5,politics,scc-senate-gop-2026-11-03-49,SELL,81,0.15,backfill,,19.62,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGHNK96RWP6
+1789919807.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,-0.16,0.11,fix,,0.25,,,,,,,,,size trimmed by 0.16 to the exchange's count (order CJPAR78STWM9),CJPAR78STWM9
+1789919807.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,-0.16,0.2,fix,,0.05,,,,,,,,,size trimmed by 0.16 to the exchange's count (order CJPDNHQ74W7H),CJPDNHQ74W7H
+1789919807.6,politics,scc-senate-gop-2026-11-03-51,BUY,60,0.11,void,0.982,0,0.09025,8,12,0.766,0.12,0.13,0.0198,60,voided: the exchange has no trade for order CM0VF04EGWPB — the row of 09-20 15:2,CM0VF04EGWPB
+1789919807.6,politics,scc-senate-gop-2026-11-03-49,SELL,81,0.15,backfill,,19.62,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGHNK96RWP6
