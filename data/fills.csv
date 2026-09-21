@@ -1129,3 +1129,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789998666.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,3,0.606,sell,0.196,1.71,0.5,60,62,0.857,0.605,0.606,-0.106,3,an exit — its fill reduces the position it sits on,CMJHC9KNTWPB
 1789999146.7,politics,scc-senate-gop-2026-11-03-55,BUY,28,0.05,sell,0.5658,0.53,0.01085,3,6,0.708,0.04,0.05,0.0392,0,an exit — its fill reduces the position it sits on,CMKPT896RWPH
 1789999386.7,politics,scc-senate-gop-2026-11-03-48,BUY,40,0.15,void,5.8917,0,0.15075,11,15,0.607,0.15,0.16,-0.0008,40,voided: the exchange has no trade for order CMK6HN0P2WPC — the row of 09-21 12:5,CMK6HN0P2WPC
+1789999806.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,49,0.112,sell,2.734,0.85,0.1034,11,14,0.861,0.112,0.113,0.0086,0,an exit — its fill reduces the position it sits on,CMKJS9GDPWPB
+1790000226.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,345,0.112,focus,301.538,0.05,0.1034,11,13,0.875,0.11,0.111,0.0086,345,focus entry: ~$186.96/day; fill odds 54%/day; EV +165.50/day,CMMC8SZSPWP7
+1790001683.6,politics,scc-senate-gop-2026-11-03-lte45,BUY,31,0.04,focus,2.9898,0,0.12235,6,10,0.797,0.05,0.06,-0.0824,31,focus entry: ~$2.99/day; fill odds 16%/day; EV +0.41/day,CMMRWBGAMWPA
+1790002643.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,3,0.606,sell,0.1042,1.09,0.5,60,62,0.87,0.605,0.606,-0.106,0,an exit — its fill reduces the position it sits on,CMM24ZF74WP7
