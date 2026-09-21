@@ -1121,3 +1121,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789995325.1,politics,scc-senate-gop-2026-11-03-48,BUY,40,0.15,focus,5.8917,0,0.15075,11,15,0.607,0.15,0.16,-0.0008,40,focus entry: ~$5.89/day; fill odds 70%/day; EV +1.55/day,CMK6HN0P2WPC
 1789995786.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,BUY,53,0.07,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMHQQXCYRWP6
 1789995786.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,0.02,0.08,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMJQ72552WPD
+1789996746.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,10,0.113,focus,1.2716,0.11,0.1034,12,14,0.854,0.112,0.114,-0.0096,-49,focus entry: ~$1.27/day; fill odds 67%/day; EV +0.20/day,CMKF41NF8WPB
+1789997226.7,politics,scc-senate-gop-2026-11-03-50,BUY,49,0.14,focus,1.1638,0.06,0.117625,11,16,0,0.13,0.15,0.0224,111,focus entry: ~$1.25/day; fill odds 70%/day; EV +0.08/day,CMKN8QHCRWP9
+1789997226.7,politics,scc-senate-gop-2026-11-03-48,BUY,57,0.15,focus,2.5473,0.03,0.15075,10,14,0.702,0.14,0.15,-0.0008,57,focus entry: ~$2.32/day; fill odds 70%/day; EV +0.76/day,CMKP33FCGWPH
+1789997286.7,politics,scc-senate-gop-2026-11-03-lte45,BUY,31,0.07,sell,1.311,8.41,0.12235,7,11,0.794,0.05,0.06,-0.0523,0,an exit — its fill reduces the position it sits on,CMCGC0CM0WPF
+1789997286.7,politics,scc-senate-gop-2026-11-03-54,BUY,28,0.05,sell,0.2808,0.15,0.02095,4,8,0.626,0.05,0.06,0.029,0,an exit — its fill reduces the position it sits on,CMKJBCAW4WPD
+1789998666.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,3,0.606,sell,0.196,1.71,0.5,60,62,0.857,0.605,0.606,-0.106,3,an exit — its fill reduces the position it sits on,CMJHC9KNTWPB
+1789999146.7,politics,scc-senate-gop-2026-11-03-55,BUY,28,0.05,sell,0.5658,0.53,0.01085,3,6,0.708,0.04,0.05,0.0392,0,an exit — its fill reduces the position it sits on,CMKPT896RWPH
+1789999386.7,politics,scc-senate-gop-2026-11-03-48,BUY,40,0.15,void,5.8917,0,0.15075,11,15,0.607,0.15,0.16,-0.0008,40,voided: the exchange has no trade for order CMK6HN0P2WPC — the row of 09-21 12:5,CMK6HN0P2WPC
