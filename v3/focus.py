@@ -1551,7 +1551,8 @@ class Focus:
                "not_tended": self.why_not_tended(slug),
                "held": bool(self.fam.held_ground(slug)),
                "position": ({"qty": round(net, 2), "cost": round(cost, 2),
-                             "cost_px": round(abs(cost / net), 4) if abs(net) > 0.005 else None}
+                             "cost_px": round(abs(cost / net), 4) if abs(net) > 0.005 else None,
+                             "est": bool((self.fam.inventory.get(slug) or {}).get("est"))}
                             if abs(net) > 0.005 else None),
                "first_seen": self.first_seen.get(slug, 0.0),
                "orders": [], "sides": {}, "ev": None, "book": None, "prog": None}
@@ -1736,8 +1737,89 @@ class Focus:
             row["note"] = "no terms read yet"
         elif not pool:
             row["note"] = "event size unconfirmed — no estimate"
+        # what his qualifying wall would add a day (owner, 2026-09-21
+        # "Show me in the list of focus markets which qualifying orders
+        # I can place to boost earnings"): a side under the target pays
+        # NOBODY, so every order of ours there reads $0.00 and the
+        # tender rests nothing new; a wall at the far edge carries it
+        # over the line. The side is scored again with the wall on it —
+        # the resting orders, else the tender's own entry or the exit of
+        # what is held — and the difference is shown beside the button.
+        row["boost"] = {}
+        if (book is not None and prog is not None and pool and age <= 3600.0
+                and row.get("wall") and row.get("qual")):
+            for s_, bs in (("bid", "BUY"), ("ask", "SELL")):
+                w = row["wall"].get(s_) or {}
+                if row["qual"][s_][2] or w.get("room") or float(w.get("gap") or 0.0) <= 0.0:
+                    continue          # already paying, or nothing to add
+                try:
+                    b = self._wall_boost(slug, bs, book, prog, pool,
+                                         fair if fair is not None else silver,
+                                         stake, stake_top, net, cost, basis, w, now)
+                except Exception as e:  # noqa: BLE001 — a readout, never fatal
+                    b = {"note": f"no estimate: {type(e).__name__}: {e}"[:120]}
+                if b:
+                    row["boost"][s_] = b
+        row["boost_day"] = round(sum(float(b.get("usd_day") or 0.0)
+                                     for b in row["boost"].values()), 2)
         row["ev"] = best_ev
         return row
+
+    def _wall_boost(self, slug: str, side: str, book, prog, pool: float,
+                    fair: float | None, stake: float, stake_top: float,
+                    net: float, cost: float, basis: float | None,
+                    wall: dict, now: float) -> dict | None:
+        """What a qualifying wall on `side` would add a day: the side as
+        the exchange shows it plus the wall at the far edge, and every
+        order of ours there scored on that book — the resting orders
+        first; where none rests, the tender's own entry (only where it
+        would rest one: a fair set, an EV above zero) or the exit of
+        what is held. The wall itself earns nothing worth counting."""
+        gap = float(wall.get("gap") or 0.0)
+        px = float(wall.get("px") or 0.0)
+        if gap <= 0.0 or px <= 0.0:
+            return None
+        lv = [(float(p), float(q)) for p, q in book.side(side)]
+        lv.append((px, gap))
+        lv.sort(key=(lambda x: -x[0]) if side == "BUY" else (lambda x: x[0]))
+        book_w = (dataclasses.replace(book, bids=tuple(lv)) if side == "BUY"
+                  else dataclasses.replace(book, asks=tuple(lv)))
+        total = 0.0
+        parts: list[str] = []
+        resting = [o for o in self._orders(slug, side) if not is_wall(o)]
+        for o in resting:
+            levels = self._levels_net(slug, side, book_w, exclude={o.id})
+            is_exit = o.purpose == "sell" or (
+                (o.side == "SELL" and net > 0.005) or (o.side == "BUY" and net < -0.005))
+            sc = self._score(slug, side, book_w, prog, pool, fair, o.price, o.qty,
+                             levels, is_exit=is_exit)
+            total += float(sc.get("est") or 0.0)
+            parts.append(f"{'your' if not self._is_mine(o) else 'the tender'}"
+                         f"{'' if not self._is_mine(o) else chr(39) + 's'} "
+                         f"{o.qty:g} @ {o.price * 100:g}c → ${sc.get('est') or 0.0:.2f}")
+        if not resting:
+            xs = "SELL" if net > 0.005 else "BUY" if net < -0.005 else None
+            if side == xs and basis is not None:
+                q = float(math.floor(abs(net)))
+                xp = (self._exit_plan(slug, side, book_w, prog, pool, fair, q, basis)
+                      if q >= 1.0 else None)
+                if xp and float(xp.get("est") or 0.0) > 0.0:
+                    total += float(xp["est"])
+                    parts.append(f"the exit of {q:g} @ {float(xp['px']) * 100:g}c "
+                                 f"→ ${float(xp['est']):.2f}")
+            elif fair is not None and stake >= 1.0:
+                plan = self._entry_plan(slug, side, book_w, prog, pool, fair,
+                                        stake, stake_top, now)
+                if plan and float(plan.get("ev") or 0.0) > 0.0 and float(plan.get("est") or 0.0) > 0.0:
+                    total += float(plan["est"])
+                    parts.append(f"a new entry of {float(plan['qty']):g} @ "
+                                 f"{float(plan['px']) * 100:g}c → ${float(plan['est']):.2f}")
+        out = {"usd_day": round(total, 2), "gap": round(gap), "px": px,
+               "usd": wall.get("usd"), "parts": parts[:4]}
+        if total < 0.005:
+            out["note"] = ("nothing of ours would earn here yet — no order rests on "
+                           "this side and the tender plans none")
+        return out
 
     # -- tending -----------------------------------------------------------------
 
