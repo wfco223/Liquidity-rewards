@@ -66,7 +66,15 @@ TRIP_W_MAX = 0.25                # no single close may replace a pool's number (
                                  # 54.13c a share from 49 trips, house seats 238.05c
                                  # from 6, against a markdown of 1.03c and 1.88c
                                  # measured over 1,406 and 68 real fills)
-TRIP_REPAIR = "basis-sign-2026-09-12"   # every stored trip cost was learned through the
+TRIP_REPAIR = "feed-basis-2026-09-21"   # owner, 2026-09-21 "Yes repair the fill model":
+                                         # the stored trip costs (governor 13c, House/Senate
+                                         # control 21.7c, Senate 7c a share against measured
+                                         # markdowns of 0.4-2.3c) were learned from round trips
+                                         # whose basis the exchange's cost field set — House
+                                         # control rep sold at 10c against a 51c "basis", 41c
+                                         # a share, at the maximum weight, four times in a day.
+                                         # Dropped once; relearned from our own fills only.
+                                         # The earlier tag, "basis-sign-2026-09-12", was
                                         # negative-basis bug and that weight: dropped
                                         # once, then relearned from clean observations
 OFFLOAD_SEED_DAYS = 2.0          # fill -> fully offloaded, until measured
