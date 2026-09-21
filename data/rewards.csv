@@ -11919,3 +11919,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,ussewc-usse-tn-2026-11-03-dem,liquidityProgram,0.45,PENDING
 2026-09-18,ussewc-usse-va-2026-11-03-rep,liquidityProgram,0.56,PENDING
 2026-09-18,ussewc-usse-wv-2026-11-03-dem,liquidityProgram,0.2,PENDING
+2026-09-19,cpoc-ussec-tx-me-2026-11-03-rtx-dme,liquidityProgram,16.36,PENDING
+2026-09-19,paccc-usho-midterms-2026-11-03-rep,liquidityProgram,27.37,PENDING
+2026-09-19,paccc-usse-midterms-2026-11-03-dem,liquidityProgram,1.08,PENDING
+2026-09-19,ushrewc-ushr-tx-34-2026-11-03-rep,liquidityProgram,7.21,PENDING
