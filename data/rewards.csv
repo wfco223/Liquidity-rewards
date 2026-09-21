@@ -11923,6 +11923,7 @@ date,market,program_type,reward_usd,status
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-dtx-rme,liquidityProgram,0.79,PENDING
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-rsweep,liquidityProgram,4.92,PENDING
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-rtx-dme,liquidityProgram,16.36,PENDING
+2026-09-19,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,liquidityProgram,6.91,PENDING
 2026-09-19,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,liquidityProgram,2.34,PENDING
 2026-09-19,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,liquidityProgram,11.57,PENDING
 2026-09-19,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,liquidityProgram,11.8,PENDING
@@ -11941,6 +11942,7 @@ date,market,program_type,reward_usd,status
 2026-09-19,ewc-usgub-oh-2026-11-03-rep,liquidityProgram,0.34,PENDING
 2026-09-19,ewc-usgub-wi-2026-11-03-dem,liquidityProgram,0.03,PENDING
 2026-09-19,ewc-usgub-wi-2026-11-03-rep,liquidityProgram,0.01,PENDING
+2026-09-19,ewc-usse-ga-2026-11-03-rep,liquidityProgram,1.11,PENDING
 2026-09-19,ewc-usse-ia-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-19,ewc-usse-me-2026-11-03-dem,liquidityProgram,0.46,PENDING
 2026-09-19,ewc-usse-mi-2026-11-03-dem,liquidityProgram,1.49,PENDING
@@ -11967,6 +11969,7 @@ date,market,program_type,reward_usd,status
 2026-09-19,scc-senate-gop-2026-11-03-49,liquidityProgram,2.03,PENDING
 2026-09-19,scc-senate-gop-2026-11-03-50,liquidityProgram,2.92,PENDING
 2026-09-19,scc-senate-gop-2026-11-03-51,liquidityProgram,1.56,PENDING
+2026-09-19,scc-senate-gop-2026-11-03-52,liquidityProgram,0.45,PENDING
 2026-09-19,scc-senate-gop-2026-11-03-54,liquidityProgram,0.06,PENDING
 2026-09-19,scc-senate-gop-2026-11-03-55,liquidityProgram,0.15,PENDING
 2026-09-19,scc-senate-gop-2026-11-03-lte45,liquidityProgram,3.49,PENDING
@@ -11983,6 +11986,7 @@ date,market,program_type,reward_usd,status
 2026-09-19,usgubewc-usgub-ny-2026-11-03-dem,liquidityProgram,1.37,PENDING
 2026-09-19,usgubewc-usgub-ny-2026-11-03-rep,liquidityProgram,0.78,PENDING
 2026-09-19,usgubewc-usgub-ok-2026-11-03-dem,liquidityProgram,0.02,PENDING
+2026-09-19,usgubewc-usgub-ok-2026-11-03-rep,liquidityProgram,0.55,PENDING
 2026-09-19,usgubewc-usgub-or-2026-11-03-dem,liquidityProgram,0.07,PENDING
 2026-09-19,usgubewc-usgub-pa-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-19,usgubewc-usgub-tn-2026-11-03-dem,liquidityProgram,0.27,PENDING
