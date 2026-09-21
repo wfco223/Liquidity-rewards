@@ -5617,3 +5617,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789959394.5,politics,scc-hrep-rep-2026-11-03-gte185,SELL,57,0.82,sell,22.0439,0.08,0.85645,81,88,0.733,0.83,0.84,0.0365,-57,an exit — its fill reduces the position it sits on,CMAP8WE3PWP9
 1789959634.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,2,0.601,backfill,,2.86,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7SWSHR4WPA
 1789959634.5,politics,ewc-usse-ak-2026-11-03-dem,SELL,163,0.67,backfill,,3.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7Y0Q2F6WPB
+1789959754.6,politics,scc-hrep-rep-2026-11-03-gte185,SELL,157,0.84,focus,14.6018,0.1,0.85645,83,88,0.781,0.83,0.84,0.0165,-214,focus entry: ~$14.49/day; fill odds 34%/day; EV +8.15/day,CMART51A0WP7
+1789960894.7,politics,scc-senate-gop-2026-11-03-lte45,SELL,31,0.04,focus,22.4161,0.02,0.12235,7,12,0.793,0.03,0.05,0.0824,-31,focus entry: ~$21.49/day; fill odds 75%/day; EV +19.85/day,CMB35DNPMWPB
+1789961361.3,politics,scc-senate-gop-2026-11-03-51,BUY,115,0.13,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMB4XY4SWWPF
+1789962034.8,politics,ushrewc-ushr-wa-03-2026-11-03-rep,SELL,4,0.08,sell,18.1802,3.32,,8,15,0,0.08,0.09,0.03,0,an exit — its fill reduces the position it sits on,CM8H69B72WP6
+1789962034.8,politics,scc-senate-gop-2026-11-03-55,BUY,50,0.05,sell,0.9496,0.07,0.01085,2,7,0.538,0.04,0.06,0.0392,0,an exit — its fill reduces the position it sits on,CMBA78YSYWPE
+1789962670.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,235,0.112,backfill,,0.36,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMB72GFWGWPD
+1789962694.8,politics,ushrewc-ushr-wa-03-2026-11-03-rep,SELL,4,0.09,focus,9.8866,0,,9,15,0.454,0.08,0.09,0.02,-4,focus entry: ~$9.89/day; fill odds 67%/day; EV +7.86/day,CMBGT8Y7JWPE
+1789963166.4,politics,scc-hrep-rep-2026-11-03-gte210,BUY,12,0.29,backfill,,58.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJSNM1XG0W0Y
+1789963216.8,politics,scc-hrep-rep-2026-11-03-gte205,SELL,22,0.29,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CMBKYWWP6WP7
+1789963216.8,politics,scc-hrep-rep-2026-11-03-gte205,SELL,22,0.29,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMBM0KD8RWP9
+1789963234.9,politics,scc-senate-gop-2026-11-03-51,BUY,81,0.13,void,15.9781,0,0.09,9,13,0.669,0.13,0.14,0.04,81,voided: the exchange has no trade for order CMB76B7BAWPH — the row of 09-21 03:2,CMB76B7BAWPH
+1789963234.9,politics,scc-senate-gop-2026-11-03-51,BUY,115,0.13,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMB4XY4SWWPF
+1789963234.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,235,0.112,backfill,,0.36,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMB72GFWGWPD
+1789963234.9,politics,scc-hrep-rep-2026-11-03-gte210,BUY,12,0.29,backfill,,58.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJSNM1XG0W0Y
+1789963234.9,politics,scc-hrep-rep-2026-11-03-gte205,SELL,22,0.29,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CMBKYWWP6WP7
+1789963234.9,politics,scc-hrep-rep-2026-11-03-gte205,SELL,22,0.29,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMBM0KD8RWP9
