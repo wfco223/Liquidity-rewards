@@ -5602,3 +5602,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789955554.1,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.427,61.12,,8,12,0.901,0.05,0.06,0.04,210,an exit — its fill reduces the position it sits on,CJND344BPW22
 1789955674.2,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.3946,61.15,,8,12,0.909,0.05,0.06,0.04,205,an exit — its fill reduces the position it sits on,CJND344BPW22
 1789955914.2,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.3621,61.22,,8,12,0.915,0.05,0.06,0.04,200,an exit — its fill reduces the position it sits on,CJND344BPW22
+1789956154.2,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.3296,61.28,,8,12,0.92,0.05,0.06,0.04,195,an exit — its fill reduces the position it sits on,CJND344BPW22
+1789956274.2,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.297,61.32,,9,12,0.925,0.05,0.06,0.04,190,an exit — its fill reduces the position it sits on,CJND344BPW22
+1789956514.2,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.2644,61.38,,9,12,0.93,0.05,0.06,0.04,185,an exit — its fill reduces the position it sits on,CJND344BPW22
+1789956754.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.2318,61.45,,9,12,0.933,0.05,0.06,0.04,180,an exit — its fill reduces the position it sits on,CJND344BPW22
+1789956934.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.1992,61.5,,9,12,0.937,0.05,0.06,0.04,175,an exit — its fill reduces the position it sits on,CJND344BPW22
+1789957054.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,2,0.602,focus,11.4594,0.66,0.5,59,63,0.679,0.601,0.602,-0.102,-23,focus entry: ~$5.76/day; fill odds 52%/day; EV +3.86/day,CM9N71BEGWP7
+1789957152.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,2,0.601,backfill,,2.86,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7SWSHR4WPA
+1789957174.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,5,0.06,sell,1.1665,61.57,,9,13,0.94,0.05,0.06,0.05,170,an exit — its fill reduces the position it sits on,CJND344BPW22
+1789957234.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,21,0.601,sell,0.2237,2.88,0.5,61,64,0.747,0.601,0.602,0.101,-2,an exit — its fill reduces the position it sits on,CM7SWSHR4WPA
+1789958374.4,politics,scc-hrep-rep-2026-11-03-gte185,SELL,81.95,0.74,sell,24.9999,1.02,0.85645,74,84,0.523,0.73,0.74,0.1165,20.05,an exit — its fill reduces the position it sits on,CM9NEHYPEWPE
+1789959154.5,politics,scc-hrep-rep-2026-11-03-gte185,SELL,20,0.74,sell,24.9997,0.16,0.85645,80,86,0.658,0.81,0.82,0.1165,0,an exit — its fill reduces the position it sits on,CMAJ6EK2AWPE
+1789959297.6,politics,ewc-usse-ak-2026-11-03-dem,SELL,163,0.67,backfill,,3.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7Y0Q2F6WPB
+1789959394.5,politics,scc-hrep-rep-2026-11-03-gte185,SELL,57,0.82,sell,22.0439,0.08,0.85645,81,88,0.733,0.83,0.84,0.0365,-57,an exit — its fill reduces the position it sits on,CMAP8WE3PWP9
+1789959634.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,2,0.601,backfill,,2.86,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7SWSHR4WPA
+1789959634.5,politics,ewc-usse-ak-2026-11-03-dem,SELL,163,0.67,backfill,,3.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7Y0Q2F6WPB
