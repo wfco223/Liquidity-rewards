@@ -1093,3 +1093,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789982364.5,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,SELL,1,0.51,sell,0,0,,51,63,0.404,0.51,0.53,0.06,0,taker dump — sold into the bid (the carved exception),CMG51KGVRWP9
 1789983804.7,politics,scc-senate-gop-2026-11-03-48,BUY,40,0.15,focus,3.8361,0,0.15075,12,16,0.69,0.15,0.16,-0.0008,40,focus entry: ~$3.84/day; fill odds 70%/day; EV +0.67/day,CMGFBCVSWWPB
 1789984944.8,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,SELL,0.62,0.53,backfill,,13.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM4SMZTPJWPD
+1789986444.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,SELL,115,0.41,sell,5.0885,4.94,,39,45,0.259,0.4,0.41,0.01,0,an exit — its fill reduces the position it sits on,CMCWARR2EWPE
+1789986451.7,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,41,0.5,backfill,,3.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CME8X9FY6WPD
+1789986624.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,SELL,32,0.11,focus,0,0.05,,8,11,0,0.1,0.11,-0.01,-32,focus entry: ~$6.38/day; fill odds 53%/day; EV +4.01/day,CMH3AZ2YEWPF
+1789986624.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,SELL,16.89,0.11,focus,0,0.04,,7,12,0.377,0.1,0.11,-0.01,-30.89,focus entry: ~$3.47/day; fill odds 53%/day; EV +0.64/day,CMH3QV9QAWP6
+1789986864.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-rme,BUY,25,0.08,sell,1.8733,4.01,,2,8,0.43,0.02,0.08,0.03,0,an exit — its fill reduces the position it sits on,CMDRFE4SPWPF
+1789986864.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,BUY,41,0.14,focus,18.533,0.08,,10,13,0.58,0.14,0.15,0.03,41,focus entry: ~$4.35/day; fill odds 56%/day; EV +0.80/day,CMH4GP5SRWPF
+1789987044.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-rme,SELL,7,0.03,focus,18.0812,0.05,,2,7,0.614,0.02,0.03,0.01,-7,focus entry: ~$18.10/day; fill odds 53%/day; EV +17.64/day,CMH6PH9BGWPA
+1789988545.0,politics,scc-senate-gop-2026-11-03-48,BUY,40,0.15,void,3.8361,0,0.15075,12,16,0.69,0.15,0.16,-0.0008,40,voided: the exchange has no trade for order CMGFBCVSWWPB — the row of 09-21 09:4,CMGFBCVSWWPB
+1789988545.0,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,41,0.5,backfill,,3.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CME8X9FY6WPD
