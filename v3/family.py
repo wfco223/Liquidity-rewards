@@ -722,6 +722,13 @@ class Family:
             if abs(fixed - c) > 1e-6:
                 v["cost"] = fixed
                 n += 1
+            # a basis outside the price range came from the exchange's
+            # cost field, not our fills (owner, 2026-09-21 "Yes repair
+            # the fill model": House control rep, 9 shares at $79.61 of
+            # "cost"): estimated — its closes page no loss and teach
+            # the fill model nothing
+            if not (0.0 < abs(fixed / q) < 1.0):
+                v["est"] = True
         return n
 
     def _place_blocked(self) -> bool:
@@ -2150,15 +2157,24 @@ class Family:
                             self.inventory.pop(m, None)
                             self.inv_since.pop(m, None)
                     else:
+                        est = bool((inv or {}).get("est"))
                         if abs(have) > 0.005:
                             per = (inv or {}).get("cost", 0.0) / have
                             cost = per * feed_qty
                         else:
+                            # the exchange's cost field is not price x
+                            # quantity (House control rep: 235 shares at
+                            # 11.2c reported as $105.21): an ESTIMATED
+                            # basis (owner, 2026-09-21) — shown, never
+                            # paged as a loss, never learned from
                             cost = (positions[m][1]
                                     if len(positions[m]) > 1 else 0.0)
+                            est = True
                         self.inventory[m] = {
                             "qty": feed_qty,
                             "cost": self._feed_cost(feed_qty, cost)}
+                        if est:
+                            self.inventory[m]["est"] = True
                     self._log(event="inventory_corrected", market=m,
                               qty=feed_qty,
                               note=f"book said {have:g}, exchange says "
@@ -2192,14 +2208,22 @@ class Family:
             self.inv_since[rec.market] = now
         inv = self.inventory.setdefault(rec.market, {"qty": 0.0, "cost": 0.0})
         q0, c0 = inv["qty"], inv["cost"]
+        # a basis the exchange's cost field set, not our fills (owner,
+        # 2026-09-21 "Yes repair the fill model"): the close is booked
+        # and shown, but it is not a measurement — it neither pages a
+        # loss nor teaches the fill model. Until then House control rep
+        # taught 41c a share four times in a day off a 51c "basis" on
+        # a 10c contract, and the pools read 13-22c a share.
+        est0 = bool(inv.get("est"))
         if rec.purpose == "sell" and abs(q0) > 0.005:
             # what closing really cost per share against the basis it
             # closed (owner, 2026-09-09: "make sure the numbers about
             # fill costs are updating") — the fill model's trip_cost
             basis = c0 / q0
-            if not (0.0 < basis < 1.0):
-                # not a price a share: a broken basis teaches the fill
-                # model nothing (owner, 2026-09-12 "Yes fix that")
+            if est0 or not (0.0 < basis < 1.0):
+                # not a price a share, or not ours to begin with: teaches
+                # the fill model nothing (owner, 2026-09-12 "Yes fix
+                # that"; 2026-09-21)
                 loss_ps = None
             elif rec.side == "SELL" and q0 > 0:
                 loss_ps = max(basis - rec.price, 0.0)
@@ -2225,6 +2249,7 @@ class Family:
             # step-up, bounded to 5 ticks over "what the short sold
             # for", bought 15 back at 50c on a book with no bid.
             inv["cost"] = round(inv["qty"] * rec.price, 4)
+            inv.pop("est", None)          # this fill's price: a real basis
         qty_after = round(inv["qty"], 2)
         if abs(inv["qty"]) < 0.005:
             self._float_forget(rec.market)
@@ -2252,7 +2277,14 @@ class Family:
         self._log(event="fill", market=rec.market, side=rec.side,
                   price=rec.price, qty=round(filled, 2))
         gain = self._closing_gain(rec.side, rec.price, filled, q0, c0)
-        if gain is not None:
+        if gain is not None and est0:
+            # the basis was the exchange's cost field: the "loss" is
+            # not a measurement and does not page (owner, 2026-09-21)
+            self._log(event="fill_no_page", market=rec.market,
+                      note=f"closed {filled:g} at ${gain:+.2f} against a basis "
+                           f"the exchange's cost field set — estimated, not "
+                           f"paged, not learned")
+        elif gain is not None:
             # A CLOSE. Silent unless it realised more than a dollar of
             # loss (owner, 2026-08-24). Profit, break-even and small
             # losses all stay off the phone; the card still records it.
@@ -2312,6 +2344,13 @@ class Family:
             pnl = qty * mark - (inv.get("cost") or 0.0)
             earning = any((o.live_est or 0.0) > 0.0
                           for o in list(self.orders.values()) if o.market == slug)
+            if inv.get("est"):
+                # the mark against an estimated basis says nothing
+                # (owner, 2026-09-21)
+                self._log(event="fill_no_page", market=slug,
+                          note=f"opened {p['qty']:g} — the basis is the exchange's "
+                               f"cost field, estimated; no under-water page")
+                continue
             if pnl < -PAGE_LOSS_USD and not earning:
                 self.alert(f"{self.cfg.tag} position under water, earning nothing",
                            f"{self._label(slug)}: {p['side']} {p['qty']:g} @ "
@@ -2512,8 +2551,11 @@ class Family:
             net, cost = ((list(pv) + [0.0, 0.0])[:2]
                          if isinstance(pv, (tuple, list)) else (float(pv), 0.0))
             if m in self.universe and abs(net) > 0.005 and m not in self.inventory:
+                # the basis is the exchange's cost field: estimated
+                # (owner, 2026-09-21)
                 self.inventory[m] = {"qty": net,
-                                     "cost": self._feed_cost(net, cost)}
+                                     "cost": self._feed_cost(net, cost),
+                                     "est": True}
                 self.positions_seen[m] = net
 
     # ------------------------------------------------------------------ cycle
@@ -5644,6 +5686,7 @@ class Family:
                 # "Hide bond positions on the orders/positions tab")
                 "bond": slug in self.bond_markets,
                 "cost": round(inv.get("cost", 0.0), 2),
+                "est": bool(inv.get("est")),
                 "liq": round(liq, 2), "unsold": unsold,
                 "no_book": book is None and stale is None,
                 "as_of": stale,

@@ -1072,6 +1072,57 @@ long and accreted, so search it rather than reading it through.
   sides of 20k-750k shares), 15 where the 8-20c fill cost eats the
   claim, on a stake basis of $117.85 (buying power $417.85 less $300).
 
+- A BASIS THE EXCHANGE'S COST FIELD SET IS ESTIMATED, AND THE FILL
+  MODEL RELEARNS FROM OUR OWN FILLS (owner, 2026-09-21 "Yes repair the
+  fill model", after "What does the evidence show?"). The learned trip
+  cost per pool over the day's saved states moved right after the fake
+  loss alerts: House/Senate control 3.9c -> 8.2c -> 14.8c -> 21.7c a
+  share (the last within three minutes of the $74.97 House control rep
+  alert), governor 2.3c -> 19.9c within the hour of the two NY governor
+  rep alerts on 09-20, Senate 2.2c -> 16.6c after a 44c-a-share TX/ME
+  dsweep trip and a 53c-a-share NM senate trip — against measured
+  markdowns of 0.4-2.3c. The fake trips came from lots whose cost the
+  feed's cost field set (House control rep: 235 shares at 11.2c
+  reported as $105.21; sold at 10c that "lost" 41c a share, learned at
+  the maximum weight four times in a day; $237.58 alerted on that one
+  market, real under $5). The 2026-09-12 guard dropped only a basis
+  outside $0-$1, and 51c is inside it. Now: (1) TRIP_REPAIR is bumped
+  once ("feed-basis-2026-09-21"), every pool falls back to its measured
+  markdown with the 2c floor and relearns; (2) a lot whose cost came
+  from the exchange's cost field — seeded from nothing on the
+  exchange-wins path, a position the feed shows that we never opened,
+  or a stored basis outside the price range on restore — carries
+  inv["est"]: its closes are booked and shown (the card says "estimated
+  … not paged, not learned"), teach the fill model nothing, page no
+  "closed at a loss" and no "under water"; a fill that flips the
+  position through zero clears it, since that fill's price is the
+  basis; the feed correction that SCALES our own basis keeps it clean.
+  The page marks the position "cost estimated by the exchange's feed".
+  THE HONEST SIZE OF THIS: of 111 idle sides in the tender's log only
+  17 had a positive claim and 7 of those turn positive at a 2c cost,
+  worth $0.01-0.40 a day each — the repair stops the fake alerts and
+  the churn (11-46 pulls an hour at "expected value −$0.01"), not the
+  earnings drop, which is his 207 wiped hand orders (markets with a
+  claim 251 -> 117 across the 09-18 wipe) and a $20-50 stake against
+  sides of 50k-1.5M shares.
+- THE FOCUS LIST SAYS WHAT A QUALIFYING WALL WOULD ADD (owner,
+  2026-09-21 "Show me in the list of focus markets which qualifying
+  orders I can place to boost earnings"). A side under the target pays
+  nobody, so every order of ours there reads $0.00 and the tender rests
+  nothing new. For each such side the row now carries boost[side]: the
+  side scored again with the wall on the book (the qualify button's
+  own wall — 125% of the target less what rests, at 1c or 99c) — the
+  resting orders first, else the tender's own entry where it would rest
+  one (a fair set, EV over zero) or the exit of what is held — with
+  the parts spelled out ("the tender's 100 @ 47c → $12.30"; "a new
+  entry of 60 @ 47c → …"), the shares and buying power the wall takes,
+  and boost_day for the list: a "wall: +$/day" pill on the condensed
+  line, a "wall boost" sort, and the estimate beside each qualify
+  button. On 2026-09-21 only 3 of 178 sides with a book in the
+  family's cache were under target, so the list may be short; the
+  board's other markets are scored live. The wall itself earns nothing
+  worth counting; nothing places without his tap.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
