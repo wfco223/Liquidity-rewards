@@ -11922,6 +11922,7 @@ date,market,program_type,reward_usd,status
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-dtx-rme,liquidityProgram,0.79,PENDING
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-rtx-dme,liquidityProgram,16.36,PENDING
 2026-09-19,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-dme,liquidityProgram,6.56,PENDING
+2026-09-19,ewc-usgub-mi-2026-11-03-rep,liquidityProgram,0.24,PENDING
 2026-09-19,ewc-usgub-nv-2026-11-03-dem,liquidityProgram,0.29,PENDING
 2026-09-19,ewc-usgub-oh-2026-11-03-rep,liquidityProgram,0.34,PENDING
 2026-09-19,ewc-usse-nc-2026-11-03-rep,liquidityProgram,3.46,PENDING
