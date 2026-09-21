@@ -1088,3 +1088,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789974848.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,45,0.605,sell,2.429,0.04,0.5,61,64,0.835,0.605,0.606,0.105,0,an exit — its fill reduces the position it sits on,CME8HVR5AWPA
 1789977668.6,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,SELL,32,0.51,void,5.9107,0,,53,59,0.616,0.5,0.51,0.05,-32,voided: the exchange has no trade for order CME15RYRCWPC — the row of 09-21 06:5,CME15RYRCWPC
 1789981307.2,politics,scc-senate-gop-2026-11-03-48,BUY,40,0.15,void,1.9296,0,0.15075,13,17,0.594,0.15,0.16,-0.0008,40,voided: the exchange has no trade for order CMF10DMRGWP7 — the row of 09-21 08:0,CMF10DMRGWP7
+1789982362.9,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,SELL,0.62,0.53,backfill,,13.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM4SMZTPJWPD
+1789982364.5,politics,usgubewc-usgub-ok-2026-11-03-rep,SELL,4,0.87,sell,0.8444,0.74,0.9606,86,93,0.108,0.86,0.87,0.0906,6,selling filled stock — it earns while it waits,CMFFBNMKEWPC
+1789982364.5,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,SELL,1,0.51,sell,0,0,,51,63,0.404,0.51,0.53,0.06,0,taker dump — sold into the bid (the carved exception),CMG51KGVRWP9
+1789983804.7,politics,scc-senate-gop-2026-11-03-48,BUY,40,0.15,focus,3.8361,0,0.15075,12,16,0.69,0.15,0.16,-0.0008,40,focus entry: ~$3.84/day; fill odds 70%/day; EV +0.67/day,CMGFBCVSWWPB
+1789984944.8,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,SELL,0.62,0.53,backfill,,13.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM4SMZTPJWPD
