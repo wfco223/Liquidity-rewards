@@ -1109,3 +1109,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789989805.0,cfb,aachc-cfb-wins-2026-11-28-clmsn-7pt5wins,BUY,1,0.34,sell,0.124,14.49,,30,37,0.239,0.34,0.35,0.01,2,buying back the short at or under what it sold for — the bid earns while it wait,CM5NGXDR0WPC
 1789990825.0,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,20,0.19,sell,0.1702,9.87,0.33255,19,24,0.481,0.18,0.19,0.1426,0,an exit — its fill reduces the position it sits on,CM9SXHQDEWPB
 1789992145.0,politics,scc-senate-gop-2026-11-03-55,SELL,0.01,0.05,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMHK4VG5TWPA
+1789992505.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,6,0.605,focus,6.0614,0.08,0.5,60,62,0.843,0.605,0.606,0.105,6,focus entry: ~$5.36/day; fill odds 56%/day; EV +1.64/day,CMJEQ5798WP7
+1789993045.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,186,0.1,sell,14.8955,1.21,0.1034,10,13,0.81,0.099,0.1,0.0034,49,an exit — its fill reduces the position it sits on,CMHMANG12WPA
+1789993045.0,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-rme,SELL,19,0.03,focus,0,0.23,,4,8,0.701,0.06,0.1,0.03,-26,focus entry: ~$2.24/day; fill odds 53%/day; EV +1.00/day,CMJEWVQD4WPB
+1789993095.9,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,BUY,53,0.07,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMHQQXCYRWP6
+1789993165.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,49,0.1,sell,3.179,1.24,0.1034,11,13,0.836,0.099,0.1,0.0034,0,an exit — its fill reduces the position it sits on,CMHMANG12WPA
+1789993165.0,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,BUY,13,0.07,focus,17.4461,0.02,,9,13,0.422,0.03,0.04,-0.04,144,focus entry: ~$17.46/day; fill odds 56%/day; EV +16.62/day,CMJNX0CGRWP9
+1789993486.5,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,0.02,0.08,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMJQ72552WPD
+1789993525.0,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,11,0.08,focus,10.4572,0.07,,5,10,0.55,0.08,0.09,0,11,focus entry: ~$6.60/day; fill odds 57%/day; EV +2.57/day,CMJQ72552WPD
+1789994665.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,39,0.101,focus,374.977,0.06,0.1034,11,14,0.846,0.111,0.113,0.0024,-39,focus entry: ~$342.78/day; fill odds 67%/day; EV +338.46/day,CMK0WJFMJWPH
+1789995325.1,politics,scc-senate-gop-2026-11-03-48,BUY,40,0.15,focus,5.8917,0,0.15075,11,15,0.607,0.15,0.16,-0.0008,40,focus entry: ~$5.89/day; fill odds 70%/day; EV +1.55/day,CMK6HN0P2WPC
+1789995786.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,BUY,53,0.07,backfill,,1.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMHQQXCYRWP6
+1789995786.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,0.02,0.08,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMJQ72552WPD
