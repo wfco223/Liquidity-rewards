@@ -4797,7 +4797,22 @@ class Family:
                                        "gate's blessing — pulled back")
                         actions -= 1
                     continue
-                bound = max(ask_touch, floor_px) + 2 * book.tick
+                # the placer's own slot (below): the ask touch, or one
+                # tick under the model fair when the touch gives away
+                # against it. The bound ALLOWS that slot (owner,
+                # 2026-09-21 "Yes, let them rest under fair"): until
+                # then it was touch + 2 ticks alone, so on a 90/91 book
+                # Silver priced at 98.8c the placer rested the exit at
+                # 98c, this rule cancelled it a cycle later as stranded,
+                # and the placer rested it at 98c again — six lots (New
+                # Mexico, Maine, Alabama and Nebraska governor, Illinois
+                # and Nebraska senate) went round 23 times each in 45
+                # minutes, 138 cancels, off the book half the time
+                fair_g = self.fairs(slug) if self.fairs is not None else None
+                join_px = ask_touch
+                if fair_g is not None and join_px < fair_g - 3 * book.tick:
+                    join_px = fair_g - book.tick
+                bound = max(ask_touch, floor_px, join_px) + 2 * book.tick
                 stray = [o for o in mine if o.price > bound + 1e-9
                          and o.id in self.orders]
                 if stray and self._can_replace():
@@ -4824,10 +4839,8 @@ class Family:
                 # sell at the FRONT of the profitable range (owner,
                 # 2026-08-22): join the ask touch — unless the touch is
                 # a giveaway against the model, then rest just under fair
-                fair_g = self.fairs(slug) if self.fairs is not None else None
-                join_px = ask_touch
-                if fair_g is not None and join_px < fair_g - 3 * book.tick:
-                    join_px = fair_g - book.tick
+                # (join_px, computed above where the stranded bound
+                # reads it too, so the pair can never disagree)
                 px = max(lo, min(join_px, 0.999))
                 if gate_px is not None:
                     px = gate_px          # the gate's price IS the plan:

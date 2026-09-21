@@ -1045,6 +1045,33 @@ long and accreted, so search it rather than reading it through.
   that field means, and the step-up's ceiling for it is still 5
   ticks over that basis, capped at the bid touch and fair + 3 ticks.
 
+- A STOCK EXIT MAY REST ONE TICK UNDER THE MODEL FAIR WITHOUT BEING
+  STRANDED (owner, 2026-09-21 "Yes, let them rest under fair", to
+  "The number of orders I have open is very low"). The placer's rule
+  since 2026-08-22: a sale joins the ask touch unless the touch gives
+  away against the model, then it rests one tick under fair. The
+  stranded rule of the same day allowed nothing past touch + 2 ticks.
+  The two disagreed wherever the model fair sat more than 3 ticks over
+  the touch, and on 2026-09-21 (14:45-15:30Z) that was six lots — New
+  Mexico, Maine, Alabama and Nebraska governor, Illinois and Nebraska
+  senate, 117 shares — each rested at 97-99c on a 90-95c book (78c on
+  68/69 for Nebraska senate) and cancelled a cycle later as stranded,
+  23 rounds each, 138 cancels in 45 minutes, off the book half the
+  time. The bound now allows the placer's own slot: touch, floor or
+  fair − 1 tick, whichever is highest, plus 2 ticks. Without a model
+  fair the touch bound stands as before; a leftover past the slot
+  still comes off. The cover side never had the conflict (its slot is
+  bounded by the bid touch and the cap) and is untouched.
+  THE REST OF THAT ANSWER, for the record: on 09-14 the exchange's
+  open list held 313 orders, 207 his (85 on the seat books); the
+  09-18 wipe took them all and his walls' collateral read $2.30 from
+  then on (bonds log), nothing re-places a wall on its own; and the
+  tender fell from 61-67 entries on 09-18 to 14 — 40 sides at their
+  stake after 39 fills, 61 sides whose allowed slot scores $0.00 a day
+  (fair well behind the touch on a bare side, stakes of $12-29 against
+  sides of 20k-750k shares), 15 where the 8-20c fill cost eats the
+  claim, on a stake basis of $117.85 (buying power $417.85 less $300).
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
