@@ -5582,3 +5582,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1789948779.6,politics,paccc-usse-midterms-2026-11-03-dem,BUY,100,0.601,backfill,,2.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM5EWD5BTWP7
 1789948779.6,politics,ewc-usgub-oh-2026-11-03-rep,BUY,9,0.4,backfill,,51.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJVSPDRWWW0Y
 1789948779.6,politics,scc-senate-gop-2026-11-03-50,SELL,0.53,0.15,backfill,,27.81,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKGA8VSSAWP7
+1789949528.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-dme,BUY,168,0.32,backfill,,0.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7T2N8BTWPC
+1789949619.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,50,0.09,sell,15.6989,7.93,,2,5,0.415,0.08,0.09,0.06,50,an exit — its fill reduces the position it sits on,CM1MTNKMJWP9
+1789951392.6,politics,paccc-usse-midterms-2026-11-03-dem,BUY,29,0.601,backfill,,1.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7SWSHR4WPA
+1789952433.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-dme,BUY,168,0.32,backfill,,0.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7T2N8BTWPC
+1789952433.8,politics,paccc-usse-midterms-2026-11-03-dem,BUY,29,0.601,backfill,,1.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM7SWSHR4WPA
