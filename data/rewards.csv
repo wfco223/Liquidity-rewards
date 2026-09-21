@@ -11922,6 +11922,7 @@ date,market,program_type,reward_usd,status
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-dtx-rme,liquidityProgram,0.79,PENDING
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-rtx-dme,liquidityProgram,16.36,PENDING
 2026-09-19,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-dme,liquidityProgram,6.56,PENDING
+2026-09-19,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,liquidityProgram,6.4,PENDING
 2026-09-19,ewc-usgub-mi-2026-11-03-rep,liquidityProgram,0.24,PENDING
 2026-09-19,ewc-usgub-nv-2026-11-03-dem,liquidityProgram,0.29,PENDING
 2026-09-19,ewc-usgub-oh-2026-11-03-rep,liquidityProgram,0.34,PENDING
@@ -11953,6 +11954,7 @@ date,market,program_type,reward_usd,status
 2026-09-19,ushrewc-ushr-me-02-2026-11-03-rep,liquidityProgram,0.06,PENDING
 2026-09-19,ushrewc-ushr-nc-01-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-19,ushrewc-ushr-nj-07-2026-11-03-dem,liquidityProgram,0.13,PENDING
+2026-09-19,ushrewc-ushr-oh-09-2026-11-03-dem,liquidityProgram,0.02,PENDING
 2026-09-19,ushrewc-ushr-tx-34-2026-11-03-dem,liquidityProgram,0.64,PENDING
 2026-09-19,ushrewc-ushr-tx-34-2026-11-03-rep,liquidityProgram,7.21,PENDING
 2026-09-19,ushrewc-ushr-wa-03-2026-11-03-rep,liquidityProgram,0.86,PENDING
