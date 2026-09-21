@@ -11919,6 +11919,7 @@ date,market,program_type,reward_usd,status
 2026-09-18,ussewc-usse-tn-2026-11-03-dem,liquidityProgram,0.45,PENDING
 2026-09-18,ussewc-usse-va-2026-11-03-rep,liquidityProgram,0.56,PENDING
 2026-09-18,ussewc-usse-wv-2026-11-03-dem,liquidityProgram,0.2,PENDING
+2026-09-19,cpoc-ussec-tx-me-2026-11-03-dsweep,liquidityProgram,13.17,PENDING
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-dtx-rme,liquidityProgram,0.79,PENDING
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-rsweep,liquidityProgram,4.92,PENDING
 2026-09-19,cpoc-ussec-tx-me-2026-11-03-rtx-dme,liquidityProgram,16.36,PENDING
@@ -11975,6 +11976,7 @@ date,market,program_type,reward_usd,status
 2026-09-19,usgubewc-usgub-tn-2026-11-03-dem,liquidityProgram,0.27,PENDING
 2026-09-19,usgubewc-usgub-tx-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-19,usgubewc-usgub-tx-2026-11-03-rep,liquidityProgram,0.84,PENDING
+2026-09-19,ushrewc-ushr-ca-13-2026-11-03-rep,liquidityProgram,10.23,PENDING
 2026-09-19,ushrewc-ushr-ca-45-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-19,ushrewc-ushr-ia-01-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-19,ushrewc-ushr-me-02-2026-11-03-dem,liquidityProgram,0.2,PENDING
@@ -11987,9 +11989,11 @@ date,market,program_type,reward_usd,status
 2026-09-19,ushrewc-ushr-oh-09-2026-11-03-dem,liquidityProgram,0.02,PENDING
 2026-09-19,ushrewc-ushr-tx-34-2026-11-03-dem,liquidityProgram,0.64,PENDING
 2026-09-19,ushrewc-ushr-tx-34-2026-11-03-rep,liquidityProgram,7.21,PENDING
+2026-09-19,ushrewc-ushr-wa-03-2026-11-03-dem,liquidityProgram,0.18,PENDING
 2026-09-19,ushrewc-ushr-wa-03-2026-11-03-rep,liquidityProgram,0.86,PENDING
 2026-09-19,ussewc-usse-ar-2026-11-03-rep,liquidityProgram,0.09,PENDING
 2026-09-19,ussewc-usse-co-2026-11-03-dem,liquidityProgram,2.36,PENDING
+2026-09-19,ussewc-usse-fl-2026-11-03-dem,liquidityProgram,0.13,PENDING
 2026-09-19,ussewc-usse-la-2026-11-03-dem,liquidityProgram,0.15,PENDING
 2026-09-19,ussewc-usse-la-2026-11-03-rep,liquidityProgram,0.18,PENDING
 2026-09-19,ussewc-usse-or-2026-11-03-dem,liquidityProgram,0.07,PENDING
