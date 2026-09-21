@@ -1133,3 +1133,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790000226.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,345,0.112,focus,301.538,0.05,0.1034,11,13,0.875,0.11,0.111,0.0086,345,focus entry: ~$186.96/day; fill odds 54%/day; EV +165.50/day,CMMC8SZSPWP7
 1790001683.6,politics,scc-senate-gop-2026-11-03-lte45,BUY,31,0.04,focus,2.9898,0,0.12235,6,10,0.797,0.05,0.06,-0.0824,31,focus entry: ~$2.99/day; fill odds 16%/day; EV +0.41/day,CMMRWBGAMWPA
 1790002643.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,3,0.606,sell,0.1042,1.09,0.5,60,62,0.87,0.605,0.606,-0.106,0,an exit — its fill reduces the position it sits on,CMM24ZF74WP7
+1790005464.0,politics,paccc-usse-midterms-2026-11-03-dem,SELL,62,0.606,focus,2.4657,0.06,0.5,61,63,0.881,0.605,0.606,-0.106,-62,focus entry: ~$8.38/day; fill odds 53%/day; EV +5.00/day,CMNM47JTYWPF
+1790006042.1,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,40.27,0.93,backfill,,52.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CK93JF66GWPA
+1790006304.0,politics,paccc-usho-midterms-2026-11-03-dem,SELL,238,0.899,focus,375,0.02,0.8966,89,92,0.711,0.912,0.913,-0.0024,-238,focus entry: ~$320.35/day; fill odds 67%/day; EV +302.13/day,CMNV9PR56WPB
+1790006544.0,politics,ushrewc-ushr-wa-03-2026-11-03-dem,BUY,106,0.93,focus,57.9313,0.03,,88,95,0,0.91,0.92,0.01,0,focus exit: ~$12.94/day; fill odds 55%/day; EV +9.18/day,CMNXDZ5RTWPH
+1790006604.1,politics,scc-senate-gop-2026-11-03-lte45,BUY,-19.89,0.09,fix,17.0173,0.02,0.104675,7,12,0.756,0.09,0.1,-0.0147,79.99,size trimmed by 19.89 to the exchange's count (order CJWAVH35CW0Y),CJWAVH35CW0Y
+1790006604.1,politics,scc-senate-gop-2026-11-03-lte45,BUY,31,0.04,void,2.9898,0,0.12235,6,10,0.797,0.05,0.06,-0.0824,31,voided: the exchange has no trade for order CMMRWBGAMWPA — the row of 09-21 14:4,CMMRWBGAMWPA
+1790006604.1,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,40.27,0.93,backfill,,52.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CK93JF66GWPA
