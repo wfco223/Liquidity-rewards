@@ -1212,3 +1212,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790013091.3,politics,paccc-usho-midterms-2026-11-03-dem,BUY,4,0.911,void,10.4631,0.07,0.8966,87,89,0.865,0.911,0.912,0.0144,42,voided: the exchange has no trade for order CMPKG34R2WPF — the row of 09-21 16:5,CMPKG34R2WPF
 1790013091.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,5,0.04,void,6.5959,0.11,,7,11,0.731,0.03,0.04,0.05,-5,voided: the exchange has no trade for order CMPKWT4JYWPH — the row of 09-21 16:5,CMPKWT4JYWPH
 1790013091.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,5.1,0.04,backfill,,0.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMPKSJDHGWPE
+1790013391.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,9,0.103,sell,0.2015,1.7,0.1034,12,14,0.908,0.102,0.103,0.0004,0,an exit — its fill reduces the position it sits on,CMP3HADQGWP7
+1790014951.4,politics,ewc-usgub-nv-2026-11-03-dem,SELL,10,0.45,sell,0.0644,69.54,0.40965,43,47,0.513,0.44,0.45,-0.0403,60,an exit — its fill reduces the position it sits on,CJWBHWJ68W7H
+1790015847.4,politics,ewc-usse-tx-2026-11-03-rep,BUY,40,0.43,backfill,,38.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKQ48659YWP9
+1790015911.4,politics,ewc-usse-tx-2026-11-03-rep,BUY,33,0.43,sell,0.5289,38.61,0.299425,42,46,0.436,0.43,0.44,0.1306,0,an exit — its fill reduces the position it sits on,CKQ48659YWP9
+1790016692.9,politics,ewc-usse-tx-2026-11-03-rep,BUY,40,0.43,backfill,,38.59,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CKQ48659YWP9
