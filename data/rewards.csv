@@ -11924,14 +11924,17 @@ date,market,program_type,reward_usd,status
 2026-09-19,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-dme,liquidityProgram,6.56,PENDING
 2026-09-19,ewc-usgub-nv-2026-11-03-dem,liquidityProgram,0.29,PENDING
 2026-09-19,ewc-usse-nc-2026-11-03-rep,liquidityProgram,3.46,PENDING
+2026-09-19,paccc-balpow-2026-11-03-rsweep,liquidityProgram,0.1,PENDING
 2026-09-19,paccc-usho-midterms-2026-11-03-dem,liquidityProgram,0.81,PENDING
 2026-09-19,paccc-usho-midterms-2026-11-03-rep,liquidityProgram,27.37,PENDING
 2026-09-19,paccc-usse-midterms-2026-11-03-dem,liquidityProgram,1.08,PENDING
 2026-09-19,scc-hrep-rep-2026-11-03-gte185,liquidityProgram,0.24,PENDING
 2026-09-19,scc-senate-gop-2026-11-03-54,liquidityProgram,0.06,PENDING
 2026-09-19,usgubewc-usgub-fl-2026-11-03-rep,liquidityProgram,8.31,PENDING
+2026-09-19,usgubewc-usgub-md-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-19,usgubewc-usgub-ny-2026-11-03-dem,liquidityProgram,1.37,PENDING
 2026-09-19,usgubewc-usgub-tx-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-19,ushrewc-ushr-ca-45-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-19,ushrewc-ushr-me-02-2026-11-03-dem,liquidityProgram,0.2,PENDING
+2026-09-19,ushrewc-ushr-nc-01-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-19,ushrewc-ushr-tx-34-2026-11-03-rep,liquidityProgram,7.21,PENDING
