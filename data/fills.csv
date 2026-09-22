@@ -1345,3 +1345,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790063064.7,politics,ewc-usse-oh-2026-11-03-dem,BUY,40,0.65,focus,9.9562,0.04,0.6962,57,64,0.598,0.65,0.66,-0.0462,40,focus entry: ~$5.57/day; fill odds 56%/day; EV +3.09/day,CN382K8E8WPC
 1790064144.8,politics,scc-hrep-rep-2026-11-03-gte215,SELL,15,0.11,manual,0.1845,15.19,0.162575,8,12,0.351,0.1,0.11,0.0526,-38,the owner's own order — the engine leaves it alone,CMPKSJE2PWPE
 1790064324.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,5,0.095,focus,55.7786,0.15,0.1111,12,14,0.941,0.097,0.098,0.0161,-70,focus entry: ~$54.55/day; fill odds 67%/day; EV +53.90/day,CN3F8WJBEWPA
+1790065368.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,51,0.651,backfill,,1.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN2VA1DHWWPF
+1790066064.8,politics,paccc-usse-midterms-2026-11-03-rep,SELL,74,0.364,sell,31.5148,0.48,0.3583,36,39,0.805,0.363,0.364,-0.0057,0,an exit — its fill reduces the position it sits on,CN3M8RHSYWP6
+1790067059.7,politics,ussewc-usse-co-2026-11-03-rep,SELL,0.01,0.05,backfill,,92.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDG4MNRW22
+1790067084.9,politics,ussewc-usse-co-2026-11-03-rep,SELL,153,0.05,sell,0.7925,92.08,0.003625,2,6,0.112,0.04,0.05,-0.0464,213,an exit — its fill reduces the position it sits on,CJNDG4MNRW22
+1790067108.1,politics,ushrewc-ushr-tx-34-2026-11-03-rep,SELL,0.38,0.23,backfill,,38.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM3TXQT2RWPD
+1790067144.9,politics,ushrewc-ushr-tx-34-2026-11-03-rep,SELL,35,0.23,sell,2.2903,38.09,,23,28,0.127,0.22,0.23,0.02,133,an exit — its fill reduces the position it sits on,CM3TXQT2RWPD
+1790068404.9,politics,usgubewc-usgub-ny-2026-11-03-rep,SELL,-73.73,0.08,fix,0.4247,53.59,0.011575,6,11,0.615,0.07,0.08,-0.0684,-0.03,size trimmed by 73.73 to the exchange's count (order CJNCPXYBAW1N),CJNCPXYBAW1N
+1790068404.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,51,0.651,backfill,,1.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN2VA1DHWWPF
+1790068404.9,politics,ussewc-usse-co-2026-11-03-rep,SELL,0.01,0.05,backfill,,92.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDG4MNRW22
+1790068404.9,politics,ushrewc-ushr-tx-34-2026-11-03-rep,SELL,0.38,0.23,backfill,,38.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM3TXQT2RWPD
