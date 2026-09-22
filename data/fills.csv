@@ -1277,3 +1277,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790038486.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,61,0.102,sell,9.1995,0.19,0.1111,11,13,0.928,0.101,0.102,0.0091,515,an exit — its fill reduces the position it sits on,CMXDTF48CWPC
 1790039332.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,230,0.102,sell,7.1312,0.42,0.1111,11,13,0.932,0.101,0.102,0.0091,285,an exit — its fill reduces the position it sits on,CMXDTF48CWPC
 1790039572.5,politics,scc-hrep-rep-2026-11-03-gte180,SELL,-5.14,0.97,fix,0.0059,20.03,0.920325,92,97,0,0.96,0.97,-0.0497,0,size trimmed by 5.14 to the exchange's count (order CJX9VWF8JW1Z),CJX9VWF8JW1Z
+1790039932.5,politics,ewc-usse-tx-2026-11-03-rep,SELL,14,0.43,sell,0.8346,1.09,0.3037,40,45,0.584,0.42,0.43,-0.1263,68,an exit — its fill reduces the position it sits on,CMWXFBPFMWPE
+1790039992.5,politics,ewc-usse-tx-2026-11-03-rep,SELL,22,0.43,sell,0.7014,1.11,0.3037,42,46,0.691,0.42,0.43,-0.1263,46,an exit — its fill reduces the position it sits on,CMWXFBPFMWPE
+1790040657.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,20,0.06,sell,1.2295,84.75,,8,12,0.913,0.05,0.06,0.04,150,an exit — its fill reduces the position it sits on,CJND344BPW22
+1790041257.4,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,39,0.06,sell,1.2441,0.15,,8,12,0.919,0.05,0.06,0.04,111,an exit — its fill reduces the position it sits on,CMY38YVW4WPC
+1790041497.4,politics,ewc-usse-tx-2026-11-03-rep,SELL,11,0.43,sell,0.5314,1.53,0.3037,43,46,0.752,0.42,0.43,-0.1263,35,an exit — its fill reduces the position it sits on,CMWXFBPFMWPE
+1790041677.4,politics,ewc-usse-tx-2026-11-03-rep,SELL,35,0.43,sell,0.4065,1.58,0.3037,44,47,0.794,0.42,0.43,-0.1263,0,an exit — its fill reduces the position it sits on,CMWXFBPFMWPE
+1790041677.4,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,20,0.06,sell,1.3416,0.1,,9,13,0.924,0.05,0.06,0.04,91,an exit — its fill reduces the position it sits on,CMY7Y9NSAWP7
+1790041857.4,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,20,0.06,sell,1.3733,0.15,,9,13,0.928,0.05,0.06,0.05,71,an exit — its fill reduces the position it sits on,CMY7Y9NSAWP7
+1790042097.4,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,20,0.06,sell,0.8649,0.22,,9,13,0.932,0.05,0.06,0.05,51,an exit — its fill reduces the position it sits on,CMY7Y9NSAWP7
+1790042337.5,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,20,0.06,sell,0.4285,0.28,,9,13,0.936,0.05,0.06,0.05,31,an exit — its fill reduces the position it sits on,CMY7Y9NSAWP7
+1790042457.5,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,20,0.06,sell,0.2543,0.32,,10,13,0.939,0.05,0.06,0.05,11,an exit — its fill reduces the position it sits on,CMY7Y9NSAWP7
+1790042757.5,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,11,0.06,sell,0.184,0.4,,10,14,0.942,0.05,0.06,0.05,0,an exit — its fill reduces the position it sits on,CMY7Y9NSAWP7
+1790043177.5,politics,ussewc-usse-sc-2026-11-03-dem,BUY,-2.3,0.14,fix,,56.1,,,,,,,,,size trimmed by 2.3 to the exchange's count (order CJNDPN4XTW22),CJNDPN4XTW22
+1790043177.5,politics,ussewc-usse-sc-2026-11-03-dem,BUY,-3.33,0.14,fix,,30.56,,,,,,,,,size trimmed by 3.33 to the exchange's count (order CJNDPN4XTW22),CJNDPN4XTW22
+1790043177.5,politics,ussewc-usse-sc-2026-11-03-dem,BUY,-38.43,0.14,fix,,29.66,,,,,,,,,size trimmed by 38.43 to the exchange's count (order CJNDPN4XTW22),CJNDPN4XTW22
