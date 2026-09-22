@@ -89,7 +89,7 @@ class TestGraduation(unittest.TestCase):
         self.assertEqual([x["market"] for x in g["graduated"]], [B])
         self.assertEqual(g["graduated"][0]["days"], 3)
         self.assertEqual([x["market"] for x in g["candidates"]], [A])
-        self.assertEqual((g["bar_usd"], g["days"], g["pool_usd"]), (1.0, 3, 150.0))
+        self.assertEqual((g["bar_usd"], g["days"], g["pool_usd"]), (1.0, 3, 50.0))   # 2026-09-22: was 150
 
     def test_a_restart_keeps_what_he_approved(self):
         self.mon._refresh_graduation(self.fam, 1000.0)

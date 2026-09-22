@@ -113,7 +113,11 @@ def config() -> FamilyConfig:
         # boosted markets are the focus tender's now (v3/focus.py) and
         # the three families share $250 — politics $150, cfb $60, NFL
         # $40 (my split; his to change)
-        capital_usd=150.0, gross_cap_usd=2500.0,
+        # owner, 2026-09-22 ("And a little into politics. Not as much as
+        # before" ... "$50 loss / $300 collateral"): a third of the old
+        # expected-loss cap, an eighth of the old worst-day bound; the
+        # per-market limits stand
+        capital_usd=50.0, gross_cap_usd=300.0,
         per_market_usd=20.0, per_market_gross_usd=60.0,
         revive_max_usd=20.0,
         share_hi=0.10,
@@ -226,7 +230,7 @@ def config() -> FamilyConfig:
         # primary markets" — those books stay fresh every cycle and
         # lead the stream subscription
         watch_tokens=("ussep-mov-ma-dem",),
-        graduate_paid_usd=1.00, proven_usd=150.0,
+        graduate_paid_usd=1.00, proven_usd=50.0,   # 2026-09-22: was 150 — the graduated pool may not reopen the old size
         # owner, 2026-08-21: 75c is a GOAL — markets that could clear it
         # at full confidence get starter positions from this budget, and
         # probes stay funded ("you have to go out and get evidence")
