@@ -1299,3 +1299,17 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790047437.6,politics,ussewc-usse-co-2026-11-03-dem,SELL,366,0.95,focus,16.4315,0.84,0.996375,93,97,0.483,0.95,0.96,0.0464,-366,focus entry: ~$9.62/day; fill odds 54%/day; EV +1.67/day,CMYYK40DYWPD
 1790047797.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,14,0.619,focus,1.4174,0.14,0.5,61,63,0.85,0.618,0.619,-0.119,-14,focus entry: ~$13.56/day; fill odds 54%/day; EV +11.95/day,CMZJRWZKEWPE
 1790049477.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,3,0.619,focus,0.2784,0.12,0.5,61,64,0.853,0.618,0.619,-0.119,-17,focus entry: ~$4.01/day; fill odds 54%/day; EV +3.60/day,CMZYTAMXJWPB
+1790050557.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,28,0.619,focus,1.4069,0.05,0.5,62,64,0.856,0.618,0.619,-0.119,-45,focus entry: ~$1.40/day; fill odds 54%/day; EV +1.04/day,CN09WKM8RWP9
+1790051157.7,politics,ewc-usse-ia-2026-11-03-rep,BUY,69,0.58,focus,120.305,0.01,0.481675,51,58,0.039,0.56,0.57,0.0983,69,focus entry: ~$28.31/day; fill odds 56%/day; EV +27.34/day,CN0E58F3MWP7
+1790051698.4,politics,paccc-usse-midterms-2026-11-03-rep,BUY,73,0.413,focus,9.3602,0.16,0.3583,39,44,0.157,0.408,0.409,0.0547,73,focus entry: ~$8.73/day; fill odds 56%/day; EV +7.77/day,CN0EHWYJ4WPE
+1790051998.4,politics,ewc-usse-tx-2026-11-03-rep,BUY,53,0.42,focus,1.7329,0.08,0.3037,43,46,0.84,0.41,0.42,0.1163,94,focus entry: ~$2.12/day; fill odds 56%/day; EV +1.25/day,CN0HHD7SRWPF
+1790052598.4,politics,paccc-usse-midterms-2026-11-03-dem,SELL,2,0.619,focus,1.6212,0.06,0.5,62,64,0.858,0.618,0.619,-0.119,-47,focus entry: ~$1.69/day; fill odds 54%/day; EV +1.49/day,CN0N904CJWP6
+1790053078.4,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,20,0.19,focus,0.9322,0.28,0.324425,19,25,0.558,0.19,0.2,0.1344,-20,focus entry: ~$0.96/day; fill odds 48%/day; EV +0.50/day,CN0K8PDS2WP6
+1790053258.4,politics,ewc-usgub-ia-2026-11-03-dem,SELL,39,0.77,sell,122.45,11.89,0.87875,79,85,0.408,0.8,0.81,0.1088,0,an exit — its fill reduces the position it sits on,CMPWQ5G3JWPA
+1790053258.4,politics,paccc-usho-midterms-2026-11-03-rep,BUY,177,0.1,focus,370.783,0.03,0.1111,12,14,0.934,0.093,0.094,-0.0111,177,focus entry: ~$5.58/day; fill odds 4%/day; EV +4.06/day,CN0WB9QE2WPC
+1790053258.4,politics,ewc-usgub-ia-2026-11-03-dem,SELL,39,0.81,focus,9.8514,0.02,0.87875,79,85,0.408,0.8,0.81,0.0687,-39,focus exit: ~$2.56/day; fill odds 49%/day; EV +3.81/day,CN0WRM97CWPE
+1790053438.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,177,0.094,sell,57.1157,0.05,0.1111,12,13,0.938,0.093,0.094,0.0171,0,an exit — its fill reduces the position it sits on,CN0XCJM1AWPE
+1790053918.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,25,0.094,focus,6.8736,0.07,0.1111,12,13,0.941,0.093,0.094,0.0171,-25,focus entry: ~$8.16/day; fill odds 66%/day; EV +4.93/day,CN10EKEBMWPH
+1790053968.5,politics,ewc-usse-tx-2026-11-03-rep,SELL,94,0.42,backfill,,0.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN0K0Q76TWPE
+1790053978.4,politics,ussewc-usse-sc-2026-11-03-dem,BUY,-3.33,0.14,fix,,29.66,,,,,,,,,size trimmed by 3.33 to the exchange's count (order CJNDPN4XTW22),CJNDPN4XTW22
+1790053978.4,politics,ewc-usse-tx-2026-11-03-rep,SELL,94,0.42,backfill,,0.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN0K0Q76TWPE
