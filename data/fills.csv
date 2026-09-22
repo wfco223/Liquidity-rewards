@@ -1379,3 +1379,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790079205.8,politics,ewc-usse-ia-2026-11-03-dem,SELL,-39,0.44,fix,0.8547,0.65,0.518325,44,48,0.762,0.43,0.44,0.0783,2,size trimmed by 39 to the exchange's count (order CN5N0QA8JWP6),CN5N0QA8JWP6
 1790079205.8,politics,ussewc-usse-co-2026-11-03-rep,SELL,0.6,0.05,backfill,,94.81,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDG4MNRW22
 1790079205.8,politics,paccc-usse-midterms-2026-11-03-dem,BUY,46,0.651,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN6VJ7SSRWP7
+1790079505.8,politics,paccc-balpow-2026-11-03-dsweep,SELL,79,0.6,focus,3.4078,0.07,,57,63,0.174,0.6,0.61,0,-79,focus entry: ~$8.39/day; fill odds 67%/day; EV +0.52/day,CN72Z2YS8WPF
+1790080465.8,politics,paccc-usse-midterms-2026-11-03-dem,BUY,33,0.651,focus,358.561,0.26,0.5,63,65,0.89,0.648,0.651,0.151,80,focus entry: ~$54.55/day; fill odds 56%/day; EV +52.73/day,CN756M0SMWPA
+1790080585.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,62,0.65,focus,1.5202,0.01,0.5,63,65,0.899,0.648,0.65,-0.15,-44,focus entry: ~$3.69/day; fill odds 55%/day; EV +1.51/day,CN7D130WEWP9
+1790081605.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,12,0.646,focus,361.48,0.06,0.5,64,66,0.907,0.641,0.646,0.146,30,focus entry: ~$1.31/day; fill odds 56%/day; EV +0.66/day,CN7KKBTMTWPA
+1790082325.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,70,0.099,sell,0.6883,4.95,0.1111,12,14,0.936,0.099,0.1,-0.0121,0,an exit — its fill reduces the position it sits on,CN3NB6QWPWPH
+1790082806.0,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,-27.91,0.77,fix,40.6461,0.05,0.976325,69,75,0.586,0.76,0.77,0.2063,0,size trimmed by 27.91 to the exchange's count (order CM3BV4MZYWPH),CM3BV4MZYWPH
+1790082806.0,politics,paccc-usse-midterms-2026-11-03-dem,SELL,62,0.651,void,1.4388,0.02,0.5,63,65,0.899,0.648,0.65,-0.151,18,voided: the exchange has no trade for order CN7D6FGW0WPE — the row of 09-22 12:3,CN7D6FGW0WPE
