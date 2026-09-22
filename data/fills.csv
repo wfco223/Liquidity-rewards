@@ -1393,3 +1393,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790085901.7,politics,ewc-usse-tx-2026-11-03-dem,BUY,55,0.59,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN8CGVPWAWPB
 1790086406.3,politics,paccc-usse-midterms-2026-11-03-rep,SELL,72,0.364,backfill,,0.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN7SG72MAWP7
 1790086406.3,politics,ewc-usse-tx-2026-11-03-dem,BUY,55,0.59,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN8CGVPWAWPB
+1790086886.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,9,0.64,focus,375,0.11,0.5,62,64,0.908,0.626,0.629,0.14,69,focus entry: ~$2.13/day; fill odds 57%/day; EV +1.66/day,CN8VR1M8AWPH
+1790087126.3,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,1,0.41,sell,0.1426,41.47,,31,40,0.032,0.33,0.34,0.06,2,buying back the short at or under what it sold for — the bid earns while it wait,CM5PFS7B8WPB
+1790087126.3,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,SELL,1,0.29,sell,0,0.02,,31,40,0.032,0.33,0.34,0.06,1,selling filled stock — it earns while it waits,CN8ZZRMV8WPB
+1790087246.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,44,0.626,sell,53.1299,0.05,0.5,62,64,0.914,0.625,0.626,-0.126,25,an exit — its fill reduces the position it sits on,CN8ZXV22GWPA
+1790087606.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,2,0.626,sell,0.9589,0.15,0.5,62,64,0.915,0.625,0.626,-0.126,23,an exit — its fill reduces the position it sits on,CN8ZXV22GWPA
+1790087726.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,7,0.626,sell,0.8886,0.18,0.5,63,64,0.921,0.625,0.626,-0.126,16,an exit — its fill reduces the position it sits on,CN8ZXV22GWPA
+1790087786.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,7,0.626,sell,0.6226,0.2,0.5,63,65,0.922,0.625,0.626,-0.126,9,an exit — its fill reduces the position it sits on,CN8ZXV22GWPA
+1790088206.4,politics,usgubewc-usgub-ok-2026-11-03-dem,BUY,40,0.1,sell,0.6485,17.03,0.037925,5,11,0.109,0.09,0.1,0.0621,0,buying back the short at or under what it sold for — the bid earns while it wait,CMTNM7YW0WP7
+1790088206.4,politics,paccc-usse-midterms-2026-11-03-dem,SELL,9,0.626,sell,0.3611,0.32,0.5,63,65,0.922,0.625,0.626,-0.126,0,an exit — its fill reduces the position it sits on,CN8ZXV22GWPA
+1790089410.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,111,0.626,backfill,,0.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN9BS4XW0WPA
+1790090006.5,politics,scc-senate-gop-2026-11-03-49,SELL,-17.04,0.15,fix,,19.62,,,,,,,,,size trimmed by 17.04 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
+1790090006.5,politics,scc-senate-gop-2026-11-03-49,SELL,-12,0.15,fix,1.6284,10.32,0.13965,13,16,0.597,0.14,0.15,-0.0103,126,size trimmed by 12 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
+1790090006.5,politics,scc-senate-gop-2026-11-03-49,SELL,-0.59,0.15,fix,,10.31,,,,,,,,,size trimmed by 0.59 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
+1790090006.5,politics,scc-senate-gop-2026-11-03-49,SELL,-1.83,0.15,fix,1.5226,8.29,0.13965,12,16,0.414,0.14,0.15,-0.0103,138.61,size trimmed by 1.83 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
+1790090006.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-59,0.599,fix,,0.67,,,,,,,,,size trimmed by 59 to the exchange's count (order CM43WK370WP9),CM43WK370WP9
+1790090006.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,111,0.626,backfill,,0.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN9BS4XW0WPA
