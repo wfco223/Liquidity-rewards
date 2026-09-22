@@ -1123,6 +1123,24 @@ long and accreted, so search it rather than reading it through.
   board's other markets are scored live. The wall itself earns nothing
   worth counting; nothing places without his tap.
 
+- WHEN A MARKET LEAVES THE TENDER'S BOARD, ITS ENTRIES COME OFF
+  (owner, 2026-09-22 "C: Pull entries when a market leaves the board",
+  the one of three fixes he took — A, sealing the 37 pre-flag
+  feed-seeded lots, and B, the tender's resize churn, were NOT
+  approved and are not built). On 2026-09-21 at 21:41Z the exchange
+  cut the Senate Combo pools from $300 to $25 a day; the twelve books
+  left the board ("left_focus"), and four tender entries holding $140
+  of collateral (399 @ 7c, 257 @ 20c, 38 @ 43c, 104 @ 44c) rested on
+  for six hours earning $2.70 a day between them — the tender no
+  longer planned that ground and the engine left them alone. Now
+  refresh_markets calls _release_entries for every departed market:
+  the tender's own orders there that are ENTRIES are cancelled
+  (logged "pull … left the board"), the ids go to the ghost memory so
+  a lagging open list never adopts them back; an EXIT — purpose
+  "sell", or a sale of a long / a cover of a short by the family's
+  book — stays for the engine; his hand's orders and his walls are
+  never touched. A refused cancel is logged "pull_refused" and left.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
