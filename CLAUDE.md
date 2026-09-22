@@ -1141,6 +1141,29 @@ long and accreted, so search it rather than reading it through.
   book — stays for the engine; his hand's orders and his walls are
   never touched. A refused cancel is logged "pull_refused" and left.
 
+- THE STOP SIGNAL SAVES THE STATE (owner, 2026-09-22 "Yes, ship it",
+  fix D). The launcher forwards the platform's SIGTERM and v3.main had
+  no handler: the process died with nothing written, so every deploy
+  lost the orders the tender had placed since the last cycle's save
+  (its passes run every 15 s between them). The next boot found them
+  on the open list, not in the state, and recorded them as his hand's
+  — untouchable — and on the seat books, where his orders are never
+  adopted, the tender rested its own beside them: 2026-09-21 a 15-share
+  ask on House seats ≥215 (the tender added 21); 2026-09-22 five orders
+  at once (Senate seats 52: a 223-share bid at 7c became "his", the
+  tender rested 195 at 8c beside it; 48 the same with asks of 7 and
+  18 at 15c; House ≥225 and ≥230 bids; the NE senate rep exit of 13).
+  Now run() installs SIGTERM/SIGINT handlers: shutdown_save builds on
+  the last full state (never a fragment — with nothing restored and no
+  cycle run it writes nothing, the 2026-09-17 lesson), overlays every
+  part that moves between cycle saves (the families' to_dict, the
+  tender, the bonds, the sweep, the maintenance run, the desks' cancel
+  memory, the switches, the audit), waits for a running cycle up to
+  SHUTDOWN_LOCK_S (5 s) then saves regardless, uploads with
+  force_remote and waits up to SHUTDOWN_SAVE_S (25 s) for the upload,
+  prints what it did, and exits. A boot then restores every order as
+  whose it really is.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
