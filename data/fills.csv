@@ -1444,3 +1444,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790098363.7,politics,scc-senate-gop-2026-11-03-49,SELL,140.44,0.15,hand,,26.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CKGHNK96RWP6
 1790098363.7,politics,ewc-usgub-oh-2026-11-03-rep,BUY,10,0.4,hand,,58.04,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVSPDRWWW0Y
 1790098363.7,politics,ewc-usgub-wi-2026-11-03-dem,SELL,5,0.83,hand,,75.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVWP40J8W1Y
+1790100429.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,44,0.636,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNBGB3QNPWPF
+1790101164.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,44,0.636,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNBGB3QNPWPF
