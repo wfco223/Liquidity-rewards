@@ -1530,3 +1530,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,SELL,0.19,0.08,hand,,9.65,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CN5V8SHTTWPH
 1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,0.15,0.07,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNE6KGPHRWP7
 1790111974.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,55,0.64,backfill,,0.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNEQ8ES4AWPD
+1790112573.9,politics,ewc-usse-tx-2026-11-03-rep,SELL,26,0.42,focus,2.6444,0.25,0.298025,43,45,0.825,0.41,0.42,-0.122,-71,focus entry: ~$2.71/day; fill odds 56%/day; EV +0.40/day,CNEVW1MHEWP7
+1790115299.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,82,0.639,backfill,,1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNEVHVMSEWPA
+1790115574.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,71,0.64,focus,104.189,0.13,0.5,65,68,0.906,0.639,0.64,-0.14,-141,focus entry: ~$18.06/day; fill odds 56%/day; EV +15.39/day,CNFPBVMP2WPH
+1790115634.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,82,0.639,backfill,,1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNEVHVMSEWPA
