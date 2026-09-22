@@ -1386,3 +1386,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790082325.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,70,0.099,sell,0.6883,4.95,0.1111,12,14,0.936,0.099,0.1,-0.0121,0,an exit — its fill reduces the position it sits on,CN3NB6QWPWPH
 1790082806.0,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,-27.91,0.77,fix,40.6461,0.05,0.976325,69,75,0.586,0.76,0.77,0.2063,0,size trimmed by 27.91 to the exchange's count (order CM3BV4MZYWPH),CM3BV4MZYWPH
 1790082806.0,politics,paccc-usse-midterms-2026-11-03-dem,SELL,62,0.651,void,1.4388,0.02,0.5,63,65,0.899,0.648,0.65,-0.151,18,voided: the exchange has no trade for order CN7D6FGW0WPE — the row of 09-22 12:3,CN7D6FGW0WPE
+1790083706.1,politics,paccc-usse-midterms-2026-11-03-dem,BUY,12,0.645,focus,147.555,0.06,0.5,63,65,0.901,0.645,0.646,0.145,42,focus entry: ~$58.01/day; fill odds 57%/day; EV +56.62/day,CN84NMTGTWPC
+1790084525.0,politics,paccc-usse-midterms-2026-11-03-rep,SELL,72,0.364,backfill,,0.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN7SG72MAWP7
+1790085506.2,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,34,0.2,focus,0.7236,0.27,0.324425,20,24,0.632,0.2,0.21,0.1244,-54,focus entry: ~$1.00/day; fill odds 48%/day; EV +0.37/day,CN8CEYWRGWPF
+1790085566.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,18,0.645,focus,326.104,0.01,0.5,62,64,0.901,0.641,0.643,0.145,60,focus entry: ~$25.97/day; fill odds 57%/day; EV +25.01/day,CN8MWFCFEWPF
+1790085901.7,politics,ewc-usse-tx-2026-11-03-dem,BUY,55,0.59,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN8CGVPWAWPB
+1790086406.3,politics,paccc-usse-midterms-2026-11-03-rep,SELL,72,0.364,backfill,,0.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN7SG72MAWP7
+1790086406.3,politics,ewc-usse-tx-2026-11-03-dem,BUY,55,0.59,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN8CGVPWAWPB
