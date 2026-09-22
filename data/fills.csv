@@ -1361,3 +1361,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790072005.3,politics,scc-senate-gop-2026-11-03-49,SELL,-17.04,0.15,fix,0.9037,22.93,0.13965,14,17,0.722,0.14,0.15,-0.0103,13.54,size trimmed by 17.04 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
 1790072005.3,politics,scc-senate-gop-2026-11-03-49,SELL,-63.96,0.15,fix,,19.62,,,,,,,,,size trimmed by 63.96 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
 1790072005.3,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,BUY,0.1,0.63,backfill,,3.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN25DTQ9RWPC
+1790073025.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,1,0.651,focus,23.401,0.35,0.5,64,66,0.884,0.651,0.652,0.151,1,focus entry: ~$28.05/day; fill odds 56%/day; EV +25.16/day,CN5CCS27CWPH
+1790073074.5,politics,paccc-usse-midterms-2026-11-03-rep,BUY,28,0.363,backfill,,1.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN4HWZE74WPB
+1790073208.2,politics,ewc-usse-ia-2026-11-03-dem,BUY,41,0.47,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN5MER9AMWPC
+1790073325.4,politics,ewc-usse-ia-2026-11-03-dem,SELL,39,0.43,focus,2.9366,0.03,0.518325,43,48,0.706,0.43,0.44,0.0883,2,focus exit: ~$3.05/day; fill odds 54%/day; EV +4.32/day,CN5MMMBZ2WPA
+1790075546.0,politics,ewc-usse-ia-2026-11-03-dem,SELL,39,0.44,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN5N0QA8JWP6
+1790075605.6,politics,paccc-usse-midterms-2026-11-03-rep,BUY,28,0.363,backfill,,1.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN4HWZE74WPB
+1790075605.6,politics,ewc-usse-ia-2026-11-03-dem,BUY,41,0.47,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN5MER9AMWPC
+1790075605.6,politics,ewc-usse-ia-2026-11-03-dem,SELL,39,0.44,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN5N0QA8JWP6
