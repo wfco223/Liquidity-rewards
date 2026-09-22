@@ -670,6 +670,14 @@ class Focus:
         for s in gone:
             self._log(event="left_focus", market=s,
                       note="its program no longer pays the focus bar")
+            # the tender's own ENTRIES there come off; its exits stay
+            # for the engine (owner, 2026-09-22 "C: Pull entries when
+            # a market leaves the board" — on 2026-09-21 the exchange
+            # cut the Senate Combo pools from $300 to $25 a day, the
+            # twelve books left the board, and four tender entries
+            # holding $140 of collateral rested on for six hours
+            # earning $2.70 a day between them, planned by nobody)
+            self._release_entries(s, now)
         self.markets = out
         # the ground is the tender's: the engine places, pulls and
         # reprices nothing here; the bonds hand the markets over
@@ -683,6 +691,34 @@ class Focus:
             except Exception:  # noqa: BLE001
                 pass
         return out
+
+    def _release_entries(self, slug: str, now: float) -> int:
+        """A market has left the board: cancel the tender's own entries
+        there. An exit — the position leaving — stays, and the engine
+        works it under its own rules; his hand's orders and his walls
+        are never touched. Returns the number pulled."""
+        net = float((self.fam.inventory.get(slug) or {}).get("qty") or 0.0)
+        n = 0
+        for o in self._orders(slug):
+            if not self._is_mine(o) or is_wall(o):
+                continue
+            is_exit = o.purpose == "sell" or (
+                (o.side == "SELL" and net > 0.005) or (o.side == "BUY" and net < -0.005))
+            if is_exit:
+                continue
+            r = self.fam.desk.cancel(o.id, o.market, initiator="auto")
+            if not r.ok:
+                self._log(event="pull_refused", market=slug, side=o.side, price=o.price,
+                          qty=o.qty, note=f"left the board, cancel refused: {r.note}"[:160])
+                continue
+            self.fam.orders.pop(o.id, None)
+            self._forget(o.id)
+            self.moved_at[f"{slug}|{o.side}"] = now
+            n += 1
+            self._log(event="pull", market=slug, side=o.side, price=o.price, qty=o.qty,
+                      why="left the board — its program no longer pays the focus bar; "
+                          "the entry comes off, an exit stays for the engine")
+        return n
 
     # -- the program watch -----------------------------------------------------
 
