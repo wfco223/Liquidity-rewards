@@ -229,6 +229,16 @@ MORE_SHARE = 0.50           # the buy-more order rests only where it captures th
 # bids freed — proceeds or a deposit, not our own collateral coming back.
 NO_MONEY_USD = 10.0
 MONEY_BACK_USD = 50.0
+# With the bonds switch OFF there is no bond loop to reserve for (owner,
+# 2026-09-22 "You can put money into cfb. And a little into politics"):
+# the families' gate holds back the same $300 of the exchange's buying
+# power the tender keeps free (focus.FOCUS_BP_KEEP_FREE_USD), read as the
+# exchange reports it — his walls' collateral is money the exchange has
+# genuinely taken and is not added back (the 2026-09-14 rule). From
+# 2026-09-18 11:27Z the bonds' unspent budget ($2,094) had been reserved
+# against a buying power of $360-$590, so politics and cfb sat at
+# "exits only" for four days with the bonds switch off the whole time.
+FAMILY_KEEP_FREE_USD = 300.0
 DOTS_KEEP = 2880            # bond earning-rate samples kept for the graph
 # the holdings come from the exchange's position feed and their cost
 # from its transaction record (owner, 2026-09-04: "The bonds list
@@ -1861,10 +1871,16 @@ class Bonds:
         for s in list(self.exit_px):
             if self.held(s, self._side_of(s)) < 0.005:
                 self.exit_px.pop(s, None)        # out of the position: the pin is spent
-        # the families' gate, judged switch on or off: free money on the
-        # exchange beyond what the bonds may still spend (their room)
-        self._money_gate(self._buying_power(now), now, act=on,
-                         walls=self._wall_held(), reserve=self.budget_room())
+        # the families' gate, judged switch on or off. ON: free money on
+        # the exchange (plus his walls) beyond what the bonds may still
+        # spend (their room). OFF: nothing to reserve for — the families
+        # keep the tender's $300 free, on the buying power as read
+        if on:
+            self._money_gate(self._buying_power(now), now, act=on,
+                             walls=self._wall_held(), reserve=self.budget_room())
+        else:
+            self._money_gate(self._buying_power(now), now, act=on,
+                             walls=0.0, reserve=FAMILY_KEEP_FREE_USD)
         if on:
             for slug in self._tending():
                 side = self._side_of(slug)

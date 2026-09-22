@@ -5476,12 +5476,11 @@ class TestExpectedRiskBudget(unittest.TestCase):
     def test_politics_config_carries_the_approved_numbers(self):
         from v3 import politics
         c = politics.config()
-        # owner, 2026-09-10: politics' share of the families' $250 while
-        # the boosted markets are the focus tender's
-        self.assertEqual(c.capital_usd, 150.0)
-        # owner, 2026-08-30 "2500 is fine" — the raw-claims planner
-        # pressed the old $500 gross bound within hours
-        self.assertEqual(c.gross_cap_usd, 2500.0)
+        # owner, 2026-09-22 "a little into politics. Not as much as
+        # before": $50 of expected loss (was $150), $300 gross (was $2,500)
+        self.assertEqual(c.capital_usd, 50.0)
+        self.assertEqual(c.gross_cap_usd, 300.0)
+        self.assertEqual(c.proven_usd, 50.0)
         self.assertEqual(c.per_market_usd, 20.0)
         self.assertEqual(c.per_market_gross_usd, 60.0)
         self.assertEqual(c.min_est_day, 0.02)
