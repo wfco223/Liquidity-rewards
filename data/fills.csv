@@ -1475,3 +1475,58 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790108374.0,politics,ewc-usgub-oh-2026-11-03-rep,BUY,32,0.41,backfill,,20.98,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMVCVTMNEWP7
 1790108374.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,101,0.636,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNCZ5A962WPF
 1790108374.0,politics,scc-hrep-rep-2026-11-03-gte235,SELL,18,0.03,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNDQKBFJGWPA
+1790108704.1,politics,paccc-usse-midterms-2026-11-03-dem,BUY,55,0.639,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNDW081K8WPA
+1790108707.3,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,81.38,0.95,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNE53APTAWPH
+1790108753.4,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,89.59,0.78,hand,,0.51,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNDQC2GTEWPB
+1790108776.0,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,110.84,0.78,backfill,,4.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNAJBQSZTWPE
+1790108778.4,politics,usgubewc-usgub-nh-2026-11-03-dem,BUY,15.65,0.11,hand,,63.89,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CKQJJ9RQRWPD
+1790108778.4,politics,usgubewc-usgub-nh-2026-11-03-dem,BUY,50,0.11,hand,,96.66,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CJVEWE2B4W1N
+1790108778.4,politics,usgubewc-usgub-nh-2026-11-03-dem,BUY,7.34,0.11,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNE5T5XF0WPB
+1790108781.4,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,0.02,0.87,hand,,96.69,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVDQJZQ0W7H
+1790108828.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-rme,BUY,26.47,0.1,hand,,96.81,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CJVAZ5CZYW7H
+1790108869.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,39.74,0.14,hand,,23.54,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CMT3WZ2ZAWPD
+1790108869.6,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,1,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNE6KMNRWWPH
+1790108878.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,BUY,20.13,0.11,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNE68ZFRGWPB
+1790108878.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,BUY,12,0.11,hand,,27.5,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CMPQRC98EWPF
+1790108878.8,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,BUY,0.13,0.11,hand,,28.98,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CMNEP0B1WWPC
+1790108886.1,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,30.96,0.11,hand,,2.36,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNC6M6XARWPE
+1790108890.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,0.48,0.44,hand,,5.28,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CN9PKJYG8WPA
+1790108894.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,SELL,0.19,0.08,hand,,9.65,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CN5V8SHTTWPH
+1790108898.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,0.15,0.07,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNE6KGPHRWP7
+1790108914.0,politics,paccc-usse-midterms-2026-11-03-rep,BUY,72,0.364,sell,0.9086,6.77,0.3263,37,39,0.819,0.364,0.365,0.0377,0,an exit — its fill reduces the position it sits on,CN8CZ1XMTWPC
+1790109034.0,politics,ewc-usgub-nv-2026-11-03-dem,SELL,2,0.45,sell,0.5258,95.67,0.44245,43,48,0.533,0.44,0.45,-0.0076,58,an exit — its fill reduces the position it sits on,CJWBHWJ68W7H
+1790111629.0,politics,paccc-usse-midterms-2026-11-03-dem,SELL,55,0.64,backfill,,0.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNEQ8ES4AWPD
+1790111674.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,97,0.64,focus,159.211,0.16,0.5,64,66,0.918,0.639,0.64,-0.14,-97,focus entry: ~$23.96/day; fill odds 56%/day; EV +20.32/day,CNEQ8ES4AWPD
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-5,0.06,fix,1.3946,61.15,,8,12,0.909,0.05,0.06,0.04,205,size trimmed by 5 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-5,0.06,fix,1.427,61.12,,8,12,0.901,0.05,0.06,0.04,210,size trimmed by 5 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-5,0.06,fix,1.4594,61.05,,8,12,0.892,0.05,0.06,0.03,215,size trimmed by 5 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-5,0.06,fix,1.4918,60.98,,8,11,0.882,0.05,0.06,0.03,220,size trimmed by 5 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-5,0.06,fix,1.5241,60.95,,7,11,0.869,0.05,0.06,0.03,225,size trimmed by 5 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-5,0.06,fix,1.7301,60.88,,7,11,0.853,0.05,0.06,0.03,230,size trimmed by 5 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-25,0.06,fix,1.913,60.87,,7,11,0.833,0.05,0.06,0.03,235,size trimmed by 25 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-5,0.06,fix,1.7496,60.82,,7,11,0.806,0.05,0.06,0.02,260,size trimmed by 5 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-5,0.06,fix,1.7817,60.78,,6,10,0.769,0.05,0.06,0.02,265,size trimmed by 5 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790111974.3,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,-20,0.19,fix,0.1702,9.87,0.33255,19,24,0.481,0.18,0.19,0.1426,0,size trimmed by 20 to the exchange's count (order CM9SXHQDEWPB),CM9SXHQDEWPB
+1790111974.3,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,-124,0.19,fix,1.3641,2.46,0.33255,18,23,0.19,0.18,0.19,0.1426,20,size trimmed by 124 to the exchange's count (order CM9SXHQDEWPB),CM9SXHQDEWPB
+1790111974.3,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,81,0.98,void,0,0.21,0.999425,94,97,0.318,0.95,0.96,0.0194,0,voided: the exchange has no trade for order CNE25PE0EWPA — the row of 09-22 20:3,CNE25PE0EWPA
+1790111974.3,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,90,0.82,void,0,13.5,0.777075,77,80,0.387,0.78,0.79,-0.0429,0,voided: the exchange has no trade for order CN2NFQH20WP7 — the row of 09-22 20:3,CN2NFQH20WP7
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,41,0.15,void,0,0.1,,11,16,0.302,0.14,0.15,-0.01,0,voided: the exchange has no trade for order CNE6KMHZMWPH — the row of 09-22 20:3,CNE6KMHZMWPH
+1790111974.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,55,0.639,backfill,,0.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNDW081K8WPA
+1790111974.3,politics,ewc-usgub-ca-2026-11-03-xavbec,SELL,81.38,0.95,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNE53APTAWPH
+1790111974.3,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,89.59,0.78,hand,,0.51,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNDQC2GTEWPB
+1790111974.3,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,110.84,0.78,backfill,,4.17,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNAJBQSZTWPE
+1790111974.3,politics,usgubewc-usgub-nh-2026-11-03-dem,BUY,15.65,0.11,hand,,63.89,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CKQJJ9RQRWPD
+1790111974.3,politics,usgubewc-usgub-nh-2026-11-03-dem,BUY,50,0.11,hand,,96.66,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CJVEWE2B4W1N
+1790111974.3,politics,usgubewc-usgub-nh-2026-11-03-dem,BUY,7.34,0.11,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNE5T5XF0WPB
+1790111974.3,politics,usgubewc-usgub-nh-2026-11-03-rep,BUY,0.02,0.87,hand,,96.69,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVDQJZQ0W7H
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-rme,BUY,26.47,0.1,hand,,96.81,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CJVAZ5CZYW7H
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,39.74,0.14,hand,,23.54,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CMT3WZ2ZAWPD
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,SELL,1,0.14,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNE6KMNRWWPH
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,BUY,20.13,0.11,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNE68ZFRGWPB
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,BUY,12,0.11,hand,,27.5,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CMPQRC98EWPF
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,BUY,0.13,0.11,hand,,28.98,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CMNEP0B1WWPC
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,30.96,0.11,hand,,2.36,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNC6M6XARWPE
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,0.48,0.44,hand,,5.28,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CN9PKJYG8WPA
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-dme,SELL,0.19,0.08,hand,,9.65,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CN5V8SHTTWPH
+1790111974.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,SELL,0.15,0.07,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNE6KGPHRWP7
+1790111974.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,55,0.64,backfill,,0.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNEQ8ES4AWPD
