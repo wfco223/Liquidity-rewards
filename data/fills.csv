@@ -1446,3 +1446,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790098363.7,politics,ewc-usgub-wi-2026-11-03-dem,SELL,5,0.83,hand,,75.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVWP40J8W1Y
 1790100429.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,44,0.636,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNBGB3QNPWPF
 1790101164.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,44,0.636,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNBGB3QNPWPF
+1790101824.3,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,12,0.31,sell,0.522,102.2,,30,35,0.178,0.3,0.31,-0.01,0,an exit — its fill reduces the position it sits on,CJN0ZTPHGW0Y
+1790103275.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,25,0.636,backfill,,0.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNC7QFGD0WPC
+1790103633.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,55,0.637,focus,53.9343,0.2,0.5,64,66,0.924,0.636,0.637,-0.137,-121,focus entry: ~$15.26/day; fill odds 55%/day; EV +10.04/day,CNCSAT2V4WPB
+1790104593.6,politics,usgubewc-usgub-pa-2026-11-03-dem,SELL,17,0.95,sell,0.1567,0.32,0.99895,94,98,0.038,0.95,0.96,0.049,0,selling filled stock — it earns while it waits,CNCXHR3Q6WPC
+1790104773.7,politics,ewc-usgub-oh-2026-11-03-rep,BUY,-19,0.4,fix,0.0613,58.07,0.43025,39,44,0.214,0.4,0.41,-0.0302,0,size trimmed by 19 to the exchange's count (order CJVSPDRWWW0Y),CJVSPDRWWW0Y
+1790104773.7,politics,ewc-usgub-wi-2026-11-03-dem,SELL,-5,0.83,fix,,75.86,,,,,,,,,size trimmed by 5 to the exchange's count (order CJVWP40J8W1Y),CJVWP40J8W1Y
+1790104773.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-21,0.601,fix,0.2237,2.88,0.5,61,64,0.747,0.601,0.602,0.101,-2,size trimmed by 21 to the exchange's count (order CM7SWSHR4WPA),CM7SWSHR4WPA
+1790104773.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-2,0.601,fix,,2.86,,,,,,,,,size trimmed by 2 to the exchange's count (order CM7SWSHR4WPA),CM7SWSHR4WPA
+1790104773.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-6,0.601,fix,,1.26,,,,,,,,,size trimmed by 6 to the exchange's count (order CM7SWSHR4WPA),CM7SWSHR4WPA
+1790104773.7,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-10,0.06,fix,1.2295,84.75,,8,12,0.913,0.05,0.06,0.04,150,size trimmed by 10 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790104773.7,politics,paccc-usse-midterms-2026-11-03-dem,BUY,25,0.636,backfill,,0.76,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNC7QFGD0WPC
