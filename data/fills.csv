@@ -1355,3 +1355,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790068404.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,51,0.651,backfill,,1.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN2VA1DHWWPF
 1790068404.9,politics,ussewc-usse-co-2026-11-03-rep,SELL,0.01,0.05,backfill,,92.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJNDG4MNRW22
 1790068404.9,politics,ushrewc-ushr-tx-34-2026-11-03-rep,SELL,0.38,0.23,backfill,,38.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CM3TXQT2RWPD
+1790069243.0,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,BUY,0.1,0.63,backfill,,3.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN25DTQ9RWPC
+1790069965.1,politics,ewc-usse-ia-2026-11-03-dem,SELL,1,0.48,sell,0.9749,2.59,0.518325,43,48,0.617,0.47,0.48,0.0383,39,an exit — its fill reduces the position it sits on,CN2NW5YDCWPF
+1790071465.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,19,0.651,sell,16.3276,2.82,0.5,64,67,0.873,0.651,0.652,0.151,0,an exit — its fill reduces the position it sits on,CN2VA1DHWWPF
+1790072005.3,politics,scc-senate-gop-2026-11-03-49,SELL,-17.04,0.15,fix,0.9037,22.93,0.13965,14,17,0.722,0.14,0.15,-0.0103,13.54,size trimmed by 17.04 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
+1790072005.3,politics,scc-senate-gop-2026-11-03-49,SELL,-63.96,0.15,fix,,19.62,,,,,,,,,size trimmed by 63.96 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
+1790072005.3,cfb,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,BUY,0.1,0.63,backfill,,3.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN25DTQ9RWPC
