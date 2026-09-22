@@ -1265,3 +1265,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790028764.2,politics,cpoc-ussec-tx-me-2026-11-03-rsweep,SELL,-10.21,0.28,fix,4.1869,30.25,,24,29,0.53,0.27,0.28,-0.01,23,size trimmed by 10.21 to the exchange's count (order CJVCQD0ZPW1Y),CJVCQD0ZPW1Y
 1790028764.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,576,0.102,backfill,,0.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMTQ70B6MWP6
 1790029064.3,politics,paccc-usse-midterms-2026-11-03-dem,SELL,4,0.619,sell,0.0351,0.4,0.5,61,63,0.898,0.618,0.619,-0.119,0,an exit — its fill reduces the position it sits on,CMTV86SXGWP7
+1790034029.8,politics,ushrewc-ushr-wa-03-2026-11-03-rep,SELL,51,0.09,backfill,,1.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMTXQMV60WPB
+1790035786.4,politics,ewc-usgub-wi-2026-11-03-dem,SELL,1,0.83,sell,0.0004,75.88,0.7141,82,86,0.622,0.82,0.83,-0.1159,0,an exit — its fill reduces the position it sits on,CJVWP40J8W1Y
+1790035921.4,politics,ewc-usse-tx-2026-11-03-rep,BUY,82,0.43,backfill,,0.51,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMWEQZCARWP6
+1790035966.4,politics,ewc-usse-nc-2026-11-03-rep,SELL,-82,0.07,fix,1.7222,32.05,0.1066,5,9,0.618,0.06,0.07,0.0366,0,size trimmed by 82 to the exchange's count (order CJNCYYBE0W20),CJNCYYBE0W20
+1790035966.4,politics,ewc-usse-nc-2026-11-03-rep,SELL,-34,0.07,fix,4.0673,27.56,0.1066,6,10,0.482,0.06,0.07,0.0366,82,size trimmed by 34 to the exchange's count (order CJNCYYBE0W20),CJNCYYBE0W20
+1790035966.4,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,-0.66,0.78,fix,,46.84,,,,,,,,,size trimmed by 0.66 to the exchange's count (order CJV9M856AW21),CJV9M856AW21
+1790035966.4,politics,ushrewc-ushr-wa-03-2026-11-03-rep,SELL,51,0.09,backfill,,1.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMTXQMV60WPB
+1790035966.4,politics,ewc-usse-tx-2026-11-03-rep,BUY,82,0.43,backfill,,0.51,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMWEQZCARWP6
