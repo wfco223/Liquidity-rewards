@@ -1418,3 +1418,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790093033.8,politics,ewc-usse-me-2026-11-03-rep,BUY,107,0.34,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNA9RGHAPWPD
 1790093606.7,politics,ewc-usgub-oh-2026-11-03-rep,BUY,-8,0.4,fix,0.0613,58.07,0.43025,39,44,0.214,0.4,0.41,-0.0302,0,size trimmed by 8 to the exchange's count (order CJVSPDRWWW0Y),CJVSPDRWWW0Y
 1790093606.7,politics,ewc-usse-me-2026-11-03-rep,BUY,107,0.34,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNA9RGHAPWPD
+1790093966.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,21,0.627,focus,210.623,0.09,0.5,63,65,0.927,0.627,0.629,-0.127,-111,focus entry: ~$148.52/day; fill odds 55%/day; EV +147.75/day,CNAHCDD64WP6
+1790096846.8,politics,paccc-usse-midterms-2026-11-03-dem,SELL,24,0.629,focus,358.562,0.03,0.5,64,65,0.93,0.63,0.632,-0.129,-135,focus entry: ~$31.40/day; fill odds 55%/day; EV +30.52/day,CNB99H2Q8WPA
+1790096939.5,politics,ewc-usse-tx-2026-11-03-rep,SELL,45,0.42,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNAWY9FMGWP9
+1790097152.5,politics,ewc-usse-tx-2026-11-03-dem,SELL,13,0.59,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNB0MHAJTWPH
+1790097206.8,politics,ewc-usgub-wi-2026-11-03-dem,SELL,-1,0.83,fix,0.0004,75.88,0.7141,82,86,0.622,0.82,0.83,-0.1159,0,size trimmed by 1 to the exchange's count (order CJVWP40J8W1Y),CJVWP40J8W1Y
+1790097206.8,politics,ewc-usgub-wi-2026-11-03-dem,SELL,-4,0.83,fix,0.0064,73.61,0.7141,81,85,0.47,0.82,0.83,-0.1159,1,size trimmed by 4 to the exchange's count (order CJVWP40J8W1Y),CJVWP40J8W1Y
+1790097206.8,politics,scc-hrep-rep-2026-11-03-gte180,SELL,-6.16,0.8,fix,8.128,5.78,0.910425,80,86,0.648,0.79,0.8,0.1104,0.16,size trimmed by 6.16 to the exchange's count (order CM1SAZ9P0WPF),CM1SAZ9P0WPF
+1790097206.8,politics,ewc-usse-tx-2026-11-03-rep,SELL,45,0.42,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNAWY9FMGWP9
+1790097206.8,politics,ewc-usse-tx-2026-11-03-dem,SELL,13,0.59,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNB0MHAJTWPH
