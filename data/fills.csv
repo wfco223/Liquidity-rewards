@@ -1292,3 +1292,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790043177.5,politics,ussewc-usse-sc-2026-11-03-dem,BUY,-2.3,0.14,fix,,56.1,,,,,,,,,size trimmed by 2.3 to the exchange's count (order CJNDPN4XTW22),CJNDPN4XTW22
 1790043177.5,politics,ussewc-usse-sc-2026-11-03-dem,BUY,-3.33,0.14,fix,,30.56,,,,,,,,,size trimmed by 3.33 to the exchange's count (order CJNDPN4XTW22),CJNDPN4XTW22
 1790043177.5,politics,ussewc-usse-sc-2026-11-03-dem,BUY,-38.43,0.14,fix,,29.66,,,,,,,,,size trimmed by 38.43 to the exchange's count (order CJNDPN4XTW22),CJNDPN4XTW22
+1790044959.3,politics,ewc-usse-tx-2026-11-03-rep,BUY,35,0.42,backfill,,0.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMY9T842PWPD
+1790044977.6,politics,ewc-usse-tx-2026-11-03-rep,BUY,6,0.42,focus,4.1821,0.94,0.3037,44,47,0.822,0.42,0.43,0.1163,6,focus entry: ~$4.10/day; fill odds 56%/day; EV +2.38/day,CMY9T842PWPD
+1790045157.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,285,0.102,sell,2.0565,1.6,0.1111,12,13,0.934,0.101,0.102,0.0091,0,an exit — its fill reduces the position it sits on,CMXSQCYBMWP9
+1790046777.6,politics,ewc-usse-tx-2026-11-03-rep,BUY,35,0.42,backfill,,0.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMY9T842PWPD
