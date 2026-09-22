@@ -1534,3 +1534,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790115299.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,82,0.639,backfill,,1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNEVHVMSEWPA
 1790115574.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,71,0.64,focus,104.189,0.13,0.5,65,68,0.906,0.639,0.64,-0.14,-141,focus entry: ~$18.06/day; fill odds 56%/day; EV +15.39/day,CNFPBVMP2WPH
 1790115634.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,82,0.639,backfill,,1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNEVHVMSEWPA
+1790116284.8,politics,paccc-usse-midterms-2026-11-03-dem,BUY,14,0.64,backfill,,0.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNFSZRS98WPE
+1790116594.4,politics,paccc-usse-midterms-2026-11-03-dem,SELL,17,0.642,focus,94.247,0.03,0.5,66,68,0.9,0.641,0.642,-0.142,-144,focus entry: ~$152.03/day; fill odds 56%/day; EV +151.09/day,CNG04M0RWWPA
+1790117358.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,29,0.601,hand,,2.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CM7SWSHR4WPA
+1790117358.3,politics,ewc-usgub-oh-2026-11-03-rep,BUY,19,0.4,hand,,58.04,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVSPDRWWW0Y
+1790117358.3,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,144,0.19,hand,,9.85,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CM9SXHQDEWPB
+1790117358.3,politics,ewc-usgub-wi-2026-11-03-dem,SELL,5,0.83,hand,,75.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVWP40J8W1Y
+1790117358.3,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,120,0.06,hand,,84.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJND344BPW22
+1790117358.3,politics,ewc-usgub-nv-2026-11-03-dem,SELL,2,0.45,backfill,,95.66,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWBHWJ68W7H
+1790117358.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,14,0.64,backfill,,0.18,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNFSZRS98WPE
