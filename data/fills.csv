@@ -1409,3 +1409,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790090006.5,politics,scc-senate-gop-2026-11-03-49,SELL,-1.83,0.15,fix,1.5226,8.29,0.13965,12,16,0.414,0.14,0.15,-0.0103,138.61,size trimmed by 1.83 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
 1790090006.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-59,0.599,fix,,0.67,,,,,,,,,size trimmed by 59 to the exchange's count (order CM43WK370WP9),CM43WK370WP9
 1790090006.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,111,0.626,backfill,,0.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN9BS4XW0WPA
+1790091026.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,111,0.625,sell,108.965,0.43,0.5,63,65,0.917,0.625,0.626,0.125,0,an exit — its fill reduces the position it sits on,CN9KVKYTPWPC
+1790091206.5,politics,ewc-usse-me-2026-11-03-dem,SELL,122,0.66,focus,91.3844,0.02,0.72995,64,70,0,0.66,0.68,0.07,-127,focus entry: ~$15.84/day; fill odds 55%/day; EV +10.04/day,CN9ZP5MPPWPH
+1790091446.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,84,0.626,focus,5.17,0.03,0.5,63,65,0.918,0.625,0.626,-0.126,-168,focus entry: ~$69.41/day; fill odds 55%/day; EV +65.39/day,CNA1ER824WPD
+1790092406.6,politics,paccc-usse-midterms-2026-11-03-dem,SELL,6,0.626,focus,41.5393,0.01,0.5,63,65,0.923,0.625,0.626,-0.126,-90,focus entry: ~$64.80/day; fill odds 55%/day; EV +63.50/day,CNA8XAYEAWPE
+1790092526.6,politics,ewc-usse-ia-2026-11-03-dem,SELL,76,0.46,focus,52.0139,0.06,0.518325,46,49,0.816,0.45,0.47,0.0583,-76,focus entry: ~$24.63/day; fill odds 55%/day; EV +20.92/day,CNA8MW3BWWP9
+1790092586.6,politics,ewc-usse-oh-2026-11-03-dem,SELL,40,0.66,sell,6.2578,8.2,0.6962,59,64,0.665,0.65,0.66,0.0362,0,an exit — its fill reduces the position it sits on,CN39378AMWPH
+1790093033.8,politics,ewc-usse-me-2026-11-03-rep,BUY,107,0.34,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNA9RGHAPWPD
+1790093606.7,politics,ewc-usgub-oh-2026-11-03-rep,BUY,-8,0.4,fix,0.0613,58.07,0.43025,39,44,0.214,0.4,0.41,-0.0302,0,size trimmed by 8 to the exchange's count (order CJVSPDRWWW0Y),CJVSPDRWWW0Y
+1790093606.7,politics,ewc-usse-me-2026-11-03-rep,BUY,107,0.34,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNA9RGHAPWPD
