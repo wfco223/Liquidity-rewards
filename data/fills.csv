@@ -1340,3 +1340,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790061204.7,politics,scc-senate-gop-2026-11-03-49,SELL,-14.42,0.15,fix,0.9037,22.93,0.13965,14,17,0.722,0.14,0.15,-0.0103,13.54,size trimmed by 14.42 to the exchange's count (order CKGHNK96RWP6),CKGHNK96RWP6
 1790061204.7,politics,ushrewc-ushr-nc-01-2026-11-03-dem,SELL,3,0.6,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CN23ASWH8WPE
 1790061204.7,politics,ewc-usse-ia-2026-11-03-dem,BUY,20,0.5,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CN28XQ844WPF
+1790061564.7,politics,ewc-usse-oh-2026-11-03-dem,BUY,131,0.65,sell,8.0316,0.73,0.6962,62,68,0.403,0.65,0.66,-0.0462,0,an exit — its fill reduces the position it sits on,CN29VVFEJWP6
+1790062764.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,15,0.095,focus,92.7283,0.11,0.1111,12,14,0.941,0.094,0.095,0.0161,-65,focus entry: ~$102.26/day; fill odds 67%/day; EV +100.31/day,CN348JDXEWP7
+1790063064.7,politics,ewc-usse-oh-2026-11-03-dem,BUY,40,0.65,focus,9.9562,0.04,0.6962,57,64,0.598,0.65,0.66,-0.0462,40,focus entry: ~$5.57/day; fill odds 56%/day; EV +3.09/day,CN382K8E8WPC
+1790064144.8,politics,scc-hrep-rep-2026-11-03-gte215,SELL,15,0.11,manual,0.1845,15.19,0.162575,8,12,0.351,0.1,0.11,0.0526,-38,the owner's own order — the engine leaves it alone,CMPKSJE2PWPE
+1790064324.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,5,0.095,focus,55.7786,0.15,0.1111,12,14,0.941,0.097,0.098,0.0161,-70,focus entry: ~$54.55/day; fill odds 67%/day; EV +53.90/day,CN3F8WJBEWPA
