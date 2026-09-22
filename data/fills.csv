@@ -1273,3 +1273,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790035966.4,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,-0.66,0.78,fix,,46.84,,,,,,,,,size trimmed by 0.66 to the exchange's count (order CJV9M856AW21),CJV9M856AW21
 1790035966.4,politics,ushrewc-ushr-wa-03-2026-11-03-rep,SELL,51,0.09,backfill,,1.7,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMTXQMV60WPB
 1790035966.4,politics,ewc-usse-tx-2026-11-03-rep,BUY,82,0.43,backfill,,0.51,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMWEQZCARWP6
+1790037526.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-rmi-dme,BUY,5,0.07,sell,0.0218,0.37,,8,13,0.677,0.07,0.09,-0.03,5,buying back the short at or under what it sold for — the bid earns while it wait,CMWZEZJ5GWPD
+1790038486.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,61,0.102,sell,9.1995,0.19,0.1111,11,13,0.928,0.101,0.102,0.0091,515,an exit — its fill reduces the position it sits on,CMXDTF48CWPC
+1790039332.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,230,0.102,sell,7.1312,0.42,0.1111,11,13,0.932,0.101,0.102,0.0091,285,an exit — its fill reduces the position it sits on,CMXDTF48CWPC
+1790039572.5,politics,scc-hrep-rep-2026-11-03-gte180,SELL,-5.14,0.97,fix,0.0059,20.03,0.920325,92,97,0,0.96,0.97,-0.0497,0,size trimmed by 5.14 to the exchange's count (order CJX9VWF8JW1Z),CJX9VWF8JW1Z
