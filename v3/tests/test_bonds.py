@@ -3329,6 +3329,42 @@ class TestTheFamiliesGate(Base):
         self.assertIsNone(self.b.money_out)
         self.assertTrue(self.b._more_orders(AL))
 
+    # owner, 2026-09-22 "You can put money into cfb. And a little into
+    # politics": with the bonds switch OFF the families keep the tender's
+    # $300 free instead of the bonds' whole unspent budget
+    def cyc_off(self, t):
+        self.r.cache.put(AL, minnow_book(t, minnows=5.0))
+        return self.b.cycle(t, self.positions(), on=False)
+
+    def test_with_the_bonds_off_the_families_keep_300_free_not_the_budget(self):
+        # room 911, the exchange shows 500: ON would hold the families out;
+        # OFF, 500 - 300 = 200 free, so they may buy
+        self.cyc_off(self.now)
+        self.assertIsNone(self.b.money_out)
+        self.bp = 305.0                                         # 5 free: under the $10 line
+        self.cyc_off(self.now + 61)
+        self.assertTrue(self.b.money_out)
+        self.assertAlmostEqual(self.b.money_out["reserve"], 300.0, places=2)
+        self.bp = 351.0                                         # 51 free: back over $50
+        self.cyc_off(self.now + 122)
+        self.assertIsNone(self.b.money_out)
+
+    def test_with_the_bonds_off_his_walls_are_not_added_back(self):
+        # the buying power is read, never derived (2026-09-14): a wall's
+        # collateral is money the exchange has taken
+        self.wall(6000.0)                                       # holds $60
+        self.bp = 305.0
+        self.cyc_off(self.now)
+        self.assertTrue(self.b.money_out)
+        self.assertEqual(self.b.money_out["walls"], 0.0)
+
+    def test_switching_the_bonds_back_on_restores_the_budget_reserve(self):
+        self.cyc_off(self.now)
+        self.assertIsNone(self.b.money_out)
+        self.cyc(self.now + 61)                                 # 500 < 911 room
+        self.assertTrue(self.b.money_out)
+        self.assertAlmostEqual(self.b.money_out["reserve"], 911.0, places=2)
+
 
 class TestTheBudgetRoom(Base):
     """Owner, 2026-09-06: "the bonds can use money so long as the amount
