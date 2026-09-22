@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import signal
 import sys
 import threading
 import time
@@ -57,6 +58,20 @@ except Exception:  # noqa: BLE001
 POLL_S = 60.0
 NURSE_TICK_S = 5.0
 ERROR_BACKOFF_CAP_S = 600.0
+# the stop signal's save (owner, 2026-09-22 "Yes, ship it", fix D): the
+# launcher forwards the platform's SIGTERM and the process died on it
+# with nothing written, so every deploy lost the orders the tender had
+# placed since the last cycle's save — the next boot found them on the
+# open list, not in the state, and recorded them as his hand's: one on
+# 2026-09-21 (a 15-share ask on House seats ≥215, the tender rested 21
+# beside it), five on 2026-09-22 (Senate seats 52: a 223-share bid at
+# 7c became "his" and the tender rested 195 at 8c beside it; 48 the
+# same with asks; the NE senate rep exit of 13 became "his"). Now the
+# signal builds the full state from the live desks, uploads it, waits
+# for the upload, and only then exits.
+SHUTDOWN_LOCK_S = 5.0        # how long the save waits for a running cycle
+SHUTDOWN_SAVE_S = 25.0       # how long it waits for the upload before exiting
+
 FLATTEN_CANCELS_PER_CYCLE = 45
 # the meter's "exchange still in reach" probe (owner, 2026-09-13): the
 # sampler reads the open list itself when the cycle's own read is older
@@ -4070,6 +4085,77 @@ class Monitor:
                     "ladder": fam.ladder_view(slug)}
         return {"ok": False, "note": "no book cached for this market yet"}
 
+    def _install_stop_handlers(self):
+        """SIGTERM (the launcher's forward of the platform's stop) and
+        SIGINT save the state and exit (fix D, 2026-09-22)."""
+        def _stop(signum, frame):  # noqa: ARG001
+            self._stopping = True
+            try:
+                self.shutdown_save(f"signal {signum}")
+            finally:
+                raise SystemExit(0)
+        try:
+            signal.signal(signal.SIGTERM, _stop)
+            signal.signal(signal.SIGINT, _stop)
+        except (ValueError, OSError) as e:      # not the main thread, or no signals here
+            self._note(f"stop handlers not installed: {e}")
+        return _stop
+
+    def shutdown_save(self, why: str = "stop") -> bool:
+        """The full state, from the live desks, written and uploaded
+        before the process dies. Builds on the last full state (never a
+        fragment: with nothing restored and no cycle run there is
+        nothing safe to write — the 2026-09-17 lesson) and overlays
+        every part that moves between cycle saves: the families'
+        orders, journals and books, the tender, the bonds, the sweep,
+        the maintenance run, the desks' cancel memory, the audit and
+        the switches. Waits for a running cycle up to SHUTDOWN_LOCK_S,
+        then saves regardless; waits for the upload up to
+        SHUTDOWN_SAVE_S. Returns whether the upload finished."""
+        base = self._base_state()
+        if not base:
+            print(f"v3: shutdown save skipped ({why}) — nothing restored and no cycle "
+                  f"run yet; a fragment would overwrite the whole state", flush=True)
+            return False
+        got = self._lock.acquire(timeout=SHUTDOWN_LOCK_S)
+        try:
+            st = dict(base)
+            for key, fam in self.families.items():
+                try:
+                    st[f"fam_{key}"] = fam.to_dict()
+                except Exception as e:  # noqa: BLE001 — save what can be saved
+                    print(f"v3: shutdown save: {key}: {type(e).__name__}: {e}", flush=True)
+            parts = (("focus", lambda: self.focus.to_dict()),
+                     ("bonds", lambda: self.bonds.to_dict()),
+                     ("sweep", lambda: self.sweep.to_dict()),
+                     ("maint", lambda: self.maint.to_dict()),
+                     ("desk_cancelled", lambda: self._desk_cancelled()),
+                     ("master_switch", lambda: self.master.to_dict()),
+                     ("sw_bonds", lambda: self.switches["bonds"].to_dict()),
+                     ("sw_focus", lambda: self.switches["focus"].to_dict()))
+            for name, fn in parts:
+                try:
+                    st[name] = fn()
+                except Exception as e:  # noqa: BLE001
+                    print(f"v3: shutdown save: {name}: {type(e).__name__}: {e}", flush=True)
+            for key in self.families:
+                try:
+                    st[f"sw_{key}"] = self.switches[key].to_dict()
+                except Exception:  # noqa: BLE001
+                    pass
+            st["audit"] = list(self.audit[-60:])
+            st["saved_at"] = time.time()
+            self.last_state = st
+        finally:
+            if got:
+                self._lock.release()
+        self.store.save_soon(st, force_remote=True)
+        done = self.store.wait_remote(timeout=SHUTDOWN_SAVE_S)
+        print(f"v3: shutdown save ({why}): {len(st)} keys, "
+              f"{'uploaded' if done else 'upload still running at exit'}"
+              f"{'' if got else ' — the cycle held the lock, saved anyway'}", flush=True)
+        return done
+
     def _base_state(self) -> dict:
         """The state a save or a page builds on: the last full cycle's,
         else the one restored at boot, never nothing. Owner, 2026-09-17
@@ -4891,6 +4977,7 @@ class Monitor:
         # compete with the boot for the GIL and the health check
         # (owner, 2026-08-31); on a throttled boot that left the tender
         # blind for the twenty minutes the board took to read.
+        self._install_stop_handlers()
         for st_ in self.streams:
             st_.start()
         while True:
