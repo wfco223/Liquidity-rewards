@@ -1716,3 +1716,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790201405.0,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-120,0.06,fix,,84.74,,,,,,,,,size trimmed by 120 to the exchange's count (order CJND344BPW22),CJND344BPW22
 1790201405.0,politics,ewc-usgub-nv-2026-11-03-dem,SELL,-12,0.45,fix,3.9251,118.12,0.45885,44,49,0.562,0.44,0.45,0.0088,37,size trimmed by 12 to the exchange's count (order CJWBHWJ68W7H),CJWBHWJ68W7H
 1790201405.0,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,-40.27,0.93,fix,1.1106,80.04,0.9886,92,96,0.012,0.93,0.94,-0.0586,-0.27,size trimmed by 40.27 to the exchange's count (order CK93JF66GWPA),CK93JF66GWPA
+1790201738.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,62,0.647,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP47EHEQ4WPE
+1790202075.1,politics,cpoc-ussegubc-ks-2026-11-03-rsweep,BUY,2,0.69,earn,0.8407,20.33,,68,75,0,0.69,0.7,-0.02,2,joins the touch — the book has been quiet,CNK37H0XJWP6
+1790202092.3,politics,scc-hrep-rep-2026-11-03-gte210,SELL,0.39,0.28,backfill,,64.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMDAKT5CCWPB
+1790202135.1,politics,scc-hrep-rep-2026-11-03-gte210,SELL,3,0.28,sell,0.2856,64.28,0.2379,27,31,0,0.27,0.28,-0.0421,11,an exit — its fill reduces the position it sits on,CMDAKT5CCWPB
+1790202435.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,30,0.648,focus,6.3472,0.19,0.5,65,67,0.842,0.647,0.648,-0.148,-98,focus entry: ~$19.01/day; fill odds 55%/day; EV +17.74/day,CP4B7ZWN6WPC
+1790202757.5,politics,ussewc-usse-wy-2026-11-03-dem,SELL,20,0.03,earn,5.6581,0.02,0,1,6,0.001,0.02,0.05,-0.03,-20,1 tick in front of the touch — we would hold 91% of the ask side,CP4HH524CWPF
+1790203147.1,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,0.21,0.54,manual,0.0035,1.53,,44,58,0.234,0.54,0.57,0.02,-0.79,the owner's own order — the engine leaves it alone,CP3C5YCK6WP6
+1790203296.2,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,0.79,0.54,manual,0,1.57,,42,54,0.532,0.29,0.57,0.04,0,the owner's own order — the engine leaves it alone,CP3C5YCK6WP6
+1790205005.2,politics,ewc-usgub-wi-2026-11-03-dem,SELL,-10,0.83,fix,0.0064,73.61,0.7141,81,85,0.47,0.82,0.83,-0.1159,1,size trimmed by 10 to the exchange's count (order CJVWP40J8W1Y),CJVWP40J8W1Y
+1790205005.2,politics,ewc-usgub-wi-2026-11-03-dem,SELL,-4,0.83,fix,0.1214,48.63,0.722,81,85,0.375,0.82,0.83,-0.108,15,size trimmed by 4 to the exchange's count (order CJVWP40J8W1Y),CJVWP40J8W1Y
+1790205005.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,62,0.647,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP47EHEQ4WPE
+1790205005.2,politics,scc-hrep-rep-2026-11-03-gte210,SELL,0.39,0.28,backfill,,64.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMDAKT5CCWPB
