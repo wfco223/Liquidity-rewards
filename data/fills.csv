@@ -1602,3 +1602,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790137783.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,41,0.645,sell,123.171,1.72,0.5,65,67,0.869,0.645,0.646,-0.145,0,an exit — its fill reduces the position it sits on,CNKPY5W6MWPD
 1790137843.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,37,0.646,sell,32.6147,0.03,0.5,65,67,0.882,0.645,0.646,-0.146,4,an exit — its fill reduces the position it sits on,CNN4XCR00WPE
 1790138811.4,politics,ewc-usse-mi-2026-11-03-rep,SELL,76,0.31,sell,8.0498,1.3,0.2001,31,35,0.775,0.3,0.31,-0.1099,98,an exit — its fill reduces the position it sits on,CNMAV9WKMWP7
+1790140247.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,25,0.101,focus,3.64,0.06,0.099,12,14,0.912,0.1,0.102,-0.002,-57,focus entry: ~$4.48/day; fill odds 67%/day; EV +2.55/day,CNNM47MBYWP9
+1790140682.0,politics,ewc-usse-mi-2026-11-03-rep,SELL,40,0.31,sell,1.2084,0.5,0.2001,32,35,0.809,0.3,0.31,-0.1099,58,an exit — its fill reduces the position it sits on,CNND41RJ2WPF
+1790142154.8,politics,paccc-usse-midterms-2026-11-03-rep,BUY,20,0.377,backfill,,0.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNNJF3674WP9
+1790142218.0,politics,paccc-usse-midterms-2026-11-03-rep,BUY,34,0.377,sell,4.1996,0.69,0.3263,36,39,0.818,0.377,0.378,0.0507,0,an exit — its fill reduces the position it sits on,CNNJF3674WP9
+1790142824.4,politics,paccc-usse-midterms-2026-11-03-rep,BUY,20,0.377,backfill,,0.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNNJF3674WP9
