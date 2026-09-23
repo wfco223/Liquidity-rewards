@@ -1699,3 +1699,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790196569.2,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,BUY,1,0.27,backfill,,4.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZE609ZAWPC
 1790197028.0,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-12.67,0.03,fix,4.0678,119.33,0.0418,1,6,0.274,0.02,0.03,0.0118,119,size trimmed by 12.67 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
 1790197028.0,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,BUY,1,0.27,backfill,,4.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZE609ZAWPC
+1790197157.7,politics,cpoc-ussegubc-nh-2026-11-03-dgov-rsen,SELL,3,0.07,sell,0,0,,5,9,0.419,0.07,0.08,0,0,taker dump — sold into the bid (the carved exception),CP39E7EC8WPC
+1790197792.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,36,0.103,hand,,1.68,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CMP3HADQGWP7
+1790197792.6,politics,paccc-usse-midterms-2026-11-03-dem,BUY,89,0.618,hand,,0.72,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CMRPBX0QJWP7
+1790197792.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,58,0.091,hand,,1.15,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CMRCQ171TWPE
+1790197792.6,politics,ewc-usse-mi-2026-11-03-rep,SELL,49,0.33,hand,,79.65,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJN7PQB5EW22
+1790197792.6,politics,ewc-usgub-wi-2026-11-03-dem,SELL,5,0.83,hand,,75.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVWP40J8W1Y
+1790197792.6,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,120,0.06,hand,,84.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJND344BPW22
+1790197792.6,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,40.27,0.93,hand,,80.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CK93JF66GWPA
+1790197792.6,politics,ewc-usgub-nv-2026-11-03-dem,SELL,12,0.45,backfill,,118.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWBHWJ68W7H
+1790197792.6,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,13,0.03,backfill,,119.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWB6WACPW7E
