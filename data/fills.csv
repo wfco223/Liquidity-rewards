@@ -1598,3 +1598,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790133654.7,politics,ewc-usse-oh-2026-11-03-dem,BUY,27,0.64,focus,3.4837,0,0.703975,62,66,0.69,0.64,0.65,-0.064,27,focus entry: ~$3.48/day; fill odds 57%/day; EV +2.55/day,CNM6SY04WWP7
 1790134428.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,14,0.101,focus,0.363,0.05,0.099,12,14,0.912,0.1,0.101,-0.002,-32,focus entry: ~$3.63/day; fill odds 67%/day; EV +2.55/day,CNMBYNRBGWPC
 1790135527.9,politics,ewc-usse-oh-2026-11-03-dem,BUY,37,0.65,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNKVV45A8WPF
+1790136654.1,politics,ewc-usse-mi-2026-11-03-rep,SELL,3,0.31,sell,8.4096,0.71,0.2001,30,34,0.726,0.3,0.31,-0.1099,174,an exit — its fill reduces the position it sits on,CNMAV9WKMWP7
+1790137783.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,41,0.645,sell,123.171,1.72,0.5,65,67,0.869,0.645,0.646,-0.145,0,an exit — its fill reduces the position it sits on,CNKPY5W6MWPD
+1790137843.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,37,0.646,sell,32.6147,0.03,0.5,65,67,0.882,0.645,0.646,-0.146,4,an exit — its fill reduces the position it sits on,CNN4XCR00WPE
+1790138811.4,politics,ewc-usse-mi-2026-11-03-rep,SELL,76,0.31,sell,8.0498,1.3,0.2001,31,35,0.775,0.3,0.31,-0.1099,98,an exit — its fill reduces the position it sits on,CNMAV9WKMWP7
