@@ -1676,3 +1676,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790182461.6,politics,ewc-usse-mi-2026-11-03-rep,SELL,-5,0.33,fix,0.3099,78.6,0.2277,32,36,0.652,0.32,0.33,-0.1023,37,size trimmed by 5 to the exchange's count (order CJN7PQB5EW22),CJN7PQB5EW22
 1790182461.6,politics,ewc-usse-mi-2026-11-03-rep,SELL,-2,0.33,fix,0.5152,78.42,0.2277,31,35,0.511,0.32,0.33,-0.1023,42,size trimmed by 2 to the exchange's count (order CJN7PQB5EW22),CJN7PQB5EW22
 1790182461.6,politics,ewc-usse-mi-2026-11-03-dem,SELL,151,0.71,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZCCF4DPWPD
+1790183909.9,politics,cpoc-ussegubc-ga-2026-11-03-dsweep,BUY,20,0.52,sell,1.2867,1.82,,47,53,0.446,0.52,0.53,0.02,0,buying back the short at or under what it sold for — the bid earns while it wait,CNYGKJ9FEWP9
+1790186077.7,politics,ewc-usse-mi-2026-11-03-rep,SELL,-5,0.33,fix,0.5152,78.42,0.2277,31,35,0.511,0.32,0.33,-0.1023,42,size trimmed by 5 to the exchange's count (order CJN7PQB5EW22),CJN7PQB5EW22
