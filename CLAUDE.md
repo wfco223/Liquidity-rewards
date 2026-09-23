@@ -1164,6 +1164,25 @@ long and accreted, so search it rather than reading it through.
   prints what it did, and exits. A boot then restores every order as
   whose it really is.
 
+- THE STOP HALTS EVERY DESK BEFORE IT SAVES, AND THE BOOT SAYS WHICH
+  SAVE IT CAME BACK FROM (owner, 2026-09-22 "Yes, ship it", fix E). The
+  first deploy after fix D (22:48Z, stopped by 688d658c, which had the
+  handler) still brought one order back as his: the tender's Senate
+  seats 50 bid had been 607 at 12c in the 22:18Z save, it resized to
+  552 before the deploy, and the boot restored a state without the
+  552 — the stop save either never landed or the tender traded during
+  it (its thread was never stopped). Now: OrderDesk.halted (one flag
+  for every desk) is set first — place_resting/reprice refuse through
+  _check and cancel refuses, logged "stopping"; cancel_all, the
+  emergency stop, stays exempt — then shutdown_save takes the cycle's
+  lock and the tender's lock (5 s each), snapshots, and writes
+  state["last_stop"] {at, why, build, keys, cycle_lock, tender_lock,
+  halt_s}. At boot, _restore sets boot_restore {"from": "the stop save"
+  when the restored state carries a last_stop stamped at its own
+  saved_at, else "a periodic save — the stop save did not land",
+  saved_at, age_s, stop}, and every cycle's state carries it, so each
+  check can say which save the boot restored.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."

@@ -1456,6 +1456,17 @@ class Monitor:
         # 2026-09-17: a focus tap during a 45-minute boot saved next to
         # nothing — see _base_state)
         self.restored_state = dict(saved) if saved else {}
+        # which save this boot came back from (fix E): the stop's own, or
+        # an older periodic one — in which case orders placed since it may
+        # come back recorded as his hand's
+        ls = (saved or {}).get("last_stop") or {}
+        sv = float((saved or {}).get("saved_at") or 0.0)
+        self.boot_restore = {
+            "from": ("the stop save" if ls and abs(float(ls.get("at") or 0.0) - sv) < 2.0
+                     else "a periodic save — the stop save did not land" if saved
+                     else "nothing (fresh state)"),
+            "saved_at": round(sv, 1), "age_s": round(time.time() - sv, 1) if sv else None,
+            "stop": ls or None}
         if not saved:
             self._note(f"booted build {self.build}; fresh state — "
                        "every switch is off")
@@ -1641,6 +1652,7 @@ class Monitor:
     def _state(self, now: float, summaries: dict) -> dict:
         st = {
             "saved_at": now, "build": self.build, "boot_ts": self.boot_ts,
+            "boot_restore": getattr(self, "boot_restore", None),
             "balances_last": getattr(self.client, "balances_last", None),
             "boots": self.boots[-20:], "errors": self.errors,
             "deaths": getattr(self, "deaths", [])[-30:],
@@ -4117,7 +4129,16 @@ class Monitor:
             print(f"v3: shutdown save skipped ({why}) — nothing restored and no cycle "
                   f"run yet; a fragment would overwrite the whole state", flush=True)
             return False
+        # fix E (owner, 2026-09-22 "Yes, ship it"): halt every desk FIRST,
+        # then wait for a running cycle and a running tender pass, so the
+        # snapshot is the last word — nothing places, moves or cancels
+        # after it
+        from .orders import OrderDesk
+        OrderDesk.halted = f"the process is stopping ({why})"
+        t_stop = time.time()
         got = self._lock.acquire(timeout=SHUTDOWN_LOCK_S)
+        flock = getattr(getattr(self, "focus", None), "lock", None)
+        got_f = bool(flock.acquire(timeout=SHUTDOWN_LOCK_S)) if flock is not None else False
         try:
             st = dict(base)
             for key, fam in self.families.items():
@@ -4145,8 +4166,16 @@ class Monitor:
                     pass
             st["audit"] = list(self.audit[-60:])
             st["saved_at"] = time.time()
+            # the record the next boot reads to say whether it restored
+            # THIS save or an older periodic one (fix E)
+            st["last_stop"] = {"at": round(st["saved_at"], 1), "why": why,
+                               "build": self.build, "keys": len(st) + 1,
+                               "cycle_lock": bool(got), "tender_lock": got_f,
+                               "halt_s": round(st["saved_at"] - t_stop, 2)}
             self.last_state = st
         finally:
+            if got_f:
+                flock.release()
             if got:
                 self._lock.release()
         self.store.save_soon(st, force_remote=True)
