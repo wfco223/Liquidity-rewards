@@ -1592,3 +1592,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790131490.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,1,0.644,focus,64.5309,0.01,0.5,65,68,0.87,0.644,0.646,0.144,1,focus entry: ~$181.25/day; fill odds 57%/day; EV +179.91/day,CNKPA7FT8WPB
 1790131914.1,politics,paccc-usse-midterms-2026-11-03-rep,SELL,54,0.365,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNJGWAANCWPF
 1790131914.1,politics,paccc-usse-midterms-2026-11-03-dem,BUY,40,0.649,backfill,,0.74,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNK2FEAR0WP9
+1790132334.5,politics,ewc-usse-tx-2026-11-03-dem,SELL,34,0.59,sell,0.4241,0.99,0.701975,60,64,0.596,0.58,0.59,0.112,0,an exit — its fill reduces the position it sits on,CNK2D5QE6WPD
+1790132843.6,politics,scc-senate-demst-2026-11-03-gte51,BUY,5,0.88,earn,0.496,0.91,,78,89,0,0.01,0.88,0.03,5,joins the touch — the book has been quiet,CNK8NT8Y6WPB
+1790133625.3,politics,ewc-usse-oh-2026-11-03-dem,BUY,37,0.65,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNKVV45A8WPF
+1790133654.7,politics,ewc-usse-oh-2026-11-03-dem,BUY,27,0.64,focus,3.4837,0,0.703975,62,66,0.69,0.64,0.65,-0.064,27,focus entry: ~$3.48/day; fill odds 57%/day; EV +2.55/day,CNM6SY04WWP7
+1790134428.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,14,0.101,focus,0.363,0.05,0.099,12,14,0.912,0.1,0.101,-0.002,-32,focus entry: ~$3.63/day; fill odds 67%/day; EV +2.55/day,CNMBYNRBGWPC
+1790135527.9,politics,ewc-usse-oh-2026-11-03-dem,BUY,37,0.65,backfill,,0.38,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNKVV45A8WPF
