@@ -1577,3 +1577,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790124640.2,politics,ewc-usse-tx-2026-11-03-rep,BUY,71,0.42,backfill,,1.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNG7HPV1EWP7
 1790124640.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,169,0.649,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNHDFQD4WWP7
 1790124675.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,169,0.649,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNHDFQD4WWP7
+1790125367.9,politics,ushrewc-ushr-me-02-2026-11-03-dem,BUY,23,0.42,focus,8.9155,0.12,,39,43,0.449,0.42,0.43,0.01,41,focus entry: ~$11.94/day; fill odds 55%/day; EV +6.63/day,CNJ4VECGCWPH
+1790125938.4,politics,paccc-usse-midterms-2026-11-03-dem,BUY,9,0.649,sell,6.4284,0.32,0.5,67,70,0.882,0.649,0.65,0.149,0,an exit — its fill reduces the position it sits on,CNJ3THCFCWPB
+1790126237.9,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,82,0.77,focus,126.97,0.02,0.777075,76,80,0.546,0.75,0.76,-0.0071,82,focus entry: ~$10.86/day; fill odds 49%/day; EV +3.25/day,CNJE41HG4WPF
+1790126237.9,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,61.92,0.24,focus,60.5664,0.01,0.222925,21,26,0.245,0.23,0.24,-0.0171,-61.92,focus entry: ~$51.00/day; fill odds 49%/day; EV +43.29/day,CNJEAJVVEWPE
+1790126477.9,politics,cpoc-ussegubc-mn-2026-11-03-dgov-rsen,SELL,5,0.04,earn,0.6904,1.19,,3,11,0,0.07,0.09,0.03,-5,joins the touch — the book has been quiet,CNHGRJWZJWPD
+1790128268.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-49,0.1,fix,3.179,1.24,0.1034,11,13,0.836,0.099,0.1,0.0034,0,size trimmed by 49 to the exchange's count (order CMHMANG12WPA),CMHMANG12WPA
+1790128268.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-137,0.1,fix,14.8955,1.21,0.1034,10,13,0.81,0.099,0.1,0.0034,49,size trimmed by 137 to the exchange's count (order CMHMANG12WPA),CMHMANG12WPA
+1790128268.7,politics,ewc-usse-tx-2026-11-03-rep,BUY,-66,0.42,fix,0.6363,2.04,0.298025,43,46,0.821,0.42,0.43,0.122,0,size trimmed by 66 to the exchange's count (order CNG7HPV1EWP7),CNG7HPV1EWP7
