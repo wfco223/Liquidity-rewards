@@ -1558,3 +1558,22 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790121002.5,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,-144,0.19,fix,,9.85,,,,,,,,,size trimmed by 144 to the exchange's count (order CM9SXHQDEWPB),CM9SXHQDEWPB
 1790121002.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,35,0.642,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNGQQPYBRWPE
 1790121002.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,30,0.646,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNGTC675CWPB
+1790121135.6,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,BUY,1,0.38,probe,2.8626,0.4,,32,43,0,0.36,0.39,0,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CNGWW5MWWWPF
+1790121392.1,politics,paccc-usse-midterms-2026-11-03-dem,BUY,50,0.645,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNGWH9ZE0WPH
+1790122185.8,politics,ewc-usgub-wi-2026-11-03-dem,SELL,385,0.83,focus,91.8831,0.04,0.722,82,87,0.61,0.83,0.84,-0.108,-385,focus entry: ~$13.49/day; fill odds 49%/day; EV +1.21/day,CNHFNKH36WPC
+1790122330.3,politics,ewc-usse-mi-2026-11-03-rep,BUY,177,0.32,focus,100.099,0.04,0.2001,31,35,0.67,0.31,0.32,0.1199,177,focus entry: ~$6.55/day; fill odds 56%/day; EV +0.80/day,CNHGYZY06WPA
+1790122578.5,cfb,aachc-cfb-wins-2026-11-28-clmsn-7pt5wins,BUY,1,0.34,sell,0.2856,19.67,,28,36,0.36,0.34,0.35,0.01,2,buying back the short at or under what it sold for — the bid earns while it wait,CN0HTQGSMWP7
+1790122852.9,politics,cpoc-ussegubc-mn-2026-11-03-rsweep,BUY,5,0.1,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNHNTEDZWWP6
+1790123191.1,politics,cpoc-ussegubc-nh-2026-11-03-dsweep,BUY,50,0.24,earn,1.6361,0.32,,4,12,0,0.06,0.11,0.16,50,joins the touch — the book has been quiet,CNHFT8N8RWP6
+1790123523.6,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,86.33,0.78,backfill,,8.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNAJBQSZTWPE
+1790123629.3,politics,usgubewc-usgub-fl-2026-11-03-dem,BUY,54,0.25,focus,0.2432,0.05,0.355675,24,29,0.675,0.25,0.26,-0.1057,0,focus exit: ~$12.15/day; fill odds 48%/day; EV +11.75/day,CNHT27AGAWPB
+1790123629.3,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,46.83,0.78,sell,4.5615,8.3,0.644325,73,79,0.026,0.77,0.78,0.1357,-0.17,an exit — its fill reduces the position it sits on,CNAJBQSZTWPE
+1790123766.9,politics,cpoc-ussegubc-oh-2026-11-03-dsweep,SELL,20,0.48,earn,1.4491,0.6,,40,51,0,0.48,0.49,-0.02,-20,joins the touch — the book has been quiet,CNHD320XYWPC
+1790123766.9,politics,cpoc-ussegubc-mn-2026-11-03-rgov-dsen,BUY,20,0.23,earn,1.0246,0.5,,3,9,0,0.03,0.06,0.17,20,joins the touch — the book has been quiet,CNHF78VEYWP7
+1790124395.5,politics,ewc-usse-tx-2026-11-03-rep,BUY,71,0.42,backfill,,1.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNG7HPV1EWP7
+1790124640.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,50,0.645,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNGWH9ZE0WPH
+1790124640.2,politics,cpoc-ussegubc-mn-2026-11-03-rsweep,BUY,5,0.1,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CNHNTEDZWWP6
+1790124640.2,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,86.33,0.78,backfill,,8.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNAJBQSZTWPE
+1790124640.2,politics,ewc-usse-tx-2026-11-03-rep,BUY,71,0.42,backfill,,1.99,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNG7HPV1EWP7
+1790124640.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,169,0.649,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNHDFQD4WWP7
+1790124675.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,169,0.649,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNHDFQD4WWP7
