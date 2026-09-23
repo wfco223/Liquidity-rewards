@@ -1640,3 +1640,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790170538.5,politics,cpoc-ussegubc-nh-2026-11-03-dgov-rsen,BUY,3,0.07,earn,0.8111,7.78,,5,10,0,0.07,0.08,-0.01,3,joins the touch — the book has been quiet,CNP7CG20JWPE
 1790171618.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-9,0.103,fix,0.2015,1.7,0.1034,12,14,0.908,0.102,0.103,0.0004,0,size trimmed by 9 to the exchange's count (order CMP3HADQGWP7),CMP3HADQGWP7
 1790171618.6,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-18,0.103,fix,4.2057,1.3,0.1034,12,14,0.901,0.102,0.103,0.0004,9,size trimmed by 18 to the exchange's count (order CMP3HADQGWP7),CMP3HADQGWP7
+1790172578.7,politics,ewc-usse-mi-2026-11-03-rep,SELL,3,0.31,sell,0.1877,8.84,0.2001,33,36,0.869,0.3,0.31,-0.1099,21,an exit — its fill reduces the position it sits on,CNNSYA1CPWPF
+1790173478.7,politics,ewc-usse-mi-2026-11-03-rep,SELL,21,0.31,sell,0.1368,9.09,0.2001,33,36,0.882,0.3,0.31,-0.1099,0,an exit — its fill reduces the position it sits on,CNNSYA1CPWPF
+1790174982.1,politics,cpoc-ussegubc-tx-2026-11-03-dsweep,SELL,2,0.28,sell,0,0,,28,34,0.413,0.28,0.29,0.03,0,taker dump — sold into the bid (the carved exception),CNY0Y98BTWPA
+1790175026.8,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,3,0.98,hand,,15.47,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNGTMH32WWP6
+1790175026.8,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,6.12,0.98,hand,,101.88,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CK6Q4MDH0WP6
+1790175068.3,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,81.26,0.94,hand,,3.7,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNTTA0BGGWP7
+1790175068.3,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,35,0.94,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNY0C5KJEWP9
+1790175224.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-9,0.103,fix,4.2057,1.3,0.1034,12,14,0.901,0.102,0.103,0.0004,9,size trimmed by 9 to the exchange's count (order CMP3HADQGWP7),CMP3HADQGWP7
+1790175224.7,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,3,0.98,hand,,15.47,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNGTMH32WWP6
+1790175224.7,politics,usgubewc-usgub-ri-2026-11-03-dem,BUY,6.12,0.98,hand,,101.88,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CK6Q4MDH0WP6
+1790175224.7,politics,usgubewc-usgub-mn-2026-11-03-dem,BUY,81.26,0.94,hand,,3.7,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNTTA0BGGWP7
+1790175224.7,politics,usgubewc-usgub-mn-2026-11-03-dem,SELL,35,0.94,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNY0C5KJEWP9
