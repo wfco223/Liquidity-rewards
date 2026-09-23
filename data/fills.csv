@@ -1585,3 +1585,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790128268.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-49,0.1,fix,3.179,1.24,0.1034,11,13,0.836,0.099,0.1,0.0034,0,size trimmed by 49 to the exchange's count (order CMHMANG12WPA),CMHMANG12WPA
 1790128268.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-137,0.1,fix,14.8955,1.21,0.1034,10,13,0.81,0.099,0.1,0.0034,49,size trimmed by 137 to the exchange's count (order CMHMANG12WPA),CMHMANG12WPA
 1790128268.7,politics,ewc-usse-tx-2026-11-03-rep,BUY,-66,0.42,fix,0.6363,2.04,0.298025,43,46,0.821,0.42,0.43,0.122,0,size trimmed by 66 to the exchange's count (order CNG7HPV1EWP7),CNG7HPV1EWP7
+1790128717.6,politics,ussewc-usse-co-2026-11-03-rep,SELL,18.79,0.05,sell,0.222,109.2,0.00415,3,7,0.569,0.04,0.05,-0.0459,175.21,an exit — its fill reduces the position it sits on,CJNDG4MNRW22
+1790128786.8,politics,paccc-usse-midterms-2026-11-03-rep,SELL,54,0.365,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNJGWAANCWPF
+1790129221.1,politics,scc-hrep-demst-2026-11-03-gte218,BUY,1,0.92,earn,0.0439,0.66,,89,97,0,0.92,0.93,-0.01,1,1 tick in front of the touch — we would hold 5% of the bid side,CNJKVJP9AWP7
+1790131449.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,40,0.649,backfill,,0.74,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNK2FEAR0WP9
+1790131490.3,politics,paccc-usse-midterms-2026-11-03-dem,BUY,1,0.644,focus,64.5309,0.01,0.5,65,68,0.87,0.644,0.646,0.144,1,focus entry: ~$181.25/day; fill odds 57%/day; EV +179.91/day,CNKPA7FT8WPB
+1790131914.1,politics,paccc-usse-midterms-2026-11-03-rep,SELL,54,0.365,backfill,,0.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNJGWAANCWPF
+1790131914.1,politics,paccc-usse-midterms-2026-11-03-dem,BUY,40,0.649,backfill,,0.74,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNK2FEAR0WP9
