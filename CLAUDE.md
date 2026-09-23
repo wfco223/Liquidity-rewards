@@ -1183,6 +1183,34 @@ long and accreted, so search it rather than reading it through.
   saved_at, age_s, stop}, and every cycle's state carries it, so each
   check can say which save the boot restored.
 
+- THE TENDER LOGS THE BOOK ON EACH MOVE (owner, 2026-09-23 "Log the book
+  on each move", the read-only option of the three put to him). Covers
+  were flipping price every minute or two (Texas governor dem 15c<->29c,
+  Pennsylvania-01 rep 57c<->60c, Maine-02 dem entry 41c<->42c: each back
+  at the first pass its cooldown allowed), and four tender entries
+  filled unbooked while it moved them (House control rep 429 @ 10c
+  "moved" after it filled, and a second bid of 483 rested on top for a
+  minute). A rig reproduces the rhythm exactly when the book the tender
+  reads does not show its own new order; with a book that does, the
+  code holds steady. Two stamps could cause it and the saved state kept
+  no books: the tender stamps its orders with the PASS's start
+  (placed_ts=now) while _levels_net decides "already in the book" by
+  placed_ts against the book's read; and the family and bonds stamp
+  gateway books with their cycle's `now`, not the read. So every
+  rested, moved, pull, filled, exit_filled, refused and move_refused
+  line in the focus log now carries `diag`: the book's age and writer
+  (stream or gateway), the side raw and as netted (DIAG_LEVELS), the
+  other side's top, each tender order there with placed_vs_read,
+  sent_vs_read (the clock just before the desk sent it, _sent_at) and
+  whether the netting took it as in the book, and the live ghosts; a
+  move adds why (bare, its own reading under FOCUS_KEEP of the plan's,
+  the size or the intent), prev (the resting order's own score), was_d
+  (the replaced order against the book it was judged on), desk (the
+  desk's own words) and two; a pull adds prev and was_d. The page gets
+  the lines without the books; the saved state keeps them. Nothing
+  here feeds a decision — a failing diag writes its error and the pass
+  goes on. The fix comes after the diag names the cause, with his yes.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."

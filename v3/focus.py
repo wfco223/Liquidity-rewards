@@ -307,6 +307,20 @@ FOCUS_WS_CAP = 280
 ENGINE_WS_CAP = 200
 LOG_KEEP = 300
 EVENTS_KEEP = 60
+# THE BOOK ON EACH MOVE (owner, 2026-09-23 "Log the book on each move"):
+# covers flipped price every minute or two (Texas governor dem 15c<->29c,
+# Pennsylvania-01 rep 57c<->60c, each back at the first pass the exit
+# cooldown allowed) and entries filled while the tender was moving them
+# (House control rep, 429 @ 10c, "moved" a minute after it filled and a
+# second bid of 483 rested on top). A rig reproduces the rhythm only
+# when the book the tender reads does not show its own new order, and
+# the saved state keeps no books, so every placement, move, pull and
+# fill the tender logs now carries the book it was judged on — read-only,
+# nothing about trading changes.
+DIAG_EVENTS = frozenset({"rested", "moved", "pull", "filled", "exit_filled",
+                         "refused", "move_refused"})
+DIAG_LEVELS = 5                  # levels a side kept in a diag, nearest first
+DIAG_SENT_KEEP = 400             # send moments remembered (ids)
 PURPOSE = "focus"
 
 
@@ -363,6 +377,7 @@ class Focus:
         # book's lag — netted out of the levels like its resting orders
         self.departed: dict[str, list] = {}       # "slug|side" -> [[price, qty, ts], ...]
         self._px_seen: dict[str, tuple] = {}       # id -> (slug, side, price, qty) last scored
+        self._sent_at: dict[str, float] = {}      # id -> the clock just before the desk sent it (diag)
         self.rate_hist: dict[str, dict[str, float]] = {}   # slug -> bucket -> max rate
         # the qualify button's run note, slug -> one line (set by the
         # monitor, which owns the wall runs); owner, 2026-09-11 "Give me
@@ -414,8 +429,70 @@ class Focus:
 
     def _log(self, **kw) -> None:
         kw.setdefault("ts", round(self._clock(), 1))
+        if kw.get("event") in DIAG_EVENTS and kw.get("market") and kw.get("side"):
+            try:
+                kw["diag"] = self._diag(kw["market"], kw["side"])
+            except Exception as e:  # noqa: BLE001 — a diagnostic never breaks a pass
+                kw["diag"] = {"error": f"{type(e).__name__}: {e}"[:80]}
         self.log.append(kw)
         del self.log[:-LOG_KEEP]
+
+    def _diag(self, slug: str, side: str) -> dict:
+        """The book an order on this side is judged on, as the next pass
+        will read it (owner, 2026-09-23 "Log the book on each move"):
+        its age and which writer put it in the cache (the stream or a
+        gateway read), the side as the exchange shows it and as the
+        tender nets it, every order of the tender's on the side with its
+        pass stamp and its real send moment against the book's read and
+        whether the netting took it as already in the book, and the
+        ghosts netted. Read-only: nothing here feeds a decision."""
+        book = self.fam.cache.any_age(slug)
+        if book is None:
+            return {"book": None}
+        now = float(self._clock())
+        read_at = float(getattr(book, "fetched_at", 0.0) or 0.0)
+        tick = book.tick or 0.01
+        lv = lambda levels: [[_r4(float(p)), round(float(q), 2)]
+                             for p, q in list(levels)[:DIAG_LEVELS]]
+        mine = [self._order_diag(o, read_at) for o in self._mine(slug, side)]
+        ghosts = [[_r4(float(g[0])), round(float(g[1]), 2), round(now - float(g[2]), 1)]
+                  for g in (self.departed.get(f"{slug}|{side}") or [])
+                  if now - float(g[2]) <= FOCUS_GHOST_S]
+        return {"age": round(now - read_at, 1) if read_at else None,
+                "src": self.fam.cache.last_writer.get(slug),
+                "tick": tick,
+                "raw": lv(book.side(side)),
+                "net": lv(self._levels_net(slug, side, book)),
+                "opp": lv(book.side("SELL" if side == "BUY" else "BUY"))[:2],
+                "mine": mine, "ghosts": ghosts}
+
+    def _order_diag(self, o: FamilyOrder, read_at: float) -> dict:
+        """One order of the tender's against a book's read: its pass
+        stamp and its real send moment, and whether the netting takes it
+        as already in the book (line-for-line _levels_net's own test)."""
+        placed = float(o.placed_ts or 0.0)
+        sent = self._sent_at.get(o.id)
+        return {"px": _r4(float(o.price)), "qty": round(float(o.qty), 2),
+                "placed_vs_read": round(placed - read_at, 1) if read_at else None,
+                "sent_vs_read": (round(sent - read_at, 1)
+                                 if (sent is not None and read_at) else None),
+                "netted": not (read_at and placed >= read_at - 1e-6)}
+
+    def _was_diag(self, o: FamilyOrder) -> dict | None:
+        """The order a move or pull replaces, against the book it was
+        judged on — taken before the desk acts (diag only)."""
+        try:
+            b = self.fam.cache.any_age(o.market)
+            return self._order_diag(o, float(getattr(b, "fetched_at", 0.0) or 0.0)) if b else None
+        except Exception:  # noqa: BLE001
+            return None
+
+    def _note_sent(self, oid: str | None, at: float) -> None:
+        if oid:
+            self._sent_at[oid] = at
+            if len(self._sent_at) > DIAG_SENT_KEEP:
+                for k in list(self._sent_at)[:len(self._sent_at) - DIAG_SENT_KEEP]:
+                    self._sent_at.pop(k, None)
 
     def _label(self, slug: str) -> str:
         try:
@@ -2118,14 +2195,19 @@ class Focus:
                     if blocked:
                         continue
                 if cur is not None:
+                    was_d = self._was_diag(cur)
                     r = self.fam.desk.cancel(cur.id, slug, initiator="auto")
                     if r.ok:
                         self.fam.orders.pop(cur.id, None)
                         self._forget(cur.id)
                         self.weak_since.pop(key, None)
                         actions -= 1
+                        prev = self.scores.get(cur.id)
                         self._log(event="pull", market=slug, side=side, price=cur.price,
                                   qty=cur.qty,
+                                  prev=([round(float(x), 4) if not isinstance(x, bool) else x
+                                         for x in prev] if prev else None),
+                                  was_d=was_d,
                                   why=("past your fair with no company on the side" if bare
                                        else plan.get("note") or "nothing earns on this side"
                                        if not plan or not plan.get("px")
@@ -2171,6 +2253,7 @@ class Focus:
                                f"waiting for money: it needs ${need:,.0f} and ${limit:,.0f} "
                                f"may be spent (${FOCUS_BP_KEEP_FREE_USD:,.0f} stays free)")
                     continue
+                sent_at = self._clock()
                 r = self.fam.desk.place_resting(slug, side, plan["px"], plan["qty"],
                                                 net_position=float((positions.get(slug) or (0.0,))[0] or 0.0),
                                                 # a cover buys the short back: it
@@ -2181,6 +2264,7 @@ class Focus:
                                                 initiator="auto")
                 actions -= 1
                 rested = plan["qty"] if r.ok else (r.resting_qty if r.order_id and r.resting_qty >= 1.0 else 0.0)
+                self._note_sent(r.order_id, sent_at)
                 if r.order_id:
                     self._claim_id(r.order_id)    # every id the desk hands back is the tender's
                 if r.order_id and rested >= 1.0:
@@ -2200,7 +2284,8 @@ class Focus:
                         used += plan["risk"]
                     self._log(event="rested", market=slug, side=side, price=(r.price or plan["px"]),
                               qty=rested, est=plan["est"], pf=plan["pf"], ev=plan["ev"],
-                              exit=is_exit, note=("trimmed by the exchange" if not r.ok else ""))
+                              exit=is_exit, note=("trimmed by the exchange" if not r.ok else ""),
+                              desk=(r.note or "")[:120])
                 elif r.order_id and getattr(r, "unverified", False):
                     # accepted, never listed because the open list is capped:
                     # the order rests past the cut — it is the tender's, on
@@ -2258,10 +2343,17 @@ class Focus:
                 continue
             cur_ev = float(self._own_ev(cur) or 0.0)
             keeps = same_px or cur_ev >= FOCUS_KEEP * plan["ev"] - 1e-9
-            if self._own_bare(cur):
+            own_bare = self._own_bare(cur)
+            if own_bare:
                 keeps = False                     # past fair with no company: to the plan
             if keeps and size_ok and not wrong_intent:
                 continue
+            # why it moves, for the diag (logging only)
+            move_why = ("past your fair with no company" if own_bare
+                        else "the intent" if wrong_intent and keeps and size_ok
+                        else "the size" if keeps
+                        else f"where it rested read ${cur_ev:+.4f}/day, under {FOCUS_KEEP:.0%} "
+                             f"of the new slot's ${plan['ev']:+.4f}")
             cooldown = FOCUS_EXIT_COOLDOWN_S if is_exit else FOCUS_MOVE_COOLDOWN_S
             if now - self.moved_at.get(key, 0.0) < cooldown:
                 continue
@@ -2283,6 +2375,9 @@ class Focus:
                 self._no_money(key, slug, side, need, free, limit, now)  # the original stays
                 continue
             intent = want_intent if wrong_intent else cur.intent
+            prev = self.scores.get(cur.id)        # its own reading, for the diag
+            was_d = self._was_diag(cur)
+            sent_at = self._clock()
             r = self.fam.desk.reprice(
                 {"id": cur.id, "market": slug, "side": side, "price": cur.price,
                  "size": cur.qty, "intent": intent},
@@ -2300,6 +2395,7 @@ class Focus:
                           qty=plan["qty"], note=r.note[:140])
                 continue
             rested = plan["qty"] if r.ok else r.resting_qty
+            self._note_sent(r.order_id, sent_at)
             if r.two_orders:
                 cur.why = "cancel failed during a move — retrying"
             else:
@@ -2318,7 +2414,10 @@ class Focus:
                 used += plan["risk"] - cur_risk
             self._log(event="moved", market=slug, side=side, price=(r.price or plan["px"]),
                       qty=rested, was=cur.price, est=plan["est"], pf=plan["pf"], ev=plan["ev"],
-                      exit=is_exit)
+                      exit=is_exit, why=move_why,
+                      prev=([round(float(x), 4) if not isinstance(x, bool) else x for x in prev]
+                            if prev else None),
+                      desk=(r.note or "")[:120], two=bool(r.two_orders), was_d=was_d)
         return FOCUS_ACTIONS_PER_PASS - actions
 
     @staticmethod
@@ -2661,7 +2760,10 @@ class Focus:
                 "books_note": self.books_note,
                 "pool_min": FOCUS_POOL_MIN_USD,
                 "events": list(reversed(self.events[-20:])),
-                "log": list(reversed(self.log[-40:])),
+                # the page gets the lines, not the diag books (they stay
+                # in the saved state for the checks)
+                "log": [{k: v for k, v in e.items() if k != "diag"}
+                        for e in reversed(self.log[-40:])],
                 "rows": rows}
 
     def _freeze(self, now: float, bp: float | None, on: bool) -> None:
