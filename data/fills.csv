@@ -1684,3 +1684,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790189771.1,politics,paccc-usse-midterms-2026-11-03-dem,BUY,-76,0.618,fix,,0.55,,,,,,,,,size trimmed by 76 to the exchange's count (order CMRPBX0QJWP7),CMRPBX0QJWP7
 1790189771.1,politics,scc-senate-gop-2026-11-03-lte45,BUY,2.38,0.06,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP0TYATSPWPA
 1790189771.1,politics,paccc-usho-midterms-2026-11-03-rep,BUY,429,0.1,backfill,,0.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP1ET2GYMWPE
+1790189842.4,politics,ewc-usgub-nv-2026-11-03-dem,SELL,21,0.45,sell,3.9251,118.12,0.45885,44,49,0.562,0.44,0.45,0.0088,37,an exit — its fill reduces the position it sits on,CJWBHWJ68W7H
+1790190407.8,politics,scc-senate-demst-2026-11-03-gte51,BUY,20,0.78,earn,1.0305,3.2,,77,86,0.38,0.78,0.8,-0.03,25,1 tick behind the touch — we would hold 17% of the bid side,CNYWVR60JWPH
+1790190480.3,politics,scc-senate-demst-2026-11-03-gte51,BUY,10,0.76,earn,0.5682,0.02,,74,81,0.591,0.01,0.79,-0.02,35,2 ticks behind the touch — we would hold 9% of the bid side,CP1PK96T2WPH
+1790190972.7,politics,ewc-usgub-ga-2026-11-03-dem,SELL,16,0.59,sell,0.2669,1.34,0.655225,55,60,0,0.58,0.59,0.0652,10,an exit — its fill reduces the position it sits on,CP0NK4NTJWP9
+1790191305.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,178,0.091,sell,13.4774,0.42,0.0916,11,13,0.889,0.09,0.091,0.0006,251,an exit — its fill reduces the position it sits on,CP1JB0W88WPF
+1790192890.2,politics,scc-hrep-rep-2026-11-03-gte230,SELL,25,0.04,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP23ES2YAWPF
+1790193414.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-58,0.091,fix,37.0262,1.17,0.1034,12,14,0.925,0.09,0.091,0.0124,0,size trimmed by 58 to the exchange's count (order CMRCQ171TWPE),CMRCQ171TWPE
+1790193414.4,politics,scc-hrep-rep-2026-11-03-gte230,SELL,25,0.04,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP23ES2YAWPF
