@@ -1615,3 +1615,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790150115.8,politics,ewc-usgub-ga-2026-11-03-dem,SELL,57,0.56,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNPTH9586WPD
 1790150884.1,politics,scc-hrep-demst-2026-11-03-gte218,SELL,1,0.9,sell,0,0,,87,92,0.426,0.9,0.91,0,0,taker dump — sold into the bid (the carved exception),CNR6XC2TYWPF
 1790157535.4,politics,scc-senate-gop-2026-11-03-48,SELL,7,0.15,manual,0.0351,16.45,0.15265,12,15,0.523,0.14,0.15,0.0027,-7,the owner's own order — the engine leaves it alone,CNBPE05KWWPF
+1790161504.5,politics,ewc-usse-mi-2026-11-03-rep,SELL,29,0.31,sell,0.5645,5.77,0.2001,32,35,0.819,0.3,0.31,-0.1099,29,an exit — its fill reduces the position it sits on,CNNSYA1CPWPF
+1790163751.3,politics,ewc-usse-mi-2026-11-03-rep,SELL,3,0.31,sell,0.2822,6.39,0.2001,32,36,0.841,0.3,0.31,-0.1099,26,an exit — its fill reduces the position it sits on,CNNSYA1CPWPF
+1790164354.7,politics,ewc-usgub-oh-2026-11-03-rep,BUY,19,0.4,hand,,58.04,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVSPDRWWW0Y
+1790164354.7,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,144,0.19,hand,,9.85,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CM9SXHQDEWPB
+1790164354.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,186,0.1,hand,,1.21,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CMHMANG12WPA
+1790164354.7,politics,ewc-usgub-wi-2026-11-03-dem,SELL,5,0.83,hand,,75.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVWP40J8W1Y
+1790164354.7,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,120,0.06,hand,,84.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJND344BPW22
+1790164354.7,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,40.27,0.93,hand,,80.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CK93JF66GWPA
+1790164354.7,politics,ewc-usgub-nv-2026-11-03-dem,SELL,2,0.45,backfill,,95.66,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWBHWJ68W7H
+1790164354.7,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,BUY,0.09,0.43,hand,,0.85,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFD8VQ7TRTN3
+1790164354.7,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,BUY,0.01,0.43,hand,,3.56,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFAY052TGTMM
+1790164354.7,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,BUY,0.1,0.43,hand,,9.95,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CF5F6S0B2TMQ
