@@ -1627,3 +1627,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790164354.7,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,BUY,0.09,0.43,hand,,0.85,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFD8VQ7TRTN3
 1790164354.7,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,BUY,0.01,0.43,hand,,3.56,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CFAY052TGTMM
 1790164354.7,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,BUY,0.1,0.43,hand,,9.95,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CF5F6S0B2TMQ
+1790164495.9,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,SELL,0.2,0.26,backfill,,4.97,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNQ71RYB0WPF
+1790165014.7,politics,ewc-usse-mi-2026-11-03-rep,SELL,2,0.31,sell,0.2537,6.74,0.2001,33,36,0.859,0.3,0.31,-0.1099,24,an exit — its fill reduces the position it sits on,CNNSYA1CPWPF
+1790167965.0,politics,ewc-usgub-wi-2026-11-03-dem,SELL,-5,0.83,fix,,75.86,,,,,,,,,size trimmed by 5 to the exchange's count (order CJVWP40J8W1Y),CJVWP40J8W1Y
+1790167965.0,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,-120,0.06,fix,,84.74,,,,,,,,,size trimmed by 120 to the exchange's count (order CJND344BPW22),CJND344BPW22
+1790167965.0,politics,ewc-usgub-nv-2026-11-03-dem,SELL,-2,0.45,fix,,95.66,,,,,,,,,size trimmed by 2 to the exchange's count (order CJWBHWJ68W7H),CJWBHWJ68W7H
+1790167965.0,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,-40.27,0.93,fix,1.1106,80.04,0.9886,92,96,0.012,0.93,0.94,-0.0586,-0.27,size trimmed by 40.27 to the exchange's count (order CK93JF66GWPA),CK93JF66GWPA
+1790167965.0,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,SELL,0.2,0.26,backfill,,4.97,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNQ71RYB0WPF
