@@ -12142,6 +12142,7 @@ date,market,program_type,reward_usd,status
 2026-09-21,ewc-usse-ak-2026-11-03-dem,liquidityProgram,1.47,PENDING
 2026-09-21,ewc-usse-me-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-09-21,ewc-usse-mn-2026-11-03-dem,liquidityProgram,0.2,PENDING
+2026-09-21,ewc-usse-nc-2026-11-03-rep,liquidityProgram,0.11,PENDING
 2026-09-21,ewc-usse-nh-2026-11-03-dem,liquidityProgram,0.03,PENDING
 2026-09-21,ewc-usse-nh-2026-11-03-rep,liquidityProgram,0.02,PENDING
 2026-09-21,ewc-usse-oh-2026-11-03-dem,liquidityProgram,0.66,PENDING
