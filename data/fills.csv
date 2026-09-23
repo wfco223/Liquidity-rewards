@@ -1610,3 +1610,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790143424.5,politics,cpoc-ussegubc-tx-2026-11-03-dsweep,BUY,2,0.33,earn,1.5093,0.68,,28,40,0,0.29,0.34,0,2,joins the touch — the book has been quiet,CNNW40GGGWP6
 1790146335.5,cfb,aachc-cfb-wins-2026-11-28-clmsn-7pt5wins,SELL,1,0.34,sell,0,0,,28,35,0.552,0.34,0.35,-0.02,0,taker dump — sold into the bid (the carved exception),CNQ5KRR86WPH
 1790146464.9,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,-40.27,0.93,fix,1.1106,80.04,0.9886,92,96,0.012,0.93,0.94,-0.0586,-0.27,size trimmed by 40.27 to the exchange's count (order CK93JF66GWPA),CK93JF66GWPA
+1790146546.8,politics,ewc-usgub-ga-2026-11-03-dem,SELL,57,0.56,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNPTH9586WPD
+1790146644.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,37,0.646,sell,16.7128,0.14,0.5,65,67,0.888,0.646,0.647,0.146,0,an exit — its fill reduces the position it sits on,CNQ3XQGAYWPF
+1790150115.8,politics,ewc-usgub-ga-2026-11-03-dem,SELL,57,0.56,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNPTH9586WPD
