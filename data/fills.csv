@@ -1614,3 +1614,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790146644.9,politics,paccc-usse-midterms-2026-11-03-dem,BUY,37,0.646,sell,16.7128,0.14,0.5,65,67,0.888,0.646,0.647,0.146,0,an exit — its fill reduces the position it sits on,CNQ3XQGAYWPF
 1790150115.8,politics,ewc-usgub-ga-2026-11-03-dem,SELL,57,0.56,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNPTH9586WPD
 1790150884.1,politics,scc-hrep-demst-2026-11-03-gte218,SELL,1,0.9,sell,0,0,,87,92,0.426,0.9,0.91,0,0,taker dump — sold into the bid (the carved exception),CNR6XC2TYWPF
+1790157535.4,politics,scc-senate-gop-2026-11-03-48,SELL,7,0.15,manual,0.0351,16.45,0.15265,12,15,0.523,0.14,0.15,0.0027,-7,the owner's own order — the engine leaves it alone,CNBPE05KWWPF
