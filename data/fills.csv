@@ -1692,3 +1692,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790192890.2,politics,scc-hrep-rep-2026-11-03-gte230,SELL,25,0.04,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP23ES2YAWPF
 1790193414.4,politics,paccc-usho-midterms-2026-11-03-rep,SELL,-58,0.091,fix,37.0262,1.17,0.1034,12,14,0.925,0.09,0.091,0.0124,0,size trimmed by 58 to the exchange's count (order CMRCQ171TWPE),CMRCQ171TWPE
 1790193414.4,politics,scc-hrep-rep-2026-11-03-gte230,SELL,25,0.04,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP23ES2YAWPF
+1790194132.4,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,20.33,0.03,sell,4.0678,119.33,0.0418,1,6,0.274,0.02,0.03,0.0118,119,an exit — its fill reduces the position it sits on,CJWB6WACPW7E
+1790195483.4,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,51,0.83,sell,17.4153,5.24,0.850825,79,83,0.501,0.82,0.83,-0.0208,0,an exit — its fill reduces the position it sits on,CNYC1DQ3GWPE
+1790196443.5,politics,paccc-usse-midterms-2026-11-03-dem,SELL,6,0.647,focus,0.7556,0.21,0.5,64,66,0.838,0.646,0.647,-0.147,-6,focus entry: ~$2.08/day; fill odds 55%/day; EV +0.04/day,CP2XG3S2CWP7
+1790196563.5,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,2,0.28,sell,0,0,,27,31,0.42,0.28,0.29,0.01,2.99,taker dump — sold into the bid (the carved exception),CP34RWGDJWP9
+1790196569.2,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,BUY,1,0.27,backfill,,4.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZE609ZAWPC
+1790197028.0,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-12.67,0.03,fix,4.0678,119.33,0.0418,1,6,0.274,0.02,0.03,0.0118,119,size trimmed by 12.67 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
+1790197028.0,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,BUY,1,0.27,backfill,,4.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZE609ZAWPC
