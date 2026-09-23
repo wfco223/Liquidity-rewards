@@ -196,6 +196,15 @@ class OrderResult:
 
 
 class OrderDesk:
+    # the stop signal's halt (owner, 2026-09-22 "Yes, ship it", fix E):
+    # set once for EVERY desk when the process is told to stop, before
+    # the state is snapshotted, so no placement, move or cancel can land
+    # after the snapshot and come back at the next boot as "his hand's"
+    # (the 22:48Z boot: the tender resized its Senate seats 50 bid while
+    # the old build was stopping, and the 552-share replacement came
+    # back recorded as his). cancel_all, the emergency stop, is exempt.
+    halted: str | None = None
+
     """All order-touching operations, behind the rails.
 
     Collaborators are injected so every path is testable offline:
@@ -276,6 +285,8 @@ class OrderDesk:
                taker: bool = False) -> str | None:
         """The rail checks shared by place and reprice. Returns a refusal
         reason or None. Order matters: cheap checks first, the book last."""
+        if OrderDesk.halted:
+            return f"stopping — {OrderDesk.halted}; nothing places until the next boot"
         if not self.whitelist(slug):
             if not (slug in self.closing_only
                     and intent in (SELL_LONG, SELL_SHORT)):
@@ -594,7 +605,14 @@ class OrderDesk:
 
     def cancel(self, order_id: str, slug: str, *, initiator: str = "auto") -> OrderResult:
         """Cancel one order. Deliberately NOT gated on the master switch:
-        reducing exposure must always be easier than adding it."""
+        reducing exposure must always be easier than adding it. Gated on
+        the stop's halt alone: a cancel after the snapshot would leave the
+        saved state recording an order that is gone."""
+        if OrderDesk.halted:
+            self.log({"op": "cancel", "market": slug, "id": order_id,
+                      "refused": f"stopping — {OrderDesk.halted}", "ts": self._clock()})
+            return OrderResult(ok=False, note=f"stopping — {OrderDesk.halted}",
+                               order_id=order_id)
         try:
             self.client.post(TRADE_API + f"/v1/order/{order_id}/cancel",
                              {"marketSlug": slug}, path=f"/v1/order/{order_id}/cancel")
