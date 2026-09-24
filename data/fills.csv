@@ -2049,3 +2049,22 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790288736.5,politics,cpoc-ussegubc-oh-2026-11-03-dsweep,BUY,19.77,0.53,backfill,,9.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGH6SBMAXPM
 1790288736.5,politics,vtc-usseto-ia-2026-11-03-gt1pt4m,SELL,1,0.32,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CPRRADR72XDR
 1790288736.5,politics,scc-hrep-rep-2026-11-03-gte205,BUY,0.03,0.33,backfill,,9.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGRTR4PCXDN
+1790288917.0,politics,cpoc-ussegubc-ks-2026-11-03-rgov-dsen,SELL,10,0.1,earn,1.127,2.46,,7,12,0,0.1,0.11,0,-10,joins the touch — the book has been quiet,CPQ5M7ZPTXDS
+1790288917.0,politics,cpoc-ussegubc-ks-2026-11-03-dsweep,SELL,1,0.11,earn,0.0926,0.33,,9,19,0,0.06,0.23,0.03,-1,1 tick in front of the touch — we would hold 29% of the ask side,CPRZMPBTYXPK
+1790289066.6,politics,vmc-usgubmov-oh-2026-11-03-r6-9,BUY,1,0.16,probe,0.0005,0.09,,19,40,0,0.19,0.2,-0.14,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CPS6ZVC08XDJ
+1790290047.0,politics,scc-hrep-rep-2026-11-03-gte210,SELL,120,0.18,sell,5.019,0.74,0.22455,25,29,0.57,0.2,0.28,0.0446,0,an exit — its fill reduces the position it sits on,CPRWF98ZEXDN
+1790290049.3,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,0.01,0.97,backfill,,0.61,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPRZTAAARXPJ
+1790290109.2,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,3,0.47,sell,3.5294,7.19,,43,50,0.553,0.47,0.48,0,0,buying back the short at or under what it sold for — the bid earns while it wait,CPKBK699RXDN
+1790290362.0,politics,vtc-usgubto-pa-2026-11-03-gt6pt5m,BUY,1,0.24,earn,0.1331,0.33,,11,24,0,0.22,0.23,0.05,1,joins the touch — the book has been quiet,CPSASFF9EXDG
+1790291638.8,politics,vtc-usseto-ok-2026-11-03-gt900k,SELL,0.21,0.83,backfill,,0.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPS97V3HGXDJ
+1790291692.6,politics,vtc-usgubto-hi-2026-11-03-gt490k,BUY,1,0.43,probe,0.0557,0.09,,20,47,0,0.19,0.5,0.09,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CPSVR66KYXDS
+1790292215.2,politics,scc-hrep-rep-2026-11-03-gte205,BUY,43.02,0.33,backfill,,10.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGRTR4PCXDN
+1790292340.3,politics,ewc-usse-mi-2026-11-03-rep,SELL,-21,0.31,fix,0.1368,9.09,0.2001,33,36,0.882,0.3,0.31,-0.1099,0,size trimmed by 21 to the exchange's count (order CNNSYA1CPWPF),CNNSYA1CPWPF
+1790292340.3,politics,ewc-usse-mi-2026-11-03-rep,SELL,-3,0.31,fix,0.1877,8.84,0.2001,33,36,0.869,0.3,0.31,-0.1099,21,size trimmed by 3 to the exchange's count (order CNNSYA1CPWPF),CNNSYA1CPWPF
+1790292340.3,politics,ewc-usse-mi-2026-11-03-rep,SELL,-2,0.31,fix,0.2537,6.74,0.2001,33,36,0.859,0.3,0.31,-0.1099,24,size trimmed by 2 to the exchange's count (order CNNSYA1CPWPF),CNNSYA1CPWPF
+1790292340.3,politics,ewc-usse-mi-2026-11-03-rep,SELL,-3,0.31,fix,0.2822,6.39,0.2001,32,36,0.841,0.3,0.31,-0.1099,26,size trimmed by 3 to the exchange's count (order CNNSYA1CPWPF),CNNSYA1CPWPF
+1790292340.3,politics,ewc-usse-mi-2026-11-03-rep,SELL,-3,0.31,fix,0.5645,5.77,0.2001,32,35,0.819,0.3,0.31,-0.1099,29,size trimmed by 3 to the exchange's count (order CNNSYA1CPWPF),CNNSYA1CPWPF
+1790292340.3,politics,vmc-usgubmov-oh-2026-11-03-r6-9,SELL,1,0.19,void,0,0,,8,17,0.455,0.19,0.2,-0.06,0,voided: the exchange has no trade for order CPS9NPHPJXPK — the row of 09-24 22:3,CPS9NPHPJXPK
+1790292340.3,politics,usgubewc-usgub-md-2026-11-03-dem,BUY,0.01,0.97,backfill,,0.61,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPRZTAAARXPJ
+1790292340.3,politics,vtc-usseto-ok-2026-11-03-gt900k,SELL,0.21,0.83,backfill,,0.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPS97V3HGXDJ
+1790292340.3,politics,scc-hrep-rep-2026-11-03-gte205,BUY,43.02,0.33,backfill,,10.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGRTR4PCXDN
