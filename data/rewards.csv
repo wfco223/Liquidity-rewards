@@ -12225,6 +12225,7 @@ date,market,program_type,reward_usd,status
 2026-09-22,ewc-usgub-oh-2026-11-03-rep,liquidityProgram,0.08,PENDING
 2026-09-22,ewc-usgub-wi-2026-11-03-dem,liquidityProgram,0.3,PENDING
 2026-09-22,ewc-usse-ak-2026-11-03-dem,liquidityProgram,0.64,PENDING
+2026-09-22,ewc-usse-ga-2026-11-03-rep,liquidityProgram,0.11,PENDING
 2026-09-22,ewc-usse-ia-2026-11-03-dem,liquidityProgram,3.78,PENDING
 2026-09-22,ewc-usse-ia-2026-11-03-rep,liquidityProgram,0.69,PENDING
 2026-09-22,ewc-usse-me-2026-11-03-dem,liquidityProgram,3.5,PENDING
