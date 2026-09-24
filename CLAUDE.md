@@ -1295,6 +1295,14 @@ long and accreted, so search it rather than reading it through.
   trading and no taps on a new container that has no old copy (a
   platform restart), and the page is out for the seconds the in-place
   restart takes.
+  CONFIRMED on its first deploy (merged 20:24:30Z, 2026-09-24, master
+  on): the new copy held 63 s while the old one ran, the old copy's
+  stop save (signal 15, build 3b2cdcf0) landed at 20:26:48Z, the hold
+  restarted in place and restored it 10.5 s old ("the stop save",
+  after_hold "the old copy's stop save, after 63s"), serving again at
+  20:27:02Z. The overlap was real: a minute in which both copies would
+  have traded. That stop save took the tender's lock but not the
+  cycle's (cycle_lock false — a cycle was running; saved regardless).
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
