@@ -1025,3 +1025,24 @@ cover whose short fell by its size within five minutes is still logged
 "silent_cancel".
 **Resolves:** 48 hours after the deploy (the saved state's
 fam_politics.fills, purpose and side; the family log's silent_cancel).
+
+### P22 — written 2026-09-24 ~20:50Z, BEFORE 2026-09-22 finishes posting
+**Claim:** a market that joins a reward program partway through an ET
+day gets no row from the rewards endpoint for that day, whatever we
+estimated; from its first full day in the program it posts like any
+other. The live test: the House and Senate "demst" seat-count markets
+(scc-hrep-demst-*, scc-senate-demst-*), first read in
+politics_low_20260921 at 17:31Z on 2026-09-22 and estimated that day,
+get no 2026-09-22 row, and do get 2026-09-23 rows.
+**Why:** of the markets we started estimating on a finished day since
+09-10 (at $0.50 or more), the two days with program joins mid-day are
+the misses: 09-11 (the midterms tiers started 19:00Z, the 2028 boost
+16:48Z) — 18 such markets, 2 posted; 09-17 (the Senate combos joined
+the boosted program between 22:40Z on 09-16 and 15:43Z on 09-17) — 12,
+1 posted. On 09-10, 09-12, 09-15 and 09-20 the markets we started on
+were already in a program, and 18 of 18 posted their first day. Every
+one of the 09-11 and 09-17 misses posted on the days after.
+**Falsified if:** any scc-*-demst-* market has a 2026-09-22 row once
+that day stops posting (a day with no new row for 24 hours), or none of
+them has a 2026-09-23 row.
+**Resolves:** when 2026-09-23 finishes posting (data/rewards.csv).
