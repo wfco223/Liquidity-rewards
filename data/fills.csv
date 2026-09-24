@@ -1781,3 +1781,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790229779.5,cfb,aachc-cfb-wins-2026-11-28-hou-9pt5wins,BUY,0.5,0.29,earn,0,0.94,,26,32,0,0.29,0.3,0,0.5,1 tick behind the touch — we would hold 1% of the bid side,CPA81ZV3PXAR
 1790239583.7,politics,ushrewc-ushr-me-02-2026-11-03-dem,SELL,41,0.41,sell,0,0,,39,44,0,0.41,0.42,0,0,taker dump — sold into the bid (the carved exception),CPD4P2PSCXAS
 1790242651.2,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,17,0.02,sell,0.8953,6.89,0.0418,2,6,0.618,0.01,0.02,0.0218,53,an exit — its fill reduces the position it sits on,CP893NEDYXB0
+1790244271.5,cfb,aachc-cfb-wins-2026-11-28-missr-5pt5wins,SELL,1,0.77,sell,0,0,,77,82,0.426,0.77,0.78,0.02,0,taker dump — sold into the bid (the carved exception),CPEFBWHZAXAS
+1790244752.3,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,53,0.02,sell,0.7083,7.48,0.0418,3,6,0.708,0.01,0.02,0.0218,0,an exit — its fill reduces the position it sits on,CP893NEDYXB0
+1790251224.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,-3,0.621,fix,1.0188,0.08,0.5,62,64,0.883,0.62,0.621,-0.121,-18,size trimmed by 3 to the exchange's count (order CN1JPM1QTWPA),CN1JPM1QTWPA
+1790251224.1,politics,paccc-usse-midterms-2026-11-03-dem,SELL,-12,0.621,fix,,0.07,,,,,,,,,size trimmed by 12 to the exchange's count (order CN1JPM1QTWPA),CN1JPM1QTWPA
+1790251224.1,politics,paccc-usse-midterms-2026-11-03-rep,SELL,-13,0.365,fix,13.9197,0.51,0.3583,36,40,0.726,0.364,0.365,-0.0067,36,size trimmed by 13 to the exchange's count (order CN1C6FDWJWPH),CN1C6FDWJWPH
