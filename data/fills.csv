@@ -1739,3 +1739,20 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790208631.4,politics,cpoc-ussegubc-ia-2026-11-03-dsweep,BUY,3,0.46,backfill,,6.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZP4MWS0WP9
 1790208631.4,politics,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,BUY,20,0.17,backfill,,5.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP0JRY1W8WPE
 1790209598.3,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.49,sell,0,0,,47,53,0.656,0.49,0.5,0.02,0,taker dump — sold into the bid (the carved exception),CP6B7QC9MWPA
+1790212510.3,politics,paccc-usho-midterms-2026-11-03-rep,SELL,34,0.082,sell,10.59,0.42,0.0916,11,13,0.888,0.081,0.082,0.0096,217,an exit — its fill reduces the position it sits on,CP6P4CJW8WPD
+1790213150.3,politics,paccc-usho-midterms-2026-11-03-rep,SELL,217,0.082,sell,9.1842,0.6,0.0916,11,14,0.897,0.081,0.082,0.0096,0,an exit — its fill reduces the position it sits on,CP6P4CJW8WPD
+1790214258.9,politics,scc-senate-demst-2026-11-03-gte51,BUY,20,0.64,earn,0.8645,3.07,,66,75,0.667,0.54,0.56,-0.07,55,1 tick behind the touch — we would hold 62% of the bid side,CP4PCZ8XJWPE
+1790214410.2,politics,cpoc-ussegubc-ia-2026-11-03-dsweep,SELL,6,0.43,sell,0,0,,43,47,0.445,0.43,0.44,0.02,14,taker dump — sold into the bid (the carved exception),CP7GJC72RXAQ
+1790215467.0,politics,ewc-usgub-ga-2026-11-03-dem,BUY,34,0.58,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP7G79PC8XAR
+1790216075.9,politics,ewc-usse-oh-2026-11-03-dem,BUY,4,0.55,hand,,3.1,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJQQ5WDJAWM9
+1790216075.9,politics,ewc-usgub-wi-2026-11-03-dem,SELL,19,0.83,hand,,75.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVWP40J8W1Y
+1790216075.9,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,120,0.06,hand,,84.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJND344BPW22
+1790216075.9,politics,ewc-usse-tx-2026-11-03-rep,SELL,36,0.43,hand,,1.55,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CMWXFBPFMWPE
+1790216075.9,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,40.27,0.93,hand,,80.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CK93JF66GWPA
+1790216075.9,politics,ewc-usgub-nv-2026-11-03-dem,SELL,12,0.45,backfill,,118.1,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWBHWJ68W7H
+1790216075.9,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,13,0.03,backfill,,119.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWB6WACPW7E
+1790216075.9,politics,ewc-usgub-ga-2026-11-03-dem,BUY,34,0.58,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP7G79PC8XAR
+1790216075.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.69,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKQRQJTTN3
+1790216075.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.56,hand,,1.86,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CFT35KBWATMY
+1790216075.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.56,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J9CVRVNP
+1790216075.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.55,hand,,13.16,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CH4XTE3PYVNP
