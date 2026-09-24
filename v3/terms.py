@@ -20,6 +20,7 @@ against) but is stamped, so "tracking started here" is explicit.
 
 from __future__ import annotations
 
+import datetime as _dt
 import time
 from dataclasses import dataclass
 
@@ -40,6 +41,41 @@ class TermsChange:
 # Fields whose change is worth an alert, in the order they are reported.
 _WATCHED = ("pool", "target", "df", "pid", "status")
 
+# A MARKET'S FIRST DAY IN A PROGRAM PAYS NOTHING (owner, 2026-09-24 "Fix
+# the meter's first day"). Over the two weeks to 09-21 the rewards
+# endpoint posted no row at all for the markets that joined a program
+# partway through an ET day: the fifteen House district markets on 09-11
+# (their program began 19:00Z; $44.56 estimated), the eleven Senate
+# combos on 09-17 (read with no program the evening before; $84.49) —
+# 29 of 30 such markets, while the ones already in a program posted on
+# their first day, 18 of 18, and both groups posted every day after. So
+# the ledger notes a JOIN: a program seen after a read that found none
+# within JOIN_EVIDENCE_S, or a first sighting of a program that itself
+# began after that day's midnight ET. A program replaced by another
+# (a re-issue) is not a join. The meter counts nothing for a market on
+# the ET day it joined.
+JOIN_EVIDENCE_S = 36 * 3600.0      # how old a no-program read may be to show a join
+JOIN_KEEP_S = 3 * 86400.0          # joins kept for the page and the checks
+
+try:
+    from zoneinfo import ZoneInfo
+    _ET = ZoneInfo("America/New_York")
+except Exception:  # no tz database: the estimator's fixed EDT fallback
+    _ET = _dt.timezone(_dt.timedelta(hours=-4), "ET")
+
+
+def et_day_start(now: float) -> float:
+    """Midnight ET, as a timestamp, of the ET day `now` falls in."""
+    loc = _dt.datetime.fromtimestamp(now, tz=_dt.timezone.utc).astimezone(_ET)
+    return loc.replace(hour=0, minute=0, second=0, microsecond=0).timestamp()
+
+
+def _iso_ts(s: str) -> float | None:
+    try:
+        return _dt.datetime.fromisoformat(str(s).replace("Z", "+00:00")).timestamp()
+    except (TypeError, ValueError):
+        return None
+
 
 class TermsStore:
     """Current terms per market plus change detection.
@@ -55,6 +91,8 @@ class TermsStore:
         self.current: dict[str, Program] = {}
         self.updated_at: dict[str, float] = {}
         self.seeded_at: dict[str, float] = {}
+        self.empty_at: dict[str, float] = {}    # last read that found no program
+        self.joined_at: dict[str, float] = {}   # when a market joined a program mid-day
         self._sink = history_sink or (lambda row: None)
 
     def get(self, slug: str) -> Program | None:
@@ -81,6 +119,7 @@ class TermsStore:
                    if tp is not None else None)
             old = self.current.get(slug)
             if new is None:
+                self.empty_at[slug] = now
                 if old is not None:
                     changes.append(TermsChange(slug, "program_gone", old.pid, None))
                     del self.current[slug]
@@ -88,6 +127,7 @@ class TermsStore:
                 continue
             self.updated_at[slug] = now
             if old is None:
+                self._note_join(slug, new, now)
                 first_ever = slug not in self.seeded_at
                 self.current[slug] = new
                 if first_ever:
@@ -105,7 +145,42 @@ class TermsStore:
                     changes.append(TermsChange(slug, f, getattr(old, f), getattr(new, f)))
                 self._record(slug, new, now, "change")
             self.current[slug] = new
+        self._prune(now)
         return changes
+
+    def _note_join(self, slug: str, prog: Program, now: float) -> None:
+        """A program on a market that had none: a JOIN when a read found
+        no program on it recently, or when the program itself began after
+        this ET day's midnight. A market never read before, in a program
+        older than today, gets the benefit of the doubt."""
+        empty = self.empty_at.get(slug)
+        was_empty = empty is not None and 0.0 <= now - empty <= JOIN_EVIDENCE_S
+        start = _iso_ts(prog.start) if prog.start else None
+        began_today = start is not None and start > et_day_start(now) + 60.0
+        if was_empty or began_today:
+            self.joined_at[slug] = now
+
+    def adopt(self, slug: str, prog: Program, now: float) -> bool:
+        """Take a program another reader found (the tender's hand-off to
+        the family's ledger) as a read of our own would: the same join
+        rule, the same stamps. Never over a program already held."""
+        if slug in self.current:
+            return False
+        self._note_join(slug, prog, now)
+        self.current[slug] = prog
+        self.updated_at[slug] = now
+        self.seeded_at.setdefault(slug, now)
+        return True
+
+    def joined_today(self, now: float) -> dict[str, float]:
+        """The markets that joined a program on the ET day `now` is in."""
+        lo = et_day_start(now)
+        return {s: t for s, t in list(self.joined_at.items()) if lo <= t <= now + 60.0}
+
+    def _prune(self, now: float) -> None:
+        for d, keep in ((self.empty_at, JOIN_EVIDENCE_S), (self.joined_at, JOIN_KEEP_S)):
+            for s in [s for s, t in d.items() if now - t > keep]:
+                del d[s]
 
     def _record(self, slug: str, prog: Program | None, now: float, why: str) -> None:
         row = {"ts": round(now, 1), "slug": slug, "why": why}
@@ -123,7 +198,14 @@ class TermsStore:
                         for s, p in self.current.items()},
             "updated_at": self.updated_at,
             "seeded_at": self.seeded_at,
+            "empty_at": self._pruned(self.empty_at, JOIN_EVIDENCE_S),
+            "joined_at": self._pruned(self.joined_at, JOIN_KEEP_S),
         }
+
+    @staticmethod
+    def _pruned(d: dict, keep: float) -> dict:
+        now = time.time()
+        return {s: t for s, t in list(d.items()) if now - t <= keep}
 
     @classmethod
     def from_dict(cls, d: dict, history_sink=None) -> "TermsStore":
@@ -134,4 +216,6 @@ class TermsStore:
                                     event_n=v[8], pool_n=v[9])
         st.updated_at = dict(d.get("updated_at") or {})
         st.seeded_at = dict(d.get("seeded_at") or {})
+        st.empty_at = {s: float(t) for s, t in (d.get("empty_at") or {}).items()}
+        st.joined_at = {s: float(t) for s, t in (d.get("joined_at") or {}).items()}
         return st

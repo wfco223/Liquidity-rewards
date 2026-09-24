@@ -1304,6 +1304,42 @@ long and accreted, so search it rather than reading it through.
   have traded. That stop save took the tender's lock but not the
   cycle's (cycle_lock false — a cycle was running; saved regardless).
 
+- A MARKET'S FIRST DAY IN A PROGRAM COUNTS NOTHING ON THE METER (owner,
+  2026-09-24 "Fix the meter's first day", after the report he asked
+  for: which estimated markets the rewards endpoint never posted a row
+  for, 09-10 to 09-21). Of $163.90 estimated on market-days that got no
+  row on the four worst days, $137.44 was markets that JOINED a program
+  partway through that ET day: all fifteen House district markets on
+  09-11 (their program began 19:00Z, $44.56) and three 2028 markets
+  that joined the boost at 16:48Z ($6.46), all eleven Senate combos on
+  09-17 (read with no program the evening before, $84.49) — 29 of 30,
+  while markets already in a program posted their first day, 18 of 18,
+  and both groups posted every day after. So TermsStore now keeps
+  empty_at (the last read that found no program, kept JOIN_EVIDENCE_S,
+  36 h) and joined_at (JOIN_KEEP_S, 3 days): a program seen on a market
+  that had none is a JOIN when a read found none within 36 h, or when
+  the program itself began after that day's midnight ET (et_day_start);
+  a market never read before, in a program older than today, gets the
+  benefit of the doubt; a re-issue (one program replaced by another) is
+  never a join. The tender's hand-off to the family's ledger goes
+  through terms.adopt, the same rule. The 20-second sampler leaves a
+  joined-today market's orders out of the meter until midnight ET
+  (_first_day), logged "meter_first_day" once a market a day, and the
+  state carries meter_first_day. METER ONLY: the tender and the engine
+  still value those orders at the program's full rate that day — whether
+  they should is his call and not built. Replayed on the saved ledger:
+  the 42 House district markets seeded 09-11 are caught by the start
+  rule, the twelve combos by the family's no-program read of 09-16.
+  The rest of that report, for the record: the seat-count books (House
+  seats R, Senate seats R) paid 0.88-1.18x the estimate 09-15..09-20 and
+  then 0.37x on 09-21 (7 of 18 with no row) and 0.09x on 09-22 so far
+  (12 of 20), while the House district markets on the same program paid
+  1.1x and the program record read active at $600/day throughout, with
+  16-23 of our orders resting there — cause NOT found; and 128 market-
+  days worth $6.44 in all are pennies (cfb win totals, sub-$0.60 books).
+  P22 predicts the demst seat markets that joined at 17:31Z on 09-22 get
+  no 09-22 row and do get 09-23 rows.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
