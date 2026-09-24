@@ -1005,3 +1005,23 @@ share after ten fills.
 (data/rewards.csv rows for the focus markets; the focus log's `rested`
 and `moved` rows carry each order's est; the fill model's trip_cost).
 
+
+### P21 — written 2026-09-24 ~17:30Z, BEFORE the cover-fill fix deploys
+**Claim:** once reconcile takes a fill's sign from the book side, a
+cover's fill is booked live by the family, and the hourly match against
+the exchange's transaction record stops having to recover them. Over
+the 48 hours after the deploy (or the first 20 bid-side exit fills,
+whichever comes later), politics journal rows with purpose "backfill",
+side BUY and 1 share or more are under 10% of the bid-side exit fills
+(purpose sell, focus or backfill, side BUY, 1 share or more).
+**Why:** the saved state of 16:47Z shows 48 such BUY backfill rows
+(3,874 shares) in the three days before, against 38 BUY "sell" fills
+and 34 BUY "focus" fills: about 40% of the bid-side exit fills came in
+only through the backfill, while the ask side, whose sign test was
+right, had 32. With the master off fewer covers fill, so the claim is a
+share, not a count.
+**Falsified if:** that share reads 20% or more over the window; or a
+cover whose short fell by its size within five minutes is still logged
+"silent_cancel".
+**Resolves:** 48 hours after the deploy (the saved state's
+fam_politics.fills, purpose and side; the family log's silent_cancel).

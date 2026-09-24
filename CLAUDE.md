@@ -1242,6 +1242,27 @@ long and accreted, so search it rather than reading it through.
   grace period still bounds it; the next boot's boot_restore says
   whether it landed.
 
+- A COVER'S FILL IS BOOKED (owner, 2026-09-24 "Master off, then fix
+  covers", after the repository review he asked for: "I'm feeling like
+  I'm not in control of what's going on"). A cover buys a short back —
+  intent SELL_SHORT, resting on the BID — so its fill RAISES the net.
+  family.reconcile matched a vanished or shrunken order to the
+  position's move by `intent == BUY_LONG`, which read every cover as a
+  sale: in all three places (limbo, a shrunken size, an order gone from
+  the list) a cover's real fill never matched, and a short that GREW
+  could be booked as the cover filling. The cover went to limbo; the
+  exchange's trade list or the hourly backfill recovered it, or the
+  feed's "exchange wins" snap took the short off with no fill in the
+  journal (48 BUY backfill rows of a share or more, 3,874 shares, in
+  politics over the three days to 16:47Z, against 32 on the ask side).
+  The tender's covers ride the same records, so its exit guard went
+  unconfirmed too. Now _fill_sign takes the sign from rec.side — the
+  test _on_fill books by — and nothing else changed. P21 grades it.
+  Everything else from that review (one owner per market, the
+  loss-takers off by default, sealing the pre-flag lots, the resize
+  churn, limbo the tender can see, the step-up's bound) is NOT built and
+  waits for his yes.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
