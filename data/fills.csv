@@ -1895,3 +1895,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790258545.6,politics,ussewc-usse-ks-2026-11-03-dem,SELL,0.09,0.33,backfill,,0.4,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPHDWK9GJXDJ
 1790258545.6,politics,ewc-usse-tx-2026-11-03-dem,BUY,14,0.58,backfill,,1.87,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPFT8Y7ZEXDJ
 1790258545.6,cfb,aachc-cfb-wins-2026-11-28-cin-5pt5wins,BUY,0.1,0.55,backfill,,0.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPHCTJGCGXDQ
+1790258634.5,politics,usgubewc-usgub-ct-2026-11-03-dem,BUY,0.12,0.97,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPHMQHVMAXDS
+1790258679.0,politics,usgubewc-usgub-ct-2026-11-03-dem,BUY,6,0.97,earn,0.4981,0.51,0.99485,94,99,0.075,0.97,0.98,-0.0249,6,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CPHMQHVMAXDS
+1790259219.1,politics,scc-hrep-rep-2026-11-03-gte180,BUY,6,0.98,focus,0,0.41,0.90235,91,97,0,0.9,0.99,0.0776,6,focus entry: ~$0.91/day; fill odds 32%/day; EV +0.78/day,CPHVAZXK4XPJ
+1790259249.6,politics,cpoc-ussegubc-ks-2026-11-03-rsweep,SELL,0.01,0.47,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPHXB7C2CXDR
+1790260302.3,politics,ewc-usse-me-2026-11-03-dem,SELL,5,0.66,sell,0.0769,1.99,0.745575,62,66,0.659,0.65,0.66,0.0856,0,an exit — its fill reduces the position it sits on,CPGQZ353WXPK
+1790261442.4,politics,paccc-usho-midterms-2026-11-03-rep,BUY,34,0.085,sell,1.7855,1.07,0.0916,11,13,0.881,0.086,0.087,-0.0066,0,an exit — its fill reduces the position it sits on,CPHTFPMN6XPK
+1790261562.4,politics,paccc-usse-midterms-2026-11-03-rep,SELL,21,0.366,focus,281.249,0.06,0.3068,37,40,0.655,0.38,0.381,-0.0592,-21,focus entry: ~$2.23/day; fill odds 55%/day; EV +0.43/day,CPJQ56PJGXDG
+1790261690.7,politics,paccc-usho-midterms-2026-11-03-rep,BUY,34,0.086,focus,21.7101,0,0.0916,10,12,0.891,0.086,0.087,-0.0056,34,focus entry: ~$21.71/day; fill odds 59%/day; EV +15.72/day,CPJSBSZZMXDJ
+1790262241.5,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,-46.83,0.78,fix,4.5615,8.3,0.644325,73,79,0.026,0.77,0.78,0.1357,-0.17,size trimmed by 46.83 to the exchange's count (order CNAJBQSZTWPE),CNAJBQSZTWPE
+1790262241.5,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,-34.41,0.78,fix,,8.27,,,,,,,,,size trimmed by 34.41 to the exchange's count (order CNAJBQSZTWPE),CNAJBQSZTWPE
+1790262241.5,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,5,0.03,backfill,,119.32,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJWB6WACPW7E
+1790262241.5,politics,usgubewc-usgub-ct-2026-11-03-dem,BUY,0.12,0.97,backfill,,0.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPHMQHVMAXDS
+1790262241.5,politics,cpoc-ussegubc-ks-2026-11-03-rsweep,SELL,0.01,0.47,backfill,,0.34,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPHXB7C2CXDR
