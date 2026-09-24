@@ -1779,3 +1779,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790228074.4,politics,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,BUY,20,0.17,earn,0.4505,0.76,,12,22,0,0.07,0.09,0.01,40,joins the touch — the book has been quiet,CPA04G19AXAZ
 1790228522.4,cfb,aachc-cfb-wins-2026-11-28-duke-6pt5wins,BUY,2,0.89,sell,1.4634,1.25,,70,76,0.447,0.78,0.9,0.16,0,buying back the short at or under what it sold for — the bid earns while it wait,CP9QGZAZ4XAQ
 1790229779.5,cfb,aachc-cfb-wins-2026-11-28-hou-9pt5wins,BUY,0.5,0.29,earn,0,0.94,,26,32,0,0.29,0.3,0,0.5,1 tick behind the touch — we would hold 1% of the bid side,CPA81ZV3PXAR
+1790239583.7,politics,ushrewc-ushr-me-02-2026-11-03-dem,SELL,41,0.41,sell,0,0,,39,44,0,0.41,0.42,0,0,taker dump — sold into the bid (the carved exception),CPD4P2PSCXAS
+1790242651.2,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,17,0.02,sell,0.8953,6.89,0.0418,2,6,0.618,0.01,0.02,0.0218,53,an exit — its fill reduces the position it sits on,CP893NEDYXB0
