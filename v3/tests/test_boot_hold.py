@@ -256,7 +256,7 @@ class TestRunHoldsFirst(Base):
                 mock.patch.object(main_mod.threading, "Thread", Thread):
             with self.assertRaises(Stop):
                 self.mon.run()
-        self.assertEqual(order[:2], ["web", "hold"])
+        self.assertEqual(order[:2], ["web", "hold"], order)
         for later in ("sampler", "focus", "stop_handlers", "stream", "cycle"):
             self.assertGreater(order.index(later), order.index("hold"), later)
 
