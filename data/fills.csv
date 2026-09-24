@@ -1968,3 +1968,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790273748.4,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-7.33,0.03,fix,,119.32,,,,,,,,,size trimmed by 7.33 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
 1790273748.4,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-5.67,0.03,fix,,119.32,,,,,,,,,size trimmed by 5.67 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
 1790273748.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-dme,SELL,168.69,0.04,backfill,,1.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPKZQYC6JXDR
+1790274048.4,politics,cpoc-ussegubc-me-2026-11-03-dsweep,BUY,10,0.83,earn,0.2396,2.36,,78,86,0,0.83,0.84,0.01,10,joins the touch — the book has been quiet,CPKMZKXJCXPM
+1790274168.4,politics,cpoc-ussegubc-me-2026-11-03-dgov-rsen,SELL,5,0.16,earn,0.8711,1.37,,16,22,0,0.18,0.26,0.03,-5,joins the touch — the book has been quiet,CPMHB2SHEXPM
+1790276575.2,politics,cpoc-ussegubc-nh-2026-11-03-rgov-dsen,BUY,1,0.91,sell,0.753,3.43,,76,83,0.428,0.71,0.75,0.12,0,buying back the short at or under what it sold for — the bid earns while it wait,CPKBDNXZCXC0
+1790277050.1,politics,cpoc-ussegubc-me-2026-11-03-rsweep,SELL,10,0.02,earn,2.4955,3.26,,1,3,0,0.01,0.07,0,-10,joins the touch — the book has been quiet,CPKKG577EXDS
+1790277333.2,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,SELL,1,0.08,backfill,,3.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPKBBH8PGXDG
+1790277350.1,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,SELL,1,0.08,backfill,,3.63,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPKBBH8PGXDG
