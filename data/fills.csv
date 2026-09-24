@@ -1776,3 +1776,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790222615.0,cfb,aachc-cfb-wins-2026-11-28-missr-5pt5wins,BUY,1,0.77,earn,0.4145,2.01,,77,84,0,0.75,0.78,-0.03,1,joins the touch — the book has been quiet,CP7SJT9CPXAV
 1790222675.5,cfb,aachc-cfb-wins-2026-11-28-duke-6pt5wins,SELL,2,0.73,earn,0.2437,2.61,,69,75,0,0.72,0.73,-0.01,-2,joins the touch — the book has been quiet,CP77VCQ76WPH
 1790224770.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,18,0.082,focus,256.922,0.05,0.0916,12,15,0.89,0.087,0.088,0.0096,-18,focus entry: ~$2.97/day; fill odds 70%/day; EV +1.71/day,CP9TD8H6CXAS
+1790228074.4,politics,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,BUY,20,0.17,earn,0.4505,0.76,,12,22,0,0.07,0.09,0.01,40,joins the touch — the book has been quiet,CPA04G19AXAZ
+1790228522.4,cfb,aachc-cfb-wins-2026-11-28-duke-6pt5wins,BUY,2,0.89,sell,1.4634,1.25,,70,76,0.447,0.78,0.9,0.16,0,buying back the short at or under what it sold for — the bid earns while it wait,CP9QGZAZ4XAQ
