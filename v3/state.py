@@ -57,6 +57,8 @@ class StateStore:
         self.behind = 0                      # snapshots handed over, not yet uploaded
         self.dropped = 0                     # older snapshots a newer one replaced
         self.last_save_s = 0.0               # how long the last background save took
+        self.local_found: bool | None = None  # did load_best find a copy on disk
+        self.last_source: str | None = None   # "local" or "remote": the copy load_best took
 
     # -- local ---------------------------------------------------------------
 
@@ -240,10 +242,33 @@ class StateStore:
 
     # -- boot ----------------------------------------------------------------------
 
+    def remote_head(self) -> str | None:
+        """The state branch's commit — one small read, so the boot hold
+        can watch for a new save without downloading the state each time."""
+        if not self.token:
+            return None
+        try:
+            r = self._gh("GET", f"/repos/{self.repo}/git/ref/heads/{self.branch}")
+            if r.status_code >= 400:
+                return None
+            return str(((r.json() or {}).get("object") or {}).get("sha") or "") or None
+        except Exception as e:  # noqa: BLE001
+            self.last_error = f"remote head: {e}"
+            return None
+
     def load_best(self) -> dict | None:
         """Whichever copy was saved last — a redeploy has a stale disk and a
-        fresh branch; an ordinary restart usually the reverse."""
-        candidates = [s for s in (self.load_local(), self.load_remote()) if s]
+        fresh branch; an ordinary restart usually the reverse. Notes which
+        copy won and whether the disk had one at all: an empty disk is a
+        new container, and on a deploy the old one may still be running
+        (the boot hold, 2026-09-24)."""
+        local = self.load_local()
+        remote = self.load_remote()
+        self.local_found = local is not None
+        candidates = [s for s in (local, remote) if s]
         if not candidates:
+            self.last_source = None
             return None
-        return max(candidates, key=lambda s: s.get("saved_at") or 0)
+        best = max(candidates, key=lambda s: s.get("saved_at") or 0)
+        self.last_source = "local" if best is local else "remote"
+        return best
