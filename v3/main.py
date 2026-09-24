@@ -1018,6 +1018,7 @@ class Monitor:
         # restart shows a progress bar instead of a scary red "stale"
         self.boot_stage = {"stage": "starting", "pct": 2, "ts": time.time()}
         self.boot_hold: dict | None = None   # set while the boot hold waits
+        self._first_day_said: dict[str, set] = {}   # the meter's first-day notes, by ET day
         self.payload_json: bytes | None = None    # frozen /data.json body
         # per-market fair values SET BY THE OWNER from the orders page —
         # his number beats the model everywhere fair is used (owner,
@@ -1299,14 +1300,63 @@ class Monitor:
                         ovals = list(fam.orders.values())
                     except RuntimeError:      # dict changed mid-iteration: brief, retry once
                         ovals = list(fam.orders.values())
+                    # a market on its first day in a program is paid
+                    # nothing for that day by the exchange (owner,
+                    # 2026-09-24 "Fix the meter's first day"), so the
+                    # meter counts nothing there until midnight ET
+                    skip = self._first_day(key, fam, now)
                     orders = [{"market": o.market, "side": o.side,
-                               "price": o.price, "size": o.qty} for o in ovals]
+                               "price": o.price, "size": o.qty} for o in ovals
+                              if o.market not in skip]
                     self.samplers[key].sample(
                         now, orders, fam.cache, fam.terms,
                         side_pool=lambda s, p, f=fam: f._side_pool(s, p),
                         verified_at=getattr(self, "_verified_at", None))
                 except Exception:  # noqa: BLE001 — measuring never breaks
                     pass
+
+    def _first_day_view(self, now: float) -> dict:
+        out = {}
+        for key, fam in self.families.items():
+            try:
+                today = fam.terms.joined_today(now)
+            except Exception:  # noqa: BLE001
+                continue
+            if today:
+                out[key] = {m: round(t, 1) for m, t in today.items()}
+        return out
+
+    def _first_day(self, key: str, fam, now: float) -> set:
+        """The markets the meter leaves out today: those that joined a
+        program partway through this ET day (terms.joined_at). Each is
+        said once a day in the family's log."""
+        terms = getattr(fam, "terms", None)
+        if terms is None or not getattr(terms, "joined_at", None):
+            return set()
+        try:
+            today = terms.joined_today(now)
+        except Exception:  # noqa: BLE001 — the meter never breaks on this
+            return set()
+        if today:
+            from .estimator import et_day
+            day = et_day(now)
+            said = self._first_day_said.setdefault(day, set())
+            for m, t in today.items():
+                if (key, m) in said:
+                    continue
+                said.add((key, m))
+                try:
+                    fam._log(event="meter_first_day", market=m,
+                             note=f"joined its reward program at "
+                                  f"{time.strftime('%H:%MZ', time.gmtime(t))} today; "
+                                  "the exchange pays nothing for a market's part "
+                                  "first day, so the meter counts nothing here "
+                                  "until midnight ET")
+                except Exception:  # noqa: BLE001
+                    pass
+            for d in [d for d in self._first_day_said if d != day]:
+                del self._first_day_said[d]
+        return set(today)
 
     def _verify_probe(self, now: float) -> bool:
         """Keep the meter's "the orders are still resting" clock honest
@@ -1690,6 +1740,9 @@ class Monitor:
         st = {
             "saved_at": now, "build": self.build, "boot_ts": self.boot_ts,
             "boot_restore": getattr(self, "boot_restore", None),
+            # markets the meter counts nothing on today: their first,
+            # partial day in a reward program (owner, 2026-09-24)
+            "meter_first_day": self._first_day_view(now),
             "balances_last": getattr(self.client, "balances_last", None),
             "boots": self.boots[-20:], "errors": self.errors,
             "deaths": getattr(self, "deaths", [])[-30:],
