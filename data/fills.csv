@@ -1980,3 +1980,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790280942.8,politics,ussewc-usse-il-2026-11-03-rep,SELL,1,0.03,earn,2.5445,0.2,0.002725,1,4,0.001,0.02,0.03,-0.0273,-1,1 tick in front of the touch — we would hold 51% of the ask side,CPQ6M24JGXDN
 1790281058.4,politics,cpoc-ussec-tx-mi-me-2026-11-03-rtx-dmi-rme,SELL,-1,0.08,fix,1.4318,3.66,,6,11,0.476,0.07,0.08,0,0,size trimmed by 1 to the exchange's count (order CPKBBH8PGXDG),CPKBBH8PGXDG
 1790281058.4,cfb,aachc-cfb-wins-ou-2026-11-28-frest,SELL,0.1,0.53,backfill,,3.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPMAVFVA8XDS
+1790281512.8,politics,ewc-usse-oh-2026-11-03-dem,SELL,7,0.62,sell,0.0522,7.59,0.71765,61,64,0.678,0.61,0.62,0.0977,51,an exit — its fill reduces the position it sits on,CPH09SJWAXDS
+1790281683.0,politics,ussewc-usse-sc-2026-11-03-dem,BUY,2.3,0.14,hand,,56.1,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJNDPN4XTW22
+1790281683.0,politics,paccc-usse-midterms-2026-11-03-dem,BUY,12,0.64,hand,,0.18,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNFSZRS98WPE
+1790281683.0,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,110.84,0.78,hand,,8.27,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNAJBQSZTWPE
+1790281683.0,politics,ussewc-usse-co-2026-11-03-rep,SELL,172.61,0.05,hand,,109.18,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJNDG4MNRW22
+1790281683.0,politics,ewc-usgub-nv-2026-11-03-dem,SELL,14,0.45,hand,,118.1,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJWBHWJ68W7H
+1790281683.0,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,13,0.03,hand,,119.32,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJWB6WACPW7E
