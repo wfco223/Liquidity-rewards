@@ -1728,3 +1728,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790205005.2,politics,ewc-usgub-wi-2026-11-03-dem,SELL,-4,0.83,fix,0.1214,48.63,0.722,81,85,0.375,0.82,0.83,-0.108,15,size trimmed by 4 to the exchange's count (order CJVWP40J8W1Y),CJVWP40J8W1Y
 1790205005.2,politics,paccc-usse-midterms-2026-11-03-dem,SELL,62,0.647,backfill,,0.16,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP47EHEQ4WPE
 1790205005.2,politics,scc-hrep-rep-2026-11-03-gte210,SELL,0.39,0.28,backfill,,64.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CMDAKT5CCWPB
+1790205125.2,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,49,0.02,sell,3.762,0.19,0.0418,2,6,0.533,0.01,0.02,0.0218,70,an exit — its fill reduces the position it sits on,CP529G2TRWP9
+1790206696.3,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,62,0.29,sell,10.9892,0.11,0.268025,25,29,0.406,0.28,0.29,0.022,0,an exit — its fill reduces the position it sits on,CP5J86N06WPC
+1790207039.2,politics,cpoc-ussegubc-ia-2026-11-03-dsweep,BUY,17,0.46,earn,0.6968,6.89,,44,49,0,0.43,0.46,0,17,joins the touch — the book has been quiet,CNZP4MWS0WP9
+1790207041.5,politics,cpoc-ussegubc-ia-2026-11-03-dsweep,BUY,3,0.46,backfill,,6.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZP4MWS0WP9
+1790207051.3,politics,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,BUY,20,0.17,backfill,,5.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP0JRY1W8WPE
+1790207128.0,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,BUY,19,0.27,earn,3.1249,7.23,,26,32,0.406,0.23,0.24,-0.02,23,1 tick behind the touch — we would hold 62% of the bid side,CNZE609ZAWPC
+1790208631.4,politics,ewc-usse-tx-2026-11-03-rep,SELL,-35,0.43,fix,0.4065,1.58,0.3037,44,47,0.794,0.42,0.43,-0.1263,0,size trimmed by 35 to the exchange's count (order CMWXFBPFMWPE),CMWXFBPFMWPE
+1790208631.4,politics,ewc-usse-tx-2026-11-03-rep,SELL,-1,0.43,fix,0.5314,1.53,0.3037,43,46,0.752,0.42,0.43,-0.1263,35,size trimmed by 1 to the exchange's count (order CMWXFBPFMWPE),CMWXFBPFMWPE
+1790208631.4,politics,cpoc-ussegubc-ia-2026-11-03-dsweep,BUY,3,0.46,backfill,,6.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZP4MWS0WP9
+1790208631.4,politics,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,BUY,20,0.17,backfill,,5.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP0JRY1W8WPE
