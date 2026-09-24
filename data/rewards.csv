@@ -12195,6 +12195,7 @@ date,market,program_type,reward_usd,status
 2026-09-21,ussewc-usse-nm-2026-11-03-rep,liquidityProgram,0.02,PENDING
 2026-09-21,ussewc-usse-or-2026-11-03-dem,liquidityProgram,0.01,PAID
 2026-09-21,ussewc-usse-or-2026-11-03-dem,liquidityProgram,0.03,PENDING
+2026-09-22,ewc-usse-ia-2026-11-03-rep,liquidityProgram,0.69,PENDING
 2026-09-22,ewc-usse-tx-2026-11-03-dem,liquidityProgram,0.49,PENDING
 2026-09-22,scc-hrep-rep-2026-11-03-gte210,liquidityProgram,1.76,PENDING
 2026-09-22,ushrewc-ushr-va-02-2026-11-03-rep,liquidityProgram,0.02,PENDING
