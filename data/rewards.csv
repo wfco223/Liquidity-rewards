@@ -12209,10 +12209,12 @@ date,market,program_type,reward_usd,status
 2026-09-22,cpoc-ussegubc-ia-2026-11-03-dsweep,liquidityProgram,0.01,PENDING
 2026-09-22,cpoc-ussegubc-ia-2026-11-03-rsweep,liquidityProgram,0.04,PENDING
 2026-09-22,cpoc-ussegubc-ks-2026-11-03-rsweep,liquidityProgram,0.05,PENDING
+2026-09-22,cpoc-ussegubc-mn-2026-11-03-rgov-dsen,liquidityProgram,0.02,PENDING
 2026-09-22,cpoc-ussegubc-nh-2026-11-03-dgov-rsen,liquidityProgram,0.01,PENDING
 2026-09-22,cpoc-ussegubc-oh-2026-11-03-rsweep,liquidityProgram,0.04,PENDING
 2026-09-22,ewc-usgub-az-2026-11-03-rep,liquidityProgram,0.1,PENDING
 2026-09-22,ewc-usgub-ga-2026-11-03-rep,liquidityProgram,0.66,PENDING
+2026-09-22,ewc-usgub-ia-2026-11-03-rep,liquidityProgram,10.43,PENDING
 2026-09-22,ewc-usgub-mi-2026-11-03-dem,liquidityProgram,0.17,PENDING
 2026-09-22,ewc-usgub-nv-2026-11-03-rep,liquidityProgram,1.32,PENDING
 2026-09-22,ewc-usgub-oh-2026-11-03-dem,liquidityProgram,0.02,PENDING
@@ -12243,6 +12245,7 @@ date,market,program_type,reward_usd,status
 2026-09-22,ushrewc-ushr-ny-04-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-22,ushrewc-ushr-oh-09-2026-11-03-rep,liquidityProgram,1.18,PENDING
 2026-09-22,ushrewc-ushr-tx-15-2026-11-03-dem,liquidityProgram,0.02,PENDING
+2026-09-22,ushrewc-ushr-tx-34-2026-11-03-dem,liquidityProgram,1.21,PENDING
 2026-09-22,ushrewc-ushr-tx-34-2026-11-03-rep,liquidityProgram,1.5,PENDING
 2026-09-22,ushrewc-ushr-va-02-2026-11-03-rep,liquidityProgram,0.02,PENDING
 2026-09-22,ushrewc-ushr-wa-03-2026-11-03-dem,liquidityProgram,0.5,PENDING
