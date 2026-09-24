@@ -1756,3 +1756,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790216075.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.56,hand,,1.86,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CFT35KBWATMY
 1790216075.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.56,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J9CVRVNP
 1790216075.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.55,hand,,13.16,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CH4XTE3PYVNP
+1790216779.8,politics,ussewc-usse-fl-2026-11-03-rep,SELL,1,0.89,manual,0,0.2,0.851775,85,91,0.228,0.88,0.89,-0.0382,-1,the owner's own order — the engine leaves it alone,CP7V4YM06WPF
+1790216779.8,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,BUY,1,0.29,earn,0.1953,2.3,,25,34,0.333,0.15,0.16,0,2,joins the touch — the book has been quiet,CP635SYYEWPE
+1790217627.2,politics,scc-senate-gop-2026-11-03-52,BUY,29.75,0.07,manual,0,33.15,0.0528,7,11,0,0.07,0.08,0.0172,29.75,the owner's own order — the engine leaves it alone,CNBPB4FR6WPH
+1790217687.2,politics,scc-senate-gop-2026-11-03-52,BUY,193.25,0.07,manual,0,33.16,0.0528,6,10,0.455,0.07,0.08,0.0172,223,the owner's own order — the engine leaves it alone,CNBPB4FR6WPH
+1790217687.2,politics,scc-senate-gop-2026-11-03-52,BUY,76.31,0.07,manual,0,32.39,0.0528,6,10,0.455,0.07,0.08,0.0172,299.31,the owner's own order — the engine leaves it alone,CNCBMVZY6WP6
+1790218014.8,politics,paccc-usse-midterms-2026-11-03-rep,BUY,45,0.377,focus,281.244,0.03,0.3068,36,38,0.714,0.365,0.366,0.0702,45,focus entry: ~$2.60/day; fill odds 57%/day; EV +1.56/day,CP89YMCH6XAX
+1790219579.5,politics,scc-hrep-rep-2026-11-03-gte220,BUY,33,0.13,sell,18.214,0.04,0.067925,7,13,0.02,0.1,0.11,0.0621,0,an exit — its fill reduces the position it sits on,CP8NGSBNTXAR
+1790219748.8,politics,scc-hrep-rep-2026-11-03-gte220,SELL,12,0.11,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP8P3EKV8XAV
+1790220544.5,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,2,0.52,backfill,,2.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP77TF1NEWPE
+1790221350.2,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-7.33,0.03,fix,4.0678,119.33,0.0418,1,6,0.274,0.02,0.03,0.0118,119,size trimmed by 7.33 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
+1790221350.2,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-5.67,0.03,fix,,119.32,,,,,,,,,size trimmed by 5.67 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
+1790221350.2,politics,ewc-usgub-nv-2026-11-03-dem,SELL,-9,0.45,fix,3.9251,118.12,0.45885,44,49,0.562,0.44,0.45,0.0088,37,size trimmed by 9 to the exchange's count (order CJWBHWJ68W7H),CJWBHWJ68W7H
+1790221350.2,politics,ewc-usgub-nv-2026-11-03-dem,SELL,-3,0.45,fix,,118.1,,,,,,,,,size trimmed by 3 to the exchange's count (order CJWBHWJ68W7H),CJWBHWJ68W7H
+1790221350.2,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,-40.27,0.93,fix,1.1106,80.04,0.9886,92,96,0.012,0.93,0.94,-0.0586,-0.27,size trimmed by 40.27 to the exchange's count (order CK93JF66GWPA),CK93JF66GWPA
+1790221350.2,politics,scc-hrep-rep-2026-11-03-gte220,SELL,12,0.11,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP8P3EKV8XAV
+1790221350.2,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,2,0.52,backfill,,2.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP77TF1NEWPE
