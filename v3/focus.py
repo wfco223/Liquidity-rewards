@@ -866,9 +866,10 @@ class Focus:
             prog = self.terms.get(s)
             if prog is None or self.fam.terms.get(s) is not None:
                 continue
-            self.fam.terms.current[s] = prog
-            self.fam.terms.updated_at[s] = now
-            self.fam.terms.seeded_at.setdefault(s, now)
+            # adopt, not a bare write: the family's ledger notes a join the
+            # way its own read would (a market it read with no program, now
+            # in one), which is what the meter's first-day rule reads
+            self.fam.terms.adopt(s, prog, now)
             try:
                 self.fam.known_dead.discard(s)
             except AttributeError:
