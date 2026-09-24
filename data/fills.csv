@@ -1772,3 +1772,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790221350.2,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,-40.27,0.93,fix,1.1106,80.04,0.9886,92,96,0.012,0.93,0.94,-0.0586,-0.27,size trimmed by 40.27 to the exchange's count (order CK93JF66GWPA),CK93JF66GWPA
 1790221350.2,politics,scc-hrep-rep-2026-11-03-gte220,SELL,12,0.11,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP8P3EKV8XAV
 1790221350.2,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,2,0.52,backfill,,2.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP77TF1NEWPE
+1790221619.4,cfb,aachc-cfb-wins-2026-11-28-ala-10pt5wins,SELL,2,0.2,sell,5.9758,0.07,,26,33,0.565,0.19,0.2,0.09,0,selling filled stock — it earns while it waits,CP93QCN5AXAW
+1790222615.0,cfb,aachc-cfb-wins-2026-11-28-missr-5pt5wins,BUY,1,0.77,earn,0.4145,2.01,,77,84,0,0.75,0.78,-0.03,1,joins the touch — the book has been quiet,CP7SJT9CPXAV
+1790222675.5,cfb,aachc-cfb-wins-2026-11-28-duke-6pt5wins,SELL,2,0.73,earn,0.2437,2.61,,69,75,0,0.72,0.73,-0.01,-2,joins the touch — the book has been quiet,CP77VCQ76WPH
+1790224770.0,politics,paccc-usho-midterms-2026-11-03-rep,SELL,18,0.082,focus,256.922,0.05,0.0916,12,15,0.89,0.087,0.088,0.0096,-18,focus entry: ~$2.97/day; fill odds 70%/day; EV +1.71/day,CP9TD8H6CXAS
