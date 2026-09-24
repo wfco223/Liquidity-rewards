@@ -75,6 +75,23 @@ SHUTDOWN_LOCK_S = 2.0        # how long the save waits for a running cycle (and,
                              # then uploaded never landed on 09-22 or 09-23 (owner,
                              # 2026-09-24 "Yes, ship it")
 SHUTDOWN_SAVE_S = 25.0       # how long it waits for the upload before exiting
+# THE BOOT HOLD (owner, 2026-09-24 "Build a boot hold"). A push to the
+# deploy branch starts a NEW container while the old one still runs; the
+# old one is stopped only once the new one answers. So the new copy read
+# the state before the old copy's stop save could exist — every deploy
+# since fix D booted from "a periodic save" (09-22 22:48Z, 09-23 21:05Z,
+# 09-24 17:14:39Z: the 17:12:53Z save, 90 s after the merge) — and for
+# that overlap both copies could trade, each reading the other's orders
+# as his hand's. On a new container (no state on its disk) that did not
+# restore a stop save, the copy serves its page and trades NOTHING — no
+# cycle, no tender, no sampler, no stream, every tap refused — while it
+# watches the state branch. The old copy's stop save landing restarts
+# this process in place to restore it; a newer periodic save with no stop
+# save by BOOT_HOLD_S is restored the same way; nothing newer by then and
+# it goes on from what it has.
+BOOT_HOLD_S = 300.0
+BOOT_HOLD_POLL_S = 10.0
+BOOT_HOLD_ENV = "V3_BOOT_HOLD_DONE"   # set across the restart: one hold a boot
 
 FLATTEN_CANCELS_PER_CYCLE = 45
 # the meter's "exchange still in reach" probe (owner, 2026-09-13): the
@@ -951,6 +968,14 @@ def mem_limit_mb() -> float | None:
     return None
 
 
+def is_stop_save(st: dict | None) -> bool:
+    """Was this state written by the stop signal (fix E's stamp at its own
+    saved_at), not by a cycle."""
+    ls = (st or {}).get("last_stop") or {}
+    sv = float((st or {}).get("saved_at") or 0.0)
+    return bool(ls) and abs(float(ls.get("at") or 0.0) - sv) < 2.0
+
+
 class Monitor:
     def __init__(self):
         self.client = Client()
@@ -992,6 +1017,7 @@ class Monitor:
         # the boot readout: what the first cycle is doing right now, so a
         # restart shows a progress bar instead of a scary red "stale"
         self.boot_stage = {"stage": "starting", "pct": 2, "ts": time.time()}
+        self.boot_hold: dict | None = None   # set while the boot hold waits
         self.payload_json: bytes | None = None    # frozen /data.json body
         # per-market fair values SET BY THE OWNER from the orders page —
         # his number beats the model everywhere fair is used (owner,
@@ -1466,11 +1492,18 @@ class Monitor:
         ls = (saved or {}).get("last_stop") or {}
         sv = float((saved or {}).get("saved_at") or 0.0)
         self.boot_restore = {
-            "from": ("the stop save" if ls and abs(float(ls.get("at") or 0.0) - sv) < 2.0
+            "from": ("the stop save" if is_stop_save(saved)
                      else "a periodic save — the stop save did not land" if saved
                      else "nothing (fresh state)"),
             "saved_at": round(sv, 1), "age_s": round(time.time() - sv, 1) if sv else None,
-            "stop": ls or None}
+            "stop": ls or None,
+            # which copy, and whether this container's disk had one: an
+            # empty disk is a new container (the boot hold)
+            "source": getattr(self.store, "last_source", None),
+            "disk": getattr(self.store, "local_found", None),
+            # set when a boot hold restarted this process to restore a
+            # newer save: what it waited for and how long
+            "after_hold": os.environ.get(BOOT_HOLD_ENV) or None}
         if not saved:
             self._note(f"booted build {self.build}; fresh state — "
                        "every switch is off")
@@ -4101,6 +4134,103 @@ class Monitor:
                     "ladder": fam.ladder_view(slug)}
         return {"ok": False, "note": "no book cached for this market yet"}
 
+    # -- the boot hold (owner, 2026-09-24 "Build a boot hold") ---------------
+
+    _exec = staticmethod(os.execve)       # the restart in place (tests replace it)
+    _hold_sleep = staticmethod(time.sleep)
+    _hold_clock = staticmethod(time.time)
+
+    def boot_holding(self) -> bool:
+        return bool(getattr(self, "boot_hold", None))
+
+    def _boot_hold_due(self) -> str:
+        """Why this boot must hold, or "" when it need not: only a NEW
+        container (nothing on its disk) that restored something other
+        than a stop save, with the state branch to watch, once a boot."""
+        br = getattr(self, "boot_restore", None) or {}
+        if os.environ.get(BOOT_HOLD_ENV):
+            return ""                     # this process IS the restart after a hold
+        if not br.get("saved_at"):
+            return ""                     # fresh state: nothing to wait for
+        if br.get("from") == "the stop save":
+            return ""
+        if br.get("disk") is not False:
+            return ""                     # same container: the old process is gone
+        if not getattr(self.store, "token", ""):
+            return ""                     # no branch to watch
+        return "a new container restored a periodic save, not the stop save"
+
+    def _boot_hold(self) -> None:
+        why = self._boot_hold_due()
+        if not why:
+            return
+        clock, sleep = self._hold_clock, self._hold_sleep
+        t0 = clock()
+        sv0 = float((self.boot_restore or {}).get("saved_at") or 0.0)
+        self.boot_hold = {"since": round(t0, 1), "until": round(t0 + BOOT_HOLD_S, 1),
+                          "why": why, "polls": 0, "seen": None}
+        self.boot_stage = {"stage": "waiting for the old copy's final save — nothing "
+                                    f"trades here until it lands (at most "
+                                    f"{BOOT_HOLD_S / 60:.0f} min)",
+                           "pct": 3, "ts": t0}
+        self._note(f"boot hold: {why} — trading nothing for up to "
+                   f"{BOOT_HOLD_S:.0f}s while the old copy stops and saves")
+        head = None
+        newest = 0.0          # saved_at of the newest save seen; the state itself is
+                              # not kept — the restart reads the branch on its own
+        while True:
+            h = self.store.remote_head()
+            self.boot_hold["polls"] += 1
+            if h and h != head:
+                head = h
+                st = self.store.load_remote()
+                sv = float((st or {}).get("saved_at") or 0.0)
+                stop = is_stop_save(st)
+                st = None
+                if sv > sv0 + 0.5:
+                    if stop:
+                        self._boot_hold_restart("the old copy's stop save", sv, t0)
+                        return
+                    if not newest:
+                        self._note("boot hold: the old copy is still running — it saved "
+                                   f"{sv - sv0:.0f}s after the one this boot restored")
+                    newest = sv
+                    self.boot_hold["seen"] = round(sv, 1)
+            if clock() - t0 >= BOOT_HOLD_S:
+                break
+            sleep(BOOT_HOLD_POLL_S)
+        if newest:
+            self._boot_hold_restart("the old copy's last save (no stop save within "
+                                    f"{BOOT_HOLD_S / 60:.0f} min)", newest, t0)
+            return
+        self._note(f"boot hold over after {clock() - t0:.0f}s: nothing newer than the "
+                   "save this boot restored — going on from it")
+        if isinstance(getattr(self, "boot_restore", None), dict):
+            self.boot_restore["hold"] = {"waited_s": round(clock() - t0, 1),
+                                         "polls": self.boot_hold["polls"],
+                                         "outcome": "nothing newer — went on"}
+        self.boot_hold = None
+        self.boot_stage = {"stage": "starting", "pct": 5, "ts": clock()}
+
+    def _boot_hold_restart(self, what: str, sv: float, t0: float) -> None:
+        """Restart this process in place (same PID, so the launcher never
+        sees an exit) to restore the newer save from the branch. Nothing
+        was written here, so the new process's disk is still empty and it
+        takes the branch's copy."""
+        dt = self._hold_clock() - t0
+        self._note(f"boot hold: restoring {what} (saved "
+                   f"{time.strftime('%H:%M:%SZ', time.gmtime(sv))}) after {dt:.0f}s "
+                   "of holding — restarting in place")
+        env = dict(os.environ)
+        env[BOOT_HOLD_ENV] = f"{what}, after {dt:.0f}s"
+        try:
+            sys.stdout.flush()
+            sys.stderr.flush()
+        except Exception:  # noqa: BLE001
+            pass
+        self._exec(sys.executable, [sys.executable, "-u", "-m", "v3.main"]
+                   + [a for a in sys.argv[1:] if a != "--once"], env)
+
     def _install_stop_handlers(self):
         """SIGTERM (the launcher's forward of the platform's stop) and
         SIGINT save the state and exit (fix D, 2026-09-22)."""
@@ -4991,9 +5121,14 @@ class Monitor:
         from .web import WebServer
         web = WebServer(self)
         web.start()
+        self._note(f"serving on :{web.port}")
+        # before anything that trades or saves: on a deploy the old copy
+        # may still be running (the boot hold, 2026-09-24). It returns
+        # when there is nothing to wait for, or restarts this process to
+        # restore the old copy's stop save.
+        self._boot_hold()
         threading.Thread(target=self._sampler_loop, daemon=True,
                          name="sampler").start()
-        self._note(f"serving on :{web.port}")
         backoff = 5.0
         # the focus tender's own loop starts NOW, before the board is
         # read (owner, 2026-09-10: "The start up time for focus has to
