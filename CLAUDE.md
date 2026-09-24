@@ -1210,6 +1210,37 @@ long and accreted, so search it rather than reading it through.
   the lines without the books; the saved state keeps them. Nothing
   here feeds a decision — a failing diag writes its error and the pass
   goes on. The fix comes after the diag names the cause, with his yes.
+  WHAT IT NAMED (the 00:20Z check of 2026-09-24): not the stamps. Every
+  flip was judged on a stream book under 30 s old with our own order in
+  it and netted right. The books moved: Pennsylvania-01 rep, someone's
+  ~5,500 at 61c toggling that level 8.6k<->14.1k across the 10,000
+  target, so our 60c cover fell in and out of the paid window (11 moves
+  in 70 min at $0.002 a day each); Florida governor dem, ~4,700 coming
+  and going at 26c with the 27c cover earning ~$1.00 a day against a
+  ~$0.96 concession, so it read either side of zero (12 moves at
+  $0.06-0.27 a day). FOCUS_KEEP alone moves an order for ANY gain when
+  the readings sit near zero.
+
+- A MOVE MUST BE WORTH SOMETHING, AND THE STOP GETS TIME TO SAVE
+  (owner, 2026-09-24 "Yes, ship it" to both). (1) An order moves to a
+  new price only when the new slot beats where it rests by
+  FOCUS_MOVE_MIN_GAIN ($0.25 a day) as well as falling under FOCUS_KEEP;
+  one past his fair with no company still moves at once, a wrong intent
+  is still re-laid, and a RESIZE IS UNTOUCHED — he took this option, not
+  the one that also held resizes under 25% (half of the hour's 64 moves
+  were same-price resizes). The move line's why now says how far behind
+  the new slot it was. (2) A ghost is not netted at a price where one of
+  our own orders on the side rests now — there the ghost is the order it
+  replaced, and netting it took others' size off twice (Pennsylvania-01
+  at 23:09Z on 09-23: 6 shares off a level where only our 3 rested).
+  (3) The stop save kept missing — the 09-22 22:48Z and 09-23 21:05Z
+  deploys both booted from an older periodic save, with fix E in place
+  for the second — because the launcher killed 3.0 fifteen seconds
+  after passing on the stop while the save waited up to 5 s for each
+  lock, took ~7 s to build and then uploaded. The launcher now gives it
+  STOP_WAIT_S (45 s) and SHUTDOWN_LOCK_S is 2 s. The platform's own
+  grace period still bounds it; the next boot's boot_restore says
+  whether it landed.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

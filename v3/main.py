@@ -69,7 +69,11 @@ ERROR_BACKOFF_CAP_S = 600.0
 # same with asks; the NE senate rep exit of 13 became "his"). Now the
 # signal builds the full state from the live desks, uploads it, waits
 # for the upload, and only then exits.
-SHUTDOWN_LOCK_S = 5.0        # how long the save waits for a running cycle
+SHUTDOWN_LOCK_S = 2.0        # how long the save waits for a running cycle (and, apart, the
+                             # tender): the launcher gives 3.0 LAUNCHER_STOP_WAIT_S to exit,
+                             # and a stop save that waited 5 s twice, took ~7 s to build and
+                             # then uploaded never landed on 09-22 or 09-23 (owner,
+                             # 2026-09-24 "Yes, ship it")
 SHUTDOWN_SAVE_S = 25.0       # how long it waits for the upload before exiting
 
 FLATTEN_CANCELS_PER_CYCLE = 45
