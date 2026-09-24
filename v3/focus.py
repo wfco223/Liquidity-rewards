@@ -199,6 +199,18 @@ FOCUS_BEHIND_MAX = 6            # candidate slots at every tick out to this many
 # six cents). On a 1c-tick book nothing changes.
 FOCUS_BEHIND_C = 0.06
 FOCUS_KEEP = 0.80               # a resting order stays while it keeps this much of the best EV
+# ...and a move must be worth something (owner, 2026-09-24 "Yes, ship
+# it"): the book log of 09-23 showed the covers flipping on other
+# traders' size wobbling — Pennsylvania-01 rep 57c<->60c as someone's
+# ~5,500 at 61c crossed the 10,000 target (each move worth $0.002 a
+# day), Florida governor dem 21c<->27c as ~4,700 came and went at 26c
+# ($0.06-0.27 a day) — because FOCUS_KEEP alone moves an order for any
+# gain when the readings sit near zero. An order now moves to a new
+# price only when the new slot beats where it rests by this much a day;
+# one past his fair with no company still moves at once, a wrong intent
+# is still re-laid, and a resize is untouched (he took this option, not
+# the one that also held small resizes).
+FOCUS_MOVE_MIN_GAIN = 0.25
 # a concession past his fair needs company (owner, 2026-09-11 after the
 # exchange's maintenance wiped the books: "Be careful of placing orders
 # after the maintenance. Don't sell everything for pennies there might
@@ -1243,9 +1255,17 @@ class Focus:
                 self.departed[key] = keep
             else:
                 self.departed.pop(key, None)
+            # a price where one of our own orders on this side rests
+            # again: the ghost there is the order it replaced, and the
+            # book shows the new one, which is netted above (owner,
+            # 2026-09-24 "Yes, ship it" — Pennsylvania-01 at 23:09Z on
+            # 09-23: 6 shares came off a level where only our 3 rested)
+            ours_at = [float(o.price) for o in self._orders(slug, side) if o.id in ids]
             for gpx, gq, gts in keep:
                 if read_at and read_at > float(gts) + FOCUS_GHOST_S:
                     continue          # a book read well after the cancel: no ghost in it
+                if any(abs(float(gpx) - p) < tick / 2 for p in ours_at):
+                    continue          # our own order sits at the ghost's price now
                 # only a level that still shows at least the ghost's size
                 # can be carrying it; one showing less has already lost
                 # the order, and netting it would strip the others
@@ -2342,7 +2362,9 @@ class Focus:
             if same_px and size_ok and not wrong_intent:
                 continue
             cur_ev = float(self._own_ev(cur) or 0.0)
-            keeps = same_px or cur_ev >= FOCUS_KEEP * plan["ev"] - 1e-9
+            gain = float(plan["ev"]) - cur_ev
+            small = gain < FOCUS_MOVE_MIN_GAIN - 1e-9   # not worth a cancel and a replace
+            keeps = same_px or small or cur_ev >= FOCUS_KEEP * plan["ev"] - 1e-9
             own_bare = self._own_bare(cur)
             if own_bare:
                 keeps = False                     # past fair with no company: to the plan
@@ -2353,7 +2375,7 @@ class Focus:
                         else "the intent" if wrong_intent and keeps and size_ok
                         else "the size" if keeps
                         else f"where it rested read ${cur_ev:+.4f}/day, under {FOCUS_KEEP:.0%} "
-                             f"of the new slot's ${plan['ev']:+.4f}")
+                             f"of the new slot's ${plan['ev']:+.4f} and ${gain:.2f}/day behind it")
             cooldown = FOCUS_EXIT_COOLDOWN_S if is_exit else FOCUS_MOVE_COOLDOWN_S
             if now - self.moved_at.get(key, 0.0) < cooldown:
                 continue
