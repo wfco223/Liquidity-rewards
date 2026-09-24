@@ -12198,7 +12198,7 @@ date,market,program_type,reward_usd,status
 2026-09-22,aachc-cfb-wins-2026-11-28-clmsn-7pt5wins,liquidityProgram,0.05,PENDING
 2026-09-22,aachc-cfb-wins-2026-11-28-oregst-5pt5wins,liquidityProgram,0.01,PENDING
 2026-09-22,cpoc-ussec-tx-me-2026-11-03-dtx-rme,liquidityProgram,0.05,PENDING
-2026-09-22,cpoc-ussec-tx-me-2026-11-03-rtx-dme,liquidityProgram,0.01,PENDING
+2026-09-22,cpoc-ussec-tx-me-2026-11-03-rtx-dme,liquidityProgram,0.05,PENDING
 2026-09-22,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,liquidityProgram,0.11,PENDING
 2026-09-22,cpoc-ussec-tx-mi-me-2026-11-03-dtx-dmi-rme,liquidityProgram,0.06,PENDING
 2026-09-22,cpoc-ussec-tx-mi-me-2026-11-03-dtx-rmi-rme,liquidityProgram,0.02,PENDING
