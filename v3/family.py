@@ -444,6 +444,18 @@ def is_wall(o, held: float | None = None) -> bool:
     return qty >= WALL_MIN_QTY
 
 
+def _fill_sign(rec) -> float:
+    """Which way a fill of `rec` moves the net position: +1 for an order
+    resting on the bid, -1 for one on the ask. The BOOK SIDE decides it,
+    never the intent's name (owner, 2026-09-24 "Master off, then fix
+    covers"): a cover is SELL_SHORT and buys, so a fill RAISES the net,
+    and the old `intent == BUY_LONG` test expected it to lower it — no
+    cover's fill ever matched its delta, every one went to limbo, and the
+    ones that did not come back as trades were ruled silent cancels while
+    the short was gone. _on_fill books by rec.side; this is the same test."""
+    return 1.0 if rec.side == "BUY" else -1.0
+
+
 @dataclass
 class FamilyOrder:
     id: str
@@ -2066,7 +2078,7 @@ class Family:
                 del self.gone_pending[oid]
                 continue
             d = deltas.get(rec.market, 0.0)
-            expected = rec.qty if rec.intent == BUY_LONG else -rec.qty
+            expected = rec.qty * _fill_sign(rec)
             if abs(d) > 1e-9 and (d > 0) == (expected > 0):
                 filled = min(abs(d), rec.qty)
                 deltas[rec.market] = d - (filled if d > 0 else -filled)
@@ -2095,7 +2107,7 @@ class Family:
                     # size correction, not a fill.
                     shrink = rec.qty - live["size"]
                     d = deltas.get(rec.market, 0.0)
-                    expected_sign = 1.0 if rec.intent == BUY_LONG else -1.0
+                    expected_sign = _fill_sign(rec)
                     if abs(d) > 1e-9 and (d > 0) == (expected_sign > 0):
                         filled = min(shrink, abs(d))
                         deltas[rec.market] = d - expected_sign * filled
@@ -2107,7 +2119,7 @@ class Family:
                     rec.qty = live["size"]
                 continue
             delta = deltas.get(rec.market, 0.0)
-            expected = rec.qty if rec.intent == BUY_LONG else -rec.qty
+            expected = rec.qty * _fill_sign(rec)
             if abs(delta) > 1e-9 and (delta > 0) == (expected > 0):
                 filled = min(abs(delta), rec.qty)
                 deltas[rec.market] = delta - (filled if delta > 0 else -filled)
