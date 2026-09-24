@@ -24,6 +24,12 @@ import time
 HERE = os.path.dirname(os.path.abspath(__file__))
 HEALTHY_RESET_S = 600.0
 BACKOFF_MIN_S, BACKOFF_MAX_S = 5.0, 60.0
+# how long a child gets to exit after the stop is passed on before it is
+# killed. 3.0 saves its whole state and uploads it on SIGTERM (fix D);
+# at 15 s that save never landed — the deploys of 09-22 22:48Z and 09-23
+# 21:05Z both booted from an older periodic save (owner, 2026-09-24
+# "Yes, ship it": 45 s)
+STOP_WAIT_S = 45.0
 
 
 def children() -> dict[str, list[str]]:
@@ -105,9 +111,10 @@ def main() -> int:
             if not stopping:
                 start(name)
 
+    deadline = time.time() + STOP_WAIT_S
     for p in procs.values():
         try:
-            p.wait(timeout=15)
+            p.wait(timeout=max(deadline - time.time(), 0.1))
         except subprocess.TimeoutExpired:
             p.kill()
     return 0
