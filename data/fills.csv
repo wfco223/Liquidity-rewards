@@ -1738,3 +1738,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790208631.4,politics,ewc-usse-tx-2026-11-03-rep,SELL,-1,0.43,fix,0.5314,1.53,0.3037,43,46,0.752,0.42,0.43,-0.1263,35,size trimmed by 1 to the exchange's count (order CMWXFBPFMWPE),CMWXFBPFMWPE
 1790208631.4,politics,cpoc-ussegubc-ia-2026-11-03-dsweep,BUY,3,0.46,backfill,,6.89,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNZP4MWS0WP9
 1790208631.4,politics,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,BUY,20,0.17,backfill,,5.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CP0JRY1W8WPE
+1790209598.3,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.49,sell,0,0,,47,53,0.656,0.49,0.5,0.02,0,taker dump — sold into the bid (the carved exception),CP6B7QC9MWPA
