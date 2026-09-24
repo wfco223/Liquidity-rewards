@@ -1263,6 +1263,39 @@ long and accreted, so search it rather than reading it through.
   churn, limbo the tender can see, the step-up's bound) is NOT built and
   waits for his yes.
 
+- A PUSH TO THE DEPLOY BRANCH IS THE DEPLOY, AND THE NEW COPY HOLDS
+  (owner, 2026-09-24 "Build a boot hold"). DigitalOcean redeploys on
+  every push to `deploy` (sync_deploy.yml says so): PR #331 merged at
+  17:13:09Z and the new build restored its state at 17:14:39Z — before
+  he could tap anything. So merging to deploy IS deploying: do it only
+  on his yes. And the new container starts while the old one still
+  runs; the old one is stopped only once the new one answers. Every
+  deploy since fix D booted from "a periodic save" (09-22 22:48Z, 09-23
+  21:05Z, 09-24 17:14:39Z from the 17:12:53Z save) because the new copy
+  read the branch before the old copy's stop save could exist, and for
+  the overlap both copies could trade, each reading the other's orders
+  as his hand's. Now, in run() right after the web server starts and
+  before the sampler, the tender, the stop handlers, the stream or any
+  cycle: a boot whose container disk had no state (store.local_found
+  False — a new container), that restored something other than a stop
+  save, with a token to watch the branch, HOLDS (_boot_hold). It trades
+  nothing, saves nothing, refuses every tap in handle_op with the
+  minutes left, and shows "waiting for the old copy's final save" on
+  the boot card, while it reads the branch head every BOOT_HOLD_POLL_S
+  (10 s; one small ref read, the state downloaded only when the head
+  moves). The old copy's stop save landing (is_stop_save, newer than
+  what it restored) restarts the process IN PLACE (os.execve, same PID,
+  so the launcher sees no exit; the disk is still empty, so the restart
+  takes the branch's copy); with BOOT_HOLD_ENV set it never holds twice
+  and boot_restore["after_hold"] says what it waited for. A newer
+  periodic save and no stop save by BOOT_HOLD_S (300 s) is restored the
+  same way; nothing newer and it goes on from what it has
+  (boot_restore["hold"]). A launcher restart inside one container (disk
+  has the state) never holds. The cost: up to five minutes of no
+  trading and no taps on a new container that has no old copy (a
+  platform restart), and the page is out for the seconds the in-place
+  restart takes.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."

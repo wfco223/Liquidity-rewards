@@ -2319,6 +2319,17 @@ class WebServer:
 
     def handle_op(self, body: dict) -> dict:
         op = str(body.get("op") or "")
+        bh = getattr(self.monitor, "boot_hold", None)
+        if bh:
+            # the boot hold (owner, 2026-09-24): the old copy may still be
+            # running and is about to save; anything recorded here would
+            # be replaced when this copy restarts to restore that save
+            import time as _t
+            left = max(0.0, float(bh.get("until") or 0.0) - _t.time())
+            return {"ok": False, "note": (
+                "Starting up: the old copy is still stopping and saving, and "
+                "this one trades nothing until its save lands — at most "
+                f"{max(1, -int(-left // 60))} more min. Nothing was done; tap again then.")}
         if op.startswith("switch_"):
             return {"ok": True,
                     "state": self.monitor.switch_tap(op[len("switch_"):],
