@@ -1987,3 +1987,46 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790281683.0,politics,ussewc-usse-co-2026-11-03-rep,SELL,172.61,0.05,hand,,109.18,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJNDG4MNRW22
 1790281683.0,politics,ewc-usgub-nv-2026-11-03-dem,SELL,14,0.45,hand,,118.1,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJWBHWJ68W7H
 1790281683.0,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,13,0.03,hand,,119.32,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJWB6WACPW7E
+1790282925.5,politics,ewc-usgub-ia-2026-11-03-dem,SELL,184,0.85,sell,0.0589,8.36,0.915975,82,86,0.536,0.84,0.85,0.066,12,an exit — its fill reduces the position it sits on,CPGNN7HR4XPK
+1790282925.5,politics,ussewc-usse-sd-2026-11-03-rep,SELL,2,0.92,sell,2.5835,0.86,0.9864,92,96,0.631,0.91,0.95,0.0664,20,selling filled stock — it earns while it waits,CPQ3N7WYRXPK
+1790282925.5,politics,vtc-usseto-ri-2026-11-03-gt400k,BUY,1,0.41,earn,0.1818,0.6,,37,85,0,0.33,0.42,-0.19,1,joins the touch — the book has been quiet,CPQ9WEKZGXDJ
+1790282925.5,politics,vtc-usseto-wy-2026-11-03-gt230k,BUY,1,0.47,earn,0.1565,0.2,,13,86,0,0.46,0.5,-0.02,1,1 tick in front of the touch — we would hold 96% of the bid side,CPQN2Q97TXDR
+1790282925.5,politics,scc-hrep-rep-2026-11-03-gte210,BUY,108.84,0.28,focus,9.9551,0.03,0.22455,27,32,0.351,0.28,0.29,0.0555,119.84,focus entry: ~$10.40/day; fill odds 34%/day; EV +7.55/day,CPQS1CVS0XDJ
+1790282927.5,politics,scc-hrep-rep-2026-11-03-gte210,BUY,0.42,0.28,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQS1CVS0XDJ
+1790282933.5,politics,scc-hrep-demst-2026-11-03-gte235,BUY,0.17,0.46,backfill,,0.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQ5KKQCEXPK
+1790282933.5,politics,ussewc-usse-fl-2026-11-03-rep,SELL,20,0.91,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQR6PKY2XDR
+1790283018.9,politics,cpoc-ussegubc-ia-2026-11-03-dsweep,SELL,14,0.53,backfill,,6.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPJG1JNJJXDG
+1790283043.7,politics,ewc-usse-mn-2026-11-03-dem,SELL,5,0.92,sell,0.0015,8.14,0.89265,88,92,0.587,0.91,0.92,-0.0273,0,an exit — its fill reduces the position it sits on,CPGWSCPKCXDG
+1790283043.7,politics,ewc-usse-oh-2026-11-03-dem,SELL,51,0.62,sell,0.0466,8.01,0.71765,61,64,0.672,0.61,0.62,0.0977,0,an exit — its fill reduces the position it sits on,CPH09SJWAXDS
+1790283242.1,politics,scc-hrep-rep-2026-11-03-gte195,BUY,8,0.59,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQRTRXEGXDG
+1790283304.7,politics,scc-hrep-rep-2026-11-03-gte185,BUY,214,0.93,backfill,,0.97,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQ2YG55EXPK
+1790283400.6,politics,usgubewc-usgub-fl-2026-11-03-rep,SELL,50,0.75,earn,2.0338,0.81,0.6359,73,78,0.266,0.74,0.75,-0.1141,-50,at the touch — a fill here is 8 ticks inside value (Silver + evidence),CPQ878YTRXPJ
+1790283400.6,politics,cpoc-ussegubc-tx-2026-11-03-rgov-dsen,SELL,5,0.42,earn,0.7621,0.4,,37,43,0,0.41,0.42,-0.02,-5,joins the touch — the book has been quiet,CPQM38HRWXDG
+1790283508.2,politics,scc-hrep-rep-2026-11-03-gte180,BUY,82,0.96,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQRR5J5CXPM
+1790283728.2,politics,ushrewc-ushr-me-02-2026-11-03-rep,BUY,41,0.62,sell,40.0702,7.33,,56,63,0,0.58,0.6,0.02,0,buying back the short at or under what it sold for — the bid earns while it wait,CPHRG5CZMXDN
+1790283728.2,politics,usgubewc-usgub-ak-2026-11-03-berwil,BUY,10,0.16,sell,0.0264,5.53,0.0986,13,18,0.415,0.16,0.17,0.0614,0,an exit — its fill reduces the position it sits on,CPK8CNXZWXDJ
+1790283728.2,politics,cpoc-ussegubc-nh-2026-11-03-rsweep,BUY,1,0.11,sell,0.097,1.01,,13,20,0.419,0.11,0.12,-0.05,0,buying back the short at or under what it sold for — the bid earns while it wait,CPQ5EX5M8XDQ
+1790283728.2,politics,cpoc-ussegubc-me-2026-11-03-rsweep,BUY,10,0.06,sell,0.6698,1.01,,1,3,0.446,0.06,0.07,0.04,0,buying back the short at or under what it sold for — the bid earns while it wait,CPQ5M807GXDS
+1790283728.2,politics,scc-hrep-rep-2026-11-03-gte185,BUY,1.06,0.88,focus,17.7152,0.09,0.834175,83,89,0,0.88,0.89,0.0458,-212.94,focus exit: ~$11.75/day; fill odds 35%/day; EV +12.50/day,CPQX4ZC2WXDR
+1790283851.1,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,BUY,1,0.21,probe,2.2316,0.53,,13,21,0.396,0.17,0.21,0.04,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CPQMBD5P4XC0
+1790283851.1,cfb,aachc-cfb-wins-2026-11-28-arz-5pt5wins,SELL,0.65,0.8,sell,0,4.57,,75,82,0.453,0.79,0.8,-0.01,0.35,selling filled stock — it earns while it waits,CPM2V57YMXDG
+1790284137.5,politics,scc-hrep-rep-2026-11-03-gte200,BUY,117,0.58,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQYT9HYYXC0
+1790284247.1,politics,cpoc-ussegubc-ks-2026-11-03-dgov-rsen,BUY,2,0.06,sell,0.0008,4.91,,5,10,0,0.06,0.07,-0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CPKXPGC8PXPM
+1790284247.1,politics,ewc-usse-nh-2026-11-03-dem,SELL,226,0.85,focus,7.0522,0.07,0.88905,84,89,0.412,0.85,0.86,0.0391,-226,focus entry: ~$5.26/day; fill odds 55%/day; EV +0.27/day,CPR2N027GXPK
+1790284247.1,politics,scc-senate-demst-2026-11-03-gte49,BUY,5,0.97,earn,3.5714,0.03,,94,98,0,0.76,0.98,0.01,5,joins the touch — the book has been quiet,CPR3ZGQK0XDJ
+1790284247.1,politics,scc-hrep-rep-2026-11-03-gte200,BUY,18,0.57,focus,18.7475,0.03,0.490425,52,57,0.435,0.49,0.54,0.0796,31,focus entry: ~$18.46/day; fill odds 36%/day; EV +18.23/day,CPR4BZNXYXDN
+1790284247.1,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,1,0.35,sell,0.0131,7.96,,33,41,0.372,0.33,0.36,-0.02,0,an exit — its fill reduces the position it sits on,CPH9NHRC2XDS
+1790284483.3,cfb,aachc-cfb-wins-2026-11-28-hou-9pt5wins,BUY,1,0.28,sell,0.3529,5.27,,25,29,0.569,0.28,0.29,0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CPKMB33XEXC0
+1790284742.0,politics,ushrewc-ushr-oh-09-2026-11-03-rep,BUY,9,0.29,sell,2.3708,8.73,,25,31,0.014,0.29,0.3,0,-42,buying back the short at or under what it sold for — the bid earns while it wait,CPGSCPQPCXDS
+1790285066.2,politics,ewc-usgub-oh-2026-11-03-rep,BUY,2,0.4,hand,,58.04,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVSPDRWWW0Y
+1790285066.2,politics,scc-hrep-rep-2026-11-03-gte210,BUY,0.42,0.28,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQS1CVS0XDJ
+1790285066.2,politics,scc-hrep-demst-2026-11-03-gte235,BUY,0.17,0.46,backfill,,0.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQ5KKQCEXPK
+1790285066.2,politics,ussewc-usse-fl-2026-11-03-rep,SELL,20,0.91,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQR6PKY2XDR
+1790285066.2,politics,cpoc-ussegubc-ia-2026-11-03-dsweep,SELL,14,0.53,backfill,,6.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPJG1JNJJXDG
+1790285066.2,politics,scc-hrep-rep-2026-11-03-gte195,BUY,8,0.59,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQRTRXEGXDG
+1790285066.2,politics,scc-hrep-rep-2026-11-03-gte185,BUY,214,0.93,backfill,,0.97,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQ2YG55EXPK
+1790285066.2,politics,scc-hrep-rep-2026-11-03-gte180,BUY,82,0.96,backfill,,0.19,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQRR5J5CXPM
+1790285066.2,politics,scc-hrep-rep-2026-11-03-gte200,BUY,117,0.58,backfill,,0.15,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPQYT9HYYXC0
+1790285066.2,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,SELL,0.5,0.42,backfill,,1.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CGR4FS0EAVB2
+1790285066.2,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,1,0.42,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0H627JVNJ
+1790285066.2,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,SELL,1,0.41,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CHQ43TRVTVNN
