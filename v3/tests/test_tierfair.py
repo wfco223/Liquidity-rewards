@@ -14,7 +14,8 @@ from v3.programs import Program
 from v3.scoring import Book
 from v3.terms import TermsStore
 from v3.tierfair import (BETA_HORIZON, BETA_MIN_N, BETA_SHRINK_N, BOOK_STALE_S,
-                         FAIR_DEPTH_MIN, FAIR_VERSION, GRADE_HORIZONS, SNAP_S,
+                         FAIR_DEPTH_MIN, FAIR_VERSION, GRADE_HORIZONS, SLOW_EVERY_S,
+                         SLOW_PAGE_ROWS, SLOW_SNAP_S, SNAP_S,
                          WEIGHT_MIN_N, Beta, TierFair, _falling_fit, depth_price, tier_of)
 
 T0 = 1_790_300_000.0
@@ -62,7 +63,8 @@ class TestTheTiers(unittest.TestCase):
         self.assertEqual(tier_of("midterms_t2_competitive_senate_gov_seatcounts_20260924"), "t2")
         self.assertEqual(tier_of("midterms_t3_coverage_gov_senate_house_districts_20260924"), "t3")
         self.assertEqual(tier_of("midterms_t4_house_winners_20260924"), "t4")
-        self.assertIsNone(tier_of("politics_t4_coverage_20260924"))
+        # the $2 program is a tier of its own (owner, 2026-09-25 "both $5 and $2")
+        self.assertEqual(tier_of("politics_t4_coverage_20260924"), "t4c")
         self.assertIsNone(tier_of("politics_low_20260924"))
 
     def test_only_tier_markets_are_read(self):
@@ -277,6 +279,111 @@ class TestTheShare(unittest.TestCase):
         self.assertAlmostEqual(over.share(), 100 / (100 + BETA_SHRINK_N), places=6)
 
 
+T4C = "politics_t4_coverage_20260924"
+T45 = "midterms_t4_house_winners_20260924"
+
+
+def mov(fam, n, cache=None, at=T0, bid=0.20, ask=0.24):
+    """n margin-of-victory buckets of one House district, $2 tier 4."""
+    slugs = []
+    for i in range(n):
+        slug = f"vmc-ushrmov-tx-14-2026-11-03-rgte{i}"
+        fam.universe[slug] = {"event_n": n, "name": f"TX-14 House Election Margin of Victory — rgte{i}"}
+        fam.terms.current[slug] = Program(pool=2.0, target=2000.0, df=0.4, status="active",
+                                          pid=T4C, event_n=n)
+        (cache or fam.cache).put(slug, Book(bids=((bid, 3000.0),), asks=((ask, 3000.0),),
+                                            tick=0.01, fetched_at=at))
+        slugs.append(slug)
+    return slugs
+
+
+class TestTierFour(unittest.TestCase):
+    """Owner, 2026-09-25: "Can you focus on getting the tier 4 markets
+    identified and monitored both $5 and $2". The $5 house winners and
+    the $2 coverage program are tiers of their own, their books come
+    from the Tier 4 monitor's own stream store, and they are worked out
+    every SLOW_EVERY_S rather than every second."""
+
+    def test_both_programs_are_identified(self):
+        fam = Fam()
+        store = BookCache()
+        fam.add("ushrewc-ushr-ak-al-2026-11-03-bilhil", "AK-AL House Election Winner — bilhil",
+                T45, [(0.30, 3000.0)], [(0.34, 3000.0)], event_n=3, target=2000.0)
+        mov(fam, 3, cache=store)
+        tf = TierFair(fam, clock=lambda: T0, extra_cache=store)
+        mk = tf.markets()
+        self.assertEqual(sorted({t for t, _p in mk.values()}), ["t4", "t4c"])
+        tf.tick(T0)
+        self.assertEqual({r["tier"] for r in tf.cur.values()}, {"t4", "t4c"})
+        page = json.loads(tf.payload_json)
+        t4c = [t for t in page["tiers"] if t["key"] == "t4c"][0]
+        self.assertEqual((t4c["markets"], t4c["with_book"], t4c["with_fair"]), (3, 3, 3))
+        self.assertTrue(t4c["slow"])
+
+    def test_the_monitors_store_is_read_and_the_freshest_book_wins(self):
+        fam = Fam()
+        store = BookCache()
+        slugs = mov(fam, 2, cache=store, bid=0.20, ask=0.24)
+        tf = TierFair(fam, clock=lambda: T0, extra_cache=store)
+        tf.tick(T0)
+        self.assertAlmostEqual(tf.cur[slugs[0]]["mid"], 0.22, places=6)
+        # an older book in the family's cache does not win over it...
+        fam.cache.put(slugs[0], Book(bids=((0.40, 3000.0),), asks=((0.44, 3000.0),),
+                                     tick=0.01, fetched_at=T0 - 60))
+        tf.tick(T0 + SLOW_EVERY_S)
+        self.assertAlmostEqual(tf.cur[slugs[0]]["mid"], 0.22, places=6)
+        # ...a newer one does
+        fam.cache.put(slugs[0], Book(bids=((0.40, 3000.0),), asks=((0.44, 3000.0),),
+                                     tick=0.01, fetched_at=T0 + 15))
+        tf.tick(T0 + 2 * SLOW_EVERY_S)
+        self.assertAlmostEqual(tf.cur[slugs[0]]["mid"], 0.42, places=6)
+
+    def test_worked_out_every_ten_seconds_not_every_second(self):
+        fam = Fam()
+        pair(fam)                                   # a Tier 2 pair: every second
+        slugs = mov(fam, 2)
+        tf = TierFair(fam, clock=lambda: T0)
+        tf.tick(T0)
+        for s_ in [slugs[0], DEM]:
+            b = (0.50, 0.54) if s_ == slugs[0] else (0.70, 0.72)
+            fam.cache.put(s_, Book(bids=((b[0], 5000.0),), asks=((b[1], 5000.0),),
+                                   tick=0.01, fetched_at=T0 + 1))
+        tf.tick(T0 + 1)
+        self.assertAlmostEqual(tf.cur[DEM]["mid"], 0.71, places=6)       # moved at once
+        self.assertAlmostEqual(tf.cur[slugs[0]]["mid"], 0.22, places=6)  # held
+        tf.tick(T0 + SLOW_EVERY_S)
+        self.assertAlmostEqual(tf.cur[slugs[0]]["mid"], 0.52, places=6)
+
+    def test_written_down_every_ten_minutes(self):
+        fam = Fam()
+        slugs = mov(fam, 2)
+        tf = TierFair(fam, clock=lambda: T0)
+        t = T0
+        for _ in range(12):                         # twelve minutes of ticks, a minute apart
+            for s_ in slugs:
+                fam.cache.put(s_, Book(bids=((0.20, 3000.0),), asks=((0.24, 3000.0),),
+                                       tick=0.01, fetched_at=t))
+            tf.tick(t)
+            t += SNAP_S
+        self.assertEqual(len(tf.snaps[slugs[0]]), 2)   # at 0 and at 10 minutes
+
+    def test_the_page_lists_a_hundred_of_each_most_recently_traded_first(self):
+        fam = Fam()
+        slugs = mov(fam, SLOW_PAGE_ROWS + 20)
+        traded = slugs[-1]
+        prints = {traded: (0.22, T0 - 30, True)}
+        tf = TierFair(fam, prints=prints.get, clock=lambda: T0,
+                      t4_status=lambda: {"subscribed": 5838, "connections": "2/2"})
+        tf.tick(T0)
+        page = json.loads(tf.payload_json)
+        rows = [r for r in page["rows"] if r["tier"] == "t4c"]
+        self.assertEqual(len(rows), SLOW_PAGE_ROWS)
+        self.assertIn(traded, {r["market"] for r in rows})
+        t4c = [t for t in page["tiers"] if t["key"] == "t4c"][0]
+        self.assertEqual((t4c["markets"], t4c["rows_shown"]), (SLOW_PAGE_ROWS + 20, SLOW_PAGE_ROWS))
+        self.assertEqual(page["t4_stream"]["subscribed"], 5838)
+
+
 class TestThePageAndTheSave(unittest.TestCase):
     def test_the_page_is_read_only_and_lists_the_tiers(self):
         fam = Fam()
@@ -285,7 +392,7 @@ class TestThePageAndTheSave(unittest.TestCase):
         tf.tick(T0)
         page = json.loads(tf.payload_json)
         self.assertTrue(page["read_only"])
-        self.assertEqual([t["key"] for t in page["tiers"]], ["t1", "t2", "t3", "t4"])
+        self.assertEqual([t["key"] for t in page["tiers"]], ["t1", "t2", "t3", "t4", "t4c"])
         t2 = page["tiers"][1]
         self.assertEqual((t2["markets"], t2["with_fair"]), (2, 2))
         self.assertEqual({r["market"] for r in page["rows"]}, {DEM, REP})
@@ -359,6 +466,31 @@ class TestTheAppRunsIt(unittest.TestCase):
         self.assertIn("/tiers", PAGES)
         self.assertIsNone(mon._last_print("nothing"))
         WebServer(mon)                     # builds with the route in place
+
+    def test_tier_four_has_its_own_stream_and_its_own_store(self):
+        from v3.main import T4_STREAM_SHARDS, Monitor
+        mon = Monitor()
+        pol = mon.families["politics"]
+        self.assertEqual(len(mon.t4_streams), T4_STREAM_SHARDS)
+        self.assertFalse(set(map(id, mon.t4_streams)) & set(map(id, mon.streams)))
+        self.assertIsNot(mon.t4cache, pol.cache)          # the engine never sees it
+        self.assertTrue(all(st.cache is mon.t4cache for st in mon.t4_streams))
+        self.assertIs(mon.tierfair.extra_cache, mon.t4cache)
+        cov = "vmc-ushrmov-tx-14-2026-11-03-rgte35"
+        win = "ushrewc-ushr-ak-al-2026-11-03-bilhil"
+        t3 = "ushrewc-ushr-tx-34-2026-11-03-dem"
+        for slug, pid in ((cov, T4C), (win, T45),
+                          (t3, "midterms_t3_coverage_gov_senate_house_districts_20260924")):
+            pol.universe[slug] = {"event_n": 2, "name": slug}
+            pol.terms.current[slug] = Program(pool=2.0, target=2000.0, df=0.4,
+                                              status="active", pid=pid, event_n=2)
+        self.assertEqual(mon._t4_slugs(), [win, cov])      # the $5 first; tier 3 is not here
+        st = mon.t4_stream_status()
+        self.assertEqual((st["wanted"], st["subscribed"], st["refused"]), (2, 0, 0))
+        mon.t4cache.put(cov, Book(bids=((0.20, 3000.0),), asks=((0.24, 3000.0),),
+                                  tick=0.01, fetched_at=T0))
+        self.assertEqual(mon.t4_stream_status()["books"], 1)
+        self.assertIn("ws_t4", mon._state(T0, {}))
 
 
 if __name__ == "__main__":
