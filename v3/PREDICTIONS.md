@@ -1115,3 +1115,30 @@ and 3 ms a second for the tier fairs with 5,870 Tier 4 markets.
 connections drop out of "live", or resident memory passes 600 MB
 (state["ws_t4"], state["ws"], state["rss_mb"], mem_trail).
 **Resolves:** an hour after the deploy.
+**Graded 2026-09-25 16:33Z — FALSIFIED within a minute of the deploy.**
+Both Tier 4 connections came up live, but each took only its first TEN
+subscribe requests and refused the rest: "max subscriptions per
+connection reached" (state["ws_t4"]: 9,676 market-requests refused,
+2,000 books in — all 829 of the $5 house winners and 1,171 of the $2
+coverage markets, and no Tier 4 Lite feed at all, since those requests
+went after the books). The two main connections stayed live (200 + 79)
+and memory read 212-292 MB. **What it taught:** the limit that binds
+is TEN SUBSCRIPTIONS A CONNECTION, which the docs never state; the "100
+markets per subscription" they do state is not enforced at 200 (the
+main connections have used 200 all along). P26 grades the layout the
+owner chose from it.
+
+### P26 — written 2026-09-25 ~17:15Z, BEFORE the three-connection layout deploys
+**Claim:** with three Tier 4 connections of ten subscribe requests of
+200 markets each, full books only, every one of the 5,838 Tier 4
+markets is subscribed with none refused and none left without room,
+and within an hour at least 90% of them have a book in the monitor's
+store; the two main connections stay live.
+**Why:** the refusal came at the eleventh request, never at the size
+of a request, and the main connections' single request of 200 has been
+accepted for weeks; 3 x 10 x 200 = 6,000 seats.
+**Falsified if:** any request is refused, "no_room" is above zero, a
+fourth-or-later connection is refused outright (an account cap on
+connections), fewer than 90% of Tier 4 markets have a book after an
+hour, or a main connection drops out of "live".
+**Resolves:** an hour after the deploy.

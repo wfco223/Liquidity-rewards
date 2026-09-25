@@ -1433,7 +1433,16 @@ long and accreted, so search it rather than reading it through.
   are rebuilt every 10 s instead of every second. Measured on a rig of
   5,870 Tier 4 markets and 130 others: the per-second pass 3 ms median,
   the 10-second Tier 4 pass 127 ms, ~36 MB. Read-only: nothing places.
-  P25 grades whether the exchange carries it.
+  TEN SUBSCRIPTIONS A CONNECTION (the first deploy, 16:32Z): each
+  connection took its first ten subscribe requests and refused the rest
+  — "max subscriptions per connection reached", a limit the docs never
+  state — so 2,000 of the 5,838 had books (all 829 of the $5, 1,171 of
+  the $2) and P25 was falsified. Owner ("200s on 3 connections"):
+  T4_STREAM_SHARDS 3, T4_PER_SHARD 2,000, T4_SUB_CHUNK 200 (the size the
+  main connections have always used, accepted), full books only
+  (lite=False), and ws.WS_MAX_SUBS (10) caps what a connection sends —
+  a slice too big for ten says so as "no_room" rather than being
+  refused. P26 grades it.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

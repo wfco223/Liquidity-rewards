@@ -46,7 +46,7 @@ from .switch import MasterSwitch
 from .focus import ENGINE_WS_CAP, FOCUS_CYCLE_S, FOCUS_WS_CAP, Focus
 from .sweep import Sweep
 from .maintenance import Maintenance
-from .ws import STREAM_SHARDS, Stream
+from .ws import STREAM_SHARDS, WS_MAX_SUBS, Stream
 from .tierfair import SLOW_TIERS, TierFair, tier_of
 
 try:
@@ -99,9 +99,16 @@ TIERFAIR_TICK_S = 1.0         # the tier fairs are re-estimated this often (stag
 # debounced, written into a store of its own that only the tier fairs
 # read — never the family's cache the engine trades from, never the
 # throttled gateway.
-T4_STREAM_SHARDS = 2
-T4_PER_SHARD = 3000
-T4_SUB_CHUNK = 100
+# 2026-09-25 16:32Z, the first deploy (2 connections, requests of 100,
+# books and Lite): the exchange took the first TEN requests on each
+# connection and refused the rest ("max subscriptions per connection
+# reached"), so 2,000 of the 5,838 markets had books. Owner, same day
+# ("200s on 3 connections"): requests of 200 — the size the two main
+# connections already use, accepted — full books only, ten a
+# connection, so a connection carries 2,000 and three carry all 5,838.
+T4_STREAM_SHARDS = 3
+T4_PER_SHARD = 2000
+T4_SUB_CHUNK = 200
 T4_SLUGS_TTL_S = 60.0
 BOOT_HOLD_S = 300.0
 BOOT_HOLD_POLL_S = 10.0
@@ -1172,7 +1179,8 @@ class Monitor:
                                    self.client.key_id, self.client.secret_key,
                                    shard=i, shards=T4_STREAM_SHARDS, cap=T4_PER_SHARD,
                                    chunk=T4_SUB_CHUNK, debounce=True,
-                                   keep=2 * T4_PER_SHARD, name=f"ws-t4-{i}")
+                                   keep=2 * T4_PER_SHARD, name=f"ws-t4-{i}",
+                                   lite=False, max_subs=WS_MAX_SUBS)
                             for i in range(T4_STREAM_SHARDS)]
                            if pol is not None else [])
         self.tierfair = (TierFair(pol, prints=self._last_print,
@@ -1252,10 +1260,12 @@ class Monitor:
         if not sts:
             return {}
         live = [x for x in sts if x.get("state") == "live"]
-        notes = [str(x.get("note") or "") for x in sts if x.get("note")]
+        notes = [str(x.get("note") or x.get("no_room_note") or "") for x in sts
+                 if x.get("note") or x.get("no_room_note")]
         return {"wanted": len(self._t4_list[1]),
                 "subscribed": sum(int(x.get("subscribed") or 0) for x in sts),
                 "refused": sum(int(x.get("refused") or 0) for x in sts),
+                "no_room": sum(int(x.get("no_room") or 0) for x in sts),
                 "connections": f"{len(live)}/{len(sts)}",
                 "last_msg": max(float(x.get("last_msg") or 0.0) for x in sts),
                 "books": len(getattr(self.t4cache, "_books", {}) or {}),

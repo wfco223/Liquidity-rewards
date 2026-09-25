@@ -39,6 +39,13 @@ SUB_CAP = 200
 # the priority-ordered list; a shard that cannot connect degrades to
 # REST exactly as one did before, and the others carry on.
 STREAM_SHARDS = 2
+# The exchange holds a connection to TEN subscribe requests: on
+# 2026-09-25 (16:32Z) each Tier 4 connection sent 60 and every request
+# past the tenth came back "max subscriptions per connection reached" —
+# a limit the docs do not state. A connection built with max_subs never
+# sends more than that, and says how many of its markets it had no room
+# for.
+WS_MAX_SUBS = 10
 
 
 class Stream:
@@ -49,7 +56,8 @@ class Stream:
     def __init__(self, cache: BookCache, get_slugs, key_id: str, secret_key: str,
                  shard: int = 0, shards: int = 1, cap: int | None = None,
                  chunk: int | None = None, debounce: bool = False,
-                 keep: int = 600, name: str = "ws-books"):
+                 keep: int = 600, name: str = "ws-books", lite: bool = True,
+                 max_subs: int | None = None):
         self.cache = cache
         self.get_slugs = get_slugs
         self.key_id, self.secret_key = key_id, secret_key
@@ -66,6 +74,10 @@ class Stream:
         # thousands of markets in requests of 100.
         self.chunk = int(chunk) if chunk else self.cap
         self.debounce = bool(debounce)
+        # the Lite feed (best bid/ask, last trade) beside the full book;
+        # a connection that needs every subscription for books drops it
+        self.lite = bool(lite)
+        self.max_subs = int(max_subs) if max_subs else None
         self.keep = max(int(keep), 600)
         self.name = name
         self.status = {"state": "off", "last_msg": 0.0, "subscribed": 0,
@@ -119,9 +131,20 @@ class Stream:
         feed, one request each per `chunk` markets. A slice that fits one
         chunk keeps the request ids it always had ("books", "lite")."""
         parts = [slugs[i:i + self.chunk] for i in range(0, len(slugs), self.chunk)] or [[]]
+        kinds = [("books", "SUBSCRIPTION_TYPE_MARKET_DATA")]
+        if self.lite:
+            kinds.append(("lite", "SUBSCRIPTION_TYPE_MARKET_DATA_LITE"))
+        if self.max_subs is not None:
+            # the books first: never past the exchange's ten a connection
+            room = max(self.max_subs // len(kinds), 1)
+            over = sum(len(p) for p in parts[room:])
+            parts = parts[:room]
+            self.status["no_room"] = over
+            if over:
+                self.status["no_room_note"] = (f"{over} markets past the exchange's "
+                                               f"{self.max_subs} subscriptions a connection")
         out = []
-        for kind, typ in (("books", "SUBSCRIPTION_TYPE_MARKET_DATA"),
-                          ("lite", "SUBSCRIPTION_TYPE_MARKET_DATA_LITE")):
+        for kind, typ in kinds:
             for i, part in enumerate(parts):
                 rid = kind if len(parts) == 1 else f"{kind}-{self.shard}-{i}"
                 sub = {"requestId": rid, "subscriptionType": typ, "marketSlugs": part}
@@ -237,9 +260,13 @@ class Stream:
             async with conn as ws:
                 self.refused.clear()
                 self.status.update(refused=0, refused_requests=0)
-                for req in self._requests(slugs):
+                reqs = self._requests(slugs)
+                for req in reqs:
                     await ws.send(json.dumps(req))
-                self.status.update(state="live", subscribed=len(slugs), note="")
+                carried = sum(len(r["subscribe"]["marketSlugs"]) for r in reqs
+                              if r["subscribe"]["subscriptionType"]
+                              == "SUBSCRIPTION_TYPE_MARKET_DATA")
+                self.status.update(state="live", subscribed=carried, note="")
                 last_check = started = time.time()
                 while True:
                     try:
