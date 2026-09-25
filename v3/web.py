@@ -60,7 +60,7 @@ def authed(get_header, query_string: str, password: str) -> bool:
 # Owner, 2026-08-31: plan and model run in the background — their
 # routes still answer for a bookmark, but they are off the bar. Fills
 # and watch became sub-pages of quick look.
-NAV = (("quick look", "."), ("focus", "focus"), ("status", "status"),
+NAV = (("quick look", "."), ("focus", "focus"), ("tiers", "tiers"), ("status", "status"),
        ("orders", "orders"), ("pay", "pay"), ("bonds", "bonds"),
        ("log", "log"), ("switch", "switch"))
 SUBNAV = {"quick": (("meter", "."), ("fills", "fills"), ("watch", "watch")),
@@ -2010,6 +2010,46 @@ function render(d){
 # their routes for a bookmark but are off the bar (owner, 2026-08-31).
 # The survey page is gone with the survey (owner, 2026-09-10).
 
+TIERS_JS = r"""
+// The tier fairs (owner, 2026-09-25, stage 1 of the tier engines —
+// v3/TIERS.md): every midterm-tier market's fair, re-estimated every
+// second from the book at depth, the last trade, the event's linked
+// markets and Silver, and graded against where the price went.
+// READ-ONLY: nothing on this page places, moves or cancels an order.
+function tPoll(){fetch('/tiers.json',{headers:hdrs(),cache:'no-store'}).then(function(r){if(r.status===401)return null;return r.json();}).then(function(j){if(!j)return;window._t=j;tApply(false);}).catch(function(){});}
+function tApply(force){var t=window._t;if(!t)return;var v=document.getElementById('view');if(!v)return;
+ if(!force&&(window.scrollY||0)>120)return;var y=window.scrollY||0;v.innerHTML=tRender(t);if(y>0)window.scrollTo(0,y);}
+function tTog(k){window._tOpen=window._tOpen||{};window._tOpen[k]=!window._tOpen[k];tApply(true);}
+function tMiss(g,h){var r=(g||{})[''+h]||{};var f=r.fair,m=r.mid;
+ if(!f||!m)return '<span class="muted">not graded yet — a reading is graded '+(h>=3600?'an hour':Math.round(h/60)+' minutes')+' after it is taken</span>';
+ var better=f.mae_c<m.mae_c;
+ return (h>=3600?'1 hour':Math.round(h/60)+' min')+' ahead: the fair misses by <b>'+f.mae_c.toFixed(2)+'¢</b> on average, the plain midpoint by <b>'+m.mae_c.toFixed(2)+'¢</b> '
+  +'<span class="'+(better?'ok':'warn')+'">('+(better?'fair better':'midpoint better')+')</span> <span class="muted">'+Math.round(f.n)+' readings'
+  +(r.his?' · your fair '+r.his.mae_c.toFixed(2)+'¢':'')+'</span>';}
+function tRow(r){var k='m-'+r.market;var open=(window._tOpen||{})[k];
+ var o='<div class="sub" style="cursor:pointer" onclick="tTog(\''+k+'\')"><b>'+esc(r.name)+'</b> — fair <b>'+pc(r.fair)+'</b> ±'+pc(r.conf)
+  +' <span class="muted">· mid '+pc(r.mid)+' · spread '+pc(r.spread)+(r.his!=null?' · your fair '+pc(r.his):'')+(r.book_age>120?' · <span class="warn">book '+Math.round(r.book_age/60)+' min old</span>':'')+'</span></div>';
+ if(open){var ins=r.inputs||{},w=r.weights||{};var names={book:'book at depth',print:'last trade',linked:'linked markets',silver:'Silver'};
+  o+='<div class="muted" style="margin-left:10px">';
+  for(var n in ins){o+=esc(names[n]||n)+' '+pc(ins[n])+' (weight '+Math.round((w[n]||0)*100)+'%)<br>';}
+  o+='book: first '+r.depth.toLocaleString()+' shares a side average '+pc(r.bid_d)+' bid / '+pc(r.ask_d)+' ask'+(r.thin?' <span class="warn">(thin: a side holds less than that)</span>':'')+'<br>';
+  if(r.g1h&&r.g1h.fair!=null)o+='this market, 1 hour ahead: fair misses '+r.g1h.fair.toFixed(2)+'¢, midpoint '+(r.g1h.mid!=null?r.g1h.mid.toFixed(2)+'¢':'–')+' ('+Math.round(r.g1h_n||0)+' readings)';
+  o+='</div>';}
+ return o;}
+function tRender(t){var o='<div class="card"><b>Tier fairs</b> <span class="pill">stage 1 — read only</span>'
+  +'<div class="muted">A fair for every midterm-tier market, worked out again every second from the book, the last trade, the event’s other markets and Silver. Each is written down every minute and checked against the midpoint 10 minutes and an hour later. Nothing on this page places, moves or cancels an order.</div>'
+  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+'</div>';
+ (t.tiers||[]).forEach(function(tr){var k='t-'+tr.key;var open=(window._tOpen||{})[k];
+  o+='<div class="card"><div style="cursor:pointer" onclick="tTog(\''+k+'\')"><b>'+esc(tr.name)+'</b> <span class="muted">· '+tr.markets+' markets, '+tr.with_fair+' with a fair'+((tr.pool_day||[]).length?' · pays '+tr.pool_day.map(function(x){return '$'+x.toLocaleString();}).join('/')+' a day per event · Target Size '+(tr.target||[]).map(function(x){return x.toLocaleString();}).join('/'):' · no program on the ledger now')+'</span></div>'
+   +'<div class="sub">'+tMiss(tr.grade,3600)+'</div><div class="sub">'+tMiss(tr.grade,600)+'</div>';
+  if(open){(t.rows||[]).filter(function(r){return r.tier===tr.key;}).forEach(function(r){o+=tRow(r);});
+   if(!tr.with_fair)o+='<div class="muted">no market in this tier has a book to read yet</div>';}
+  else if(tr.with_fair)o+='<div class="muted">tap to list its markets</div>';
+  o+='</div>';});
+ return o;}
+function render(d){if(!window._tTimer){window._tTimer=setInterval(tPoll,5000);tPoll();}var t=window._t;if(!t)return '<div class="card muted">reading the tier fairs…</div>';return tRender(t);}
+"""
+
 FOCUS_JS = r"""
 // The focus page (owner, 2026-09-10): the boosted markets, sorted by the
 // expected value of an entry of 10% of buying power at the best price,
@@ -2208,6 +2248,7 @@ PAGES = {
     "/grades": ("Pay", "pay", PAY_JS, ""),
     "/bonds": ("Bonds", "bonds", BONDS_JS, ""),
     "/focus": ("Focus", "focus", FOCUS_JS, ""),
+    "/tiers": ("Tiers", "tiers", TIERS_JS, ""),
     "/switch": ("Switches", "switch", SWITCH_JS, ""),
     "/log": ("Log", "log", LOG_JS, ""),
     "/plan": ("Plan", "", PLAN_JS, ""),
@@ -2475,6 +2516,15 @@ class WebServer:
                         return
                     self._send(200, "application/json",
                                json.dumps(server.monitor.fills_view()).encode())
+                    return
+                if route == "/tiers.json":
+                    # stage 1's tier fairs: bytes frozen on its own thread
+                    if not authed(self.headers.get, u.query, server.password):
+                        self._send(401, "application/json", b'{"error":"key required"}')
+                        return
+                    tj = getattr(server.monitor, "tiers_json", None)
+                    self._send(200, "application/json",
+                               tj() if tj is not None else b'{"ok":false}')
                     return
                 if route == "/focus.json":
                     # the focus tender's own frozen view: bytes built on

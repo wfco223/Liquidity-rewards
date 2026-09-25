@@ -70,6 +70,9 @@ class Stream:
         # either marks a trade PRINT (owner, 2026-08-29: shape churn is
         # blind to take-and-refill; prints are the real quiet signal)
         self._lite_prev: dict[str, tuple[float, float]] = {}
+        # the last trade PRICE per market and when it changed (the tier
+        # fair's print input, owner 2026-09-25 stage 1 — read-only)
+        self.last_trade: dict[str, tuple[float, float, bool]] = {}
         self._thread: threading.Thread | None = None
 
     def _sample(self, msg: dict) -> None:
@@ -123,6 +126,15 @@ class Stream:
                 if (prev is not None and prev != (ltp, oi)
                         and hasattr(self.cache, "note_trade")):
                     self.cache.note_trade(slug_l, time.time())
+                # (price, when, printed): the first frame for a market
+                # carries a last trade of unknown age, so it is kept but
+                # marked not printed; a CHANGE is a print, timed now
+                if 0.0 < ltp < 1.0 and (prev is None or prev[0] != ltp
+                                        or slug_l not in self.last_trade):
+                    self.last_trade[slug_l] = (ltp, time.time(), prev is not None)
+                    if len(self.last_trade) > 2000:
+                        oldest = min(self.last_trade, key=lambda k: self.last_trade[k][1])
+                        self.last_trade.pop(oldest, None)
                 self._lite_prev[slug_l] = (ltp, oi)
                 if len(self._lite_prev) > 600:
                     self._lite_prev.pop(next(iter(self._lite_prev)), None)
