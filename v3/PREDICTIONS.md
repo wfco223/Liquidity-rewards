@@ -1149,3 +1149,23 @@ live at 200 + 79; resident memory 232-295 MB. Holding so far. (That
 boot landed on 167.71.16.32, which the exchange refused as a VPN at
 17:08:19Z — nothing to do with the stream; the owner chose a redeploy
 for a new address, which also restarts the Tier 4 connections.)
+
+**P22 graded 2026-09-25 21:54Z — HELD.** A full day after 2026-09-22
+finished posting (its last rows 09-24 20:11Z), the four demst seat
+markets still have no 09-22 row, and all four have 09-23 rows ($6.78,
+2.69x the estimate). A market that joins a program partway through an
+ET day is paid nothing for that day and posts from its first full day —
+the meter's first-day rule (2026-09-24) stands on it. The confound
+named at the time (the seat books missing rows on 09-22) is not
+resolved by this; the demst markets posted on 09-23 while several
+House seat rungs did not.
+
+**P24 restarted, 2026-09-25 (owner, "Restart all three").** Its first
+one-hour reading (21:49Z) could compare the fair with the midpoint only
+in Tier 4 (the $5 tier: 0.172c against 0.170c, 1.2% worse, inside the
+2% line; the $2 tier: identical at 0.691c), because in Tiers 1-3 the
+midpoint's grade still carried readings from before the rebuild and the
+fair's did not. FAIR_VERSION "mid-2026-09-25b" restarts the fair's, the
+midpoint's and his fair's grades together; P24's three days run from
+that deploy, on the same readings, with the claim and the falsifier
+unchanged.
