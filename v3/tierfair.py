@@ -88,8 +88,16 @@ BETA_MIN_N = 30.0             # graded readings an input needs before it may mov
 BETA_SHRINK_N = 100.0         # its share is shrunk by n / (n + this): more readings, more trust
 BETA_HORIZON = 3600           # the shares are learned against the midpoint this far ahead
 # the fair's grade before 2026-09-25 was the inputs' average; the one
-# after starts from the midpoint — its errors are kept apart
-FAIR_VERSION = "mid-2026-09-25"
+# after starts from the midpoint — its errors are kept apart. "b"
+# (owner, 2026-09-25 21:5xZ "Restart all three"): the first rebuild
+# restarted only the fair's grade, so in Tiers 1-3 the midpoint's and
+# his fair's still carried the morning's readings and P24 could not
+# compare them; a save of any other version now drops all three
+# (the fair's, the midpoint's and his) so they are graded on the same
+# readings. The inputs' errors and the learned shares are about the
+# inputs, not the fair, and are kept.
+FAIR_VERSION = "mid-2026-09-25b"
+GRADED_TOGETHER = ("fair", "mid", "his")
 PRIOR_ERR = 0.02              # the error every input is assumed to have until measured ($)
 VOL_WINDOW_S = 600.0
 VOL_SAMPLE_S = 10.0           # the fair is kept for the volatility this often (memory)
@@ -652,21 +660,24 @@ class TierFair:
                 "betas": {f"{t}|{h}|{n}": bt.to_list() for (t, h, n), bt in self.betas.items()}}
 
     def restore(self, d: dict) -> None:
-        # a save from before the fair started at the midpoint graded a
-        # different fair: its "fair" errors are dropped, the inputs', the
-        # midpoint's and his are the same measures and are kept
+        # a save of another version: the fair's, the midpoint's and his
+        # fair's errors are dropped TOGETHER, so the three are graded on
+        # the same readings from here on; the inputs' errors and the
+        # learned shares are kept
         same = d.get("version") == FAIR_VERSION
         for k, v in (d.get("stats") or {}).items():
             try:
                 t, h, n = k.split("|", 2)
-                if n == "fair" and not same:
+                if n in GRADED_TOGETHER and not same:
                     continue
                 self.stats[(t, int(h), n)] = Stat(*v)
             except (ValueError, TypeError):
                 continue
         for s, dd in (d.get("mstats") or {}).items():
-            self.mstats[s] = {k: Stat(*v) for k, v in (dd or {}).items()
-                              if same or k != "fair"}
+            kept = {k: Stat(*v) for k, v in (dd or {}).items()
+                    if same or k not in GRADED_TOGETHER}
+            if kept:
+                self.mstats[s] = kept
         for k, v in (d.get("betas") or {}).items():
             try:
                 t, h, n = k.split("|", 2)

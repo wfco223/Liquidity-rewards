@@ -408,22 +408,35 @@ class TestThePageAndTheSave(unittest.TestCase):
         self.assertEqual(back.betas[("t2", 3600, "silver")].to_list(),
                          tf.betas[("t2", 3600, "silver")].to_list())
 
-    def test_a_save_from_the_old_fair_drops_only_the_fairs_grade(self):
+    def test_a_save_of_another_version_restarts_fair_mid_and_his_together(self):
+        # owner, 2026-09-25 "Restart all three": the first rebuild dropped
+        # only the fair's grade, so the midpoint's kept the morning's
+        # readings and the two could not be compared in Tiers 1-3
         fam = Fam()
         pair(fam)
-        tf = TierFair(fam, silver={DEM: 0.70}.get, clock=lambda: T0)
+        tf = TierFair(fam, silver={DEM: 0.70}.get, clock=lambda: T0,
+                      his_fairs=lambda: {DEM: 0.65})
         TestTheGrading().run_hour(fam, tf, 0.70)
-        old = json.loads(json.dumps(tf.to_dict()))
-        old.pop("version")
-        old.pop("betas")
-        back = TierFair(fam, clock=lambda: T0)
-        back.restore(old)
-        g = back.grade_view("t2")["3600"]
-        self.assertNotIn("fair", g)            # a different fair: not carried over
-        self.assertIn("mid", g)
-        self.assertIn("silver", g)
-        self.assertFalse(any("fair" in d for d in back.mstats.values()))
+        self.assertIn("his", tf.grade_view("t2")["3600"])
+        for ver in (None, "mid-2026-09-25"):          # the stage-1 save, the first rebuild
+            old = json.loads(json.dumps(tf.to_dict()))
+            if ver is None:
+                old.pop("version")
+            else:
+                old["version"] = ver
+            back = TierFair(fam, clock=lambda: T0)
+            back.restore(old)
+            g = back.grade_view("t2")["3600"]
+            for name in ("fair", "mid", "his"):
+                self.assertNotIn(name, g, (ver, name))
+            self.assertIn("silver", g)                # the inputs' errors are kept
+            self.assertEqual(back.betas.keys(), tf.betas.keys())   # and the learned shares
+            self.assertFalse(back.mstats)             # per market: fair and mid restart too
+        same = TierFair(fam, clock=lambda: T0)
+        same.restore(json.loads(json.dumps(tf.to_dict())))
+        self.assertEqual(same.grade_view("t2"), tf.grade_view("t2"))
         self.assertEqual(tf.to_dict()["version"], FAIR_VERSION)
+        self.assertEqual(FAIR_VERSION, "mid-2026-09-25b")
 
 
 class TestTheStreamKeepsTheLastTrade(unittest.TestCase):

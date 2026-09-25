@@ -1404,6 +1404,13 @@ long and accreted, so search it rather than reading it through.
   is no midpoint and the old weighted average stands. The fair's grade
   restarts under FAIR_VERSION "mid-2026-09-25" (a save without it drops
   only the "fair" errors); P24 grades it. Still read-only.
+  ALL THREE GRADES RESTART TOGETHER (owner, 2026-09-25 "Restart all
+  three"): dropping only the fair's errors left the midpoint's and his
+  fair's carrying the morning's readings in Tiers 1-3, so P24 could
+  compare the two only in Tier 4. FAIR_VERSION "mid-2026-09-25b": a save
+  of any other version drops the fair's, the midpoint's and his fair's
+  errors (tier and per-market) together (GRADED_TOGETHER); the inputs'
+  errors and the learned shares are kept. P24's three days run from it.
 
 - TIER 4 IS IDENTIFIED AND MONITORED, BOTH PROGRAMS (owner, 2026-09-25
   "Can you focus on getting the tier 4 markets identified and monitored
