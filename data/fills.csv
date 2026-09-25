@@ -2244,3 +2244,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790367178.5,politics,ewc-usgub-ks-2026-11-03-dem,SELL,33,0.29,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPFT928D4XDJ
 1790367178.5,politics,ewc-usgub-ga-2026-11-03-dem,SELL,9,0.48,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGA2MWT0XDN
 1790367178.5,nfl,tec-nfl-afceast-2027-01-10-w-ne,SELL,-0.1,0.3,fix,,2.49,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CFRAQB086TN2),CFRAQB086TN2
+1790367950.3,politics,ewc-usgub-mi-2026-11-03-dem,BUY,48,0.92,sell,0.1346,8.25,0.938275,91,95,0.309,0.92,0.93,-0.0183,0,an exit — its fill reduces the position it sits on,CQ4CFQE2GYCD
+1790368590.5,politics,paccc-usse-midterms-2026-11-03-rep,BUY,45,0.39,sell,0.2923,7.82,0.3097,38,40,0.792,0.39,0.391,0.0803,0,an exit — its fill reduces the position it sits on,CQ5E5ZGNYYC6
+1790369123.5,politics,usgubewc-usgub-sd-2026-11-03-dem,SELL,10,0.02,earn,0.8574,4.42,0.004075,1,5,0.054,0.01,0.04,-0.0159,-10,2 ticks in front of the touch — we would hold 89% of the ask side,CQ8JVMQ0YYCC
+1790369651.5,politics,usgubewc-usgub-sd-2026-11-03-rep,SELL,0.01,0.94,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQCC1JJ8TYBY
+1790370942.2,politics,ewc-usgub-ga-2026-11-03-dem,SELL,-9,0.48,fix,,0.09,,,,,,,,,size trimmed by 9 to the exchange's count (order CPGA2MWT0XDN),CPGA2MWT0XDN
+1790370942.2,politics,ewc-usgub-ga-2026-11-03-dem,SELL,-10,0.48,fix,27.0534,0.08,0.655225,55,62,0.694,0.38,0.48,0.1752,10,size trimmed by 10 to the exchange's count (order CPGA2MWT0XDN),CPGA2MWT0XDN
+1790370942.2,politics,usgubewc-usgub-sd-2026-11-03-rep,SELL,0.01,0.94,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQCC1JJ8TYBY
