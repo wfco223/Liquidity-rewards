@@ -2109,3 +2109,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790311677.1,politics,scc-senate-demst-2026-11-03-gte49,SELL,5,0.95,sell,0,0,,93,97,0.418,0.95,0.96,0,0,taker dump — sold into the bid (the carved exception),CPYG4GCB8XDQ
 1790311827.5,politics,vmc-ussemov-ky-2026-11-03-dwin,BUY,-1,0.12,fix,0.0245,0.44,,9,22,0,0.1,0.15,-0.03,1,size trimmed by 1 to the exchange's count (order CPXE4HZH2XDJ),CPXE4HZH2XDJ
 1790311827.5,politics,ussewc-usse-id-2026-11-03-rep,SELL,0.1,0.91,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPY5Z28NYXPM
+1790312755.4,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,0.03,0.21,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPYCZM08AXDR
+1790312842.5,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,4,0.21,sell,1.4877,0.44,,23,30,0.463,0.2,0.21,0.05,18,selling filled stock — it earns while it waits,CPYCZM08AXDR
+1790312912.8,politics,vmc-usgubmov-oh-2026-11-03-r6-9,SELL,1,0.19,manual,0,6.59,,5,14,0.423,0.06,0.19,-0.09,0,the owner's own order — the engine leaves it alone,CPS9NPHPJXPK
+1790315179.5,politics,ussewc-usse-id-2026-11-03-rep,SELL,0.3,0.91,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPYXQ43E0XDR
+1790315179.5,politics,ussewc-usse-id-2026-11-03-rep,SELL,4.9,0.91,backfill,,1.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPY5Z28NYXPM
+1790315497.2,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,0.03,0.21,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPYCZM08AXDR
+1790315497.2,politics,ussewc-usse-id-2026-11-03-rep,SELL,0.3,0.91,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPYXQ43E0XDR
+1790315497.2,politics,ussewc-usse-id-2026-11-03-rep,SELL,4.9,0.91,backfill,,1.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPY5Z28NYXPM
