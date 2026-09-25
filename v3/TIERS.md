@@ -56,9 +56,16 @@ The fair carries a confidence; low confidence rests further out.
   our own fills (how far the fair moved against us in the minutes
   after), per tier and side;
 - minus: the cost of the capital tied up;
-- minus: the cost of moving (queue place lost, time off the book, a
-  fill mid-move).
-It rests the best spot or nothing, and moves when another spot beats
+- minus: the cost of moving — the moment both the old and the new
+  order rest, and the exchange's limit on how fast we may place and
+  cancel. NOT a place in line: rewards do not depend on it, and at the
+  back of the line others fill first, which for us is a help (owner,
+  2026-09-25: "I'm not sure what you meant by the cost of losing a
+  place in line" — I had it wrong).
+It rests the best SET of orders on each side — one price level,
+several, or none (owner, 2026-09-25: "rest at the best or nothing
+excludes the possibility that it may be better to rest multiple orders
+at different price levels") — and changes the set when another beats
 staying by more than moving costs. No fixed minutes or dollar gates.
 
 ## Defence against being gamed — numbers, not rules
