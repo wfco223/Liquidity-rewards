@@ -188,3 +188,36 @@ class TestTheTierFourMonitorsStream(unittest.TestCase):
             s.apply_frame(lite(f"m-{i}", 0.31))
         self.assertTrue(s.last_trade["m-0"][2])      # the change was seen as a print
         self.assertEqual(len(s.last_trade), 3000)
+
+
+class TestTenSubscriptionsAConnection(unittest.TestCase):
+    """2026-09-25 16:32Z: the exchange took the first ten subscribe
+    requests on each Tier 4 connection and refused the rest ("max
+    subscriptions per connection reached"). Owner: "200s on 3
+    connections" — ten requests of 200, full books only."""
+
+    def test_the_tier_four_layout_sends_ten_requests_of_two_hundred_books(self):
+        all_ = [f"m-{i:04d}" for i in range(5838)]
+        carried = []
+        for i in range(3):
+            s = Stream(BookCache(), lambda: all_, "k", SECRET, shard=i, shards=3,
+                       cap=2000, chunk=200, debounce=True, lite=False,
+                       max_subs=ws.WS_MAX_SUBS)
+            reqs = s._requests(s._my_slugs())
+            self.assertLessEqual(len(reqs), ws.WS_MAX_SUBS)
+            self.assertTrue(all(r["subscribe"]["subscriptionType"]
+                                == "SUBSCRIPTION_TYPE_MARKET_DATA" for r in reqs))
+            self.assertTrue(all(len(r["subscribe"]["marketSlugs"]) <= 200 for r in reqs))
+            self.assertEqual(s.status.get("no_room"), 0)
+            for r in reqs:
+                carried += r["subscribe"]["marketSlugs"]
+        self.assertEqual(sorted(carried), all_)            # every market, once
+
+    def test_a_slice_too_big_for_ten_says_how_many_had_no_room(self):
+        s = Stream(BookCache(), lambda: [f"m-{i}" for i in range(3000)], "k", SECRET,
+                   cap=3000, chunk=100, max_subs=10)
+        reqs = s._requests(s._my_slugs())
+        self.assertEqual(len(reqs), 10)                     # five books, five Lite
+        self.assertEqual(sum(1 for r in reqs if r["subscribe"]["requestId"].startswith("books")), 5)
+        self.assertEqual(s.status["no_room"], 2500)
+        self.assertIn("2500 markets past", s.status["no_room_note"])

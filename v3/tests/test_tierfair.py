@@ -472,6 +472,8 @@ class TestTheAppRunsIt(unittest.TestCase):
         mon = Monitor()
         pol = mon.families["politics"]
         self.assertEqual(len(mon.t4_streams), T4_STREAM_SHARDS)
+        self.assertTrue(all(not st.lite and st.max_subs == 10 and st.chunk == 200
+                            for st in mon.t4_streams))
         self.assertFalse(set(map(id, mon.t4_streams)) & set(map(id, mon.streams)))
         self.assertIsNot(mon.t4cache, pol.cache)          # the engine never sees it
         self.assertTrue(all(st.cache is mon.t4cache for st in mon.t4_streams))
