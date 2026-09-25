@@ -2092,3 +2092,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790300785.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.56,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J9CVRVNP
 1790300785.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.55,hand,,13.16,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CH4XTE3PYVNP
 1790300785.7,nfl,tec-nfl-afcsouth-2027-01-10-w-hou,SELL,-0.1,0.42,fix,,1.14,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CFKCW23MJTMQ),CFKCW23MJTMQ
+1790302793.6,politics,usgubewc-usgub-ct-2026-11-03-rep,SELL,10,0.03,earn,1.8134,9.37,0.005275,2,5,0.408,0.02,0.03,-0.0247,-11,1 tick behind the touch — we would hold 49% of the ask side,CPMG74R02XPJ
+1790304475.4,politics,ewc-usgub-nv-2026-11-03-dem,SELL,-5,0.45,fix,,118.1,,,,,,,,,size trimmed by 5 to the exchange's count (order CJWBHWJ68W7H),CJWBHWJ68W7H
+1790304475.4,politics,ewc-usgub-nv-2026-11-03-dem,SELL,-9,0.45,fix,,118.1,,,,,,,,,size trimmed by 9 to the exchange's count (order CJWBHWJ68W7H),CJWBHWJ68W7H
+1790304475.4,politics,cpoc-ussegubc-tx-2026-11-03-dsweep,SELL,-1.03,0.28,fix,0,0,,28,34,0.413,0.28,0.29,0.03,0,size trimmed by 1.03 to the exchange's count (order CNY0Y98BTWPA),CNY0Y98BTWPA
+1790304475.4,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-7.33,0.03,fix,,119.32,,,,,,,,,size trimmed by 7.33 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
+1790304475.4,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-5.67,0.03,fix,,119.32,,,,,,,,,size trimmed by 5.67 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
