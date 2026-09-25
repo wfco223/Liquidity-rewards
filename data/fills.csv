@@ -2126,3 +2126,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790319167.0,politics,ussewc-usse-id-2026-11-03-rep,SELL,-0.3,0.91,fix,4.9825,0.56,0.997425,92,98,0.422,0.94,0.95,0.0874,0,size trimmed by 0.3 to the exchange's count (order CPYXQ43E0XDR),CPYXQ43E0XDR
 1790319167.0,politics,cpoc-ussegubc-tx-2026-11-03-rgov-dsen,BUY,0.32,0.45,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPZFXQPF2XPM
 1790319167.0,politics,ussewc-usse-la-2026-11-03-rep,SELL,9,0.92,backfill,,2.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPXB15WM6XDG
+1790327778.6,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,1,0.17,sell,0,0,,15,20,0.541,0.17,0.18,0,0,taker dump — sold into the bid (the carved exception),CQ2B55866XDJ
