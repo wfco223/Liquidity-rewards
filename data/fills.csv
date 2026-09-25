@@ -2117,3 +2117,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790315497.2,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,0.03,0.21,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPYCZM08AXDR
 1790315497.2,politics,ussewc-usse-id-2026-11-03-rep,SELL,0.3,0.91,backfill,,0.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPYXQ43E0XDR
 1790315497.2,politics,ussewc-usse-id-2026-11-03-rep,SELL,4.9,0.91,backfill,,1.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPY5Z28NYXPM
+1790316187.6,politics,cpoc-ussegubc-tx-2026-11-03-rgov-dsen,BUY,0.32,0.45,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPZFXQPF2XPM
+1790316233.1,politics,cpoc-ussegubc-tx-2026-11-03-rgov-dsen,BUY,1,0.45,sell,0,0.02,,41,46,0.411,0.47,0.55,0.02,-4,buying back the short at or under what it sold for — the bid earns while it wait,CPZFXQPF2XPM
+1790316525.4,politics,ussewc-usse-la-2026-11-03-rep,SELL,9,0.92,backfill,,2.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPXB15WM6XDG
+1790316765.1,politics,ussewc-usse-la-2026-11-03-dem,BUY,10,0.08,sell,1.0428,1.96,0.042625,3,8,0.506,0.07,0.08,0.0374,0,buying back the short at or under what it sold for — the bid earns while it wait,CPY4B3MEEXPM
+1790316765.1,politics,vtc-usseto-de-2026-11-03-gt475k,BUY,1,0.36,earn,0.0773,0.35,,28,41,0,0.36,0.42,0.01,1,2 ticks behind the touch — we would hold 70% of the bid side,CPZC6BGX6XDS
+1790319167.0,politics,ussewc-usse-id-2026-11-03-rep,SELL,-4.7,0.91,fix,4.9989,1.6,0.997425,92,98,0.422,0.94,0.95,0.0874,0.3,size trimmed by 4.7 to the exchange's count (order CPY5Z28NYXPM),CPY5Z28NYXPM
+1790319167.0,politics,ussewc-usse-id-2026-11-03-rep,SELL,-0.3,0.91,fix,4.9825,0.56,0.997425,92,98,0.422,0.94,0.95,0.0874,0,size trimmed by 0.3 to the exchange's count (order CPYXQ43E0XDR),CPYXQ43E0XDR
+1790319167.0,politics,cpoc-ussegubc-tx-2026-11-03-rgov-dsen,BUY,0.32,0.45,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPZFXQPF2XPM
+1790319167.0,politics,ussewc-usse-la-2026-11-03-rep,SELL,9,0.92,backfill,,2.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPXB15WM6XDG
