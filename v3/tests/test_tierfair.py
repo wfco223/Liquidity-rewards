@@ -478,6 +478,9 @@ class TestTheAppRunsIt(unittest.TestCase):
         self.assertIsNot(mon.t4cache, pol.cache)          # the engine never sees it
         self.assertTrue(all(st.cache is mon.t4cache for st in mon.t4_streams))
         self.assertIs(mon.tierfair.extra_cache, mon.t4cache)
+        # the old engine takes a fresh Tier 4 book from the store in
+        # place of a gateway read (owner, 2026-09-25)
+        self.assertEqual(pol.stream_book, mon.t4cache.any_age)
         cov = "vmc-ushrmov-tx-14-2026-11-03-rgte35"
         win = "ushrewc-ushr-ak-al-2026-11-03-bilhil"
         t3 = "ushrewc-ushr-tx-34-2026-11-03-dem"
@@ -489,6 +492,7 @@ class TestTheAppRunsIt(unittest.TestCase):
         self.assertEqual(mon._t4_slugs(), [win, cov])      # the $5 first; tier 3 is not here
         st = mon.t4_stream_status()
         self.assertEqual((st["wanted"], st["subscribed"], st["refused"]), (2, 0, 0))
+        self.assertEqual((st["engine_hits"], st["engine_misses"]), (0, 0))
         mon.t4cache.put(cov, Book(bids=((0.20, 3000.0),), asks=((0.24, 3000.0),),
                                   tick=0.01, fetched_at=T0))
         self.assertEqual(mon.t4_stream_status()["books"], 1)

@@ -93,6 +93,14 @@ GONE_GRACE_S = 300.0
 # The purge path already gave a fresh fill this grace; this is the
 # same grace on the overwrite path.
 FEED_LAG_GRACE_S = 180.0
+# A Tier 4 book the monitor's stream already carries (owner, 2026-09-25
+# "Build it, ask before deploy"): at 17:40-17:52Z 24 of 38 throttled
+# gateway reads were the engine fetching Tier 4 books the stream had.
+# Where the engine would read the gateway, it takes the stream's book
+# instead when that book is at most this old — well inside the desk's
+# 120 s placement gate, so a plan made on it can still be placed.
+# Older, or not carried: the gateway read as before.
+STREAM_BOOK_MAX_S = 60.0
 # An exit that has earned NOTHING for this long is not waiting for a
 # better price — it is dead capital. Measured 2026-08-24: 18 of 39
 # stuck politics exits were earning zero against $49.40 of the owner's
@@ -575,6 +583,12 @@ class Family:
         self.recent_paid: dict[str, tuple] = {}   # mkt -> (avg $/day, paid days), last 7d
         self.inv_since: dict[str, float] = {}  # market -> first-fill ts
         self.fill_at: dict[str, float] = {}    # market -> last fill WE booked
+        # the Tier 4 monitor's store, set by main (slug -> Book | None),
+        # and how often it stood in for a gateway read (hit) or was too
+        # old to (miss)
+        self.stream_book = None
+        self.stream_hits = 0
+        self.stream_misses = 0
         self._feed_lag_noted: dict[str, float] = {}
         self._exit_rate_ps = 0.0               # $/share/day our exits earn
         self.triage_feed: list[dict] = []     # the sweep's recent verdicts
@@ -5398,6 +5412,26 @@ class Family:
                     del self.orders[rec.id]
         return actions
 
+    def _streamed(self, slug: str, now: float):
+        """The monitor stream's book for `slug` where it is fresh enough
+        to stand in for a gateway read (STREAM_BOOK_MAX_S), else None.
+        The book keeps its own stamp, so every age gate downstream sees
+        how old it really is."""
+        fn = self.stream_book
+        if fn is None:
+            return None
+        try:
+            b = fn(slug)
+        except Exception:  # noqa: BLE001 — a missing store is a gateway read
+            return None
+        if b is None or not (b.bids or b.asks):
+            return None
+        if now - float(b.fetched_at or 0.0) > STREAM_BOOK_MAX_S:
+            self.stream_misses += 1
+            return None
+        self.stream_hits += 1
+        return b
+
     def _refresh_books(self, client, now: float, scan: bool = True) -> int:
         """Active markets by staleness first; the candidate scan keeps its
         reserved slice so discovery can never starve (the 2026-08-20 CFB
@@ -5445,6 +5479,10 @@ class Family:
             if done >= budget - scan_reserve:
                 break
             if self.cache.age(slug, now) > self.cfg.book_stale_s:
+                sb = self._streamed(slug, now)
+                if sb is not None:
+                    self.cache.put(slug, sb, writer="ws")   # no gateway read spent
+                    continue
                 try:
                     self.cache.put(slug, client.book(slug, fetched_at=now))
                 except Exception as e:  # noqa: BLE001
@@ -5504,8 +5542,12 @@ class Family:
                     "why": no_prog_why}
                 continue
             try:
-                book = client.book(slug, fetched_at=now)
-                self.cache.put(slug, book)
+                book = self._streamed(slug, now)
+                if book is not None:
+                    self.cache.put(slug, book, writer="ws")   # no gateway read spent
+                else:
+                    book = client.book(slug, fetched_at=now)
+                    self.cache.put(slug, book)
             except Exception as e:  # noqa: BLE001
                 self.scoreboard[slug] = {"ts": now, "plans": [],
                                          "why": f"book fetch failed: {str(e)[:50]}"}
