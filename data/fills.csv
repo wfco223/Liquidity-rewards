@@ -2169,3 +2169,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790340644.0,politics,scc-hrep-rep-2026-11-03-gte220,SELL,51,0.08,backfill,,0.26,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ4ZEDEGAYC6
 1790340644.0,politics,ewc-usse-me-2026-11-03-rep,SELL,81,0.31,backfill,,0.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ525SSYYYBY
 1790340644.0,politics,ussewc-usse-fl-2026-11-03-rep,SELL,20,0.86,backfill,,0.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ58EQK0WYCD
+1790340840.9,politics,scc-hrep-rep-2026-11-03-gte205,BUY,0.37,0.4,sell,0.9494,0.27,0.35045,34,38,0.753,0.4,0.41,0.0496,-28.63,an exit — its fill reduces the position it sits on,CQ59V02SPYCC
+1790341044.2,politics,cpoc-ussec-tx-me-2026-11-03-rtx-dme,SELL,0.51,0.12,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5H1D7XCYCC
+1790341216.7,politics,cpoc-ussec-tx-me-2026-11-03-rtx-dme,SELL,24,0.12,sell,28.1211,0.16,,15,22,0,0.09,0.12,0.06,1,selling filled stock — it earns while it waits,CQ5H1D7XCYCC
+1790341407.2,politics,ewc-usse-ne-2026-11-03-danosb,SELL,1,0.25,earn,0.1872,0.03,,23,32,0,0.12,0.25,0.03,-1,1 tick in front of the touch — we would hold 6% of the ask side,CQ5P4K5JWYBE
+1790343917.2,politics,ewc-usgub-ga-2026-11-03-rep,BUY,16,0.51,focus,8.0346,0.94,0.342475,47,52,0.505,0.51,0.52,0.1675,16,focus entry: ~$10.36/day; fill odds 49%/day; EV +4.65/day,CQ5EVGZT2YBY
+1790344283.0,politics,scc-senate-gop-2026-11-03-52,BUY,-173.4,0.07,fix,0,33.16,0.0528,6,10,0.455,0.07,0.08,0.0172,223,size trimmed by 173.4 to the exchange's count (order CNBPB4FR6WPH),CNBPB4FR6WPH
+1790344283.0,politics,ussewc-usse-fl-2026-11-03-rep,SELL,-20,0.86,fix,1.4435,0.33,0.84785,85,90,0.524,0.85,0.88,-0.0121,-40,size trimmed by 20 to the exchange's count (order CQ58EQK0WYCD),CQ58EQK0WYCD
+1790344283.0,politics,cpoc-ussec-tx-me-2026-11-03-rtx-dme,SELL,0.51,0.12,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5H1D7XCYCC
