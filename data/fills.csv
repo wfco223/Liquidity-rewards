@@ -2184,3 +2184,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790346770.4,politics,scc-hrep-rep-2026-11-03-gte205,SELL,6.65,0.41,focus,12.813,0.21,0.35045,34,38,0.789,0.4,0.41,-0.0595,-34.65,focus entry: ~$17.53/day; fill odds 30%/day; EV +16.84/day,CQ6RWZV2RYCA
 1790346834.9,politics,scc-hrep-rep-2026-11-03-gte195,SELL,51,0.5,sell,1.5633,2.07,0.628125,64,69,0.354,0.6,0.62,0.1281,0,an exit — its fill reduces the position it sits on,CQ56JBJRTYC6
 1790347907.0,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,112.39,0.71,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ6FWEAW2YBE
+1790348245.3,politics,usgubewc-usgub-ak-2026-11-03-berwil,SELL,35,0.14,focus,28.0053,0.41,0.0986,12,17,0.522,0.15,0.16,-0.0414,-35,focus entry: ~$2.67/day; fill odds 49%/day; EV +0.67/day,CQ6Z62602YBE
+1790350270.8,politics,ussewc-usse-al-2026-11-03-rep,BUY,1,0.98,earn,1.7534,0.56,0.9984,95,99,0.001,0.98,0.99,-0.0184,1,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CQ79DYE0TYCD
+1790351143.8,politics,ewc-usgub-oh-2026-11-03-rep,BUY,17,0.4,hand,,58.04,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVSPDRWWW0Y
+1790351143.8,politics,usgubewc-usgub-fl-2026-11-03-dem,SELL,20,0.19,hand,,9.85,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CM9SXHQDEWPB
+1790351143.8,politics,ewc-usgub-wi-2026-11-03-dem,SELL,1,0.83,hand,,75.86,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJVWP40J8W1Y
+1790351143.8,politics,ushrewc-ushr-ne-02-2026-11-03-rep,SELL,20,0.06,hand,,84.74,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJND344BPW22
+1790351143.8,politics,cpoc-ussegubc-tx-2026-11-03-dsweep,SELL,1.03,0.28,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNY0Y98BTWPA
+1790351143.8,politics,ewc-usgub-nv-2026-11-03-dem,SELL,16,0.45,hand,,118.1,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJWBHWJ68W7H
+1790351143.8,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,13,0.03,hand,,119.32,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJWB6WACPW7E
+1790351143.8,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,1,0.28,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CP34RWGDJWP9
+1790351143.8,politics,scc-senate-gop-2026-11-03-52,BUY,173.4,0.07,hand,,33.17,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CNBPB4FR6WPH
