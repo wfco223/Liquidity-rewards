@@ -2127,3 +2127,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790319167.0,politics,cpoc-ussegubc-tx-2026-11-03-rgov-dsen,BUY,0.32,0.45,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPZFXQPF2XPM
 1790319167.0,politics,ussewc-usse-la-2026-11-03-rep,SELL,9,0.92,backfill,,2.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPXB15WM6XDG
 1790327778.6,politics,cpoc-ussec-tx-me-2026-11-03-dtx-rme,SELL,1,0.17,sell,0,0,,15,20,0.541,0.17,0.18,0,0,taker dump — sold into the bid (the carved exception),CQ2B55866XDJ
+1790336877.6,politics,ewc-usse-tx-2026-11-03-dem,BUY,23,0.61,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQ440JV0AYBY
+1790336886.4,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,-1,0.28,fix,0,0,,27,31,0.42,0.28,0.29,0.01,2.99,size trimmed by 1 to the exchange's count (order CP34RWGDJWP9),CP34RWGDJWP9
+1790336886.4,politics,ewc-usse-tx-2026-11-03-dem,BUY,23,0.61,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQ440JV0AYBY
