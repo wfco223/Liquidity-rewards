@@ -1405,6 +1405,36 @@ long and accreted, so search it rather than reading it through.
   restarts under FAIR_VERSION "mid-2026-09-25" (a save without it drops
   only the "fair" errors); P24 grades it. Still read-only.
 
+- TIER 4 IS IDENTIFIED AND MONITORED, BOTH PROGRAMS (owner, 2026-09-25
+  "Can you focus on getting the tier 4 markets identified and monitored
+  both $5 and $2"). The ledger already held both: midterms_t4_house_
+  winners ($5/day per event, 829 markets, event of 2) and politics_t4_
+  coverage ($2/day per event, 5,009 markets — 3,803 House margin
+  buckets, 337/330 governor/Senate margins, 316 turnout, 109 state
+  House seat counts, the rest down-ballot), Target Size 2,000, discount
+  0.4, all in the family's universe. What was missing was books: the
+  two stream connections seat 400 markets and the tender's board takes
+  most of them, and the gateway throttles. So: (1) tierfair.TIERS has a
+  fifth tier, "t4c" (politics_t4_coverage_), beside "t4"; (2) Tier 4
+  gets a stream of its own — T4_STREAM_SHARDS (2) connections of up to
+  T4_PER_SHARD (3,000) markets, each in subscribe requests of
+  T4_SUB_CHUNK (100; the exchange's docs: "a maximum of 100 markets per
+  subscription. Use multiple subscriptions if you need more"), full
+  book and Lite, debounced — writing into main.t4cache, a store ONLY
+  the tier fairs read (TierFair._book takes the fresher of it and the
+  family's cache). The engine, the tender and the meter never see it,
+  and it never touches the gateway. A subscribe the exchange refuses is
+  kept in its words (Stream.refused, status "refused") and shown on
+  /tiers and in state["ws_t4"]; the two existing connections send
+  exactly what they did. (3) Tier 4 is worked out every SLOW_EVERY_S
+  (10 s), written down for grading every SLOW_SNAP_S (10 min), and each
+  Tier 4 card lists SLOW_PAGE_ROWS (100) markets, the most recently
+  traded first; the market ground, the event groups and their shapes
+  are rebuilt every 10 s instead of every second. Measured on a rig of
+  5,870 Tier 4 markets and 130 others: the per-second pass 3 ms median,
+  the 10-second Tier 4 pass 127 ms, ~36 MB. Read-only: nothing places.
+  P25 grades whether the exchange carries it.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."

@@ -47,7 +47,7 @@ from .focus import ENGINE_WS_CAP, FOCUS_CYCLE_S, FOCUS_WS_CAP, Focus
 from .sweep import Sweep
 from .maintenance import Maintenance
 from .ws import STREAM_SHARDS, Stream
-from .tierfair import TierFair
+from .tierfair import SLOW_TIERS, TierFair, tier_of
 
 try:
     from zoneinfo import ZoneInfo
@@ -91,6 +91,18 @@ SHUTDOWN_SAVE_S = 25.0       # how long it waits for the upload before exiting
 # save by BOOT_HOLD_S is restored the same way; nothing newer by then and
 # it goes on from what it has.
 TIERFAIR_TICK_S = 1.0         # the tier fairs are re-estimated this often (stage 1)
+# The Tier 4 monitor's stream (owner, 2026-09-25 "focus on getting the
+# tier 4 markets identified and monitored both $5 and $2"): ~5,800
+# markets on connections of their own, in subscribe requests of
+# T4_SUB_CHUNK markets (the exchange's docs: "a maximum of 100 markets
+# per subscription. Use multiple subscriptions if you need more"),
+# debounced, written into a store of its own that only the tier fairs
+# read — never the family's cache the engine trades from, never the
+# throttled gateway.
+T4_STREAM_SHARDS = 2
+T4_PER_SHARD = 3000
+T4_SUB_CHUNK = 100
+T4_SLUGS_TTL_S = 60.0
 BOOT_HOLD_S = 300.0
 BOOT_HOLD_POLL_S = 10.0
 BOOT_HOLD_ENV = "V3_BOOT_HOLD_DONE"   # set across the restart: one hold a boot
@@ -1152,9 +1164,22 @@ class Monitor:
         # stage 1 of the tier engines (owner, 2026-09-25): a fair for
         # every midterm-tier market, every second, graded against where
         # the price goes — READ-ONLY, see v3/TIERS.md and v3/tierfair.py
+        # Tier 4 on its own stream and its own store (owner, 2026-09-25):
+        # read-only, the engine never sees the store
+        self.t4cache = BookCache()
+        self._t4_list: tuple[float, list[str]] = (0.0, [])
+        self.t4_streams = ([Stream(self.t4cache, self._t4_slugs,
+                                   self.client.key_id, self.client.secret_key,
+                                   shard=i, shards=T4_STREAM_SHARDS, cap=T4_PER_SHARD,
+                                   chunk=T4_SUB_CHUNK, debounce=True,
+                                   keep=2 * T4_PER_SHARD, name=f"ws-t4-{i}")
+                            for i in range(T4_STREAM_SHARDS)]
+                           if pol is not None else [])
         self.tierfair = (TierFair(pol, prints=self._last_print,
                                   silver=self.silver.model_fair,
-                                  his_fairs=lambda: getattr(self.focus, "fairs", {}))
+                                  his_fairs=lambda: getattr(self.focus, "fairs", {}),
+                                  extra_cache=self.t4cache,
+                                  t4_status=self.t4_stream_status)
                          if pol is not None else None)
         self._restore()
         # the focus ground is claimed before the first family cycle can
@@ -1198,6 +1223,43 @@ class Monitor:
                              "subscribed": x.get("subscribed"),
                              "note": str(x.get("note") or "")[:120]} for x in sts]
         return out
+
+    def _t4_slugs(self) -> list[str]:
+        """Every Tier 4 market the ledger holds — the $5 house winners
+        and the $2 coverage program — in a stable order (the $5 first),
+        so each connection keeps its own slice. Rebuilt once a minute."""
+        at, cached = self._t4_list
+        now = time.time()
+        if cached and now - at < T4_SLUGS_TTL_S:
+            return cached
+        pol = self.families.get("politics")
+        out: list[str] = []
+        if pol is not None:
+            uni = pol.universe
+            rows = []
+            for slug, prog in list(pol.terms.current.items()):
+                t = tier_of(getattr(prog, "pid", ""))
+                if t in SLOW_TIERS and slug in uni:
+                    rows.append((SLOW_TIERS.index(t), slug))
+            out = [s_ for _i, s_ in sorted(rows)]
+        self._t4_list = (now, out)
+        return out
+
+    def t4_stream_status(self) -> dict:
+        """The Tier 4 monitor's connections: markets wanted, subscribed,
+        refused by the exchange (with its words), the newest frame."""
+        sts = [dict(st_.status) for st_ in getattr(self, "t4_streams", None) or []]
+        if not sts:
+            return {}
+        live = [x for x in sts if x.get("state") == "live"]
+        notes = [str(x.get("note") or "") for x in sts if x.get("note")]
+        return {"wanted": len(self._t4_list[1]),
+                "subscribed": sum(int(x.get("subscribed") or 0) for x in sts),
+                "refused": sum(int(x.get("refused") or 0) for x in sts),
+                "connections": f"{len(live)}/{len(sts)}",
+                "last_msg": max(float(x.get("last_msg") or 0.0) for x in sts),
+                "books": len(getattr(self.t4cache, "_books", {}) or {}),
+                "note": notes[0][:160] if notes else ""}
 
     def _ws_slugs(self) -> list[str]:
         """The owner's slot order (2026-08-21): every politics market
@@ -1792,6 +1854,7 @@ class Monitor:
             "summaries": summaries,
             "floor": self.floor.status(now),
             "ws": self.stream_status(),
+            "ws_t4": self.t4_stream_status(),
             "lite_study": self._lite_study(),
 
             "silver_log": self.silver.changes[-120:],
@@ -5089,7 +5152,8 @@ class Monitor:
         """The stream's last trade price for a market, from whichever
         shard carries it: (price, when, printed) or None."""
         best = None
-        for st_ in getattr(self, "streams", None) or []:
+        for st_ in list(getattr(self, "streams", None) or []) + list(
+                getattr(self, "t4_streams", None) or []):
             v = (getattr(st_, "last_trade", None) or {}).get(slug)
             if v is not None and (best is None or v[1] > best[1]):
                 best = v
@@ -5247,6 +5311,9 @@ class Monitor:
         # blind for the twenty minutes the board took to read.
         self._install_stop_handlers()
         for st_ in self.streams:
+            st_.start()
+        # the Tier 4 monitor's connections, read-only (owner, 2026-09-25)
+        for st_ in getattr(self, "t4_streams", None) or []:
             st_.start()
         while True:
             t0 = time.time()

@@ -115,3 +115,76 @@ class TestTheStreamShards(unittest.TestCase):
     def test_the_seats_now_hold_every_market_that_wanted_a_book(self):
         # 335 on 2026-09-14, against 200 before
         self.assertGreaterEqual(ws.SUB_CAP * ws.STREAM_SHARDS, 335)
+
+
+SECRET = "c2VjcmV0c2VjcmV0c2VjcmV0c2VjcmV0c2Vjcg=="
+
+
+class TestTheTierFourMonitorsStream(unittest.TestCase):
+    """Owner, 2026-09-25 ("focus on getting the tier 4 markets identified
+    and monitored both $5 and $2"): ~5,800 markets on connections of
+    their own. The exchange's docs cap a subscription at 100 markets and
+    say to use more subscriptions for more, so a slice goes in requests
+    of `chunk`; a request the exchange refuses is recorded in its words."""
+
+    def slugs(self, n):
+        return [f"m-{i:04d}" for i in range(n)]
+
+    def test_the_existing_connections_send_exactly_what_they_did(self):
+        s = Stream(BookCache(), lambda: self.slugs(150), "k", SECRET)
+        reqs = s._requests(s._my_slugs())
+        self.assertEqual([r["subscribe"]["requestId"] for r in reqs], ["books", "lite"])
+        self.assertEqual(len(reqs[0]["subscribe"]["marketSlugs"]), 150)
+        self.assertNotIn("responsesDebounced", reqs[0]["subscribe"])
+
+    def test_a_big_slice_goes_in_requests_of_a_hundred(self):
+        all_ = self.slugs(5838)
+        s0 = Stream(BookCache(), lambda: all_, "k", SECRET, shard=0, shards=2,
+                    cap=3000, chunk=100, debounce=True)
+        s1 = Stream(BookCache(), lambda: all_, "k", SECRET, shard=1, shards=2,
+                    cap=3000, chunk=100, debounce=True)
+        a, b = s0._my_slugs(), s1._my_slugs()
+        self.assertEqual((len(a), len(b)), (3000, 2838))
+        self.assertFalse(set(a) & set(b))
+        reqs = s1._requests(b)
+        books = [r["subscribe"] for r in reqs
+                 if r["subscribe"]["subscriptionType"] == "SUBSCRIPTION_TYPE_MARKET_DATA"]
+        lite = [r["subscribe"] for r in reqs
+                if r["subscribe"]["subscriptionType"] == "SUBSCRIPTION_TYPE_MARKET_DATA_LITE"]
+        self.assertEqual((len(books), len(lite)), (29, 29))
+        self.assertTrue(all(len(x["marketSlugs"]) <= 100 for x in books + lite))
+        self.assertEqual(sum(len(x["marketSlugs"]) for x in books), 2838)
+        self.assertTrue(all(x["responsesDebounced"] for x in books + lite))
+        self.assertEqual(len({x["requestId"] for x in books + lite}), 58)
+
+    def test_a_refused_request_is_recorded_in_the_exchanges_words(self):
+        s = Stream(BookCache(), lambda: self.slugs(250), "k", SECRET, cap=3000, chunk=100)
+        s._requests(s._my_slugs())
+        self.assertIsNone(s.apply_frame(json.dumps(
+            {"requestId": "books-0-2", "error": "too many subscriptions"})))
+        self.assertEqual(s.status["refused"], 50)
+        self.assertEqual(s.status["refused_requests"], 1)
+        self.assertIn("too many subscriptions", s.status["note"])
+
+    def test_it_writes_its_own_store(self):
+        mine, other = BookCache(), BookCache()
+        s = Stream(mine, lambda: ["m-1"], "k", SECRET, cap=3000, chunk=100)
+        s.apply_frame(json.dumps({"marketData": {
+            "marketSlug": "m-1", "bids": [{"px": {"value": "0.20"}, "qty": 3000}],
+            "offers": [{"px": {"value": "0.24"}, "qty": 3000}]}}))
+        self.assertIsNotNone(mine.any_age("m-1"))
+        self.assertIsNone(other.any_age("m-1"))
+
+    def test_it_keeps_the_last_trade_of_every_market_it_carries(self):
+        s = Stream(BookCache(), lambda: [], "k", SECRET, cap=3000, chunk=100, keep=6000)
+
+        def lite(slug, ltp):
+            return json.dumps({"marketDataLite": {"marketSlug": slug,
+                                                  "lastTradePx": {"value": str(ltp)},
+                                                  "openInterest": "10"}})
+        for i in range(3000):
+            s.apply_frame(lite(f"m-{i}", 0.30))
+        for i in range(3000):
+            s.apply_frame(lite(f"m-{i}", 0.31))
+        self.assertTrue(s.last_trade["m-0"][2])      # the change was seen as a print
+        self.assertEqual(len(s.last_trade), 3000)

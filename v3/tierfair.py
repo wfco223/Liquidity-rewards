@@ -56,7 +56,22 @@ from collections import deque
 TIERS = (("t1", "Tier 1", "midterms_t1_"),
          ("t2", "Tier 2", "midterms_t2_"),
          ("t3", "Tier 3", "midterms_t3_"),
-         ("t4", "Tier 4", "midterms_t4_"))
+         ("t4", "Tier 4 · $5 house winners", "midterms_t4_"),
+         # the $2 program sits beside the $5 one (owner, 2026-09-25
+         # "focus on getting the tier 4 markets identified and monitored
+         # both $5 and $2"): 5,009 margin, turnout, seat-count and
+         # down-ballot markets in politics_t4_coverage_20260924
+         ("t4c", "Tier 4 · $2 coverage", "politics_t4_coverage_"))
+# Tier 4 is ~5,800 markets against ~130 in Tiers 1-3: it is worked out
+# every SLOW_EVERY_S, not every second, written down for grading every
+# SLOW_SNAP_S, kept for its volatility every SLOW_VOL_S, and the page
+# lists SLOW_PAGE_ROWS of each (the most recently traded, then the
+# narrowest), so the per-second tick and the phone page stay light.
+SLOW_TIERS = ("t4", "t4c")
+SLOW_EVERY_S = 10.0
+SLOW_SNAP_S = 600.0
+SLOW_VOL_S = 60.0
+SLOW_PAGE_ROWS = 100
 INPUTS = ("book", "print", "linked", "silver")
 
 FAIR_DEPTH_FRAC = 0.10        # the book input walks this share of the Target Size a side
@@ -204,8 +219,21 @@ class TierFair:
     or None; `silver(slug)` Silver's number or None; `his_fairs()` the
     focus page's fairs, for comparison only."""
 
-    def __init__(self, fam, prints=None, silver=None, his_fairs=None, clock=None):
+    def __init__(self, fam, prints=None, silver=None, his_fairs=None, clock=None,
+                 extra_cache=None, t4_status=None):
         self.fam = fam
+        # the Tier 4 monitor's own book store (its stream writes there,
+        # never into the family's cache the engine trades from)
+        self.extra_cache = extra_cache
+        self.t4_status = t4_status or (lambda: {})
+        self.last_slow = 0.0
+        self.last_slow_snap = 0.0
+        self._slow_books: dict[str, dict | None] = {}
+        self._mk: dict | None = None
+        self._mk_at = 0.0
+        self._grp: dict[str, list[str]] = {}
+        self._shapes: dict[str, dict] = {}
+        self._fast_ev: list[str] = []
         self.prints = prints or (lambda s: None)
         self.silver = silver or (lambda s: None)
         self.his_fairs = his_fairs or (lambda: {})
@@ -247,8 +275,20 @@ class TierFair:
 
     # -- inputs ------------------------------------------------------------------
 
+    def _book(self, slug: str):
+        """The freshest book either store holds: the family's cache (the
+        stream's two connections and the gateway) or the Tier 4
+        monitor's."""
+        a = self.fam.cache.any_age(slug)
+        b = self.extra_cache.any_age(slug) if self.extra_cache is not None else None
+        if a is None:
+            return b
+        if b is None:
+            return a
+        return b if float(b.fetched_at or 0.0) > float(a.fetched_at or 0.0) else a
+
     def _book_input(self, slug: str, prog, now: float) -> dict | None:
-        book = self.fam.cache.any_age(slug)
+        book = self._book(slug)
         if book is None or not book.bids or not book.asks:
             return None
         age = now - float(book.fetched_at or 0.0)
@@ -263,26 +303,60 @@ class TierFair:
                 "depth": depth, "mid": (bb + ba) / 2.0, "spread": ba - bb,
                 "age": age, "stale": age > BOOK_STALE_S}
 
-    def _linked(self, slug: str, group: list[str], books: dict) -> float | None:
+    def _shape(self, group: list[str]) -> dict:
+        """What the event's markets are, worked out once when the ground
+        is rebuilt, not once a market a second: an "at least N" ladder's
+        thresholds, or how many outcomes the event has."""
         uni = self.fam.universe
         names = {s: str((uni.get(s) or {}).get("name") or s) for s in group}
-        outs = {s: _outcome(names[s], s) for s in group}
-        n_event = int((uni.get(slug) or {}).get("event_n") or len(group))
-        gte = {s: _GTE.match(outs[s]) for s in group}
-        if all(gte.values()):
-            pts = sorted((float(gte[s].group(1)), books[s]["value"])
-                         for s in group if books.get(s) and not books[s]["stale"])
-            if len(pts) < 3 or not books.get(slug) or books[slug]["stale"]:
-                return None
+        gte = {s: _GTE.match(_outcome(names[s], s)) for s in group}
+        return {"ladder": ({s: float(gte[s].group(1)) for s in group}
+                           if all(gte.values()) else None),
+                "n_event": {s: int((uni.get(s) or {}).get("event_n") or len(group))
+                            for s in group}}
+
+    def _linked_group(self, group: list[str], books: dict, shape: dict) -> dict[str, float]:
+        """What the event's other markets imply, for every market in it
+        at once: a ladder made to fall (one fit for the event), or one
+        less the sum of the others' book prices where every outcome is
+        here and fresh."""
+        fresh = {s: books[s]["value"] for s in group
+                 if books.get(s) and not books[s]["stale"]}
+        out: dict[str, float] = {}
+        if shape["ladder"] is not None:
+            pts = sorted((shape["ladder"][s], v) for s, v in fresh.items())
+            if len(pts) < 3:
+                return out
             fit = _falling_fit(pts)
-            return fit.get(float(gte[slug].group(1)))
-        if len(group) != n_event or len(group) < 2:
-            return None                    # not every outcome of the event is here
-        others = [s for s in group if s != slug]
-        if not all(books.get(s) and not books[s]["stale"] for s in others):
-            return None
-        v = 1.0 - sum(books[s]["value"] for s in others)
-        return min(max(v, 0.001), 0.999)
+            for s in fresh:
+                v = fit.get(shape["ladder"][s])
+                if v is not None:
+                    out[s] = v
+            return out
+        if len(group) < 2:
+            return out
+        total = sum(fresh.values())
+        for s in group:
+            if shape["n_event"][s] != len(group):
+                continue                   # not every outcome of the event is here
+            if len(fresh) == len(group) or (len(fresh) == len(group) - 1 and s not in fresh):
+                v = 1.0 - (total - fresh.get(s, 0.0))
+                out[s] = min(max(v, 0.001), 0.999)
+        return out
+
+    def _ground(self, now: float):
+        """The markets, their events and each event's shape — rebuilt
+        every SLOW_EVERY_S: the ledger changes by the hour, and walking
+        its 6,600 programs every second cost more than the fairs."""
+        if self._mk is not None and now - self._mk_at < SLOW_EVERY_S:
+            return self._mk, self._grp, self._shapes
+        mk = self.markets()
+        grp = self._groups(mk)
+        self._mk, self._grp, self._mk_at = mk, grp, now
+        self._shapes = {ev: self._shape(g) for ev, g in grp.items()}
+        self._fast_ev = [ev for ev, g in grp.items()
+                         if any(mk[s][0] not in SLOW_TIERS for s in g)]
+        return mk, grp, self._shapes
 
     def _weight(self, tier: str, name: str) -> float:
         st = self.stats.get((tier, 3600, name))
@@ -306,18 +380,39 @@ class TierFair:
     def tick(self, now: float | None = None) -> None:
         now = self._clock() if now is None else now
         t0 = time.time()
-        mk = self.markets()
-        books = {s: self._book_input(s, p, now) for s, (t, p) in mk.items()}
-        groups = self._groups(mk)
+        mk, groups, shapes = self._ground(now)
+        # Tier 4 only every SLOW_EVERY_S: its books and readings stand
+        # in between, and a second's work touches only Tiers 1-3
+        slow_due = now - self.last_slow >= SLOW_EVERY_S
+        if slow_due:
+            self.last_slow = now
+            work = list(groups)
+            books: dict[str, dict | None] = {s_: self._book_input(s_, p_, now)
+                                             for s_, (t_, p_) in mk.items()}
+            self._slow_books = {s_: books[s_] for s_, (t_, _p) in mk.items()
+                                if t_ in SLOW_TIERS}
+            cur: dict[str, dict] = {}
+        else:
+            work = self._fast_ev
+            books = dict(self._slow_books)
+            for ev in work:
+                for s_ in groups[ev]:
+                    t_, p_ = mk[s_]
+                    if t_ not in SLOW_TIERS:
+                        books[s_] = self._book_input(s_, p_, now)
+            cur = {s_: r for s_, r in self.cur.items() if r["tier"] in SLOW_TIERS}
         his = {}
         try:
             his = dict(self.his_fairs() or {})
         except Exception:  # noqa: BLE001
             his = {}
-        cur: dict[str, dict] = {}
-        for ev, group in groups.items():
+        for ev in work:
+            group = groups[ev]
+            linked = self._linked_group(group, books, shapes[ev])
             for slug in group:
                 tier, prog = mk[slug]
+                if tier in SLOW_TIERS and not slow_due:
+                    continue
                 bk = books.get(slug)
                 if bk is None or bk["stale"]:
                     continue
@@ -329,7 +424,7 @@ class TierFair:
                     pr = None
                 if pr and len(pr) >= 3 and pr[2] and now - float(pr[1]) <= PRINT_MAX_AGE_S:
                     inputs["print"] = float(pr[0])
-                lk = self._linked(slug, group, books)
+                lk = linked.get(slug)
                 if lk is not None:
                     inputs["linked"] = lk
                 try:
@@ -363,7 +458,8 @@ class TierFair:
                     shares = {k: round(ws[k] / tot, 3) for k in ws}
                     dis = math.sqrt(sum(ws[k] * (v - fair) ** 2 for k, v in inputs.items()) / tot)
                 h = self.hist.setdefault(slug, deque())
-                if not h or now - h[-1][0] >= VOL_SAMPLE_S:
+                every = SLOW_VOL_S if tier in SLOW_TIERS else VOL_SAMPLE_S
+                if not h or now - h[-1][0] >= every:
                     h.append((now, fair))
                 while h and now - h[0][0] > VOL_WINDOW_S:
                     h.popleft()
@@ -383,7 +479,9 @@ class TierFair:
                              "mid": bk["mid"], "spread": bk["spread"],
                              "bid_d": bk["bid_d"], "ask_d": bk["ask_d"], "depth": bk["depth"],
                              "thin": bk["thin"], "book_age": bk["age"],
-                             "his": his.get(slug)}
+                             "his": his.get(slug),
+                             "print_at": (float(pr[1]) if pr and len(pr) >= 3 and pr[2]
+                                          else 0.0)}
         self.cur = cur
         for s in [s for s in self.hist if s not in mk]:
             del self.hist[s]
@@ -398,9 +496,14 @@ class TierFair:
             self._freeze(now, mk, books)
 
     def _snap(self, now: float) -> None:
+        slow_snap = now - self.last_slow_snap >= SLOW_SNAP_S
+        if slow_snap:
+            self.last_slow_snap = now
         for slug, r in self.cur.items():
             if r["spread"] > MID_TRUST_SPREAD:
                 continue      # graded in pairs: the fair only where the midpoint is a price too
+            if r["tier"] in SLOW_TIERS and not slow_snap:
+                continue      # Tier 4 is written down every SLOW_SNAP_S
             d = self.snaps.setdefault(slug, deque())
             d.append({"ts": now, "tier": r["tier"], "fair": r["fair"], "mid": r["mid"],
                       "inputs": dict(r["inputs"]), "his": r.get("his"),
@@ -478,14 +581,33 @@ class TierFair:
             progs = [mk[s][1] for s in ms]
             pools = sorted({float(getattr(p, "pool", 0) or 0) for p in progs})
             targets = sorted({float(getattr(p, "target", 0) or 0) for p in progs})
+            bks = [(books or {}).get(s) for s in ms]
+            live = [b for b in bks if b]
             tiers.append({"key": key, "name": name, "prefix": prefix,
                           "markets": len(ms),
                           "with_fair": sum(1 for s in ms if s in self.cur),
-                          "with_book": sum(1 for s in ms if (books or {}).get(s)),
+                          "with_book": len(live),
+                          "fresh": sum(1 for b in live if not b["stale"]),
+                          "narrow": sum(1 for b in live if not b["stale"]
+                                        and b["spread"] <= MID_TRUST_SPREAD),
                           "pool_day": pools, "target": targets,
+                          "slow": key in SLOW_TIERS,
                           "grade": self.grade_view(key)})
+        # Tiers 1-3 list every market; each Tier 4 lists SLOW_PAGE_ROWS —
+        # the most recently traded first, then the narrowest touch
+        keep: set[str] = set()
+        for key in SLOW_TIERS:
+            ranked = sorted((s for s, r in self.cur.items() if r["tier"] == key),
+                            key=lambda s: (-float(self.cur[s].get("print_at") or 0.0),
+                                           float(self.cur[s]["spread"]), s))
+            keep.update(ranked[:SLOW_PAGE_ROWS])
+            for t in tiers:
+                if t["key"] == key:
+                    t["rows_shown"] = min(len(ranked), SLOW_PAGE_ROWS)
         rows = []
         for slug, r in sorted(self.cur.items(), key=lambda kv: (kv[1]["tier"], kv[1]["event"], kv[0])):
+            if r["tier"] in SLOW_TIERS and slug not in keep:
+                continue
             ms = self.mstats.get(slug) or {}
             rows.append({"market": slug,
                          "name": str((self.fam.universe.get(slug) or {}).get("name") or slug),
@@ -504,8 +626,15 @@ class TierFair:
                 "note": "stage 1 — fairs only; nothing here places or moves an order",
                 "version": FAIR_VERSION,
                 "tiers": tiers, "all": self.grade_view("all"), "rows": rows,
+                "t4_stream": self._t4_view(),
                 "ticks": self.ticks, "tick_s": self.tick_s, "error": self.error,
                 "horizons": list(GRADE_HORIZONS), "mid_trust_spread": MID_TRUST_SPREAD}
+
+    def _t4_view(self) -> dict:
+        try:
+            return dict(self.t4_status() or {})
+        except Exception as e:  # noqa: BLE001 — a readout
+            return {"note": f"{type(e).__name__}: {e}"[:120]}
 
     def _freeze(self, now: float, mk=None, books=None) -> None:
         try:
