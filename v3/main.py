@@ -47,6 +47,7 @@ from .focus import ENGINE_WS_CAP, FOCUS_CYCLE_S, FOCUS_WS_CAP, Focus
 from .sweep import Sweep
 from .maintenance import Maintenance
 from .ws import STREAM_SHARDS, Stream
+from .tierfair import TierFair
 
 try:
     from zoneinfo import ZoneInfo
@@ -89,6 +90,7 @@ SHUTDOWN_SAVE_S = 25.0       # how long it waits for the upload before exiting
 # this process in place to restore it; a newer periodic save with no stop
 # save by BOOT_HOLD_S is restored the same way; nothing newer by then and
 # it goes on from what it has.
+TIERFAIR_TICK_S = 1.0         # the tier fairs are re-estimated this often (stage 1)
 BOOT_HOLD_S = 300.0
 BOOT_HOLD_POLL_S = 10.0
 BOOT_HOLD_ENV = "V3_BOOT_HOLD_DONE"   # set across the restart: one hold a boot
@@ -1147,6 +1149,13 @@ class Monitor:
                          for i in range(STREAM_SHARDS)]
                         if pol is not None else [])
         self.stream = self.streams[0] if self.streams else None
+        # stage 1 of the tier engines (owner, 2026-09-25): a fair for
+        # every midterm-tier market, every second, graded against where
+        # the price goes — READ-ONLY, see v3/TIERS.md and v3/tierfair.py
+        self.tierfair = (TierFair(pol, prints=self._last_print,
+                                  silver=self.silver.model_fair,
+                                  his_fairs=lambda: getattr(self.focus, "fairs", {}))
+                         if pol is not None else None)
         self._restore()
         # the focus ground is claimed before the first family cycle can
         # act on it: the family's terms stand in until the tender reads
@@ -1620,6 +1629,8 @@ class Monitor:
             self.maint.restore_state(saved["maint"])
         if saved.get("focus"):
             self.focus.restore(saved["focus"])
+        if saved.get("tierfair") and getattr(self, "tierfair", None) is not None:
+            self.tierfair.restore(saved["tierfair"])
         self.ladder_seen = {str(k): str(v) for k, v in
                             (saved.get("ladder_seen") or {}).items()}
         self.actuals_by_day = dict(saved.get("actuals_by_day") or {})
@@ -1767,6 +1778,8 @@ class Monitor:
             "sweep": self.sweep.to_dict(),
             "maint": self.maint.to_dict(),
             "focus": self.focus.to_dict(),
+            "tierfair": (self.tierfair.to_dict()
+                         if getattr(self, "tierfair", None) is not None else {}),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
             "actuals_by_day": self.actuals_by_day,
@@ -4334,6 +4347,7 @@ class Monitor:
                 except Exception as e:  # noqa: BLE001 — save what can be saved
                     print(f"v3: shutdown save: {key}: {type(e).__name__}: {e}", flush=True)
             parts = (("focus", lambda: self.focus.to_dict()),
+                     ("tierfair", lambda: self.tierfair.to_dict()),
                      ("bonds", lambda: self.bonds.to_dict()),
                      ("sweep", lambda: self.sweep.to_dict()),
                      ("maint", lambda: self.maint.to_dict()),
@@ -5067,6 +5081,36 @@ class Monitor:
     def focus_json(self) -> bytes:
         return getattr(self.focus, "payload_json", b'{"ok":false}')
 
+    def tiers_json(self) -> bytes:
+        tf = getattr(self, "tierfair", None)
+        return tf.payload_json if tf is not None else b'{"ok":false,"note":"no tier fairs"}'
+
+    def _last_print(self, slug: str):
+        """The stream's last trade price for a market, from whichever
+        shard carries it: (price, when, printed) or None."""
+        best = None
+        for st_ in getattr(self, "streams", None) or []:
+            v = (getattr(st_, "last_trade", None) or {}).get(slug)
+            if v is not None and (best is None or v[1] > best[1]):
+                best = v
+        return best
+
+    def _tierfair_loop(self) -> None:
+        """Stage 1's clock: every TIERFAIR_TICK_S, the tier fairs from the
+        books already in the cache. Reads nothing from the exchange and
+        touches no order."""
+        said = 0.0
+        while True:
+            t0 = time.time()
+            try:
+                self.tierfair.tick(t0)
+            except Exception as e:  # noqa: BLE001 — the fairs never break the app
+                self.tierfair.error = f"{type(e).__name__}: {e}"[:160]
+                if t0 - said > 600.0:
+                    said = t0
+                    self._note(f"tier fairs: {type(e).__name__}: {e}")
+            time.sleep(max(TIERFAIR_TICK_S - (time.time() - t0), 0.2))
+
     def sweep_op(self, op: str) -> dict:
         """His taps on the sweep card (owner, 2026-09-13): preview reads
         the books and shows every order the sweep would place; run
@@ -5182,6 +5226,9 @@ class Monitor:
         self._boot_hold()
         threading.Thread(target=self._sampler_loop, daemon=True,
                          name="sampler").start()
+        if getattr(self, "tierfair", None) is not None:
+            threading.Thread(target=self._tierfair_loop, daemon=True,
+                             name="tierfair").start()
         backoff = 5.0
         # the focus tender's own loop starts NOW, before the board is
         # read (owner, 2026-09-10: "The start up time for focus has to

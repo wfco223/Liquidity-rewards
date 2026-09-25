@@ -1046,3 +1046,18 @@ one of the 09-11 and 09-17 misses posted on the days after.
 that day stops posting (a day with no new row for 24 hours), or none of
 them has a 2026-09-23 row.
 **Resolves:** when 2026-09-23 finishes posting (data/rewards.csv).
+
+### P23 — written 2026-09-25, BEFORE stage 1 (the tier fairs) deploys
+**Claim:** on Tier 1–3 markets whose touch is 10¢ wide or less, the
+tier fair's mean absolute error against the touch midpoint an hour
+later is at least 5% lower than the plain midpoint's (the "nothing
+changes" forecast), over the first three days of readings.
+**Why:** the touch on these books is often a handful of shares in front
+of the real size; the book input averages the first 10% of the Target
+Size a side, the linked markets hold a pair or a ladder together, and
+each input's weight is its own measured error. If the midpoint wins,
+the fair is adding nothing yet and stage 2 must not price off it.
+**Falsified if:** after 500 or more graded one-hour readings across
+Tiers 1–3, the fair's error is 0.95 of the midpoint's or more (the
+/tiers page and state["tierfair"] carry both).
+**Resolves:** three days after the stage 1 deploy.

@@ -1340,6 +1340,35 @@ long and accreted, so search it rather than reading it through.
   P22 predicts the demst seat markets that joined at 17:31Z on 09-22 get
   no 09-22 row and do get 09-23 rows.
 
+- THE TIER ENGINES, STAGE 1: THE TIER FAIRS (owner, 2026-09-24/25: "We
+  should build a different tender/engine for each tier" ... "No we're
+  building from the ground up. It can borrow elements from the tender,
+  but there were clearly flaws"; $1,000 of free cash assumed, a fixed
+  share per tier reset daily from its EV, all switches off at start;
+  "We have to get dynamic fairs. Things are changing fast";
+  "Everything can go past fair if it is +ev"; decisions every second,
+  "smart enough to spot when that is good vs bad. Hard coding rules is
+  effective to a point but these rules are too easy to exploit"; and
+  NOT one order a side — "it may be better to rest multiple orders at
+  different price levels"). The design is v3/TIERS.md; four stages,
+  each his yes, nothing trades before stage 4. A market's tier is its
+  program's name (midterms_t1_..t4_), never its pay. Stage 1 is
+  v3/tierfair.py, READ-ONLY: every TIERFAIR_TICK_S (1 s), on its own
+  thread started after the boot hold, a fair for every tier market with
+  a book less than 10 minutes old, from the book at depth (the first
+  10% of the Target Size a side, at least 100 shares), the stream's
+  last trade price (ws.Stream.last_trade; a first frame's price of
+  unknown age is not a print), the linked markets (one less the other
+  outcomes where every outcome of the event is here; an "at least N"
+  ladder made to fall), and Silver — weighted by each input's measured
+  error an hour ahead in its tier (equal until 30 readings), with a ±
+  confidence. Graded every minute against the touch midpoint 10 minutes
+  and an hour later, paired with the plain midpoint and his focus-page
+  fair; a touch wider than 10c is not graded. /tiers (the tab after
+  focus) shows it; state["tierfair"] keeps the grades. It reads no
+  book of its own: Tier 4's 829 markets mostly have no stream seat, so
+  few of them get a fair until seats are decided. P23 grades it.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
