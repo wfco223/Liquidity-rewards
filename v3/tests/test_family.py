@@ -670,6 +670,74 @@ class TestTheMidtermPoolsPayDaily(unittest.TestCase):
         self.assertAlmostEqual(bounded.daily_pool, 1500.0 / 55.0)
 
 
+class TestATierFourStreamBookStandsInForAGatewayRead(unittest.TestCase):
+    """Owner, 2026-09-25 ("Build it, ask before deploy"): at 17:40-17:52Z
+    24 of 38 throttled gateway reads were the engine fetching Tier 4
+    books the monitor's stream already carried. Where the engine would
+    read the gateway it takes the stream's book when it is at most
+    STREAM_BOOK_MAX_S old; older, or not carried, it reads as before."""
+
+    def setUp(self):
+        from v3.books import BookCache
+        self.r = Rig()
+        self.r.add_market(A, book=Book(bids=((0.45, 100.0),), asks=((0.48, 100.0),),
+                                       tick=0.01, fetched_at=self.r.now))
+        self.store = BookCache()
+        self.r.fam.stream_book = self.store.any_age
+        self.r.fam.inventory[A] = {"qty": 100.0, "cost": 45.0}   # held, not dust
+        self.r.now += 600.0                                      # the family's copy is stale
+
+    def streamed(self, age, bid=0.46):
+        self.store.put(A, Book(bids=((bid, 900.0),), asks=((bid + 0.03, 900.0),),
+                               tick=0.01, fetched_at=self.r.now - age), writer="ws")
+
+    def test_a_fresh_stream_book_spends_no_gateway_read(self):
+        from v3.family import STREAM_BOOK_MAX_S
+        self.streamed(STREAM_BOOK_MAX_S - 5)
+        self.r.exchange.book_reads = []
+        self.r.fam._refresh_books(self.r.exchange, self.r.now, scan=False)
+        self.assertNotIn(A, self.r.exchange.book_reads)
+        b = self.r.fam.cache.any_age(A)
+        self.assertEqual(b.bids[0], (0.46, 900.0))
+        self.assertAlmostEqual(b.fetched_at, self.r.now - (STREAM_BOOK_MAX_S - 5))  # its own stamp
+        self.assertEqual((self.r.fam.stream_hits, self.r.fam.stream_misses), (1, 0))
+
+    def test_an_old_stream_book_is_read_through_the_gateway(self):
+        from v3.family import STREAM_BOOK_MAX_S
+        self.streamed(STREAM_BOOK_MAX_S + 30)
+        self.r.exchange.book_reads = []
+        self.r.fam._refresh_books(self.r.exchange, self.r.now, scan=False)
+        self.assertIn(A, self.r.exchange.book_reads)
+        self.assertEqual((self.r.fam.stream_hits, self.r.fam.stream_misses), (0, 1))
+
+    def test_a_market_the_stream_does_not_carry_is_read_as_before(self):
+        self.r.exchange.book_reads = []
+        self.r.fam._refresh_books(self.r.exchange, self.r.now, scan=False)
+        self.assertIn(A, self.r.exchange.book_reads)
+        self.assertEqual((self.r.fam.stream_hits, self.r.fam.stream_misses), (0, 0))
+
+    def test_no_store_at_all_is_the_old_behaviour(self):
+        self.r.fam.stream_book = None
+        self.streamed(1)
+        self.r.exchange.book_reads = []
+        self.r.fam._refresh_books(self.r.exchange, self.r.now, scan=False)
+        self.assertIn(A, self.r.exchange.book_reads)
+
+    def test_the_candidate_scan_takes_it_too_and_still_counts_the_candidate(self):
+        from v3.family import STREAM_BOOK_MAX_S
+        self.r.fam.inventory.pop(A, None)                        # an idle candidate now
+        self.r.cycle()                                           # discovery and terms
+        self.assertIn(A, self.r.fam.universe)
+        self.r.now += 7200.0                                     # past the rescan interval
+        self.r.fam.scoreboard.pop(A, None)
+        self.streamed(STREAM_BOOK_MAX_S - 5)
+        self.r.exchange.book_reads = []
+        self.r.fam._refresh_books(self.r.exchange, self.r.now, scan=True)
+        self.assertNotIn(A, self.r.exchange.book_reads)
+        self.assertIn(A, self.r.fam.scoreboard)                  # scored off the stream's book
+        self.assertEqual(self.r.fam.stream_hits, 1)
+
+
 class TestDustSpendsNoGatewayRead(unittest.TestCase):
     """Owner, 2026-09-14 ("Do all three for the 429s", with the caveat
     "Unless it would affect our ability to estimate earnings from focus
