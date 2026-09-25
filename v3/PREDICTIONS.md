@@ -1142,3 +1142,10 @@ fourth-or-later connection is refused outright (an account cap on
 connections), fewer than 90% of Tier 4 markets have a book after an
 hour, or a main connection drops out of "live".
 **Resolves:** an hour after the deploy.
+**Early reading 2026-09-25 17:08Z (it resolves ~18:08Z):** 3/3 Tier 4
+connections live, 5,838 of 5,838 subscribed, 0 refused, 0 without room,
+5,838 books in the store within a minute of boot; the main connections
+live at 200 + 79; resident memory 232-295 MB. Holding so far. (That
+boot landed on 167.71.16.32, which the exchange refused as a VPN at
+17:08:19Z — nothing to do with the stream; the owner chose a redeploy
+for a new address, which also restarts the Tier 4 connections.)
