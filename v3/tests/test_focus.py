@@ -1195,6 +1195,72 @@ class TestAfterAFill(Base):
         self.assertFalse(self.mine(NC, "BUY"))
 
 
+class TestWhatAPositionHoldsIsSharesTimesPrice(Base):
+    """Owner, 2026-09-25 ("Build the fix, ask before deploy"): on Alaska
+    governor the exchange's feed reported a short of 90 at a cost of
+    $0.00, the rule that an entry never adds to a position past the stake
+    read "holding $0 here", and the tender grew a short-opening ask beside
+    it from 64 to 127 shares at 71c while the 90 already had $27 at risk.
+    What a position holds is now its shares times the price."""
+
+    def short(self, qty, sold_at, est=False):
+        self.r.positions[NC] = (-qty, 0.0)              # the feed: no cost
+        inv = {"qty": -qty, "cost": round(-qty * sold_at, 4)}
+        if est:
+            inv["est"] = True
+        self.r.fam.inventory[NC] = inv
+
+    def test_a_short_the_feed_reports_at_no_cost_holds_what_it_can_lose(self):
+        self.f.set_fair(NC, 45.0)
+        self.short(900.0, 0.70)                         # 900 x 30c = $270 > the $200 stake
+        self.tick()
+        row = self.f.rows[NC]
+        self.assertAlmostEqual(row["position"]["held"], 270.0, places=2)
+        self.assertEqual(row["position"]["held_src"], "our fills")
+        self.assertEqual(row["position"]["cost"], 0.0)  # the page still shows the feed's
+        self.assertIn("no entry that adds", row["tend"]["SELL"]["note"])
+        self.assertIn("$270", row["tend"]["SELL"]["note"])
+        self.assertFalse(self.mine(NC, "SELL"))
+
+    def test_under_the_stake_it_leaves_only_the_room(self):
+        self.f.set_fair(NC, 45.0)
+        self.short(300.0, 0.70)                         # $90 held of the $200 stake
+        self.tick()
+        t = self.f.rows[NC]["tend"]["SELL"]
+        if t.get("px"):
+            self.assertLessEqual(t["qty"] * (1.0 - t["px"]), 110.0 + 1e-6)
+
+    def test_an_estimated_lot_is_priced_at_the_midpoint(self):
+        self.f.set_fair(NC, 45.0)
+        self.short(900.0, 0.70, est=True)               # the lot's cost came from the feed
+        self.tick()
+        pos = self.f.rows[NC]["position"]
+        self.assertEqual(pos["held_src"], "the midpoint")
+        self.assertAlmostEqual(pos["held"], 900.0 * (1.0 - 0.455), places=2)
+
+    def test_the_resting_entry_beside_it_comes_off(self):
+        self.f.set_fair(NC, 45.0)
+        self.tick()
+        self.assertTrue(self.mine(NC, "SELL"))          # flat: an ask rests
+        self.short(900.0, 0.70)
+        self.f.moved_at.clear()
+        self.tick(advance=focus_mod.FOCUS_EXIT_COOLDOWN_S)
+        entries = [o for o in self.mine(NC, "SELL")]
+        self.assertFalse(entries)
+
+    def test_the_fallbacks(self):
+        self.assertEqual(self.f._held(NC, 0.0, 5.0, None), (0.0, "flat"))
+        self.assertEqual(self.f._held(PLAIN, 10.0, 4.0, None), (4.0, "the exchange's cost"))
+        self.assertEqual(self.f._held(PLAIN, 10.0, 0.0, None), (10.0, "a dollar a share"))
+        # a book of ours whose price is no price (a lot sold down at a loss)
+        self.r.fam.inventory[PLAIN] = {"qty": 1.0, "cost": 16.495}
+        book = wide_book(self.r.now)
+        self.assertEqual(self.f._held(PLAIN, 1.0, 0.0, book), (0.455, "the midpoint"))
+        # a long of ours: what it paid
+        self.r.fam.inventory[PLAIN] = {"qty": 40.0, "cost": 20.0}
+        self.assertEqual(self.f._held(PLAIN, 40.0, 0.0, book), (20.0, "our fills"))
+
+
 class TestTheRecordOfTheOrders(Base):
     """21:00Z, 2026-09-10: the balance-of-power cover was rested and
     pulled "over the cap" eight times in four minutes; a refused resize
