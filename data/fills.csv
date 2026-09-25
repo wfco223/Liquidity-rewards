@@ -2081,3 +2081,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790298296.3,politics,vtc-usseto-or-2026-11-03-gt1pt5m,SELL,1,0.8,earn,0.0488,0.5,,78,95,0,0.76,0.99,0.07,-1,3 ticks behind the touch — we would hold 39% of the ask side,CPV4HRRH8XDQ
 1790298683.0,politics,cpoc-ussegubc-mn-2026-11-03-rsweep,SELL,5,0.07,sell,0,0.46,,2,13,0,0.01,0.02,-0.01,0,selling filled stock — it earns while it waits,CPV8WQRC2XDS
 1790299489.1,politics,cpoc-ussegubc-ks-2026-11-03-rsweep,SELL,2,0.54,sell,0.3125,0.24,,61,69,0.331,0.53,0.54,0.11,0,selling filled stock — it earns while it waits,CPVM3G3PWXDJ
+1790299942.7,politics,ussewc-usse-la-2026-11-03-dem,SELL,10,0.06,earn,1.422,4.73,0.042625,3,8,0.223,0.06,0.07,-0.0174,-10,at the touch — a fill here is 1 ticks inside value (Silver + evidence),CPQT7G73CXDS
+1790300785.7,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,6.09,0.78,hand,,46.84,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJV9M856AW21
+1790300785.7,politics,scc-senate-gop-2026-11-03-49,SELL,13.56,0.15,hand,,26.01,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CKGHNK96RWP6
+1790300785.7,politics,ewc-usse-mi-2026-11-03-rep,SELL,37,0.31,backfill,,9.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNNSYA1CPWPF
+1790300785.7,politics,ewc-usgub-nv-2026-11-03-dem,SELL,14,0.45,hand,,118.1,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJWBHWJ68W7H
+1790300785.7,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,13,0.03,hand,,119.32,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CJWB6WACPW7E
+1790300785.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.69,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CFVKQRQJTTN3
+1790300785.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.56,hand,,1.86,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CFT35KBWATMY
+1790300785.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.56,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CHG0J9CVRVNP
+1790300785.7,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.55,hand,,13.16,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CH4XTE3PYVNP
+1790300785.7,nfl,tec-nfl-afcsouth-2027-01-10-w-hou,SELL,-0.1,0.42,fix,,1.14,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CFKCW23MJTMQ),CFKCW23MJTMQ
