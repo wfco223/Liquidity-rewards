@@ -2102,3 +2102,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790308074.3,politics,vtc-usseto-wy-2026-11-03-gt250k,BUY,0.99,0.31,earn,0.1389,0.04,,21,33,0,0.31,0.32,0.03,0.99,joins the touch — the book has been quiet,CPXPQT3ZCXDS
 1790308082.3,politics,vmc-ussemov-ky-2026-11-03-dwin,BUY,1,0.12,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPXE4HZH2XDJ
 1790308134.3,politics,vmc-ussemov-ky-2026-11-03-dwin,BUY,1,0.12,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPXE4HZH2XDJ
+1790308874.3,politics,cpoc-ussegubc-me-2026-11-03-dsweep,SELL,1,0.83,sell,0,0,,76,84,0.409,0.83,0.84,-0.03,9,taker dump — sold into the bid (the carved exception),CPXWQD0GGXDR
+1790309062.7,politics,ussewc-usse-co-2026-11-03-rep,SELL,34.5,0.02,sell,0.7915,15.74,0.00335,1,5,0.451,0.01,0.02,-0.0167,140.5,selling filled stock — it earns while it waits,CPGHYC3A0XDG
+1790310469.3,politics,ussewc-usse-id-2026-11-03-rep,SELL,0.1,0.91,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPY5Z28NYXPM
+1790311074.0,politics,ushrewc-ushr-nj-07-2026-11-03-rep,SELL,160,0.18,sell,0,0,,15,20,0,0.18,0.19,0,0,taker dump — sold into the bid (the carved exception),CPYC05GVEXPM
+1790311677.1,politics,scc-senate-demst-2026-11-03-gte49,SELL,5,0.95,sell,0,0,,93,97,0.418,0.95,0.96,0,0,taker dump — sold into the bid (the carved exception),CPYG4GCB8XDQ
+1790311827.5,politics,vmc-ussemov-ky-2026-11-03-dwin,BUY,-1,0.12,fix,0.0245,0.44,,9,22,0,0.1,0.15,-0.03,1,size trimmed by 1 to the exchange's count (order CPXE4HZH2XDJ),CPXE4HZH2XDJ
+1790311827.5,politics,ussewc-usse-id-2026-11-03-rep,SELL,0.1,0.91,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPY5Z28NYXPM
