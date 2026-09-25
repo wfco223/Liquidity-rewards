@@ -2251,3 +2251,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790370942.2,politics,ewc-usgub-ga-2026-11-03-dem,SELL,-9,0.48,fix,,0.09,,,,,,,,,size trimmed by 9 to the exchange's count (order CPGA2MWT0XDN),CPGA2MWT0XDN
 1790370942.2,politics,ewc-usgub-ga-2026-11-03-dem,SELL,-10,0.48,fix,27.0534,0.08,0.655225,55,62,0.694,0.38,0.48,0.1752,10,size trimmed by 10 to the exchange's count (order CPGA2MWT0XDN),CPGA2MWT0XDN
 1790370942.2,politics,usgubewc-usgub-sd-2026-11-03-rep,SELL,0.01,0.94,backfill,,0.12,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQCC1JJ8TYBY
+1790371134.9,politics,vtc-usseto-la-2026-11-03-gt1pt4m,SELL,1,0.71,earn,0.102,0.03,,66,94,0,0.66,0.72,0.09,-1,1 tick in front of the touch — we would hold 71% of the ask side,CQCSQSSQRYC6
+1790371418.7,politics,ewc-usgub-nv-2026-11-03-dem,SELL,37,0.48,sell,0.0597,9.53,0.461,45,50,0.445,0.47,0.48,-0.019,0,an exit — its fill reduces the position it sits on,CQ3YW3REPYB5
+1790371800.7,politics,vtc-usseto-ak-2026-11-03-gt275k,BUY,0.99,0.95,backfill,,0.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQCP72Z58YAQ
+1790371832.0,politics,vmc-usgubmov-hi-2026-11-03-d25-30,SELL,1,0.05,earn,0.0701,2.41,,2,11,0,0.01,0.06,0.01,-1,1 tick in front of the touch — we would hold 70% of the ask side,CQAXYB1NWYAQ
+1790372994.7,politics,vtc-usseto-mi-2026-11-03-gt4pt6m,BUY,0.99,0.95,earn,0.1081,0.05,,85,98,0,0.95,0.99,0.02,0.99,3 ticks behind the touch — we would hold 86% of the bid side,CQD4QZQKWYBE
+1790373966.9,politics,ewc-usgub-ga-2026-11-03-rep,SELL,16,0.52,sell,0.004,8.35,0.34525,48,51,0.612,0.51,0.52,-0.1748,0,an exit — its fill reduces the position it sits on,CQ685QD3EYCD
+1790374694.9,politics,ewc-usgub-ks-2026-11-03-dem,SELL,-12,0.29,fix,40.227,0.09,0.267075,31,37,0.714,0.26,0.32,-0.0229,0,size trimmed by 12 to the exchange's count (order CPGG0516PXPK),CPGG0516PXPK
+1790374694.9,politics,ewc-usgub-ks-2026-11-03-dem,SELL,-13,0.29,fix,0,0.05,0.267075,30,36,0.625,0.23,0.29,-0.0229,12,size trimmed by 13 to the exchange's count (order CPGG0516PXPK),CPGG0516PXPK
+1790374694.9,politics,vtc-usseto-ak-2026-11-03-gt275k,BUY,0.99,0.95,backfill,,0.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQCP72Z58YAQ
