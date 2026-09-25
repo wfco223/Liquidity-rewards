@@ -2221,3 +2221,18 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790360143.6,politics,vmc-ussemov-nj-2026-11-03-d15-20,SELL,0.99,0.06,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ9Q6472CYCC
 1790360143.6,politics,vmc-ussemov-nj-2026-11-03-d20-25,SELL,1,0.06,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ9Q7P8HYYC3
 1790360143.6,politics,paccc-usse-midterms-2026-11-03-rep,BUY,27,0.39,backfill,,5.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5E5ZGNYYC6
+1790360392.0,politics,ussewc-usse-ok-2026-11-03-dem,SELL,10,0.02,earn,4.8162,0.07,0.0005,1,7,0.001,0.01,0.05,-0.0195,-10,1 tick in front of the touch — we would hold 17% of the ask side,CQA5DPXHEYBY
+1790361737.3,politics,ussewc-usse-ok-2026-11-03-rep,BUY,0.12,0.98,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQA8YWWRPYCD
+1790362871.7,politics,ushrewc-ushr-ny-17-2026-11-03-dem,SELL,25,0.61,sell,0,0,,60,66,0,0.61,0.62,0.02,48,taker dump — sold into the bid (the carved exception),CQAX8XHNWYCA
+1790363159.4,politics,ussewc-usse-or-2026-11-03-dem,BUY,20,0.98,sell,1.5142,6.93,0.9986,94,99,0.104,0.98,0.99,-0.0186,0,buying back the short at or under what it sold for — the bid earns while it wait,CQ4TVQNZRYBY
+1790363159.4,politics,ussewc-usse-ok-2026-11-03-dem,BUY,10,0.04,sell,0.686,0.77,0.0005,1,6,0.451,0.01,0.02,0.0395,0,buying back the short at or under what it sold for — the bid earns while it wait,CQA6HSHBCYC6
+1790363159.4,politics,ewc-usse-ia-2026-11-03-rep,SELL,69,0.53,focus,4.397,0,0.39325,50,55,0.141,0.53,0.54,-0.1367,0,focus exit: ~$4.40/day; fill odds 55%/day; EV +2.50/day,CQAXCA2WEYC6
+1790363633.1,politics,ushrewc-ushr-ca-45-2026-11-03-dem,SELL,0.09,0.95,backfill,,6.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ500H8QCYCA
+1790363692.1,politics,ushrewc-ushr-ca-45-2026-11-03-dem,SELL,2,0.95,sell,0.056,6.98,,91,96,0.005,0.94,0.95,-0.01,50,selling filled stock — it earns while it waits,CQ500H8QCYCA
+1790363692.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,60,0.084,focus,21.4446,0.13,0.0884,8,12,0.592,0.086,0.088,0.0044,-60,focus entry: ~$5.64/day; fill odds 70%/day; EV +0.28/day,CQAXWBFC2YB5
+1790363754.2,politics,ewc-usgub-ks-2026-11-03-dem,SELL,-33,0.29,fix,10.0406,0.08,0.267075,28,33,0.455,0.15,0.29,-0.0229,0,size trimmed by 33 to the exchange's count (order CPFT928D4XDJ),CPFT928D4XDJ
+1790363754.2,politics,ewc-usgub-ga-2026-11-03-dem,SELL,-5,0.48,fix,,0.09,,,,,,,,,size trimmed by 5 to the exchange's count (order CPGA2MWT0XDN),CPGA2MWT0XDN
+1790363754.2,politics,ewc-usgub-ga-2026-11-03-dem,SELL,-4,0.48,fix,27.0534,0.08,0.655225,55,62,0.694,0.38,0.48,0.1752,10,size trimmed by 4 to the exchange's count (order CPGA2MWT0XDN),CPGA2MWT0XDN
+1790363754.2,politics,paccc-usse-midterms-2026-11-03-rep,BUY,-27,0.39,fix,5.8862,5.47,0.3097,37,40,0.78,0.39,0.391,0.0803,-45,size trimmed by 27 to the exchange's count (order CQ5E5ZGNYYC6),CQ5E5ZGNYYC6
+1790363754.2,politics,ussewc-usse-ok-2026-11-03-rep,BUY,0.12,0.98,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQA8YWWRPYCD
+1790363754.2,politics,ushrewc-ushr-ca-45-2026-11-03-dem,SELL,0.09,0.95,backfill,,6.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ500H8QCYCA
