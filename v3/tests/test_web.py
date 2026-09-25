@@ -215,8 +215,10 @@ class TestRedesign(unittest.TestCase):
         # visibility into the new markets")
         # second from the left (owner, 2026-09-10: "make that the
         # second tab from the left")
+        # the tiers tab third (2026-09-25, stage 1 of the tier engines),
+        # so focus stays second
         self.assertEqual(labels,
-                         ["quick look", "focus", "status", "orders", "pay",
+                         ["quick look", "focus", "tiers", "status", "orders", "pay",
                           "bonds", "log", "switch"])
         self.assertEqual(web.PAGES["/focus"][1], "focus")
         self.assertEqual(web.PAGES["/bonds"][3], "")
