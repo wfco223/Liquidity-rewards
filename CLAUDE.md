@@ -1369,6 +1369,42 @@ long and accreted, so search it rather than reading it through.
   book of its own: Tier 4's 829 markets mostly have no stream seat, so
   few of them get a fair until seats are decided. P23 grades it.
 
+- WHAT A POSITION HOLDS IS ITS SHARES TIMES THE PRICE (owner,
+  2026-09-25 "Build the fix, ask before deploy"). The rule that a
+  tender entry never adds to a position past the stake read what the
+  position held from the exchange's cost field, and the feed reported
+  Alaska governor (jonkre) short 90 at $0.00: the tender read "holding
+  $0" and grew a short-opening ask beside it, 64 -> 127 shares at 71c
+  one resize every ten minutes, past the $18 stake and the $46 growth
+  ceiling, with $27 already at risk. At 13:55Z 21 held positions read
+  $0 in the feed, and where it gave a number it was not the collateral
+  either (ME Senate rep short 81 sold at 31c: $29.45, where 81 x 69c is
+  $55.89). Focus._held now prices it: the family's own book of the lot
+  when clean (not "est", a price between 0 and 1) — a long what it
+  paid a share, a short a dollar less what it sold for — else the
+  book's midpoint, else the feed's cost, else a dollar a share. The
+  feed's cost is still what the page shows beside the position ("held"
+  and "held_src" beside it). Replayed on the 13:55Z state: ten markets
+  go from room to "no entry that adds to it" (Alaska, House seats
+  >=180/205/235, Senate seats 49/52/54, TX-15 dem, AZ gov rep, NV gov
+  dem) and four resting entries come off (Alaska 127 @ 71c, House
+  >=205 60 @ 41c, >=235 32 @ 2c, >=180 2 @ 91c); Senate seats 50 goes
+  the other way (feed $102, its fills $16).
+- THE TIER FAIR STARTS FROM THE MIDPOINT (owner, 2026-09-25 "Start the
+  fair from the midpoint"). The stage-1 fair, the inputs' average
+  weighted by each one's own error, missed by 2.20c an hour ahead where
+  the plain midpoint missed by 0.13c, better in 1 of 97 markets, with
+  prices moving in 78 of them — P23 falsified. Now, where the touch is
+  10c or narrower, the fair is the touch midpoint plus the average of
+  each PROVEN input's share of its distance from it: per tier, a
+  decaying least-squares tally (Beta) learns how much of that distance
+  the midpoint covered an hour later, held between 0 and 1, 0 under
+  BETA_MIN_N (30) readings and shrunk by n / (n + BETA_SHRINK_N, 100).
+  An input that has proven nothing moves nothing. Wider than 10c there
+  is no midpoint and the old weighted average stands. The fair's grade
+  restarts under FAIR_VERSION "mid-2026-09-25" (a save without it drops
+  only the "fair" errors); P24 grades it. Still read-only.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."

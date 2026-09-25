@@ -13,8 +13,9 @@ from v3.books import BookCache
 from v3.programs import Program
 from v3.scoring import Book
 from v3.terms import TermsStore
-from v3.tierfair import (BOOK_STALE_S, FAIR_DEPTH_MIN, GRADE_HORIZONS, SNAP_S,
-                         WEIGHT_MIN_N, TierFair, _falling_fit, depth_price, tier_of)
+from v3.tierfair import (BETA_HORIZON, BETA_MIN_N, BETA_SHRINK_N, BOOK_STALE_S,
+                         FAIR_DEPTH_MIN, FAIR_VERSION, GRADE_HORIZONS, SNAP_S,
+                         WEIGHT_MIN_N, Beta, TierFair, _falling_fit, depth_price, tier_of)
 
 T0 = 1_790_300_000.0
 DEM = "ushrewc-ushr-tx-34-2026-11-03-dem"
@@ -154,15 +155,46 @@ class TestTheOtherInputs(unittest.TestCase):
         tf.tick(T0)
         self.assertNotIn("print", tf.cur[DEM]["inputs"])
 
-    def test_equal_weights_until_measured(self):
+    def test_until_an_input_proves_itself_the_fair_is_the_midpoint(self):
+        # owner, 2026-09-25 "Start the fair from the midpoint": Silver at
+        # 70c and the linked market at 63c move nothing until they have
+        # shown the midpoint follows them
         fam = Fam()
         pair(fam, dem_px=(0.62, 0.64), rep_px=(0.36, 0.38))
         tf = TierFair(fam, silver={DEM: 0.70}.get, clock=lambda: T0)
         tf.tick(T0)
         r = tf.cur[DEM]
+        self.assertEqual(r["base"], "midpoint")
+        self.assertAlmostEqual(r["fair"], 0.63, places=6)
+        self.assertEqual(r["moves"], {})
+        self.assertTrue(all(v == 0.0 for v in r["weights"].values()))
+        self.assertGreater(r["conf"], 0.0)
+
+    def test_with_no_midpoint_to_start_from_the_inputs_are_averaged(self):
+        # a touch wider than MID_TRUST_SPREAD is no midpoint
+        fam = Fam()
+        pair(fam, dem_px=(0.50, 0.76), rep_px=(0.24, 0.50))
+        tf = TierFair(fam, silver={DEM: 0.70}.get, clock=lambda: T0)
+        tf.tick(T0)
+        r = tf.cur[DEM]
+        self.assertEqual(r["base"], "inputs")
         vals = list(r["inputs"].values())
         self.assertAlmostEqual(r["fair"], sum(vals) / len(vals), places=6)
-        self.assertGreater(r["conf"], 0.0)
+
+    def test_a_proven_input_moves_the_fair_by_its_share(self):
+        fam = Fam()
+        pair(fam, dem_px=(0.62, 0.64), rep_px=(0.36, 0.38))
+        tf = TierFair(fam, silver={DEM: 0.70}.get, clock=lambda: T0)
+        bt = Beta()
+        for _ in range(200):                  # the midpoint went half of Silver's distance
+            bt.add(0.07, 0.035, T0)
+        tf.betas[("t2", BETA_HORIZON, "silver")] = bt
+        tf.tick(T0)
+        r = tf.cur[DEM]
+        share = 0.5 * 200 / (200 + BETA_SHRINK_N)
+        self.assertAlmostEqual(r["weights"]["silver"], round(share, 4), places=4)
+        self.assertAlmostEqual(r["fair"], 0.63 + share * 0.07, places=6)
+        self.assertAlmostEqual(r["moves"]["silver"], share * 0.07, places=5)
 
 
 class TestTheGrading(unittest.TestCase):
@@ -194,7 +226,12 @@ class TestTheGrading(unittest.TestCase):
         self.assertIn("silver", g)
         # Silver was right about where the price went, so it misses least
         self.assertLess(g["silver"]["mae_c"], g["mid"]["mae_c"])
-        self.assertLess(g["fair"]["mae_c"], g["mid"]["mae_c"])
+        # and until it has proven itself the fair IS the midpoint...
+        self.assertEqual(g["fair"]["mae_c"], g["mid"]["mae_c"])
+        # ...while the tally learns how far the midpoint followed it
+        bt = tf.betas[("t2", 3600, "silver")]
+        self.assertGreater(bt.n, 0.0)
+        self.assertGreater(bt.sxy, 0.0)
 
     def test_a_wide_touch_is_not_graded(self):
         fam = Fam()
@@ -205,8 +242,9 @@ class TestTheGrading(unittest.TestCase):
         self.assertEqual(tf.snaps, {})
 
     def test_weights_follow_the_measured_errors(self):
+        # the weighted average stands only where there is no midpoint
         fam = Fam()
-        pair(fam)
+        pair(fam, dem_px=(0.50, 0.76), rep_px=(0.24, 0.50))
         tf = TierFair(fam, silver={DEM: 0.70}.get, clock=lambda: T0)
         from v3.tierfair import Stat
         good, bad = Stat(), Stat()
@@ -218,6 +256,25 @@ class TestTheGrading(unittest.TestCase):
         tf.tick(T0)
         w = tf.cur[DEM]["weights"]
         self.assertGreater(w["silver"], w["book"])
+
+
+class TestTheShare(unittest.TestCase):
+    def test_nothing_under_the_minimum_then_shrunk(self):
+        bt = Beta()
+        for _ in range(int(BETA_MIN_N) - 1):
+            bt.add(0.02, 0.02, T0)
+        self.assertEqual(bt.share(), 0.0)
+        bt.add(0.02, 0.02, T0)
+        n = BETA_MIN_N
+        self.assertAlmostEqual(bt.share(), n / (n + BETA_SHRINK_N), places=6)
+
+    def test_never_backwards_never_past_the_whole_distance(self):
+        wrong, over = Beta(), Beta()
+        for _ in range(100):
+            wrong.add(0.02, -0.02, T0)        # the midpoint went the other way
+            over.add(0.02, 0.05, T0)          # it went further than the input said
+        self.assertEqual(wrong.share(), 0.0)
+        self.assertAlmostEqual(over.share(), 100 / (100 + BETA_SHRINK_N), places=6)
 
 
 class TestThePageAndTheSave(unittest.TestCase):
@@ -241,6 +298,25 @@ class TestThePageAndTheSave(unittest.TestCase):
         back = TierFair(fam, clock=lambda: T0)
         back.restore(json.loads(json.dumps(tf.to_dict())))
         self.assertEqual(back.grade_view("t2"), tf.grade_view("t2"))
+        self.assertEqual(back.betas[("t2", 3600, "silver")].to_list(),
+                         tf.betas[("t2", 3600, "silver")].to_list())
+
+    def test_a_save_from_the_old_fair_drops_only_the_fairs_grade(self):
+        fam = Fam()
+        pair(fam)
+        tf = TierFair(fam, silver={DEM: 0.70}.get, clock=lambda: T0)
+        TestTheGrading().run_hour(fam, tf, 0.70)
+        old = json.loads(json.dumps(tf.to_dict()))
+        old.pop("version")
+        old.pop("betas")
+        back = TierFair(fam, clock=lambda: T0)
+        back.restore(old)
+        g = back.grade_view("t2")["3600"]
+        self.assertNotIn("fair", g)            # a different fair: not carried over
+        self.assertIn("mid", g)
+        self.assertIn("silver", g)
+        self.assertFalse(any("fair" in d for d in back.mstats.values()))
+        self.assertEqual(tf.to_dict()["version"], FAIR_VERSION)
 
 
 class TestTheStreamKeepsTheLastTrade(unittest.TestCase):

@@ -2031,13 +2031,17 @@ function tRow(r){var k='m-'+r.market;var open=(window._tOpen||{})[k];
   +' <span class="muted">· mid '+pc(r.mid)+' · spread '+pc(r.spread)+(r.his!=null?' · your fair '+pc(r.his):'')+(r.book_age>120?' · <span class="warn">book '+Math.round(r.book_age/60)+' min old</span>':'')+'</span></div>';
  if(open){var ins=r.inputs||{},w=r.weights||{};var names={book:'book at depth',print:'last trade',linked:'linked markets',silver:'Silver'};
   o+='<div class="muted" style="margin-left:10px">';
-  for(var n in ins){o+=esc(names[n]||n)+' '+pc(ins[n])+' (weight '+Math.round((w[n]||0)*100)+'%)<br>';}
+  var mv=r.moves||{};
+  if(r.base==='midpoint'){o+='starts from the midpoint '+pc(r.mid)+'; an input moves it only by the share of its distance the midpoint has followed an hour later<br>';
+   for(var n in ins){var sh=w[n]||0;o+=esc(names[n]||n)+' '+pc(ins[n])+(sh>0?' (proven share '+Math.round(sh*100)+'% → moves it '+(mv[n]>=0?'+':'−')+Math.abs((mv[n]||0)*100).toFixed(2)+'¢)':' <span class="muted">(not proven yet — moves nothing)</span>')+'<br>';}}
+  else{o+='<span class="warn">no midpoint to start from</span> (the touch is wider than '+pc(window._t.mid_trust_spread||0.1)+'): the inputs’ average<br>';
+   for(var n in ins){o+=esc(names[n]||n)+' '+pc(ins[n])+' (weight '+Math.round((w[n]||0)*100)+'%)<br>';}}
   o+='book: first '+r.depth.toLocaleString()+' shares a side average '+pc(r.bid_d)+' bid / '+pc(r.ask_d)+' ask'+(r.thin?' <span class="warn">(thin: a side holds less than that)</span>':'')+'<br>';
   if(r.g1h&&r.g1h.fair!=null)o+='this market, 1 hour ahead: fair misses '+r.g1h.fair.toFixed(2)+'¢, midpoint '+(r.g1h.mid!=null?r.g1h.mid.toFixed(2)+'¢':'–')+' ('+Math.round(r.g1h_n||0)+' readings)';
   o+='</div>';}
  return o;}
 function tRender(t){var o='<div class="card"><b>Tier fairs</b> <span class="pill">stage 1 — read only</span>'
-  +'<div class="muted">A fair for every midterm-tier market, worked out again every second from the book, the last trade, the event’s other markets and Silver. Each is written down every minute and checked against the midpoint 10 minutes and an hour later. Nothing on this page places, moves or cancels an order.</div>'
+  +'<div class="muted">A fair for every midterm-tier market, worked out again every second: the midpoint, moved only by what the book at depth, the last trade, the event’s other markets and Silver have proven they add. Each is written down every minute and checked against the midpoint 10 minutes and an hour later. Nothing on this page places, moves or cancels an order.</div>'
   +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+'</div>';
  (t.tiers||[]).forEach(function(tr){var k='t-'+tr.key;var open=(window._tOpen||{})[k];
   o+='<div class="card"><div style="cursor:pointer" onclick="tTog(\''+k+'\')"><b>'+esc(tr.name)+'</b> <span class="muted">· '+tr.markets+' markets, '+tr.with_fair+' with a fair'+((tr.pool_day||[]).length?' · pays '+tr.pool_day.map(function(x){return '$'+x.toLocaleString();}).join('/')+' a day per event · Target Size '+(tr.target||[]).map(function(x){return x.toLocaleString();}).join('/'):' · no program on the ledger now')+'</span></div>'

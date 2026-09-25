@@ -19,11 +19,23 @@ The inputs, each a price for the YES side:
   a ladder of "at least N" markets, the book prices made to fall as N
   rises (the closest falling fit);
 - silver: Silver's model where it has a number.
-The fair is their weighted average; each input's weight is one over
-its measured error an hour ahead in this tier (equal until it has
-WEIGHT_MIN_N graded readings). The confidence (± cents) combines how
-far the inputs disagree, how wide the book is at depth, and how much
-the fair has moved in the last ten minutes.
+The fair STARTS FROM THE TOUCH MIDPOINT and moves off it only by what
+an input has shown it adds (owner, 2026-09-25 "Start the fair from the
+midpoint", after the first build — the inputs' average, each weighted
+by one over its own error — missed by 2.20c an hour ahead where the
+plain midpoint missed by 0.13c, and did better in 1 of 97 markets).
+For each input, per tier, the tally learns how much of its distance
+from the midpoint the midpoint itself moves an hour later (the least-
+squares share, between 0 and 1, shrunk toward 0 until it has many
+readings, and 0 under BETA_MIN_N); the fair is the midpoint plus the
+average of the proven inputs' shares of their distance. An input that
+has proven nothing moves nothing, so the fair can only differ from the
+midpoint where an input has earned it. Where the touch is wider than
+MID_TRUST_SPREAD there is no midpoint to start from, and the fair is
+the inputs' average weighted as before (one over each input's measured
+error). The confidence (± cents) is the fair's own measured error an
+hour ahead in the tier, the touch's half-width and how much the fair
+moved in the last ten minutes.
 
 Grading: every SNAP_S each market's fair, its inputs, his fair (the
 focus page's, when set) and the plain touch midpoint are written down;
@@ -57,6 +69,12 @@ GRADE_SLACK_S = 180.0         # a reading is graded within this long past its ho
 MID_TRUST_SPREAD = 0.10       # a touch wider than this is no price to grade against
 WEIGHT_MIN_N = 30.0           # graded readings an input needs before its weight is its own
 ERR_HALF_LIFE_S = 2 * 86400.0
+BETA_MIN_N = 30.0             # graded readings an input needs before it may move the fair
+BETA_SHRINK_N = 100.0         # its share is shrunk by n / (n + this): more readings, more trust
+BETA_HORIZON = 3600           # the shares are learned against the midpoint this far ahead
+# the fair's grade before 2026-09-25 was the inputs' average; the one
+# after starts from the midpoint — its errors are kept apart
+FAIR_VERSION = "mid-2026-09-25"
 PRIOR_ERR = 0.02              # the error every input is assumed to have until measured ($)
 VOL_WINDOW_S = 600.0
 VOL_SAMPLE_S = 10.0           # the fair is kept for the volatility this often (memory)
@@ -146,6 +164,40 @@ class Stat:
         return [round(self.n, 3), round(self.abs, 6), round(self.sq, 8), round(self.at, 1)]
 
 
+class Beta:
+    """A decaying least-squares tally of how far the midpoint moved
+    against how far an input sat from it: sum(d x move) / sum(d x d) is
+    the share of the input's distance the midpoint went on to cover."""
+
+    __slots__ = ("n", "sxy", "sxx", "at")
+
+    def __init__(self, n=0.0, sxy=0.0, sxx=0.0, at=0.0):
+        self.n, self.sxy, self.sxx, self.at = float(n), float(sxy), float(sxx), float(at)
+
+    def add(self, d: float, move: float, now: float) -> None:
+        if self.at:
+            k = 0.5 ** (max(now - self.at, 0.0) / ERR_HALF_LIFE_S)
+            self.n *= k
+            self.sxy *= k
+            self.sxx *= k
+        self.at = now
+        self.n += 1.0
+        self.sxy += d * move
+        self.sxx += d * d
+
+    def share(self) -> float:
+        """0 until BETA_MIN_N readings; then the least-squares share,
+        held between 0 and 1 (an input that points the wrong way is not
+        used backwards) and shrunk toward 0 by n / (n + BETA_SHRINK_N)."""
+        if self.n < BETA_MIN_N or self.sxx <= 1e-12:
+            return 0.0
+        b = min(max(self.sxy / self.sxx, 0.0), 1.0)
+        return b * self.n / (self.n + BETA_SHRINK_N)
+
+    def to_list(self) -> list:
+        return [round(self.n, 3), round(self.sxy, 10), round(self.sxx, 10), round(self.at, 1)]
+
+
 class TierFair:
     """`fam` is the politics family (its program ledger, market list and
     book cache); `prints(slug)` gives the stream's (price, when, printed)
@@ -164,6 +216,9 @@ class TierFair:
         # (tier, horizon, name) -> Stat; name is an input, "fair", "mid" or "his"
         self.stats: dict[tuple, Stat] = {}
         self.mstats: dict[str, dict[str, Stat]] = {}   # slug -> {"fair","mid"} at an hour
+        # (tier, horizon, input) -> Beta: the share of its distance from
+        # the midpoint the midpoint moved
+        self.betas: dict[tuple, Beta] = {}
         self.last_snap = 0.0
         self.last_page = 0.0
         self.ticks = 0
@@ -236,6 +291,16 @@ class TierFair:
         r = st.rmse() or PRIOR_ERR
         return 1.0 / (max(r, 0.002) ** 2)
 
+    def _share(self, tier: str, name: str) -> float:
+        bt = self.betas.get((tier, BETA_HORIZON, name))
+        return bt.share() if bt is not None else 0.0
+
+    def _fair_err(self, tier: str) -> float:
+        st = self.stats.get((tier, 3600, "fair"))
+        if st is None or st.n < WEIGHT_MIN_N:
+            return PRIOR_ERR
+        return st.rmse() or PRIOR_ERR
+
     # -- the second ------------------------------------------------------------------
 
     def tick(self, now: float | None = None) -> None:
@@ -273,11 +338,30 @@ class TierFair:
                     sv = None
                 if sv is not None and 0.0 < float(sv) < 1.0:
                     inputs["silver"] = float(sv)
-                ws = {k: self._weight(tier, k) for k in inputs}
-                tot = sum(ws.values())
-                fair = sum(ws[k] * v for k, v in inputs.items()) / tot
-                fair = min(max(fair, 0.001), 0.999)
-                dis = math.sqrt(sum(ws[k] * (v - fair) ** 2 for k, v in inputs.items()) / tot)
+                mid = bk["mid"]
+                shares: dict[str, float] = {}
+                moves: dict[str, float] = {}
+                if bk["spread"] <= MID_TRUST_SPREAD:
+                    # from the midpoint, moved only by what has proven itself
+                    base = "midpoint"
+                    for k, v in inputs.items():
+                        sh = self._share(tier, k)
+                        shares[k] = round(sh, 4)
+                        if sh > 0.0:
+                            moves[k] = sh * (v - mid)
+                    fair = mid + (sum(moves.values()) / len(moves) if moves else 0.0)
+                    fair = min(max(fair, 0.001), 0.999)
+                    dis = math.sqrt(self._fair_err(tier) ** 2 + (bk["spread"] / 2.0) ** 2)
+                else:
+                    # no midpoint to start from: the inputs' average, each
+                    # weighted by one over its own measured error
+                    base = "inputs"
+                    ws = {k: self._weight(tier, k) for k in inputs}
+                    tot = sum(ws.values())
+                    fair = sum(ws[k] * v for k, v in inputs.items()) / tot
+                    fair = min(max(fair, 0.001), 0.999)
+                    shares = {k: round(ws[k] / tot, 3) for k in ws}
+                    dis = math.sqrt(sum(ws[k] * (v - fair) ** 2 for k, v in inputs.items()) / tot)
                 h = self.hist.setdefault(slug, deque())
                 if not h or now - h[-1][0] >= VOL_SAMPLE_S:
                     h.append((now, fair))
@@ -288,10 +372,14 @@ class TierFair:
                     vals = [x for _, x in h]
                     m = sum(vals) / len(vals)
                     vol = math.sqrt(sum((x - m) ** 2 for x in vals) / len(vals))
-                conf = math.sqrt(dis ** 2 + bk["half"] ** 2 + vol ** 2)
+                conf = (math.sqrt(dis ** 2 + vol ** 2) if base == "midpoint"
+                        else math.sqrt(dis ** 2 + bk["half"] ** 2 + vol ** 2))
                 cur[slug] = {"tier": tier, "event": ev, "fair": fair, "conf": conf,
-                             "inputs": inputs,
-                             "weights": {k: round(ws[k] / tot, 3) for k in ws},
+                             "inputs": inputs, "base": base,
+                             # base "midpoint": each input's proven share of its
+                             # distance; base "inputs": each input's weight
+                             "weights": shares,
+                             "moves": {k: round(v, 5) for k, v in moves.items()},
                              "mid": bk["mid"], "spread": bk["spread"],
                              "bid_d": bk["bid_d"], "ask_d": bk["ask_d"], "depth": bk["depth"],
                              "thin": bk["thin"], "book_age": bk["age"],
@@ -348,6 +436,14 @@ class TierFair:
                     add("his", snap["his"])
                     for k, v in snap["inputs"].items():
                         add(k, v)
+                    if snap["mid"] is not None:
+                        # how much of each input's distance from the
+                        # midpoint the midpoint went on to cover
+                        move = target - float(snap["mid"])
+                        for k, v in snap["inputs"].items():
+                            dev = float(v) - float(snap["mid"])
+                            self.betas.setdefault((tier, h, k), Beta()).add(dev, move, now)
+                            self.betas.setdefault(("all", h, k), Beta()).add(dev, move, now)
                     if h == 3600:
                         ms = self.mstats.setdefault(slug, {})
                         ms.setdefault("fair", Stat()).add(snap["fair"] - target, now)
@@ -368,6 +464,9 @@ class TierFair:
                 st = self.stats.get((tier, h, name))
                 if st is not None and st.n > 0:
                     row[name] = {"mae_c": round(st.mae() * 100, 2), "n": round(st.n, 1)}
+                bt = self.betas.get((tier, h, name))
+                if bt is not None and name in row:
+                    row[name]["share"] = round(bt.share(), 4)
             out[str(h)] = row
         return out
 
@@ -397,11 +496,13 @@ class TierFair:
                          "depth": round(r["depth"]), "thin": r["thin"],
                          "book_age": round(r["book_age"], 1),
                          "inputs": {k: round(v, 4) for k, v in r["inputs"].items()},
-                         "weights": r["weights"], "his": r.get("his"),
+                         "weights": r["weights"], "base": r.get("base"),
+                         "moves": r.get("moves") or {}, "his": r.get("his"),
                          "g1h": {k: round(st.mae() * 100, 2) for k, st in ms.items() if st.n > 0},
                          "g1h_n": round((ms.get("fair") or Stat()).n, 1)})
         return {"ok": True, "now": now, "read_only": True,
                 "note": "stage 1 — fairs only; nothing here places or moves an order",
+                "version": FAIR_VERSION,
                 "tiers": tiers, "all": self.grade_view("all"), "rows": rows,
                 "ticks": self.ticks, "tick_s": self.tick_s, "error": self.error,
                 "horizons": list(GRADE_HORIZONS), "mid_trust_spread": MID_TRUST_SPREAD}
@@ -415,16 +516,31 @@ class TierFair:
     # -- persistence ----------------------------------------------------------
 
     def to_dict(self) -> dict:
-        return {"stats": {f"{t}|{h}|{n}": st.to_list() for (t, h, n), st in self.stats.items()},
+        return {"version": FAIR_VERSION,
+                "stats": {f"{t}|{h}|{n}": st.to_list() for (t, h, n), st in self.stats.items()},
                 "mstats": {s: {k: st.to_list() for k, st in d.items()}
-                           for s, d in self.mstats.items()}}
+                           for s, d in self.mstats.items()},
+                "betas": {f"{t}|{h}|{n}": bt.to_list() for (t, h, n), bt in self.betas.items()}}
 
     def restore(self, d: dict) -> None:
+        # a save from before the fair started at the midpoint graded a
+        # different fair: its "fair" errors are dropped, the inputs', the
+        # midpoint's and his are the same measures and are kept
+        same = d.get("version") == FAIR_VERSION
         for k, v in (d.get("stats") or {}).items():
             try:
                 t, h, n = k.split("|", 2)
+                if n == "fair" and not same:
+                    continue
                 self.stats[(t, int(h), n)] = Stat(*v)
             except (ValueError, TypeError):
                 continue
         for s, dd in (d.get("mstats") or {}).items():
-            self.mstats[s] = {k: Stat(*v) for k, v in (dd or {}).items()}
+            self.mstats[s] = {k: Stat(*v) for k, v in (dd or {}).items()
+                              if same or k != "fair"}
+        for k, v in (d.get("betas") or {}).items():
+            try:
+                t, h, n = k.split("|", 2)
+                self.betas[(t, int(h), n)] = Beta(*v)
+            except (ValueError, TypeError):
+                continue

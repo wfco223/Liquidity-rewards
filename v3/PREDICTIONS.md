@@ -1061,3 +1061,39 @@ the fair is adding nothing yet and stage 2 must not price off it.
 Tiers 1–3, the fair's error is 0.95 of the midpoint's or more (the
 /tiers page and state["tierfair"] carry both).
 **Resolves:** three days after the stage 1 deploy.
+**Graded 2026-09-25 13:55Z — FALSIFIED, ahead of its three days.** With
+far more than 500 graded one-hour readings (52,323 in all), the fair
+missed by 2.20¢ and the plain midpoint by 0.13¢: Tier 1 0.30¢ against
+0.05¢, Tier 2 3.38¢ against 0.19¢, Tier 3 0.65¢ against 0.03¢, and the
+fair did better in 1 of 97 graded markets. It was not the overnight
+quiet: through 09:54Z the midpoint had moved at all in 2 of 92 markets,
+by 13:55Z it had moved in 78 of 97, and the fair still lost. **What it
+taught:** the midpoint is a very hard forecast of itself an hour on,
+and an average of inputs that each sit away from it (the book at
+depth most of all — 3.57¢ off in Tier 2) is only as good as its
+distance from the midpoint. The owner chose to rebuild the fair from
+the midpoint ("Start the fair from the midpoint", 2026-09-25), so this
+fair stops being graded here; P24 grades the new one.
+
+### P24 — written 2026-09-25 ~14:40Z, BEFORE the midpoint fair deploys
+**Claim:** the rebuilt fair — the touch midpoint, moved off it only by
+the share of each input's distance the midpoint has followed an hour
+later — is never materially worse than the midpoint: over the three
+days after its deploy, on Tier 1–3 markets with a touch 10¢ or
+narrower, its mean absolute error an hour ahead is no more than 2%
+above the midpoint's in each of the three tiers. Whether it beats the
+midpoint is open; the weak guess is that the last trade and the book
+at depth earn a positive share in Tier 2, whose books are the thinnest
+of the three, and that there the fair's error comes out under the
+midpoint's.
+**Why:** an input moves the fair only after 30 graded readings, only by
+a share between 0 and 1 learned by least squares against the
+midpoint's own move, shrunk by n / (n + 100); an input that predicts
+nothing earns a share near 0, so the fair can sit off the midpoint only
+where an input has shown the midpoint follows it.
+**Falsified if:** after 500 or more graded one-hour readings in a tier,
+the fair's error there is above 1.02 of the midpoint's (the /tiers page
+and state["tierfair"] carry both; the fair's grade restarts at the
+deploy, FAIR_VERSION "mid-2026-09-25"). The Tier 2 guess is wrong if
+the fair's error there is not below the midpoint's.
+**Resolves:** three days after the deploy.

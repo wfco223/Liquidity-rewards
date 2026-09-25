@@ -1676,6 +1676,11 @@ class Focus:
         net, cost = float(net or 0.0), float(cost or 0.0)
         book = self.fam.cache.any_age(slug)
         age = self.fam.cache.age(slug, now)
+        # what the position already holds, for the rule that an entry
+        # never adds to it past the stake: the shares and the price,
+        # never the exchange's cost field (see _held). `cost` stays the
+        # feed's, shown on the page as the exchange reports it.
+        held, held_src = self._held(slug, net, cost, book)
         row = {"market": slug, "name": self._label(slug),
                "fair": fair, "silver": silver, "stake": stake, "stake_src": stake_src,
                "stake_top": stake_top, "top_cut": self.top_cut(now),
@@ -1686,6 +1691,7 @@ class Focus:
                "held": bool(self.fam.held_ground(slug)),
                "position": ({"qty": round(net, 2), "cost": round(cost, 2),
                              "cost_px": round(abs(cost / net), 4) if abs(net) > 0.005 else None,
+                             "held": round(held, 2), "held_src": held_src,
                              "est": bool((self.fam.inventory.get(slug) or {}).get("est"))}
                             if abs(net) > 0.005 else None),
                "first_seen": self.first_seen.get(slug, 0.0),
@@ -1755,7 +1761,7 @@ class Focus:
                 bare = False
                 if not is_exit and s["past"] > 0 and stake >= 1.0:
                     cost_ps = o.price if o.side == "BUY" else 1.0 - o.price
-                    room = self._entry_room(f"{slug}|{o.side}", o.side, stake, net, cost, now)
+                    room = self._entry_room(f"{slug}|{o.side}", o.side, stake, net, held, now)
                     full = float(math.floor(room / cost_ps)) if cost_ps > 0 else 0.0
                     bare = full >= 1.0 and self._bare(levels, book.tick or 0.01, full)
                 elif is_exit and s["past"] > 0:
@@ -1819,16 +1825,16 @@ class Focus:
                                          "hold": True}
                     continue
                 adds = (side == "BUY" and net > 0.005) or (side == "SELL" and net < -0.005)
-                if adds and stake - cost < 1.0:
-                    row["tend"][side] = {"note": f"holding ${cost:,.0f} here already "
+                if adds and stake - held < 1.0:
+                    row["tend"][side] = {"note": f"holding ${held:,.0f} here already "
                                                  f"— no entry that adds to it", "hold": True}
                     continue
                 # back in at a quarter of the stake after a fill, ramping to
                 # the full size by two hours — applied to the room the
                 # position bound leaves, not the whole stake (_entry_room,
                 # the one arithmetic the resting order's bare test shares)
-                room = self._entry_room(key, side, stake, net, cost, now)
-                scale = (room / (stake - cost if adds else stake)) if room > 0 else 1.0
+                room = self._entry_room(key, side, stake, net, held, now)
+                scale = (room / (stake - held if adds else stake)) if room > 0 else 1.0
                 scale = min(max(scale, FOCUS_REFILL_FLOOR), 1.0)
                 if fair is None:
                     row["tend"][side] = {"note": "no fair set", "hold": True}
@@ -1837,7 +1843,7 @@ class Focus:
                 # bound and refill ramp as the base room, so growth never
                 # walks around the standoff after a fill or the rule that
                 # an entry may not add to a position past its stake
-                room_top = self._entry_room(key, side, stake_top, net, cost, now)
+                room_top = self._entry_room(key, side, stake_top, net, held, now)
                 plan = self._entry_plan(slug, side, book, prog, pool, fair,
                                         room, room_top, now)
                 if plan and scale < 1.0:
@@ -1980,6 +1986,45 @@ class Focus:
         if sc is not None:
             return float(sc[2])
         return float(o.live_ev) if o.live_ev is not None else None
+
+    def _held(self, slug: str, net: float, feed_cost: float, book) -> tuple[float, str]:
+        """The money a position here already holds, for the rule that an
+        entry never adds to a position past the stake: its shares times
+        the price — a long what it paid a share, a short what it can lose
+        a share (a dollar less what it sold for).
+
+        Owner, 2026-09-25 ("Build the fix, ask before deploy"): the rule
+        had read the exchange's cost field, and on Alaska governor the
+        feed reported a short of 90 at a cost of $0.00 — so the tender
+        read "holding $0 here" and grew a short-opening ask beside it
+        from 64 to 127 shares at 71c, one resize every ten minutes, past
+        the $18 stake and the $46 its best entries may reach, while the
+        90 shares already had $27 at risk. That morning 21 held positions
+        read $0 in the feed, and where it did give a number it was not
+        the collateral either (ME Senate rep, short 81 sold at 31c:
+        $29.45 where 81 x 69c is $55.89).
+
+        The price a share comes from the family's own book of the lot
+        when that book is clean (its fills, not the feed's cost field,
+        and a price between 0 and 1); else the book's midpoint; else the
+        feed's cost; else a dollar a share, the most a share can hold."""
+        q = abs(float(net or 0.0))
+        if q < 0.005:
+            return 0.0, "flat"
+        inv = self.fam.inventory.get(slug) or {}
+        iq = float(inv.get("qty") or 0.0)
+        ic = float(inv.get("cost") or 0.0)
+        if not inv.get("est") and abs(iq) > 0.005 and iq * net > 0:
+            per = ic / iq                  # paid a share (long), sold for (short)
+            if 0.0 < per < 1.0:
+                return round(q * (per if net > 0 else 1.0 - per), 4), "our fills"
+        if book is not None and book.bids and book.asks:
+            mid = (float(book.bids[0][0]) + float(book.asks[0][0])) / 2.0
+            if 0.0 < mid < 1.0:
+                return round(q * (mid if net > 0 else 1.0 - mid), 4), "the midpoint"
+        if feed_cost > 0.0:
+            return round(float(feed_cost), 4), "the exchange's cost"
+        return round(q, 4), "a dollar a share"
 
     def _entry_room(self, key: str, side: str, stake: float, net: float, cost: float,
                     now: float) -> float:
