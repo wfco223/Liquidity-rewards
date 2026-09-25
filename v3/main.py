@@ -1183,6 +1183,11 @@ class Monitor:
                                    lite=False, max_subs=WS_MAX_SUBS)
                             for i in range(T4_STREAM_SHARDS)]
                            if pol is not None else [])
+        # the old engine takes a Tier 4 book from that store where it
+        # would otherwise read the gateway (owner, 2026-09-25 "Build it,
+        # ask before deploy") — family.STREAM_BOOK_MAX_S decides fresh
+        if pol is not None:
+            pol.stream_book = self.t4cache.any_age
         self.tierfair = (TierFair(pol, prints=self._last_print,
                                   silver=self.silver.model_fair,
                                   his_fairs=lambda: getattr(self.focus, "fairs", {}),
@@ -1269,6 +1274,10 @@ class Monitor:
                 "connections": f"{len(live)}/{len(sts)}",
                 "last_msg": max(float(x.get("last_msg") or 0.0) for x in sts),
                 "books": len(getattr(self.t4cache, "_books", {}) or {}),
+                # the engine's gateway reads the store stood in for, and
+                # the ones it was too old for
+                "engine_hits": int(getattr(self.families.get("politics"), "stream_hits", 0) or 0),
+                "engine_misses": int(getattr(self.families.get("politics"), "stream_misses", 0) or 0),
                 "note": notes[0][:160] if notes else ""}
 
     def _ws_slugs(self) -> list[str]:

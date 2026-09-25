@@ -1443,6 +1443,21 @@ long and accreted, so search it rather than reading it through.
   (lite=False), and ws.WS_MAX_SUBS (10) caps what a connection sends —
   a slice too big for ten says so as "no_room" rather than being
   refused. P26 grades it.
+  THE OLD ENGINE TAKES A TIER 4 BOOK FROM THAT STREAM (owner, 2026-09-25
+  "Build it, ask before deploy"): at 17:40-17:52Z 24 of 38 throttled
+  gateway reads were the engine fetching Tier 4 books the stream already
+  carried. In _refresh_books — the held/active refresh and the candidate
+  scan, the two places it reads the gateway — family._streamed hands it
+  the monitor store's book instead when that book is at most
+  STREAM_BOOK_MAX_S (60 s) old, well inside the desk's 120 s placement
+  gate; older or not carried, the gateway read runs as before. The book
+  keeps its own stamp; the scan still counts the candidate against its
+  budget (the same 24 scored a cycle, fewer of them read through the
+  gateway); and a book reaches the engine's cache, and so its fill
+  model, only where it would have been read anyway — the store is NOT
+  poured into the engine wholesale, which would have shifted the fill
+  odds the tender's House markets share. ws_t4 carries engine_hits and
+  engine_misses so a check can say how many reads it saved.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
