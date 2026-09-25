@@ -2205,3 +2205,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790353720.3,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,18,0.28,sell,0.7448,3.47,,25,31,0.577,0.28,0.29,0,0,selling filled stock — it earns while it waits,CQ5MWV9XMYB5
 1790355988.5,politics,scc-hrep-rep-2026-11-03-gte200,SELL,148,0.44,backfill,,3.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ6HE3KK4YBQ
 1790356163.7,politics,scc-hrep-rep-2026-11-03-gte200,SELL,148,0.44,backfill,,3.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ6HE3KK4YBQ
+1790357147.6,politics,paccc-usse-midterms-2026-11-03-rep,BUY,5,0.39,sell,6.0947,4.64,0.3097,37,40,0.735,0.39,0.391,0.0803,-72,an exit — its fill reduces the position it sits on,CQ5E5ZGNYYC6
+1790357616.4,politics,cpoc-ussec-tx-me-2026-11-03-rtx-dme,SELL,1,0.12,sell,0.0626,0.64,,14,20,0.433,0.11,0.12,0.05,0,selling filled stock — it earns while it waits,CQ8ZRAWYMYAQ
+1790357905.1,politics,cpoc-ussegubc-tx-2026-11-03-rgov-dsen,BUY,4,0.42,sell,0.024,5.54,,38,43,0.551,0.31,0.42,0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CQ3YWAZ9CYB5
+1790357905.1,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,BUY,5,0.27,earn,0.0248,1.02,,27,32,0.682,0.18,0.3,-0.02,5,1 tick behind the touch — we would hold 14% of the bid side,CQ8S8K7MGYCC
+1790357905.1,politics,vtc-usseto-tx-2026-11-03-gt9pt6m,BUY,1,0.95,earn,0.0961,0.17,,48,69,0,0.46,0.7,0.36,1,3 ticks behind the touch — we would hold 86% of the bid side,CQ9HWHXCJYC3
+1790357960.2,politics,cpoc-ussegubc-ia-2026-11-03-rsweep,SELL,1,0.04,backfill,,1.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ8Q9030YYBE
+1790358325.3,politics,vmc-ussemov-nj-2026-11-03-d15-20,SELL,0.99,0.06,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ9Q6472CYCC
+1790358344.0,politics,vmc-ussemov-nj-2026-11-03-d20-25,SELL,1,0.06,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ9Q7P8HYYC3
+1790359034.7,politics,usgubewc-usgub-ne-2026-11-03-rep,BUY,10,0.93,earn,4.5754,4.66,0.969725,91,97,0.013,0.9,0.94,-0.0397,30,2 ticks in front of the touch — we would hold 89% of the bid side,CQ5XHYWJPYBE
+1790359034.7,politics,cpoc-ussegubc-tx-2026-11-03-dsweep,BUY,9,0.25,earn,1.1402,0.52,,25,33,0.208,0.25,0.26,-0.04,9,at the touch — a fill here is 1 ticks inside value (evidence band only; confiden,CQ9FGJBGMYCC
+1790360131.9,politics,paccc-usse-midterms-2026-11-03-rep,BUY,27,0.39,backfill,,5.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5E5ZGNYYC6
+1790360143.6,politics,ewc-usgub-oh-2026-11-03-dem,BUY,-67,0.61,fix,,0.08,,,,,,,,,size trimmed by 67 to the exchange's count (order CPFZJMSB2XDS),CPFZJMSB2XDS
+1790360143.6,politics,cpoc-ussegubc-ia-2026-11-03-rsweep,SELL,1,0.04,backfill,,1.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ8Q9030YYBE
+1790360143.6,politics,vmc-ussemov-nj-2026-11-03-d15-20,SELL,0.99,0.06,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ9Q6472CYCC
+1790360143.6,politics,vmc-ussemov-nj-2026-11-03-d20-25,SELL,1,0.06,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ9Q7P8HYYC3
+1790360143.6,politics,paccc-usse-midterms-2026-11-03-rep,BUY,27,0.39,backfill,,5.46,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5E5ZGNYYC6
