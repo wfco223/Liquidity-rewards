@@ -2098,3 +2098,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790304475.4,politics,cpoc-ussegubc-tx-2026-11-03-dsweep,SELL,-1.03,0.28,fix,0,0,,28,34,0.413,0.28,0.29,0.03,0,size trimmed by 1.03 to the exchange's count (order CNY0Y98BTWPA),CNY0Y98BTWPA
 1790304475.4,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-7.33,0.03,fix,,119.32,,,,,,,,,size trimmed by 7.33 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
 1790304475.4,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,-5.67,0.03,fix,,119.32,,,,,,,,,size trimmed by 5.67 to the exchange's count (order CJWB6WACPW7E),CJWB6WACPW7E
+1790306424.7,politics,paccc-usse-midterms-2026-11-03-rep,BUY,21,0.38,sell,0.0607,12.46,0.306,38,41,0.644,0.38,0.381,0.074,0,an exit — its fill reduces the position it sits on,CPJRFWPTAXDR
+1790308074.3,politics,vtc-usseto-wy-2026-11-03-gt250k,BUY,0.99,0.31,earn,0.1389,0.04,,21,33,0,0.31,0.32,0.03,0.99,joins the touch — the book has been quiet,CPXPQT3ZCXDS
+1790308082.3,politics,vmc-ussemov-ky-2026-11-03-dwin,BUY,1,0.12,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPXE4HZH2XDJ
+1790308134.3,politics,vmc-ussemov-ky-2026-11-03-dwin,BUY,1,0.12,backfill,,0.41,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPXE4HZH2XDJ
