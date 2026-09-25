@@ -2266,3 +2266,21 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790376509.5,politics,ewc-usgub-ga-2026-11-03-dem,SELL,19,0.48,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGA2MWT0XDN
 1790376509.5,politics,ewc-usgub-ks-2026-11-03-dem,SELL,25,0.29,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGG0516PXPK
 1790376509.5,politics,usgubewc-usgub-sc-2026-11-03-dem,SELL,10,0.05,backfill,,9.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5F5G2AEYAQ
+1790377374.2,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,38,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQEAXDNVMYCD
+1790377554.8,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,206.25,0.75,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQECVR1WMYCD
+1790377554.8,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,100,0.75,hand,,2.96,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQBR3AQERYCD
+1790377554.8,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,23.15,0.75,hand,,5.38,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ9PSFBB4YC3
+1790377669.8,politics,ussewc-usse-fl-2026-11-03-rep,BUY,0.48,0.86,backfill,,2.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQBTRFXSAYBE
+1790377679.9,politics,ussewc-usse-fl-2026-11-03-rep,BUY,29,0.86,sell,0.0331,2.93,0.867925,86,90,0.613,0.88,0.89,-0.0079,-11,buying back the short at or under what it sold for — the bid earns while it wait,CQBTRFXSAYBE
+1790379399.3,politics,cpoc-ussegubc-ks-2026-11-03-rgov-dsen,BUY,7,0.15,sell,0.0158,0.14,,15,20,0.571,0.15,0.2,-0.03,-4,buying back the short at or under what it sold for — the bid earns while it wait,CQES21A40YBE
+1790379579.3,politics,cpoc-ussegubc-ks-2026-11-03-rgov-dsen,BUY,1,0.15,sell,0.0058,0.19,,13,17,0.684,0.15,0.2,0,-3,buying back the short at or under what it sold for — the bid earns while it wait,CQES21A40YBE
+1790380148.5,politics,ewc-usse-mn-2026-11-03-dem,BUY,115,0.9,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQF2J1DPJYB5
+1790380161.6,politics,usgubewc-usgub-sc-2026-11-03-dem,SELL,-10,0.05,fix,0.5569,10.02,0.02495,2,7,0.003,0.04,0.05,-0.0251,-10,size trimmed by 10 to the exchange's count (order CQ5F5G2AEYAQ),CQ5F5G2AEYAQ
+1790380161.6,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,329,0.68,void,0,6.86,0.8522,75,80,0.643,0.75,0.76,-0.1722,0,voided: the exchange has no trade for order CQ8G8X5KGYCC — the row of 09-25 23:1,CQ8G8X5KGYCC
+1790380161.6,politics,scc-hrep-rep-2026-11-03-gte195,SELL,51,0.61,void,12.427,0,0.622225,59,63,0.539,0.6,0.61,0.0122,-51,voided: the exchange has no trade for order CQEM0962WYCA — the row of 09-25 23:1,CQEM0962WYCA
+1790380161.6,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,38,0.94,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQEAXDNVMYCD
+1790380161.6,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,206.25,0.75,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQECVR1WMYCD
+1790380161.6,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,100,0.75,hand,,2.96,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQBR3AQERYCD
+1790380161.6,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,23.15,0.75,hand,,5.38,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ9PSFBB4YC3
+1790380161.6,politics,ussewc-usse-fl-2026-11-03-rep,BUY,0.48,0.86,backfill,,2.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQBTRFXSAYBE
+1790380161.6,politics,ewc-usse-mn-2026-11-03-dem,BUY,115,0.9,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQF2J1DPJYB5
