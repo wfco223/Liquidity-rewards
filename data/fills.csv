@@ -2177,3 +2177,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790344283.0,politics,scc-senate-gop-2026-11-03-52,BUY,-173.4,0.07,fix,0,33.16,0.0528,6,10,0.455,0.07,0.08,0.0172,223,size trimmed by 173.4 to the exchange's count (order CNBPB4FR6WPH),CNBPB4FR6WPH
 1790344283.0,politics,ussewc-usse-fl-2026-11-03-rep,SELL,-20,0.86,fix,1.4435,0.33,0.84785,85,90,0.524,0.85,0.88,-0.0121,-40,size trimmed by 20 to the exchange's count (order CQ58EQK0WYCD),CQ58EQK0WYCD
 1790344283.0,politics,cpoc-ussec-tx-me-2026-11-03-rtx-dme,SELL,0.51,0.12,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5H1D7XCYCC
+1790344854.9,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,112.39,0.71,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ6FWEAW2YBE
+1790344910.4,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,127,0.71,focus,26.1292,0.3,0.85555,73,80,0.568,0.71,0.72,0.1455,-217,focus entry: ~$8.04/day; fill odds 49%/day; EV +3.01/day,CQ67QZBN0YAQ
+1790346138.9,politics,usgubewc-usgub-al-2026-11-03-rep,BUY,10,0.94,earn,3.1138,0.76,0.9833,90,95,0.348,0.93,0.94,-0.0433,70,3 ticks in front of the touch — we would hold 81% of the bid side,CQ654B0QPYCA
+1790346138.9,politics,usgubewc-usgub-me-2026-11-03-dem,BUY,10,0.97,earn,4.8998,0.47,0.98915,92,97,0.345,0.95,0.96,-0.0192,34,joins the touch — the book has been quiet,CQ6CN1PK6YCC
+1790346770.4,politics,scc-hrep-rep-2026-11-03-gte205,SELL,6.65,0.41,focus,12.813,0.21,0.35045,34,38,0.789,0.4,0.41,-0.0595,-34.65,focus entry: ~$17.53/day; fill odds 30%/day; EV +16.84/day,CQ6RWZV2RYCA
+1790346834.9,politics,scc-hrep-rep-2026-11-03-gte195,SELL,51,0.5,sell,1.5633,2.07,0.628125,64,69,0.354,0.6,0.62,0.1281,0,an exit — its fill reduces the position it sits on,CQ56JBJRTYC6
+1790347907.0,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,112.39,0.71,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ6FWEAW2YBE
