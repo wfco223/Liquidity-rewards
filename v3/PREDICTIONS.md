@@ -1097,3 +1097,21 @@ and state["tierfair"] carry both; the fair's grade restarts at the
 deploy, FAIR_VERSION "mid-2026-09-25"). The Tier 2 guess is wrong if
 the fair's error there is not below the midpoint's.
 **Resolves:** three days after the deploy.
+
+### P25 — written 2026-09-25 ~17:00Z, BEFORE the Tier 4 stream deploys
+**Claim:** the exchange carries the whole Tier 4 monitor. Within an hour
+of the deploy, the two Tier 4 connections are live with every one of
+the ~5,838 Tier 4 markets subscribed (29-30 requests of 100 per feed
+per connection), no subscribe request is refused, and at least 90% of
+the Tier 4 markets have a book in the monitor's store. The app's
+resident memory stays under 600 MB, and the tender's pass line shows
+no new "books_slow" beyond its usual rate.
+**Why:** the exchange's own docs cap a SUBSCRIPTION at 100 markets and
+say to use more subscriptions for more; the two existing connections
+already carry 200 and 79 in one request each; the rig measured ~36 MB
+and 3 ms a second for the tier fairs with 5,870 Tier 4 markets.
+**Falsified if:** any subscribe request comes back refused, fewer than
+90% of Tier 4 markets have a book after an hour, the existing two
+connections drop out of "live", or resident memory passes 600 MB
+(state["ws_t4"], state["ws"], state["rss_mb"], mem_trail).
+**Resolves:** an hour after the deploy.

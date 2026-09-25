@@ -2040,11 +2040,16 @@ function tRow(r){var k='m-'+r.market;var open=(window._tOpen||{})[k];
   if(r.g1h&&r.g1h.fair!=null)o+='this market, 1 hour ahead: fair misses '+r.g1h.fair.toFixed(2)+'¢, midpoint '+(r.g1h.mid!=null?r.g1h.mid.toFixed(2)+'¢':'–')+' ('+Math.round(r.g1h_n||0)+' readings)';
   o+='</div>';}
  return o;}
+function tStream(w){if(!w||!w.wanted&&!w.subscribed)return '';
+ var age=w.last_msg?Math.round(Date.now()/1000-w.last_msg):null;
+ return '<div class="sub muted">Tier 4 stream: '+(w.subscribed||0).toLocaleString()+' of '+(w.wanted||0).toLocaleString()+' markets subscribed on '+esc(w.connections||'')+' connections · '+(w.books||0).toLocaleString()+' books in'
+  +(age!=null?' · last frame '+age+' s ago':'')+(w.refused?' · <span class="warn">'+w.refused.toLocaleString()+' refused by the exchange'+(w.note?': '+esc(w.note):'')+'</span>':'')+'</div>';}
 function tRender(t){var o='<div class="card"><b>Tier fairs</b> <span class="pill">stage 1 — read only</span>'
   +'<div class="muted">A fair for every midterm-tier market, worked out again every second: the midpoint, moved only by what the book at depth, the last trade, the event’s other markets and Silver have proven they add. Each is written down every minute and checked against the midpoint 10 minutes and an hour later. Nothing on this page places, moves or cancels an order.</div>'
-  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+'</div>';
+  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+tStream(t.t4_stream)+'</div>';
  (t.tiers||[]).forEach(function(tr){var k='t-'+tr.key;var open=(window._tOpen||{})[k];
   o+='<div class="card"><div style="cursor:pointer" onclick="tTog(\''+k+'\')"><b>'+esc(tr.name)+'</b> <span class="muted">· '+tr.markets+' markets, '+tr.with_fair+' with a fair'+((tr.pool_day||[]).length?' · pays '+tr.pool_day.map(function(x){return '$'+x.toLocaleString();}).join('/')+' a day per event · Target Size '+(tr.target||[]).map(function(x){return x.toLocaleString();}).join('/'):' · no program on the ledger now')+'</span></div>'
+   +(tr.slow?'<div class="sub muted">'+(tr.fresh||0).toLocaleString()+' with a fresh book, '+(tr.narrow||0).toLocaleString()+' with a touch 10¢ or narrower · worked out every 10 s'+(tr.rows_shown?' · the list shows the '+tr.rows_shown+' most recently traded':'')+'</div>':'')
    +'<div class="sub">'+tMiss(tr.grade,3600)+'</div><div class="sub">'+tMiss(tr.grade,600)+'</div>';
   if(open){(t.rows||[]).filter(function(r){return r.tier===tr.key;}).forEach(function(r){o+=tRow(r);});
    if(!tr.with_fair)o+='<div class="muted">no market in this tier has a book to read yet</div>';}

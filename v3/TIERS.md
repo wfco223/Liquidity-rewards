@@ -23,7 +23,18 @@ Nothing here is built yet. Each stage below needs the owner's yes.
 | T1 | midterms_t1_* (control, balance of power, tossup Senate) | 1,125 | 25,000 | 0.30 | 22 |
 | T2 | midterms_t2_* (competitive Senate/Gov, seat counts) | 450 | 15,000 | 0.25 | 57 |
 | T3 | midterms_t3_* (coverage: gov, senate, House districts) | 190 | 10,000 | 0.20 | 54 |
-| T4 | midterms_t4_* (House winners) | 5 | 2,000 | 0.40 | 829 |
+| T4 · $5 | midterms_t4_* (House winners) | 5 | 2,000 | 0.40 | 829 |
+| T4 · $2 | politics_t4_coverage_* (margins of victory, turnout, seat counts by state, attorneys general, secretaries of state, Supreme Court) | 2 | 2,000 | 0.40 | 5,009 |
+
+Both Tier 4 programs are monitored (owner, 2026-09-25 "focus on getting
+the tier 4 markets identified and monitored both $5 and $2"): their
+~5,800 books come over a stream of their own — two connections, in
+subscriptions of 100 markets as the exchange's docs require — into a
+store only the tier fairs read, and they are worked out every 10 s
+rather than every second. Of the $2 program's 5,009 markets, 3,803 are
+House margin-of-victory buckets (about nine to a district), 337 and 330
+governor and Senate margins, 316 turnout brackets, 109 state House
+seat counts, and the rest down-ballot races.
 
 A market's tier is its program's name, never how much it pays. While
 a tier's engine is on, nothing else trades that tier's markets.
