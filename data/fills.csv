@@ -2260,3 +2260,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790374694.9,politics,ewc-usgub-ks-2026-11-03-dem,SELL,-12,0.29,fix,40.227,0.09,0.267075,31,37,0.714,0.26,0.32,-0.0229,0,size trimmed by 12 to the exchange's count (order CPGG0516PXPK),CPGG0516PXPK
 1790374694.9,politics,ewc-usgub-ks-2026-11-03-dem,SELL,-13,0.29,fix,0,0.05,0.267075,30,36,0.625,0.23,0.29,-0.0229,12,size trimmed by 13 to the exchange's count (order CPGG0516PXPK),CPGG0516PXPK
 1790374694.9,politics,vtc-usseto-ak-2026-11-03-gt275k,BUY,0.99,0.95,backfill,,0.33,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQCP72Z58YAQ
+1790375820.1,politics,cpoc-ussegubc-ks-2026-11-03-rgov-dsen,SELL,1,0.16,earn,2.4705,0.14,,11,17,0.344,0.13,0.21,-0.02,-11,5 ticks in front of the touch — we would hold 99% of the ask side,CQDRR6EE8YAQ
+1790376415.9,politics,usgubewc-usgub-sc-2026-11-03-dem,SELL,10,0.05,backfill,,9.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5F5G2AEYAQ
+1790376509.5,politics,usgubewc-usgub-ny-2026-11-03-dem,BUY,40.27,0.93,hand,,80.03,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CK93JF66GWPA
+1790376509.5,politics,ewc-usgub-ga-2026-11-03-dem,SELL,19,0.48,backfill,,0.09,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGA2MWT0XDN
+1790376509.5,politics,ewc-usgub-ks-2026-11-03-dem,SELL,25,0.29,backfill,,0.08,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPGG0516PXPK
+1790376509.5,politics,usgubewc-usgub-sc-2026-11-03-dem,SELL,10,0.05,backfill,,9.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5F5G2AEYAQ
