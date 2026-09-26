@@ -2428,3 +2428,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790450631.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,3,0.618,sell,0.0192,10.36,0.5,60,63,0.707,0.618,0.619,0.118,0,an exit — its fill reduces the position it sits on,CQPNEHE9AYBY
 1790452218.5,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,-1,0.74,fix,0.6718,10.37,,70,75,0.472,0.72,0.74,0.01,0,size trimmed by 1 to the exchange's count (order CPH98V786XDS),CPH98V786XDS
 1790452218.5,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,-2,0.74,fix,,10.32,,,,,,,,,size trimmed by 2 to the exchange's count (order CPH98V786XDS),CPH98V786XDS
+1790454789.4,politics,paccc-usho-midterms-2026-11-03-rep,BUY,43,0.087,focus,32.7455,0.19,0.0884,8,10,0.819,0.087,0.088,-0.0014,43,focus entry: ~$60.99/day; fill odds 60%/day; EV +52.19/day,CR0QZYZ0JYBQ
