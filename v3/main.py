@@ -5149,26 +5149,41 @@ class Monitor:
         and tended here. Positions come from the last cycle's read (a
         minute old at most); fills are the family's reconcile to book,
         as for every order in the politics book."""
-        boot_pos: dict | None = None
         while True:
             t0 = time.time()
             try:
-                on = bool(self.master.on and self.switches["focus"].on
-                          and getattr(self, "_floor_ok", False))
-                pos = getattr(self, "_bond_positions", None)
-                if pos is None:
-                    # before the first cycle: one read of its own, so
-                    # held stock shows on the page from the first pass
-                    if boot_pos is None:
-                        try:
-                            boot_pos = dict(self.client.positions_net() or {})
-                        except Exception:  # noqa: BLE001 — the cycle's read follows
-                            boot_pos = {}
-                    pos = boot_pos
-                self.focus.cycle(t0, pos or {}, on)
+                self._focus_pass(t0)
             except Exception as e:  # noqa: BLE001 — the loop survives anything
                 self._note(f"focus: {type(e).__name__}: {e}")
             time.sleep(max(FOCUS_CYCLE_S - (time.time() - t0), 2.0))
+
+    def _focus_positions(self) -> dict | None:
+        """The positions the tender works from: the last cycle's read, the
+        one the families reconciled against — never a read of its own
+        (owner, 2026-09-26 "Yes, build it"). At the 14:38Z boot that day
+        the tender read the exchange itself while the first cycle kept
+        Texas Senate dem at its last value, short 41, because our log did
+        not yet show it closed; a fill taken against one read and applied
+        to the other made it long 41 (an exit sell of 41 at 67c) and then
+        short 41 (a cover of 41 at 60c) on a position that was flat. None
+        until the first cycle has read them."""
+        pos = getattr(self, "_bond_positions", None)
+        return dict(pos) if pos is not None else None
+
+    def _focus_pass(self, t0: float) -> bool:
+        """One pass of the tender, on the cycle's positions. Before the
+        first cycle has read them it does not run at all — nothing is
+        noted, planned or rested; the page keeps the boot seed's list.
+        So an order the first reconcile finds gone never enters the
+        tender's memory as one that left under it, and the feed that
+        cycle read is the truth for it."""
+        pos = self._focus_positions()
+        if pos is None:
+            return False
+        on = bool(self.master.on and self.switches["focus"].on
+                  and getattr(self, "_floor_ok", False))
+        self.focus.cycle(t0, pos, on)
+        return True
 
     def focus_json(self) -> bytes:
         return getattr(self.focus, "payload_json", b'{"ok":false}')
@@ -5325,8 +5340,9 @@ class Monitor:
         backoff = 5.0
         # the focus tender's own loop starts NOW, before the board is
         # read (owner, 2026-09-10: "The start up time for focus has to
-        # be very short"): its ground was claimed at seed, its first
-        # pass reads every focus book itself and its positions once
+        # be very short"): its ground was claimed at seed; its first
+        # pass waits for the first cycle's position read (owner,
+        # 2026-09-26 — see _focus_positions), 70 s at that day's boot
         if getattr(self, "focus", None) is not None:
             threading.Thread(target=self._focus_loop, daemon=True,
                              name="focus").start()

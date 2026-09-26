@@ -353,6 +353,16 @@ def _r4(x: float) -> float:
 
 
 
+def _toward_flat(delta: float, feed: float) -> float:
+    """An exit's fill as the position sees it: toward flat from what the
+    feed shows, never past it — nothing if the feed is already flat."""
+    if feed > 0.005:
+        return max(delta, -feed) if delta < 0 else 0.0
+    if feed < -0.005:
+        return min(delta, -feed) if delta > 0 else 0.0
+    return 0.0
+
+
 def _num(x) -> float | None:
     """The record's number shapes: plain, a string, or {"value": "0.60"}."""
     if isinstance(x, dict):
@@ -472,6 +482,7 @@ class Focus:
         self._record_at = 0.0                     # the last read of the exchange's trade record
         self._record_tries: dict[str, int] = {}   # id -> reads of the record it has had
         self._withdrawn: dict[str, float] = {}    # placements withdrawn unseen -> when
+        self._from_limbo: dict[str, float] = {}   # ids taken from the family's limbo -> when
         self.record_note = ""                     # the last read's failure, in its own words
         self.mine_ids: list[str] = []             # every order id the tender ever placed (bounded)
         self._bp_reads: list[tuple] = []          # (ts, bp) over the last window
@@ -1180,6 +1191,7 @@ class Focus:
         its record); a silent cancel holds nothing."""
         cur = {o.id: o for o in list(self.fam.orders.values())
                if self._is_mine(o) and o.market in self.markets}
+        left = []
         for oid, rec in list(self._last_mine.items()):
             slug, side, qty = rec[0], rec[1], rec[2]
             was_exit = bool(rec[3]) if len(rec) > 3 else False
@@ -1187,6 +1199,26 @@ class Focus:
                 continue
             o = cur.get(oid)
             gone = qty if o is None else (qty - o.qty if o.qty < qty - 0.5 else 0.0)
+            left.append((oid, slug, side, gone, was_exit, qty))
+        # the family's limbo: an order of the tender's the family found gone
+        # before the tender ever saw it there — a boot, where the first
+        # reconcile runs on the orders restored from the stop save (14:38Z,
+        # 2026-09-26: the Texas Senate dem cover had filled during the
+        # restart, the feed still showed the short, and with the cover
+        # nowhere in the tender's memory a new one would rest on a flat
+        # position). It is taken as an order that just left the book: its
+        # side holds and the exchange's record is asked about it
+        for oid, gp in list(self.fam.gone_pending.items()):
+            r = (gp or {}).get("rec")
+            if (r is None or oid in self._last_mine or oid in self._gone_by_me
+                    or oid in self._from_limbo or r.market not in self.markets
+                    or not self._is_mine(r)):
+                continue
+            self._from_limbo[oid] = now           # taken once, never re-registered
+            left.append((oid, r.market, r.side, float(r.qty), self._exit_order(r), float(r.qty)))
+        self._from_limbo = {k: t for k, t in self._from_limbo.items()
+                            if now - t < 2 * FOCUS_VANISH_WAIT_S}
+        for oid, slug, side, gone, was_exit, qty in left:
             if gone > 0.0 and oid not in self._vanished:
                 # the size it had before, beside what it lost: a shrink is
                 # "back at full size" only when it is back at THAT size
@@ -1211,13 +1243,7 @@ class Focus:
                     # missing for a read, was taken as filled, and the cover
                     # was sized to 1,252 against a short of 137); an entry
                     # counts only once the journal books it
-                    delta = gone if side == "BUY" else -gone
-                    if feed > 0.005:
-                        delta = max(delta, -feed) if delta < 0 else 0.0
-                    elif feed < -0.005:
-                        delta = min(delta, -feed) if delta > 0 else 0.0
-                    else:
-                        delta = 0.0
+                    delta = _toward_flat(gone if side == "BUY" else -gone, feed)
                     if abs(delta) > 0.005:
                         self._pos_adj[oid] = {"slug": slug, "delta": delta, "feed": before,
                                               "ts": now, "confirmed": False}
@@ -1233,7 +1259,24 @@ class Focus:
                 a = self._pos_adj.get(oid)
                 before = self._vanish_feed.pop(oid, None)
                 feed_now = float(((positions or {}).get(slug) or (0.0,))[0] or 0.0)
-                if a is not None:
+                if was_exit:
+                    # an exit booked is the position leaving: toward flat from
+                    # what the feed shows NOW, never past it, whatever the feed
+                    # did before (14:39Z, 2026-09-26: the Texas Senate dem cover
+                    # of 41 was booked while the feed already read flat, the 41
+                    # was added to the flat reading, and the tender read LONG 41
+                    # and rested an exit sale of 41 at 67c). A feed that already
+                    # shows the fill leaves nothing to add.
+                    delta = _toward_flat(delta, feed_now)
+                    if a is not None:
+                        if abs(delta) > 0.005:
+                            a.update(delta=delta, ts=now, confirmed=True)
+                        else:
+                            self._pos_adj.pop(oid, None)
+                    elif abs(delta) > 0.005:
+                        self._pos_adj[oid] = {"slug": slug, "delta": delta, "feed": feed_now,
+                                              "ts": now, "confirmed": True}
+                elif a is not None:
                     a.update(delta=delta, ts=now, confirmed=True)
                 elif before is not None and abs(feed_now - before) <= 0.005:
                     # booked, and the feed has not moved since: count it

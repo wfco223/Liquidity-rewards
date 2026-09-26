@@ -1499,6 +1499,33 @@ long and accreted, so search it rather than reading it through.
   order the tender itself moves or pulls in the seconds before the
   family sees it shrink is still found only by the hourly match. P27
   grades it.
+  DEPLOYED 14:36Z 2026-09-26 (owner "Deploy now"; PR #341, build
+  f1d95da4, booted 14:38:50Z from the stop save after a 64 s hold). Its
+  first booking came 20 s in: the Texas Senate dem cover of 41, filled
+  at 14:36:29 during the restart, booked from the record at 14:39:10
+  while the feed still read short 41 — the record was right.
+
+- AFTER A BOOT THE TENDER READS ONE POSITION FEED (owner, 2026-09-26
+  "Yes, build it"; NOT deployed without his separate yes). That same
+  boot, the tender read the exchange's positions itself (boot_pos, flat)
+  while the first cycle's guarded read kept Texas at its last value
+  (short 41) because our log did not yet show it closed: the booked 41
+  was added to the flat reading — long 41, an exit SALE of 41 at 67c
+  (14:39:13) — then on the cycle's read it was short 41 and a cover of
+  41 at 60c rested (14:39:57) on a position that was flat. It came off
+  at 14:47:44; neither filled. Three parts: (1) _focus_pass works only
+  from the cycle's read (_bond_positions, set after the families have
+  reconciled against it) and does not run at all before the first
+  cycle has one — no read of its own; the stream and the seed's market
+  list are untouched, and the first pass waits for the first cycle (70
+  s that boot); (2) an order of the tender's in the family's limbo
+  (gone_pending) is taken as one that just left the book, once
+  (_from_limbo), so its side holds and the record is asked about it —
+  at a boot the first reconcile finds the restored orders gone before
+  the tender ever saw them; (3) an exit booked by the journal moves the
+  tender's view toward flat from what the feed shows NOW, never past
+  it (_toward_flat), whatever the feed did before — a feed that already
+  shows the fill leaves nothing to add. Entries keep their rule.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
