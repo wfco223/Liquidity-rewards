@@ -73,6 +73,8 @@ EXIT_MIN_QTY = 0.01
 REPLAN_MAX = 12               # sides re-planned between spreads in one look, the stalest first
 SHADOW_H_S = 6 * 3600.0       # a real order still resting this long is scored as it stands
 SHADOW_GRACE_S = 600.0        # a real order gone is scored this long after, when its fill is booked
+BOOT_SPLIT_S = 900.0          # after a boot the split is refined this long, once a minute
+SPLIT_EVERY_S = 60.0
 LOG_KEEP = 400
 DAYS_KEEP = 14
 VERSION = "paper-2026-09-26"
@@ -212,6 +214,7 @@ class TierPaper:
         self.split_day = ""
         self.split_at = 0.0
         self.split_why = ""
+        self._boot_at = self._clock()
         self.shadows: dict[str, dict] = {}
         self.shadow_tally: dict[str, dict] = {}
         self.shadow_recent: deque = deque(maxlen=60)
@@ -222,18 +225,35 @@ class TierPaper:
 
     def _split(self, now: float) -> None:
         """Each tier's share of the pot: its value alone over the sum, set at
-        midnight ET (and at the first plan after a boot)."""
+        midnight ET (and at the first plan after a boot). A plan where every
+        tier reads nothing is no plan to split on (2026-09-26 18:45Z: the
+        first plan after the boot ran before the books had arrived, every
+        tier read $0, and every tier got $0 until midnight); after a boot
+        the split is refined once a minute for BOOT_SPLIT_S, as the books
+        fill in."""
         day = _day(now)
-        if self.shares and self.split_day == day:
-            return
+        split = bool(self.shares) and sum(self.shares.values()) > 0
+        if split and self.split_day == day:
+            if not (self.split_why == "the first plan after a boot"
+                    and now - self._boot_at <= BOOT_SPLIT_S
+                    and now - self.split_at >= SPLIT_EVERY_S):
+                return
         v = self.tv.view() if hasattr(self.tv, "view") else {}
         if not v.get("ok"):
             return
         alone = {t: max(float(((v.get("tiers") or {}).get(t) or {}).get("alone", {})
                               .get("value") or 0.0), 0.0) for t, _n, _p in TIERS}
         tot = sum(alone.values())
-        self.shares = {t: (alone[t] / tot if tot > 0 else 0.0) for t in alone}
-        why = "midnight ET" if self.split_day else "the first plan after a boot"
+        if tot <= 0:
+            return                    # nothing planned with value yet: wait for the books
+        new = {t: alone[t] / tot for t in alone}
+        if split and self.split_day == day and all(
+                abs(new[t] - self.shares.get(t, 0.0)) < 0.01 for t in new):
+            self.split_at = now
+            return                    # the refinement moved nothing worth a line
+        self.shares = new
+        why = ("midnight ET" if self.split_day and self.split_day != day
+               else "the first plan after a boot")
         self.split_day, self.split_at, self.split_why = day, now, why
         for t, pt in self.tiers.items():
             pt.money = round(POT_USD * self.shares.get(t, 0.0), 2)
