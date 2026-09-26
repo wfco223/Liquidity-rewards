@@ -2362,3 +2362,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790411633.6,politics,vtc-usseto-ak-2026-11-03-gt275k,BUY,0.99,0.94,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQP6QH27YYCA
 1790411888.5,politics,vmc-ussemov-or-2026-11-03-d10-15,SELL,1,0.24,sell,0,0,,11,22,0.429,0.24,0.25,-0.07,0,taker dump — sold into the bid (the carved exception),CQPANJ4T0YBQ
 1790412225.1,politics,vtc-usseto-ak-2026-11-03-gt275k,BUY,0.99,0.94,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQP6QH27YYCA
+1790412890.7,politics,vtc-usseto-me-2026-11-03-gt800k,BUY,1,0.2,earn,0.1235,0.07,,5,27,0,0.02,0.3,0.04,1,3 ticks behind the touch — we would hold 86% of the bid side,CQPGSW9SGYBQ
+1790414613.8,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,27,0.24,focus,33.7342,2.03,0.2657,22,27,0.311,0.24,0.25,-0.0257,27,focus entry: ~$19.24/day; fill odds 49%/day; EV +11.55/day,CQN8BRPPTYBQ
+1790414613.8,politics,vtc-usseto-de-2026-11-03-gt475k,BUY,1,0.25,earn,0.0961,1.3,,24,35,0.331,0.01,0.35,-0.05,2,3 ticks behind the touch — we would hold 86% of the bid side,CQNVGYGP4YC6
+1790415431.2,politics,vtc-usseto-nc-2026-11-03-gt3pt9m,SELL,1,0.26,earn,0.1236,1.49,,5,28,0,0.22,0.23,-0.1,-1,3 ticks behind the touch — we would hold 86% of the ask side,CQNX491N6YBY
