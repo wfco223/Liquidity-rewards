@@ -1037,8 +1037,8 @@ the 10% claim and under the 20% falsifier. Counting covers alone
 (48 backfill rows against 72 booked live over three days), so the sign
 fix did most of what it was for. What it taught: the letter counted the
 tender's entry bids as "exit fills", which blurred the measure — six of
-the ten backfill rows were House seat buys on 09-24 20:54-23:23Z, not
-covers. No cover whose short fell by its size was logged silent_cancel
+the ten backfill rows were not covers (the 13:45Z check's split; five of
+the ten were House seat buys on 09-24 20:54-23:23Z). No cover whose short fell by its size was logged silent_cancel
 in the logs kept (12:59Z onward on 09-26).
 ### P22 — written 2026-09-24 ~20:50Z, BEFORE 2026-09-22 finishes posting
 **Claim:** a market that joins a reward program partway through an ET
