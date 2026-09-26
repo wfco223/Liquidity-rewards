@@ -1527,6 +1527,41 @@ long and accreted, so search it rather than reading it through.
   it (_toward_flat), whatever the feed did before — a feed that already
   shows the fill leaves nothing to add. Entries keep their rule.
 
+- THE TIER ENGINES, STAGE 2: THE VALUE (owner, 2026-09-26 "We're going
+  to build things from the ground up. Focus on building and if you don't
+  have something ask me to get it" — the $1,000 is assumed; nothing waits
+  for the money). v3/tiervalue.py, READ-ONLY, on the tier fairs' thread:
+  for every tier market with a book under five minutes old, each side and
+  each candidate price (a tick inside the touch where the spread allows,
+  the touch, three ticks behind, every resting level within 6c), a day:
+  reward = our share of the side's pool by scoring.py's arithmetic (a side
+  under its Target Size pays nobody; nothing on a market's first day in
+  its program), less fills = fills a day x shares x the loss a share, less
+  capital = collateral x his cost of capital (focus.coc_day, 0.5%). Fills
+  a day are MEASURED on paper orders per tier, side, distance from the
+  touch and line ahead, from a prior worth one day; the loss a share is
+  what filled paper orders lost against the midpoint an hour later, per
+  tier and side, pulled toward the market's own, never under his fill
+  floor, plus his 2026-09-12 concession rule past the fair. Our own
+  resting orders (the tender's, the engine's, the bonds') come out of the
+  book first; his hand's stay in as company. The best set: $5 slices,
+  each to the price that adds the most a dollar; the share saturates so a
+  side stops by itself; a side under its Target Size may be carried over
+  it in one step; no market past $100. Each tier runs to the whole
+  $1,000, so one pass gives each tier alone, the design's split (share =
+  value alone over the sum) and the joint best split. Paper orders: one a
+  side at its best price, followed an hour — filled when the other side
+  reaches the price, a trade prints through it, or prints at it with
+  nothing left ahead (the line ahead only shrinks); Tier 4's stream sends
+  no prints, so there only the crossing counts and its fills are a floor.
+  Graded: fills predicted vs seen per tier, the loss a share, and the
+  meter's estimate vs the exchange's pay per tier since 09-24 (P28). Tier
+  3's 54 markets now ride the Tier 4 monitor stream at its front (they
+  lost their stream seats leaving the tender's board on 09-24). Measured
+  on a rig of 6,000 markets: the Tier 1-3 plan 84 ms every 10 s, the
+  Tier 4 plan 0.63 s a minute. NOT built: flickering levels counting for
+  less, our own real fills grading the paper ones (stage 3).
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."

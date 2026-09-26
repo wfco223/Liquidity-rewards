@@ -502,9 +502,11 @@ class TestTheAppRunsIt(unittest.TestCase):
             pol.universe[slug] = {"event_n": 2, "name": slug}
             pol.terms.current[slug] = Program(pool=2.0, target=2000.0, df=0.4,
                                               status="active", pid=pid, event_n=2)
-        self.assertEqual(mon._t4_slugs(), [win, cov])      # the $5 first; tier 3 is not here
+        # Tier 3 first (stage 2, 2026-09-26: it has had no stream seat
+        # since it left the tender's board), then the $5, then the $2
+        self.assertEqual(mon._t4_slugs(), [t3, win, cov])
         st = mon.t4_stream_status()
-        self.assertEqual((st["wanted"], st["subscribed"], st["refused"]), (2, 0, 0))
+        self.assertEqual((st["wanted"], st["subscribed"], st["refused"]), (3, 0, 0))
         self.assertEqual((st["engine_hits"], st["engine_misses"]), (0, 0))
         mon.t4cache.put(cov, Book(bids=((0.20, 3000.0),), asks=((0.24, 3000.0),),
                                   tick=0.01, fetched_at=T0))

@@ -261,6 +261,9 @@ class TierFair:
         self.tick_s = 0.0
         self.error = ""
         self.payload_json = b'{"ok":false,"note":"the tier fairs have not run yet"}'
+        # stage 2's value (v3/tiervalue.py), set by the app: its numbers
+        # ride this page's payload
+        self.value = None
 
     # -- the ground -------------------------------------------------------------
 
@@ -629,14 +632,32 @@ class TierFair:
                          "weights": r["weights"], "base": r.get("base"),
                          "moves": r.get("moves") or {}, "his": r.get("his"),
                          "g1h": {k: round(st.mae() * 100, 2) for k, st in ms.items() if st.n > 0},
-                         "g1h_n": round((ms.get("fair") or Stat()).n, 1)})
+                         "g1h_n": round((ms.get("fair") or Stat()).n, 1),
+                         "val": self._value_row(slug)})
         return {"ok": True, "now": now, "read_only": True,
                 "note": "stage 1 — fairs only; nothing here places or moves an order",
                 "version": FAIR_VERSION,
                 "tiers": tiers, "all": self.grade_view("all"), "rows": rows,
                 "t4_stream": self._t4_view(),
+                "value": self._value_view(),
                 "ticks": self.ticks, "tick_s": self.tick_s, "error": self.error,
                 "horizons": list(GRADE_HORIZONS), "mid_trust_spread": MID_TRUST_SPREAD}
+
+    def _value_row(self, slug: str):
+        if self.value is None:
+            return None
+        try:
+            return self.value.row(slug)
+        except Exception:  # noqa: BLE001 — a readout
+            return None
+
+    def _value_view(self):
+        if self.value is None:
+            return None
+        try:
+            return self.value.view()
+        except Exception as e:  # noqa: BLE001 — a readout
+            return {"ok": False, "note": f"{type(e).__name__}: {e}"[:120]}
 
     def _t4_view(self) -> dict:
         try:
