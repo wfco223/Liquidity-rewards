@@ -2408,3 +2408,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790433598.2,politics,ewc-usse-oh-2026-11-03-dem,SELL,6,0.62,backfill,,7.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPH09SJWAXDS
 1790433598.2,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,3,0.74,hand,,10.32,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CPH98V786XDS
 1790433598.2,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,-1.1,0.15,fix,0,0.04,,5,15,0.238,0.02,0.15,-0.05,1,size trimmed by 1.1 to the exchange's count (order CFVM19KVRTN1),CFVM19KVRTN1
+1790435841.7,politics,usgubewc-usgub-co-2026-11-03-dem,BUY,6.94,0.97,earn,1.318,6.81,0.997725,96,99,0.053,0.97,0.98,-0.0277,6.94,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CQP697R3CYAQ
+1790435901.8,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,-1.4,0.15,fix,0,0.04,,5,15,0.238,0.02,0.15,-0.05,1,size trimmed by 1.4 to the exchange's count (order CFVM19KVRTN1),CFVM19KVRTN1
