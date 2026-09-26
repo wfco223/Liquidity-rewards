@@ -2962,7 +2962,12 @@ class Monitor:
             # next fill and was added again the hour after, forever
             # (2026-09-05: the same 400 old trades re-added every hour,
             # 800 archive rows a time, from the moment the bound filled)
-            from .family import FILLS_KEEP, FILLS_KEEP_S
+            from .family import FILLS_KEEP, FILLS_KEEP_S, RECORD_ADD_GRACE_S
+            # the tender's orders are ours, not his hand's: one that came
+            # and went between two cycles never reached placed_at, and its
+            # fill read as "your own trade" (23:49Z, 2026-09-26, Minnesota
+            # Senate dem: 115 @ 90c, on the tender's own list)
+            tender_ids = set(getattr(getattr(self, "focus", None), "mine_ids", None) or ())
             journaled: dict = defaultdict(float)
             for row in fam.fills:
                 if row.get("oid"):
@@ -2981,7 +2986,12 @@ class Monitor:
                 short = g["shares"] - journaled.get(oid, 0.0)
                 if short <= 0.005:
                     continue
-                engine = oid in fam.placed_at
+                if fam.tracks(oid) and now - g["ts"] < RECORD_ADD_GRACE_S:
+                    # an order still on our books or in limbo: the live
+                    # paths book this fill (owner, 2026-09-26) — adding it
+                    # here first is how one trade was journaled twice
+                    continue
+                engine = oid in fam.placed_at or fam.tracks(oid) or oid in tender_ids
                 side = g["side"]
                 why = ("recovered from the exchange's transaction history "
                        "— this fill was never journaled")

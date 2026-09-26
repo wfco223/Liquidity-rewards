@@ -95,7 +95,10 @@ class FakeClient:
     def open_orders(self):
         return [dict(o) for o in self.live.values()]
 
-    def recent_trades(self, limit=25):
+    def recent_trades(self, limit=25, tries=4, timeout=None):
+        self.trade_reads = getattr(self, "trade_reads", 0) + 1
+        if getattr(self, "trades_fail", False):
+            raise RuntimeError("ReadTimeout on every one of 1 tries")
         return list(self.trades)[-limit:]
 
     def open_orders_raw(self, tries=4, timeout=None):
