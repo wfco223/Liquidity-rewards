@@ -2418,3 +2418,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790439582.2,politics,scc-hrep-rep-2026-11-03-gte200,SELL,3,0.44,void,0.1287,-0.01,0.486725,46,50,0.745,0.43,0.44,0.0467,-3,voided: the exchange has no trade for order CQW5GKYF2YCA — the row of 09-26 15:1,CQW5GKYF2YCA
 1790439582.2,politics,vtc-usseto-mn-2026-11-03-gt2pt75m,SELL,0.96,0.05,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQWT09BY4YBY
 1790441022.0,politics,scc-hrep-rep-2026-11-03-gte205,BUY,86,0.42,focus,14.3884,0.02,0.347325,37,42,0,0.42,0.43,0.0727,86,focus entry: ~$3.04/day; fill odds 33%/day; EV +0.57/day,CQXK94KY8YC6
+1790445712.8,politics,ewc-usse-oh-2026-11-03-dem,SELL,6,0.62,backfill,,7.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPH09SJWAXDS
+1790445712.8,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,3,0.74,hand,,10.32,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CPH98V786XDS

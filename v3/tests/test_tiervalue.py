@@ -188,6 +188,18 @@ class TestTheBestSet(unittest.TestCase):
         self.assertLessEqual(sum(per.values()), 300.0 + 1e-6)
         self.assertTrue(all(v <= 100.0 + 1e-6 for v in per.values()))
 
+    def test_no_cap_per_market_the_math_decides(self):
+        # owner, 2026-09-26 "No cap — the math decides": a rich side takes
+        # far more than a tenth of the pot, and still stops by itself
+        self.assertEqual(MARKET_CAP_FRAC, 1.0)
+        sd = side([(0.50, 20000.0)], [(0.52, 20000.0)], pool=300.0, target=20000.0, haz=0.05)
+        steps = run_greedy([sd], POT_USD, MARKET_CAP_FRAC * POT_USD)
+        spent = sum(s.cost for s in steps)
+        self.assertGreater(spent, 0.10 * POT_USD)
+        self.assertLessEqual(spent, POT_USD + 1e-6)
+        if spent < POT_USD - SLICE_USD:
+            self.assertIsNone(sd.next_step(POT_USD - spent))
+
     def test_a_side_short_of_its_target_is_carried_over_in_one_step(self):
         sd = side([(0.50, 950.0)], [(0.53, 500.0)], pool=50.0, haz=0.05)
         steps = run_greedy([sd], POT_USD, 100.0)
