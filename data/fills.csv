@@ -2348,3 +2348,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790400914.7,politics,ussewc-usse-al-2026-11-03-rep,SELL,1,0.98,void,0,0,0.9981,96,99,0.396,0.98,0.99,0.0181,0,voided: the exchange has no trade for order CQJP1MG4CYBE — the row of 09-26 04:0,CQJP1MG4CYBE
 1790400914.7,politics,ewc-usse-tx-2026-11-03-dem,SELL,42,0.6,backfill,,0.13,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQKKBNVGJYC6
 1790400914.7,politics,vtc-usseto-ak-2026-11-03-gt275k,BUY,0.99,0.94,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQKQG4H0RYC6
+1790401556.0,politics,ussewc-usse-fl-2026-11-03-rep,BUY,10.52,0.86,sell,0.0139,9.57,0.867925,85,89,0.68,0.88,0.89,-0.0079,-0.48,buying back the short at or under what it sold for — the bid earns while it wait,CQBTRFXSAYBE
+1790401556.0,politics,ussewc-usse-fl-2026-11-03-rep,BUY,0.48,0.86,sell,0.0006,6.63,0.867925,85,89,0.68,0.88,0.89,-0.0079,-0,buying back the short at or under what it sold for — the bid earns while it wait,CQEEPJ0QRYCA
+1790403005.9,politics,vtc-usgubto-ct-2026-11-03-gt1pt4m,SELL,0.99,0.06,earn,0.1236,0.2,,25,39,0,0.02,0.06,0.26,-0.99,3 ticks behind the touch — we would hold 86% of the ask side,CQM4K648CYBE
+1790403087.4,politics,cpoc-ussegubc-oh-2026-11-03-rgov-dsen,BUY,5,0.16,earn,2.1514,0.02,,13,18,0,0.16,0.17,0,5,joins the touch — the book has been quiet,CQM8ZJ7S8YCA
+1790403087.4,politics,ussewc-usse-al-2026-11-03-rep,SELL,1,0.98,sell,0,0,0.9981,96,99,0.386,0.98,0.99,0.0181,0,taker dump — sold into the bid (the carved exception),CQM9WV0N4YB5
+1790403900.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,2,0.088,hand,,0.08,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQMCFAHAPYB5
+1790404899.1,politics,ussewc-usse-al-2026-11-03-rep,SELL,1,0.98,void,0,0,0.9981,96,99,0.391,0.98,0.99,0.0181,0,voided: the exchange has no trade for order CQKGHH2EEYB5 — the row of 09-26 05:0,CQKGHH2EEYB5
+1790404899.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,2,0.088,hand,,0.08,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQMCFAHAPYB5
