@@ -1274,7 +1274,7 @@ those bounds on the first day.
 **Resolves:** 72 hours after the deploy for (a) and (b); (c) once 09-28
 has posted.
 
-### P29 — written 2026-09-26 ~19:40Z, BEFORE stage 3 (paper trading) deploys
+### P29 — written 2026-09-26 ~18:35Z, BEFORE stage 3 (paper trading) deploys
 Two claims, each graded on its own.
 **(a) The paper fill rule catches most real fills and invents few.** Over
 the 72 hours after the deploy, of the real tender orders scored against
