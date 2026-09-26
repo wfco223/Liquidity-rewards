@@ -2284,3 +2284,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790380161.6,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,23.15,0.75,hand,,5.38,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ9PSFBB4YC3
 1790380161.6,politics,ussewc-usse-fl-2026-11-03-rep,BUY,0.48,0.86,backfill,,2.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQBTRFXSAYBE
 1790380161.6,politics,ewc-usse-mn-2026-11-03-dem,BUY,115,0.9,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQF2J1DPJYB5
+1790380660.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,10,0.087,sell,0.5954,4.64,0.0884,9,12,0.676,0.087,0.088,-0.0014,-50,an exit — its fill reduces the position it sits on,CQB33RRG0YC3
+1790381106.3,politics,ewc-usse-me-2026-11-03-rep,BUY,39,0.36,sell,0.3118,2.09,0.2775,33,37,0.691,0.36,0.37,0.0825,-42,an exit — its fill reduces the position it sits on,CQDB2FGA6YBQ
+1790381166.3,politics,paccc-usho-midterms-2026-11-03-rep,BUY,50,0.087,sell,6.8316,4.78,0.0884,8,11,0.745,0.087,0.088,-0.0014,0,an exit — its fill reduces the position it sits on,CQB33RRG0YC3
+1790381649.8,politics,usgubewc-usgub-id-2026-11-03-dem,SELL,20,0.02,earn,0.7731,0.83,0.001175,1,4,0.003,0.01,0.02,-0.0188,-20,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CQEQPXXFCYBE
+1790381722.1,politics,usgubewc-usgub-me-2026-11-03-rep,SELL,10,0.05,earn,0.7694,5.01,0.0132,1,6,0.062,0.04,0.05,-0.0368,-10,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CQB1RSKEMYCA
+1790383452.9,politics,vtc-usgubto-nv-2026-11-03-gt1pt05m,BUY,0.99,0.95,earn,0.1236,0.05,,75,95,0,0.95,0.99,0.1,0.99,3 ticks behind the touch — we would hold 86% of the bid side,CQFTM212AYC6
+1790383790.8,politics,vtc-usgubto-vt-2026-11-03-gt325k,BUY,1,0.73,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQFXTHBJJYB5
+1790383798.6,politics,ushrewc-ushr-tx-15-2026-11-03-dem,BUY,-34,0.87,fix,,1.04,,,,,,,,,size trimmed by 34 to the exchange's count (order CPGSFRZM4XPK),CPGSFRZM4XPK
+1790383798.6,politics,ewc-usse-mn-2026-11-03-dem,BUY,-115,0.9,fix,15.0767,0.01,0.8917,87,91,0.573,0.89,0.9,0.0083,115,size trimmed by 115 to the exchange's count (order CQF2J1DPJYB5),CQF2J1DPJYB5
+1790383798.6,politics,vtc-usgubto-vt-2026-11-03-gt325k,BUY,1,0.73,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQFXTHBJJYB5
