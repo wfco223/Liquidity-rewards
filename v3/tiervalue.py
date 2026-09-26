@@ -29,7 +29,8 @@ the (market, side, price) whose next slice adds the most value a dollar.
 The reward share saturates — our share is our score over the side's —
 so each side stops by itself; a side under its Target Size may be
 carried over it in one step when that pays. No market takes more than
-MARKET_CAP_FRAC of the pot. Each tier runs to the whole pot, and a
+MARKET_CAP_FRAC of the pot — the whole of it since 2026-09-26 (owner:
+"No cap — the math decides"). Each tier runs to the whole pot, and a
 prefix of that run is the plan at any smaller budget (a side stopping at
 its first slice that no longer fits), which
 gives, from one pass: each tier alone with the pot; the design's split
@@ -55,7 +56,13 @@ import time
 from .tierfair import MID_TRUST_SPREAD, SLOW_TIERS, TIERS
 
 POT_USD = 1000.0              # the tier engines' money (owner, 2026-09-24: "assume $1,000")
-MARKET_CAP_FRAC = 0.10        # no market takes more than this share of the pot
+# no cap per market (owner, 2026-09-26 "No cap — the math decides", after
+# the first plan put four Tier 2 and five Tier 3 markets at exactly the
+# $100 a 10% cap allowed — a number of mine, not his — with money still
+# worth more there): a market may take the whole pot, and stops where its
+# next slice's reward, which saturates, no longer beats its fills and
+# capital, which do not
+MARKET_CAP_FRAC = 1.0
 SLICE_USD = 5.0               # money goes out this many dollars at a time
 GAP_CUSHION = 0.05            # a side carried over its Target Size is carried this much past it
 CAND_TICKS = 3                # candidates: the touch and this many ticks behind it...
@@ -222,6 +229,28 @@ def candidates(side: str, own, other, tick: float, back_c: float = CAND_BACK_C,
         if p not in res:
             res.append(p)
     return res[:n_max]
+
+
+def tape_fill(side: str, px: float, ahead: float, own, other, tick: float,
+              print_px: float | None) -> tuple[bool, float]:
+    """The tape's verdict on an order resting at `px` behind `ahead`
+    shares at its level: filled when the other side reaches its price
+    (a taker came to it), a trade prints through its price (a taker went
+    past it), or a trade prints AT its price with nothing left ahead.
+    Anything that left the level may have been ahead of it, so the line
+    ahead only shrinks. `print_px` is a trade printed since the last
+    look, or None. Returns (filled, the line ahead now)."""
+    eps = (tick or 0.01) / 2.0
+    crossed = bool(other) and ((other[0][0] <= px + eps) if side == "BUY"
+                               else (other[0][0] >= px - eps))
+    at_level = sum(q for p, q in own if abs(p - px) < eps)
+    ahead = min(ahead, at_level)
+    through = at = False
+    if print_px is not None:
+        x = float(print_px)
+        through = (x < px - eps) if side == "BUY" else (x > px + eps)
+        at = abs(x - px) <= eps
+    return (crossed or through or (at and ahead <= 1e-9)), ahead
 
 
 class Tally:
@@ -769,29 +798,9 @@ class TierValue:
         filled = False
         if nb is not None:
             bids, asks, tick = nb
-            eps = tick / 2.0
             own, other = (bids, asks) if sp.side == "BUY" else (asks, bids)
-            # the other side at or through our price: a taker came to us
-            crossed = bool(other) and ((other[0][0] <= sp.px + eps) if sp.side == "BUY"
-                                       else (other[0][0] >= sp.px - eps))
-            # anything that left our level may have been ahead of us
-            at_level = sum(q for p, q in own if abs(p - sp.px) < eps)
-            sp.ahead = min(sp.ahead, at_level)
-            through = at = False
-            ts = (self.fam.cache.trade_seen.get(sp.slug) if hasattr(self.fam, "cache")
-                  else None)
-            if ts and max(ts) > sp.tseen + 1e-6:
-                sp.tseen = max(ts)
-                pr = None
-                try:
-                    pr = self.prints(sp.slug)
-                except Exception:  # noqa: BLE001
-                    pr = None
-                if pr:
-                    x = float(pr[0])
-                    through = (x < sp.px - eps) if sp.side == "BUY" else (x > sp.px + eps)
-                    at = abs(x - sp.px) <= eps
-            filled = crossed or through or (at and sp.ahead <= 1e-9)
+            pp, sp.tseen = self.new_print(sp.slug, sp.tseen)
+            filled, sp.ahead = tape_fill(sp.side, sp.px, sp.ahead, own, other, tick, pp)
             touch = float(own[0][0]) if own else None
             key = self._key(sp.tier, sp.side, sp.px, own, touch, tick,
                             self._target(sp.slug))
@@ -805,6 +814,24 @@ class TierValue:
                                "px": sp.px, "ts": now, "done": []})
         elif now - sp.t0 >= SPOT_H_S:
             self._end(sid, sp, 0.0, now)
+
+    def new_print(self, slug: str, tseen: float) -> tuple[float | None, float]:
+        """A trade printed in `slug` since `tseen` (the stream's Lite feed
+        notes each one; its price is the last trade's): (price or None,
+        the newest print's time)."""
+        ts = self.fam.cache.trade_seen.get(slug) if hasattr(self.fam, "cache") else None
+        if not ts or max(ts) <= tseen + 1e-6:
+            return None, tseen
+        pr = None
+        try:
+            pr = self.prints(slug)
+        except Exception:  # noqa: BLE001
+            pr = None
+        return (float(pr[0]) if pr else None), max(ts)
+
+    def last_print_at(self, slug: str) -> float:
+        ts = self.fam.cache.trade_seen.get(slug) if hasattr(self.fam, "cache") else None
+        return max(ts) if ts else 0.0
 
     def _target(self, slug: str) -> float:
         prog = self.fam.terms.current.get(slug) if hasattr(self.fam, "terms") else None

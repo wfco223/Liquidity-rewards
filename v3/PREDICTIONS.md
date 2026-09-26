@@ -1273,3 +1273,34 @@ those bounds on the first day.
 /tiers page's pay line).
 **Resolves:** 72 hours after the deploy for (a) and (b); (c) once 09-28
 has posted.
+
+### P29 — written 2026-09-26 ~19:40Z, BEFORE stage 3 (paper trading) deploys
+Two claims, each graded on its own.
+**(a) The paper fill rule catches most real fills and invents few.** Over
+the 72 hours after the deploy, of the real tender orders scored against
+their paper twins: the twin filled for at least half of the real orders
+that filled (both / (both + real only) >= 0.5), and the twin filled
+without the real order for under 10% of all the twins scored
+(paper only / all < 0.10).
+**Why:** the rule counts a fill only when the other side reaches the
+price, a trade prints through it, or a trade prints at it with nothing
+left ahead — the first two are certain fills for any order at that
+price. It misses a taker who eats part of a level from the front, which
+is why the first bound is only a half. It can invent a fill only through
+the print-at rule's assumption that anything leaving the level was ahead.
+**Falsified if:** with 10 or more real fills scored, the twins caught
+under half; or with 50 or more twins scored, 10% or more were paper-only
+(tierpaper shadow_tally, per tier and summed).
+**(b) Paper earnings are at least half of what stage 2 expects.** Over
+the first three full ET days after the deploy, Tiers 1-3 together earn on
+paper (reward less capital plus realized fills plus the change in marked
+positions) at least half of what stage 2 predicted for their money over
+the same hours.
+**Why:** stage 2 prices each spot on the live book with measured fills;
+the paper engine pays for what stage 2 leaves out — positions tying up the
+money after a fill, the averaged book discounting company that comes and
+goes, and the move rules. Those should cost something, not everything.
+**Falsified if:** the three days' paper net for Tiers 1-3 is under half
+of the "pred" total, or negative (tierpaper days, net against pred).
+**Resolves:** (a) 72 hours after the deploy; (b) after the third full ET
+day.

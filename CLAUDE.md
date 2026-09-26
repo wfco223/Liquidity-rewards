@@ -1547,7 +1547,11 @@ long and accreted, so search it rather than reading it through.
   book first; his hand's stay in as company. The best set: $5 slices,
   each to the price that adds the most a dollar; the share saturates so a
   side stops by itself; a side under its Target Size may be carried over
-  it in one step; no market past $100. Each tier runs to the whole
+  it in one step; NO CAP PER MARKET (owner, 2026-09-26 "No cap — the math
+  decides", on the first plan's page: $1,000 netting $129.30 a day with $5
+  of capital, "way too safe" — four Tier 2 and five Tier 3 markets sat at
+  exactly the $100 a 10% cap of mine allowed, with money still worth more
+  there, and Tier 1 got nothing). Each tier runs to the whole
   $1,000, so one pass gives each tier alone, the design's split (share =
   value alone over the sum) and the joint best split. Paper orders: one a
   side at its best price, followed an hour — filled when the other side
@@ -1561,6 +1565,33 @@ long and accreted, so search it rather than reading it through.
   on a rig of 6,000 markets: the Tier 1-3 plan 84 ms every 10 s, the
   Tier 4 plan 0.63 s a minute. NOT built: flickering levels counting for
   less, our own real fills grading the paper ones (stage 3).
+
+- THE TIER ENGINES, STAGE 3: PAPER TRADING (owner, 2026-09-26 "We need to
+  go back to building the bigger 4 tier earning machine"). v3/tierpaper.py,
+  READ-ONLY, on the tier fairs' thread after stage 2: an engine per tier
+  decides every second (Tier 4 every ten) what it would rest with its
+  share of the $1,000 (split once an ET day at midnight, and at the first
+  plan after a boot, by each tier's value alone over the sum), fills its
+  paper orders off the real tape by stage 2's rule, holds the positions,
+  rests one exit per position sized to what is held (a position's exit
+  side takes no entry — the lot is never offered twice), and keeps books:
+  reward on a TIME-AVERAGED book (others' size averaged over five minutes,
+  so a level that comes and goes counts for the time it is there), capital
+  at his 0.5% a day, realized fills, positions marked to the midpoint —
+  against what stage 2 predicted for the same hours; each ET day written
+  down at midnight. A side changes only when the gain a day over its
+  measured holding time beats the actions it takes at an action's price;
+  30 places and cancels a minute a tier, the best skipped move pricing
+  the action when the cap binds. A tier never commits more than its money
+  (positions count against it); a side the spread stops funding is given
+  up when its money is wanted elsewhere. THE CHECK HE ASKED FOR ("How
+  will you know how well it is estimating when everything is read only"):
+  every real tender order gets a paper twin at its price, filled by the
+  same tape rule, and is scored when the real order leaves the book (ten
+  minutes' grace for its fill to be booked) or has rested six hours —
+  both filled, only the twin, only the real order, neither (P29). No
+  switches (it places nothing); the hand-over of markets from the tender
+  and the old engine is stage 4.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

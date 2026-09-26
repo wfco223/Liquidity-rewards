@@ -264,6 +264,8 @@ class TierFair:
         # stage 2's value (v3/tiervalue.py), set by the app: its numbers
         # ride this page's payload
         self.value = None
+        # stage 3's paper engines (v3/tierpaper.py), set by the app
+        self.paper = None
 
     # -- the ground -------------------------------------------------------------
 
@@ -640,6 +642,7 @@ class TierFair:
                 "tiers": tiers, "all": self.grade_view("all"), "rows": rows,
                 "t4_stream": self._t4_view(),
                 "value": self._value_view(),
+                "paper": self._paper_view(),
                 "ticks": self.ticks, "tick_s": self.tick_s, "error": self.error,
                 "horizons": list(GRADE_HORIZONS), "mid_trust_spread": MID_TRUST_SPREAD}
 
@@ -656,6 +659,14 @@ class TierFair:
             return None
         try:
             return self.value.view()
+        except Exception as e:  # noqa: BLE001 — a readout
+            return {"ok": False, "note": f"{type(e).__name__}: {e}"[:120]}
+
+    def _paper_view(self):
+        if self.paper is None:
+            return None
+        try:
+            return self.paper.view()
         except Exception as e:  # noqa: BLE001 — a readout
             return {"ok": False, "note": f"{type(e).__name__}: {e}"[:120]}
 
