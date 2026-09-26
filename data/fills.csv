@@ -2359,3 +2359,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790407469.8,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,12,0.94,manual,0.0244,8.27,,92,97,0,0.93,0.95,0,50,the owner's own order — the engine leaves it alone,CQEAXDNVMYCD
 1790407738.3,politics,vtc-usseto-wy-2026-11-03-gt210k,BUY,0.99,0.54,earn,0.1441,0.06,,40,57,0,0.54,0.58,0.04,0.99,3 ticks behind the touch — we would hold 86% of the bid side,CQNAFAAMTYAQ
 1790408538.1,politics,ewc-usse-oh-2026-11-03-dem,SELL,-6,0.62,fix,0.0466,8.01,0.71765,61,64,0.672,0.61,0.62,0.0977,0,size trimmed by 6 to the exchange's count (order CPH09SJWAXDS),CPH09SJWAXDS
+1790411633.6,politics,vtc-usseto-ak-2026-11-03-gt275k,BUY,0.99,0.94,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQP6QH27YYCA
+1790411888.5,politics,vmc-ussemov-or-2026-11-03-d10-15,SELL,1,0.24,sell,0,0,,11,22,0.429,0.24,0.25,-0.07,0,taker dump — sold into the bid (the carved exception),CQPANJ4T0YBQ
+1790412225.1,politics,vtc-usseto-ak-2026-11-03-gt275k,BUY,0.99,0.94,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQP6QH27YYCA
