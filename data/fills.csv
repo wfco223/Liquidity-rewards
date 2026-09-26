@@ -2313,3 +2313,23 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790392035.9,politics,vtc-usseto-de-2026-11-03-gt325k,BUY,1,0.87,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQH2TVW2AYC6
 1790392035.9,politics,scc-senate-demst-2026-11-03-gte51,SELL,74.75,0.56,backfill,,0.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQH8ZZD28YCD
 1790392131.1,politics,scc-senate-demst-2026-11-03-gte51,SELL,74.75,0.56,backfill,,0.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQH8ZZD28YCD
+1790392229.9,politics,vtc-usseto-mi-2026-11-03-gt5pt6m,BUY,1,0.15,earn,0.0838,0.42,,9,48,0,0.14,0.5,-0.14,1,1 tick in front of the touch — we would hold 67% of the bid side,CQHM99FRMYAQ
+1790392456.4,politics,vmc-ussemov-or-2026-11-03-d10-15,BUY,1,0.21,probe,0.0005,0.69,,12,28,0,0.08,0.25,0,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CQHD7NZRMYBY
+1790392456.4,politics,vtc-usgubto-hi-2026-11-03-gt460k,SELL,0.99,0.15,earn,0.1235,0.2,,11,28,0,0.01,0.15,0.05,-0.99,3 ticks behind the touch — we would hold 86% of the ask side,CQHTG1JHAYCA
+1790392595.1,politics,cpoc-ussegubc-ks-2026-11-03-dgov-rsen,SELL,2,0.12,earn,2.3164,0.16,,6,12,0.318,0.11,0.13,-0.03,-2,joins the touch — the book has been quiet,CQHX4Y30JYBQ
+1790393852.2,politics,scc-hrep-rep-2026-11-03-gte235,SELL,27.31,0.02,focus,3.2448,0.48,0.003875,1,4,0,0.01,0.02,-0.0161,-45.31,focus entry: ~$2.81/day; fill odds 31%/day; EV +1.91/day,CQHX0Y79RYCD
+1790393858.8,politics,scc-hrep-rep-2026-11-03-gte235,SELL,1.68,0.02,backfill,,0.48,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQHX0Y79RYCD
+1790395010.9,politics,vtc-usseto-al-2026-11-03-gt1pt5m,SELL,0.99,0.58,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQJG7JPRPYBQ
+1790395494.8,politics,ussewc-usse-al-2026-11-03-rep,SELL,1,0.98,sell,0,0,0.9981,96,99,0.396,0.98,0.99,0.0181,0,taker dump — sold into the bid (the carved exception),CQJP1MG4CYBE
+1790395631.2,politics,scc-senate-gop-2026-11-03-lte45,SELL,68.33,0.09,sell,6.8916,5.95,0.149775,7,13,0.397,0.08,0.09,0.0598,44.67,an exit — its fill reduces the position it sits on,CQDG4GXH4YCA
+1790395725.5,politics,vtc-usseto-fl-2026-11-03-gt8pt25m,SELL,1,0.26,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQJP4Y11GYCA
+1790396279.7,politics,paccc-usho-midterms-2026-11-03-rep,SELL,9,0.088,backfill,,0.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQJ7396VJYB5
+1790397202.5,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,-1,0.74,fix,0.6718,10.37,,70,75,0.472,0.72,0.74,0.01,0,size trimmed by 1 to the exchange's count (order CPH98V786XDS),CPH98V786XDS
+1790397202.5,politics,scc-senate-gop-2026-11-03-lte45,BUY,-0.45,0.09,fix,0.2954,4.59,0.1428,7,11,0.339,0.09,0.1,-0.0528,-0.45,size trimmed by 0.45 to the exchange's count (order CPG6KAGS8XPK),CPG6KAGS8XPK
+1790397202.5,politics,ushrewc-ushr-ny-17-2026-11-03-dem,SELL,-15,0.67,fix,0,0,,65,70,0,0.67,0.68,0,73,size trimmed by 15 to the exchange's count (order CPHT9NWHTXDR),CPHT9NWHTXDR
+1790397202.5,politics,scc-hrep-rep-2026-11-03-gte200,SELL,33,0.44,void,1.7803,-0.03,0.486725,44,48,0.474,0.43,0.44,0.0467,-33,voided: the exchange has no trade for order CQHX1GFPGYBY — the row of 09-26 03:0,CQHX1GFPGYBY
+1790397202.5,politics,scc-hrep-rep-2026-11-03-gte200,SELL,23,0.44,void,1.2516,0,0.486725,45,49,0.634,0.43,0.44,0.0467,-56,voided: the exchange has no trade for order CQHX91ZW6YB5 — the row of 09-26 03:0,CQHX91ZW6YB5
+1790397202.5,politics,scc-hrep-rep-2026-11-03-gte235,SELL,1.68,0.02,backfill,,0.48,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQHX0Y79RYCD
+1790397202.5,politics,vtc-usseto-al-2026-11-03-gt1pt5m,SELL,0.99,0.58,backfill,,0.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQJG7JPRPYBQ
+1790397202.5,politics,vtc-usseto-fl-2026-11-03-gt8pt25m,SELL,1,0.26,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQJP4Y11GYCA
+1790397202.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,9,0.088,backfill,,0.77,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQJ7396VJYB5
