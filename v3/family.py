@@ -43,8 +43,9 @@ from __future__ import annotations
 
 import math
 import datetime as dt
+import threading
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from zoneinfo import ZoneInfo
 
 from . import risk
@@ -93,6 +94,16 @@ GONE_GRACE_S = 300.0
 # The purge path already gave a fresh fill this grace; this is the
 # same grace on the overwrite path.
 FEED_LAG_GRACE_S = 180.0
+# A fill the live paths may still book (owner, 2026-09-26 "Yes, build
+# it"): the hourly match against the exchange's record added an
+# execution the family's own reconcile booked seconds later, so one
+# trade sat in the journal twice until the next hour trimmed it (Texas
+# governor rep, 83 @ 77c at 12:50Z; the Minnesota Senate dem entry of
+# 115 at 23:49Z read as 230, and the tender rested an exit of 230
+# against the 115 held for three minutes). An execution of an order
+# still on our books, or waiting in limbo, is left to the live paths
+# for this long before the hourly match adds it.
+RECORD_ADD_GRACE_S = 900.0
 # A Tier 4 book the monitor's stream already carries (owner, 2026-09-25
 # "Build it, ask before deploy"): at 17:40-17:52Z 24 of 38 throttled
 # gateway reads were the engine fetching Tier 4 books the stream had.
@@ -626,6 +637,10 @@ class Family:
         # in the exchange's activity record, and the exchange's own
         # state and cancel reason for it are logged and counted
         self.gone_pending: dict[str, dict] = {}   # vanished, feed pending
+        # one lock for every path that books a fill: the cycle's reconcile
+        # and the focus tender's booking from the exchange's record run on
+        # different threads, and must never book the same trade twice
+        self._fill_lock = threading.RLock()
         self.exit_float: dict[str, dict] = {}     # "slug|side" -> {px, since, steps}
         self.float_day: dict = {"day": "", "usd": 0.0}
         self._client = None
@@ -2058,6 +2073,47 @@ class Family:
 
     def reconcile(self, open_orders: list[dict], positions: dict, now: float,
                   trades=None, capped: bool = False) -> None:
+        with self._fill_lock:
+            self._reconcile(open_orders, positions, now, trades=trades, capped=capped)
+
+    def tracks(self, oid: str) -> bool:
+        """Whether one of the live paths may still book a fill of this
+        order: it is on our books, or waiting in limbo for the feed."""
+        return oid in self.orders or oid in self.gone_pending
+
+    def book_record_fill(self, oid: str, rec: FamilyOrder | None, shares: float,
+                         px: float | None, now: float) -> float:
+        """Book what the exchange's own trade record says executed on one
+        of our orders, beyond what the journal already carries, and return
+        the shares booked (owner, 2026-09-26 "Yes, build it"). The focus
+        tender calls this the pass one of its orders shrinks or leaves the
+        book: until then a fill the position feed had not caught up with
+        was only found by the hourly match, up to an hour later, and the
+        tender planned as if nothing had filled (05:25Z, Texas Senate dem:
+        42 of a 90-share entry filled and ten seconds later it was resized
+        back up to 79). The record is matched by ORDER ID, so this can
+        only book shares the exchange says traded; the order leaves limbo
+        so the feed's later move is not booked a second time."""
+        with self._fill_lock:
+            have = sum(float(r.get("qty") or 0.0) for r in self.fills
+                       if r.get("oid") == oid)
+            todo = round(float(shares) - have, 4)
+            if todo <= 0.005:
+                return 0.0
+            gp = self.gone_pending.pop(oid, None)
+            rec = rec or (gp or {}).get("rec") or self.orders.get(oid)
+            if rec is None:
+                return 0.0
+            if px and px > 0.0 and abs(float(px) - rec.price) > 1e-9:
+                rec = replace(rec, price=round(float(px), 4))
+            self._on_fill(rec, todo, now)
+            self._log(event="record_fill", market=rec.market, side=rec.side,
+                      price=rec.price, qty=round(todo, 2), id=oid,
+                      note="booked from the exchange's trade record by order id")
+            return todo
+
+    def _reconcile(self, open_orders: list[dict], positions: dict, now: float,
+                   trades=None, capped: bool = False) -> None:
         """Adopt reality. Fills come from position deltas, never from mere
         disappearance. Scoped to markets THIS family placed in — the
         account is shared with 1.0 and 2.0, and their fills are not ours."""
