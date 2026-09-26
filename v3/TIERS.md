@@ -1,6 +1,7 @@
 # Tier engines — design draft (2026-09-25)
 
-Nothing here is built yet. Each stage below needs the owner's yes.
+Stage 1 (the fairs, v3/tierfair.py) runs; stage 2 (the value, v3/tiervalue.py)
+is built and waits for his yes to deploy. Each stage needs the owner's yes.
 
 ## What the owner asked for (2026-09-24/25)
 - "We should build a different tender/engine for each tier" — the four
@@ -93,6 +94,56 @@ expected value over the sum of the tiers that are on.
 ## Records
 Fills from the exchange's own trade record by order id. Positions from
 the exchange. One exit per position, sized to what is held.
+
+## Stage 2 — the value, read-only (owner, 2026-09-26 "We're going to build
+things from the ground up. Focus on building")
+The $1,000 is assumed, as he said; nothing waits for the money.
+
+For every tier market with a book under five minutes old, each side, each
+candidate price (a tick inside the touch where the spread allows, the
+touch, three ticks behind it, and every resting level within 6c behind),
+a day:
+- reward: our share of the side's pool by the exchange's own arithmetic
+  (scoring.py — size x df^ticks inside the Target Size window, a side
+  under its Target Size paying nobody), nothing on a market's first day
+  in its program;
+- fill cost: fills a day x shares x the loss a share. Fills a day are
+  MEASURED on paper spots (below) per tier, side, distance from the touch
+  and queue ahead, from a prior worth one day; the loss a share is what
+  a filled paper spot lost against the midpoint an hour later, per tier
+  and side, pulled toward the market's own, never under his fill floor
+  (2c), plus his concession rule past the fair;
+- capital: collateral x his cost of capital (0.5% a day, the focus
+  page's number).
+Our own resting orders are taken out of the book first (the tender's and
+the engine's; his hand's stay in as company) — the engine starts from
+nothing.
+
+The best SET: money goes out in $5 slices, each to the price whose next
+slice adds the most value a dollar across the tier. The reward share
+saturates, so each side stops by itself; a side under its Target Size may
+be carried over it in one step when that pays. No market takes more than
+$100 (a tenth of the pot). Per tier it runs to the whole $1,000, which
+gives three answers at once: each tier alone with $1,000; the design's
+split (each tier's share = its value alone over the sum); and the joint
+best split (the tiers' slices merged by value a dollar).
+
+Paper spots: one per side at the side's best price, followed for an hour.
+Filled when the other side reaches its price, a trade prints through it,
+or a trade prints at its price with nothing left ahead of it in line
+(anything that leaves the level may have been ahead). Tier 4's stream
+carries full books without trade prints, so there only the first counts
+and its fill count is a floor. Tier 3 left the tender's board on 09-24
+and with it its stream seats; its 54 markets now ride the Tier 4 monitor
+stream so they have live books.
+
+Graded: fills predicted against fills seen per tier (P28); the loss a
+share an hour after a fill; and, for our real orders, what the exchange
+paid against the meter's estimate per tier since the tier programs began
+on 09-24 (the same arithmetic the reward uses).
+
+Not in stage 2: levels that flicker counting for less, and our own real
+fills grading the paper spots — both stage 3.
 
 ## Build stages — nothing trades until stage 4
 1. Fair, read-only: shown per market, logged, graded against where the

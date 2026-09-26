@@ -48,6 +48,7 @@ from .sweep import Sweep
 from .maintenance import Maintenance
 from .ws import STREAM_SHARDS, WS_MAX_SUBS, Stream
 from .tierfair import SLOW_TIERS, TierFair, tier_of
+from .tiervalue import TierValue
 
 try:
     from zoneinfo import ZoneInfo
@@ -109,6 +110,9 @@ TIERFAIR_TICK_S = 1.0         # the tier fairs are re-estimated this often (stag
 T4_STREAM_SHARDS = 3
 T4_PER_SHARD = 2000
 T4_SUB_CHUNK = 200
+# the tiers the monitor stream carries, in order: Tier 3 first (no stream
+# seat since it left the tender's board), then the two Tier 4 programs
+T4_STREAM_TIERS = ("t3",) + tuple(SLOW_TIERS)
 T4_SLUGS_TTL_S = 60.0
 BOOT_HOLD_S = 300.0
 BOOT_HOLD_POLL_S = 10.0
@@ -1194,6 +1198,19 @@ class Monitor:
                                   extra_cache=self.t4cache,
                                   t4_status=self.t4_stream_status)
                          if pol is not None else None)
+        # stage 2 (owner, 2026-09-26 "We're going to build things from
+        # the ground up. Focus on building"): what every spot would earn
+        # and cost, paper spots graded against the tape, and the meter's
+        # estimate graded against the exchange's pay per tier —
+        # READ-ONLY, see v3/TIERS.md and v3/tiervalue.py
+        self.tiervalue = (TierValue(self.tierfair, pol,
+                                    pay=lambda: (self.mkt_claim_day, self.paid_seen),
+                                    coc=lambda: self.focus.coc_day,
+                                    floor=lambda: self.focus.fill_floor,
+                                    prints=self._last_print)
+                          if self.tierfair is not None else None)
+        if self.tierfair is not None:
+            self.tierfair.value = self.tiervalue
         self._restore()
         # the focus ground is claimed before the first family cycle can
         # act on it: the family's terms stand in until the tender reads
@@ -1240,7 +1257,10 @@ class Monitor:
     def _t4_slugs(self) -> list[str]:
         """Every Tier 4 market the ledger holds — the $5 house winners
         and the $2 coverage program — in a stable order (the $5 first),
-        so each connection keeps its own slice. Rebuilt once a minute."""
+        so each connection keeps its own slice. Rebuilt once a minute.
+        Tier 3's markets ride at the front (stage 2, 2026-09-26): they
+        left the tender's board on 09-24, and its stream seats with it,
+        so their books had come only from the old engine's scans."""
         at, cached = self._t4_list
         now = time.time()
         if cached and now - at < T4_SLUGS_TTL_S:
@@ -1252,8 +1272,8 @@ class Monitor:
             rows = []
             for slug, prog in list(pol.terms.current.items()):
                 t = tier_of(getattr(prog, "pid", ""))
-                if t in SLOW_TIERS and slug in uni:
-                    rows.append((SLOW_TIERS.index(t), slug))
+                if t in T4_STREAM_TIERS and slug in uni:
+                    rows.append((T4_STREAM_TIERS.index(t), slug))
             out = [s_ for _i, s_ in sorted(rows)]
         self._t4_list = (now, out)
         return out
@@ -1712,6 +1732,8 @@ class Monitor:
             self.focus.restore(saved["focus"])
         if saved.get("tierfair") and getattr(self, "tierfair", None) is not None:
             self.tierfair.restore(saved["tierfair"])
+        if saved.get("tiervalue") and getattr(self, "tiervalue", None) is not None:
+            self.tiervalue.restore(saved["tiervalue"])
         self.ladder_seen = {str(k): str(v) for k, v in
                             (saved.get("ladder_seen") or {}).items()}
         self.actuals_by_day = dict(saved.get("actuals_by_day") or {})
@@ -1861,6 +1883,8 @@ class Monitor:
             "focus": self.focus.to_dict(),
             "tierfair": (self.tierfair.to_dict()
                          if getattr(self, "tierfair", None) is not None else {}),
+            "tiervalue": (self.tiervalue.to_dict()
+                          if getattr(self, "tiervalue", None) is not None else {}),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
             "actuals_by_day": self.actuals_by_day,
@@ -4440,6 +4464,7 @@ class Monitor:
                     print(f"v3: shutdown save: {key}: {type(e).__name__}: {e}", flush=True)
             parts = (("focus", lambda: self.focus.to_dict()),
                      ("tierfair", lambda: self.tierfair.to_dict()),
+                     ("tiervalue", lambda: self.tiervalue.to_dict()),
                      ("bonds", lambda: self.bonds.to_dict()),
                      ("sweep", lambda: self.sweep.to_dict()),
                      ("maint", lambda: self.maint.to_dict()),
@@ -5206,8 +5231,8 @@ class Monitor:
     def _tierfair_loop(self) -> None:
         """Stage 1's clock: every TIERFAIR_TICK_S, the tier fairs from the
         books already in the cache. Reads nothing from the exchange and
-        touches no order."""
-        said = 0.0
+        touches no order. Stage 2's value runs on the same clock."""
+        said = said_v = 0.0
         while True:
             t0 = time.time()
             try:
@@ -5217,6 +5242,16 @@ class Monitor:
                 if t0 - said > 600.0:
                     said = t0
                     self._note(f"tier fairs: {type(e).__name__}: {e}")
+            tv = getattr(self, "tiervalue", None)
+            if tv is not None:
+                # stage 2 on the same clock, after the fairs it reads
+                try:
+                    tv.tick(t0)
+                except Exception as e:  # noqa: BLE001 — nor does the value
+                    tv.error = f"{type(e).__name__}: {e}"[:160]
+                    if t0 - said_v > 600.0:
+                        said_v = t0
+                        self._note(f"tier value: {type(e).__name__}: {e}")
             time.sleep(max(TIERFAIR_TICK_S - (time.time() - t0), 0.2))
 
     def sweep_op(self, op: str) -> dict:

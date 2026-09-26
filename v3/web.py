@@ -2038,21 +2038,56 @@ function tRow(r){var k='m-'+r.market;var open=(window._tOpen||{})[k];
    for(var n in ins){o+=esc(names[n]||n)+' '+pc(ins[n])+' (weight '+Math.round((w[n]||0)*100)+'%)<br>';}}
   o+='book: first '+r.depth.toLocaleString()+' shares a side average '+pc(r.bid_d)+' bid / '+pc(r.ask_d)+' ask'+(r.thin?' <span class="warn">(thin: a side holds less than that)</span>':'')+'<br>';
   if(r.g1h&&r.g1h.fair!=null)o+='this market, 1 hour ahead: fair misses '+r.g1h.fair.toFixed(2)+'¢, midpoint '+(r.g1h.mid!=null?r.g1h.mid.toFixed(2)+'¢':'–')+' ('+Math.round(r.g1h_n||0)+' readings)';
-  o+='</div>';}
+  o+='</div>'+vRow(r);}
  return o;}
 function tStream(w){if(!w||!w.wanted&&!w.subscribed)return '';
  var age=w.last_msg?Math.round(Date.now()/1000-w.last_msg):null;
  return '<div class="sub muted">Tier 4 stream: '+(w.subscribed||0).toLocaleString()+' of '+(w.wanted||0).toLocaleString()+' markets subscribed on '+esc(w.connections||'')+' connections · '+(w.books||0).toLocaleString()+' books in'
   +(age!=null?' · last frame '+age+' s ago':'')+(w.refused?' · <span class="warn">'+w.refused.toLocaleString()+' refused by the exchange'+(w.note?': '+esc(w.note):'')+'</span>':'')
   +(w.no_room?' · <span class="warn">'+w.no_room.toLocaleString()+' with no room on a connection</span>':'')+'</div>';}
+// Stage 2 (owner, 2026-09-26 "We're going to build things from the
+// ground up. Focus on building"): what every spot would earn and cost,
+// and what $1,000 would earn split across the tiers. READ-ONLY.
+var T_NAMES={t1:'Tier 1',t2:'Tier 2',t3:'Tier 3',t4:'Tier 4 · $5',t4c:'Tier 4 · $2'};
+function vSum(x){if(!x)return '–';return usd(x.value)+' a day <span class="muted">(reward '+usd(x.reward)+' − fills '+usd(x.fills)+' − capital '+usd(x.capital)+' · '+x.orders+' orders in '+x.markets+' markets, '+usd(x.coll)+' tied up)</span>';}
+function vCard(v){if(!v)return '';if(!v.ok)return '<div class="card muted">stage 2: '+esc(v.note||'not planned yet')+'</div>';
+ var o='<div class="card"><b>What $'+Math.round(v.pot).toLocaleString()+' would earn</b> <span class="pill">stage 2 — read only</span>'
+  +'<div class="muted">For every side of every tier market: the reward our order would claim (our share of the side’s pool, by the exchange’s own arithmetic), less the fills it would take (fills a day, measured on paper orders, × shares × what a fill lost an hour later, never under '+pc(v.fill_floor)+' a share), less the money it ties up ('+(v.coc_day*100).toFixed(1)+'% a day). Our own resting orders are taken out of the books; yours stay in as company. Money goes out $'+v.slice+' at a time to whichever spot adds the most a dollar; no market takes more than $'+Math.round(v.market_cap)+'. Nothing here places an order.</div>';
+ var j=v.joint||{};o+='<div class="sub"><b>Best split:</b> '+vSum(j)+'</div><div class="muted" style="margin-left:10px">';
+ ['t1','t2','t3','t4','t4c'].forEach(function(k){var x=(j.by_tier||{})[k];if(x&&x.coll>0)o+=esc(T_NAMES[k])+': '+usd(x.coll)+' → '+usd(x.value)+' a day<br>';});
+ o+='</div><div class="sub"><b>The design’s split</b> (each tier’s share = what it earns alone over the sum):</div><div class="muted" style="margin-left:10px">';
+ var tot=0;['t1','t2','t3','t4','t4c'].forEach(function(k){var t=(v.tiers||{})[k];if(!t)return;var sp=t.split||{};tot+=sp.value||0;
+  o+=esc(T_NAMES[k])+': '+Math.round((sp.share||0)*100)+'% = '+usd(sp.budget)+' → '+usd(sp.value)+' a day <span class="muted">(alone with all of it: '+usd((t.alone||{}).value)+')</span><br>';});
+ o+='together '+usd(tot)+' a day</div>';
+ var age=v.plan_at?Math.round(Date.now()/1000-v.plan_at):null;
+ o+='<div class="sub muted">planned '+(age!=null?age+' s ago':'–')+' · Tiers 1-3 every 10 s ('+((v.plan_s||{}).fast||0)+' s), Tier 4 every minute ('+((v.plan_s||{}).slow||0)+' s)'+(v.error?' · <span class="warn">'+esc(v.error)+'</span>':'')+'</div></div>';
+ return o;}
+function vTier(v,key){if(!v||!v.ok)return '';var t=(v.tiers||{})[key];if(!t)return '';var o='';var sp=t.split||{},m=t.meta||{};
+ o+='<div class="sub"><b>stage 2:</b> on its share, '+usd(sp.budget)+': '+vSum(sp)+'</div>';
+ o+='<div class="sub muted">'+(m.fresh||0).toLocaleString()+' of '+(m.markets||0).toLocaleString()+' markets with a book under 5 minutes old · '+(m.sides||0).toLocaleString()+' sides planned'+(m.first_day?' · '+m.first_day+' on their first day in the program (pays nothing)':'')+'</div>';
+ var s=t.spots||{};o+='<div class="sub muted">paper orders: '+(s.active||0)+' followed now · '+Math.round(s.graded||0)+' finished: fills predicted '+(s.pred||0).toFixed(1)+', seen '+Math.round(s.seen||0)
+  +(s.floor_only?' <span class="warn">(this stream sends no trade prints: only the other side reaching the price counts, so fills seen are a floor)</span>':(m.fresh?' · '+(m.prints||0)+' of '+m.fresh+' markets report trade prints; elsewhere only a crossing counts':''))+'</div>';
+ var l=t.loss||{},lb=l['BUY|3600'],ls=l['SELL|3600'];
+ if(lb||ls)o+='<div class="sub muted">a fill lost, an hour later: '+(lb?'bids '+lb.c.toFixed(2)+'¢ a share ('+Math.round(lb.n)+')':'')+(lb&&ls?' · ':'')+(ls?'asks '+ls.c.toFixed(2)+'¢ ('+Math.round(ls.n)+')':'')+'</div>';
+ else o+='<div class="sub muted">no paper fill graded yet — the loss a share stays at the 2¢ start until fills are measured</div>';
+ var p=t.pay||{};if(p.markets)o+='<div class="sub muted">our real orders since the tier programs began: the exchange paid '+usd(p.paid)+' where the meter estimated '+usd(p.est)+' <b>('+(p.ratio!=null?p.ratio.toFixed(2)+'×':'–')+')</b> over '+p.markets+' market-days posted'+(p.unposted_est?' · '+usd(p.unposted_est)+' estimated not posted yet':'')+'</div>';
+ return o;}
+function vTop(v,key){if(!v||!v.ok)return '';var t=(v.tiers||{})[key];if(!t||!(t.top||[]).length)return '';
+ var o='<div class="sub"><b>where its share would rest</b> (the '+t.top.length+' best):</div><div class="muted" style="margin-left:10px">';
+ t.top.forEach(function(x){o+=esc(x.name)+' — '+(x.side==='BUY'?'bid':'ask')+' '+x.qty.toLocaleString()+' @ '+pc(x.px)+' → '+usd(x.value)+' a day <span class="muted">('+usd(x.coll)+')</span><br>';});
+ return o+'</div>';}
+function vRow(r){var x=r.val;if(!x)return '';var o='';if(x.first_day)o+='<span class="warn">first day in its program — pays nothing today</span><br>';
+ ['BUY','SELL'].forEach(function(sd){var b=x[sd];if(!b)return;o+=(sd==='BUY'?'best bid':'best ask')+' $5: '+pc(b.px)+' → '+usd(b.value)+' a day (reward '+usd(b.reward)+', fills '+usd(b.fills)+', capital '+usd(b.capital)+'; '+Math.round(b.pf1h*100)+'% to fill within the hour, '+b.loss_c.toFixed(2)+'¢ a share if it does)<br>';});
+ var pl=x.plan||{};['BUY','SELL'].forEach(function(sd){if(pl[sd])o+='the tier’s plan rests '+(sd==='BUY'?'bids':'asks')+' '+pl[sd].map(function(a){return a[1].toLocaleString()+' @ '+pc(a[0]);}).join(', ')+'<br>';});
+ return o?'<div class="muted" style="margin-left:10px">'+o+'</div>':'';}
 function tRender(t){var o='<div class="card"><b>Tier fairs</b> <span class="pill">stage 1 — read only</span>'
   +'<div class="muted">A fair for every midterm-tier market, worked out again every second: the midpoint, moved only by what the book at depth, the last trade, the event’s other markets and Silver have proven they add. Each is written down every minute and checked against the midpoint 10 minutes and an hour later. Nothing on this page places, moves or cancels an order.</div>'
-  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+tStream(t.t4_stream)+'</div>';
+  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+tStream(t.t4_stream)+'</div>'+vCard(t.value);
  (t.tiers||[]).forEach(function(tr){var k='t-'+tr.key;var open=(window._tOpen||{})[k];
   o+='<div class="card"><div style="cursor:pointer" onclick="tTog(\''+k+'\')"><b>'+esc(tr.name)+'</b> <span class="muted">· '+tr.markets+' markets, '+tr.with_fair+' with a fair'+((tr.pool_day||[]).length?' · pays '+tr.pool_day.map(function(x){return '$'+x.toLocaleString();}).join('/')+' a day per event · Target Size '+(tr.target||[]).map(function(x){return x.toLocaleString();}).join('/'):' · no program on the ledger now')+'</span></div>'
    +(tr.slow?'<div class="sub muted">'+(tr.fresh||0).toLocaleString()+' with a fresh book, '+(tr.narrow||0).toLocaleString()+' with a touch 10¢ or narrower · worked out every 10 s'+(tr.rows_shown?' · the list shows the '+tr.rows_shown+' most recently traded':'')+'</div>':'')
-   +'<div class="sub">'+tMiss(tr.grade,3600)+'</div><div class="sub">'+tMiss(tr.grade,600)+'</div>';
-  if(open){(t.rows||[]).filter(function(r){return r.tier===tr.key;}).forEach(function(r){o+=tRow(r);});
+   +'<div class="sub">'+tMiss(tr.grade,3600)+'</div><div class="sub">'+tMiss(tr.grade,600)+'</div>'+vTier(t.value,tr.key);
+  if(open){o+=vTop(t.value,tr.key);(t.rows||[]).filter(function(r){return r.tier===tr.key;}).forEach(function(r){o+=tRow(r);});
    if(!tr.with_fair)o+='<div class="muted">no market in this tier has a book to read yet</div>';}
   else if(tr.with_fair)o+='<div class="muted">tap to list its markets</div>';
   o+='</div>';});
