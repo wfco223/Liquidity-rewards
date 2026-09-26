@@ -2299,3 +2299,17 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790388418.0,politics,ussewc-usse-co-2026-11-03-dem,BUY,-36,0.98,fix,0.1184,4.4,0.99605,95,99,0.351,0.98,0.99,-0.0161,0,size trimmed by 36 to the exchange's count (order CPGQYZAT8XDS),CPGQYZAT8XDS
 1790388418.0,politics,ussewc-usse-co-2026-11-03-dem,BUY,-294,0.98,fix,,0.73,,,,,,,,,size trimmed by 294 to the exchange's count (order CPGQYZAT8XDS),CPGQYZAT8XDS
 1790388418.0,politics,vtc-usgubto-vt-2026-11-03-gt325k,BUY,-1,0.73,fix,0.1543,0.03,,42,91,0,0.72,0.99,0.06,1,size trimmed by 1 to the exchange's count (order CQFXTHBJJYB5),CQFXTHBJJYB5
+1790388629.3,politics,vtc-usgubto-vt-2026-11-03-gt300k,SELL,0.99,0.59,earn,0.1429,0.06,,50,67,0,0.49,0.59,-0.01,-0.99,3 ticks behind the touch — we would hold 86% of the ask side,CQH1C7CTMYC3
+1790389337.6,politics,paccc-usho-midterms-2026-11-03-rep,BUY,9,0.087,focus,32.5255,0.16,0.0884,8,11,0.782,0.087,0.088,-0.0014,9,focus entry: ~$87.30/day; fill odds 59%/day; EV +71.53/day,CQH33NK82YBE
+1790390319.4,politics,vtc-usseto-ks-2026-11-03-gt1m,BUY,0.99,0.82,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQHE1AC7RYB5
+1790390734.7,politics,vtc-usseto-il-2026-11-03-gt4pt5m,SELL,1,0.06,earn,0.1429,0.08,,32,48,0,0.02,0.43,0.34,-1,3 ticks behind the touch — we would hold 86% of the ask side,CQHHKNB0PYCD
+1790390832.7,politics,paccc-usse-midterms-2026-11-03-dem,SELL,53,0.615,backfill,,2.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQFV18H72YCC
+1790391683.6,politics,vtc-usseto-de-2026-11-03-gt325k,BUY,1,0.87,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQH2TVW2AYC6
+1790392035.9,politics,ushrewc-ushr-tx-15-2026-11-03-dem,BUY,-32.09,0.87,fix,,1.04,,,,,,,,,size trimmed by 32.09 to the exchange's count (order CPGSFRZM4XPK),CPGSFRZM4XPK
+1790392035.9,politics,ewc-usse-tx-2026-11-03-dem,BUY,-2,0.58,fix,0.0032,3.3,0.724575,60,64,0.658,0.58,0.59,-0.1446,0,size trimmed by 2 to the exchange's count (order CPFT8Y7ZEXDJ),CPFT8Y7ZEXDJ
+1790392035.9,politics,ewc-usse-tx-2026-11-03-dem,BUY,-8,0.58,fix,,1.87,,,,,,,,,size trimmed by 8 to the exchange's count (order CPFT8Y7ZEXDJ),CPFT8Y7ZEXDJ
+1790392035.9,politics,vtc-usseto-ks-2026-11-03-gt1m,BUY,0.99,0.82,backfill,,0.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQHE1AC7RYB5
+1790392035.9,politics,paccc-usse-midterms-2026-11-03-dem,SELL,53,0.615,backfill,,2.06,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQFV18H72YCC
+1790392035.9,politics,vtc-usseto-de-2026-11-03-gt325k,BUY,1,0.87,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQH2TVW2AYC6
+1790392035.9,politics,scc-senate-demst-2026-11-03-gte51,SELL,74.75,0.56,backfill,,0.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQH8ZZD28YCD
+1790392131.1,politics,scc-senate-demst-2026-11-03-gte51,SELL,74.75,0.56,backfill,,0.75,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQH8ZZD28YCD
