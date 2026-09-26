@@ -2420,3 +2420,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790441022.0,politics,scc-hrep-rep-2026-11-03-gte205,BUY,86,0.42,focus,14.3884,0.02,0.347325,37,42,0,0.42,0.43,0.0727,86,focus entry: ~$3.04/day; fill odds 33%/day; EV +0.57/day,CQXK94KY8YC6
 1790445712.8,politics,ewc-usse-oh-2026-11-03-dem,SELL,6,0.62,backfill,,7.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPH09SJWAXDS
 1790445712.8,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,3,0.74,hand,,10.32,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CPH98V786XDS
+1790446490.3,politics,cpoc-ussegubc-ia-2026-11-03-rsweep,SELL,10,0.15,earn,0.7253,20.61,,10,15,0,0.14,0.15,-0.02,-11,joins the touch — the book has been quiet,CQD1MK756YCC
+1790447740.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,2,0.087,sell,0.006,11.87,0.0884,8,11,0.795,0.087,0.088,-0.0014,0,an exit — its fill reduces the position it sits on,CQMQ2WYNJYBY
+1790448129.2,politics,ewc-usgub-az-2026-11-03-rep,BUY,1,0.13,sell,0.2071,29.73,0.0639,10,15,0.39,0.13,0.14,0.0661,-20,an exit — its fill reduces the position it sits on,CQ5KRBM68YC3
