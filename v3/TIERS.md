@@ -1,7 +1,8 @@
 # Tier engines — design draft (2026-09-25)
 
-Stage 1 (the fairs, v3/tierfair.py) runs; stage 2 (the value, v3/tiervalue.py)
-is built and waits for his yes to deploy. Each stage needs the owner's yes.
+Stage 1 (the fairs, v3/tierfair.py) and stage 2 (the value, v3/tiervalue.py)
+run; stage 3 (paper trading, v3/tierpaper.py) is built and waits for his
+yes to deploy. Each stage needs the owner's yes.
 
 ## What the owner asked for (2026-09-24/25)
 - "We should build a different tender/engine for each tier" — the four
@@ -122,8 +123,10 @@ nothing.
 The best SET: money goes out in $5 slices, each to the price whose next
 slice adds the most value a dollar across the tier. The reward share
 saturates, so each side stops by itself; a side under its Target Size may
-be carried over it in one step when that pays. No market takes more than
-$100 (a tenth of the pot). Per tier it runs to the whole $1,000, which
+be carried over it in one step when that pays. No cap per market (owner,
+2026-09-26 "No cap — the math decides": the first plan had put four Tier 2
+and five Tier 3 markets at exactly the $100 a 10% cap of mine allowed,
+with money still worth more there). Per tier it runs to the whole $1,000, which
 gives three answers at once: each tier alone with $1,000; the design's
 split (each tier's share = its value alone over the sum); and the joint
 best split (the tiers' slices merged by value a dollar).
@@ -144,6 +147,45 @@ on 09-24 (the same arithmetic the reward uses).
 
 Not in stage 2: levels that flicker counting for less, and our own real
 fills grading the paper spots — both stage 3.
+
+## Stage 3 — paper trading, read-only (owner, 2026-09-26 "We need to go
+back to building the bigger 4 tier earning machine")
+An engine per tier, deciding every second (Tier 4 every ten) what it
+would rest, and keeping the results as if it had:
+- Money: the $1,000 split once an ET day at midnight (and at the first
+  plan after a boot), each tier's share its value alone (stage 2) over
+  the sum. A tier spends its share less what its paper positions hold.
+- Values: stage 2's arithmetic on a TIME-AVERAGED book — others' size at
+  each price averaged over five minutes, so a level that comes and goes
+  counts for the time it is there, as company and as competition for the
+  reward. The live book decides where an order can rest (never at or
+  through the other side) and when a paper order fills.
+- Every 10 s (Tier 4 every minute) the tier's money is spread across its
+  markets by stage 2's greedy; between spreads a side whose book moved is
+  re-planned on its own share of the money (at most 12 a second).
+- A side changes only when the new orders beat the old by more than the
+  move costs: the gain a day over how long that side's orders have
+  measured to stay best (10 minutes until measured), against the places
+  and cancels it takes at an action's price. Actions are capped at 30 a
+  minute a tier; when the cap binds, the best move it had to skip sets
+  the action's price for the next minute. A side the spread no longer
+  funds is given up when its money is wanted elsewhere, weakest first.
+- Fills come off the real tape by stage 2's rule. One exit per paper
+  position, sized to what is held, at the price whose reward plus gain
+  against the fair is best; a position's exit side takes no entry, so the
+  lot is never offered twice. Exits go first in the action budget.
+- The books a day: reward claimed (on the averaged book), capital tied
+  up (his 0.5% a day), realized fills, and the positions marked to the
+  midpoint — against what stage 2 predicted for the tier's money over
+  the same hours. Each ET day is written down at midnight.
+The check on the paper fills: every real order of the tender's gets a
+paper twin at its price, filled by the same tape rule; when the real
+order leaves the book (ten minutes' grace for its fill to be booked) or
+has rested six hours, the twin is scored — both filled, only the twin,
+only the real order, neither. That is the measure of how far the paper
+fills run from real ones, while nothing real is placed.
+Not in stage 3: switches (nothing to switch — it places nothing), the
+hand-over of markets from the tender and the old engine (stage 4).
 
 ## Build stages — nothing trades until stage 4
 1. Fair, read-only: shown per market, logged, graded against where the

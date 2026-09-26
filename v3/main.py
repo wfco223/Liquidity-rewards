@@ -49,6 +49,7 @@ from .maintenance import Maintenance
 from .ws import STREAM_SHARDS, WS_MAX_SUBS, Stream
 from .tierfair import SLOW_TIERS, TierFair, tier_of
 from .tiervalue import TierValue
+from .tierpaper import TierPaper
 
 try:
     from zoneinfo import ZoneInfo
@@ -1211,6 +1212,17 @@ class Monitor:
                           if self.tierfair is not None else None)
         if self.tierfair is not None:
             self.tierfair.value = self.tiervalue
+        # stage 3 (owner, 2026-09-26 "We need to go back to building the
+        # bigger 4 tier earning machine"): an engine per tier trading on
+        # paper — its orders, fills off the real tape, positions, exits
+        # and books — and a paper twin of every real tender order scored
+        # against what really filled. READ-ONLY, see v3/tierpaper.py
+        self.tierpaper = (TierPaper(self.tiervalue, self.tierfair, pol,
+                                    tender_ids=lambda: set(getattr(self.focus, "mine_ids", ())
+                                                           or ()))
+                          if self.tiervalue is not None else None)
+        if self.tierfair is not None:
+            self.tierfair.paper = self.tierpaper
         self._restore()
         # the focus ground is claimed before the first family cycle can
         # act on it: the family's terms stand in until the tender reads
@@ -1734,6 +1746,8 @@ class Monitor:
             self.tierfair.restore(saved["tierfair"])
         if saved.get("tiervalue") and getattr(self, "tiervalue", None) is not None:
             self.tiervalue.restore(saved["tiervalue"])
+        if saved.get("tierpaper") and getattr(self, "tierpaper", None) is not None:
+            self.tierpaper.restore(saved["tierpaper"])
         self.ladder_seen = {str(k): str(v) for k, v in
                             (saved.get("ladder_seen") or {}).items()}
         self.actuals_by_day = dict(saved.get("actuals_by_day") or {})
@@ -1885,6 +1899,8 @@ class Monitor:
                          if getattr(self, "tierfair", None) is not None else {}),
             "tiervalue": (self.tiervalue.to_dict()
                           if getattr(self, "tiervalue", None) is not None else {}),
+            "tierpaper": (self.tierpaper.to_dict()
+                          if getattr(self, "tierpaper", None) is not None else {}),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
             "actuals_by_day": self.actuals_by_day,
@@ -4465,6 +4481,7 @@ class Monitor:
             parts = (("focus", lambda: self.focus.to_dict()),
                      ("tierfair", lambda: self.tierfair.to_dict()),
                      ("tiervalue", lambda: self.tiervalue.to_dict()),
+                     ("tierpaper", lambda: self.tierpaper.to_dict()),
                      ("bonds", lambda: self.bonds.to_dict()),
                      ("sweep", lambda: self.sweep.to_dict()),
                      ("maint", lambda: self.maint.to_dict()),
@@ -5231,8 +5248,9 @@ class Monitor:
     def _tierfair_loop(self) -> None:
         """Stage 1's clock: every TIERFAIR_TICK_S, the tier fairs from the
         books already in the cache. Reads nothing from the exchange and
-        touches no order. Stage 2's value runs on the same clock."""
-        said = said_v = 0.0
+        touches no order. Stages 2 (the value) and 3 (the paper engines)
+        run on the same clock."""
+        said = said_v = said_p = 0.0
         while True:
             t0 = time.time()
             try:
@@ -5252,6 +5270,16 @@ class Monitor:
                     if t0 - said_v > 600.0:
                         said_v = t0
                         self._note(f"tier value: {type(e).__name__}: {e}")
+            tp = getattr(self, "tierpaper", None)
+            if tp is not None:
+                # stage 3 after the value it plans with
+                try:
+                    tp.tick(t0)
+                except Exception as e:  # noqa: BLE001 — nor does the paper
+                    tp.error = f"{type(e).__name__}: {e}"[:160]
+                    if t0 - said_p > 600.0:
+                        said_p = t0
+                        self._note(f"tier paper: {type(e).__name__}: {e}")
             time.sleep(max(TIERFAIR_TICK_S - (time.time() - t0), 0.2))
 
     def sweep_op(self, op: str) -> dict:
