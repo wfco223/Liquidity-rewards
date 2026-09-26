@@ -1169,3 +1169,29 @@ fair's did not. FAIR_VERSION "mid-2026-09-25b" restarts the fair's, the
 midpoint's and his fair's grades together; P24's three days run from
 that deploy, on the same readings, with the claim and the falsifier
 unchanged.
+
+### P27 — written 2026-09-26 ~15:30Z, BEFORE the tender's record read deploys
+**Claim:** once the tender reads the exchange's trade record by order id
+the pass one of its orders shrinks or leaves the book, its fills are
+booked live. Over the 48 hours after the deploy, politics journal rows
+with purpose "backfill" whose order id is on the tender's list are at
+most 1, and no order id is journaled for more shares than the
+exchange's record shows past the next hourly match.
+**Why:** in the twelve hours 01:30-13:45Z on 2026-09-26 there were 5
+tender fills the tender never saw live (Senate control dem 53, Texas
+Senate dem 42, House control rep 9, Texas governor rep 83 booked twice,
+House seats R >=235 booked twice), plus the Minnesota Senate dem fill of
+23:49Z on 09-25 read as 230 of 115. Two causes, both now closed in the
+rig: a shrink whose remainder was at least what filled was dropped at
+once as "a read that missed it" (the restore test compared the order's
+remainder with what it lost, not with the size it had), and the hourly
+match could add a fresh execution of an order the family's reconcile
+booked seconds later.
+**Falsified if:** 3 or more such backfill rows over the window, or any
+order id journaled past the exchange's count at the hourly match after
+it; or a tender entry is resized or re-rested on a side while its own
+shrink is unexplained (a "moved" or "rested" line on that side before
+the "filled" or the ten-minute wait).
+**Resolves:** 48 hours after the deploy (fam_politics.fills, purpose,
+oid against focus.mine_ids; the family log's journal_fixed lines; the
+focus log).

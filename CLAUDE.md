@@ -1466,6 +1466,40 @@ long and accreted, so search it rather than reading it through.
   odds the tender's House markets share. ws_t4 carries engine_hits and
   engine_misses so a check can say how many reads it saved.
 
+- THE TENDER READS THE EXCHANGE'S TRADE RECORD WHEN ITS ORDER SHRINKS
+  (owner, 2026-09-26 "Yes, write it up" ... "Yes, build it"; NOT
+  deployed without his separate yes). Five tender fills in 12 hours on
+  09-26 were found only by the hourly match: the family books a fill
+  when the position feed has moved with it, and the feed lags. Texas
+  Senate dem, 05:25Z: 42 of a 90-share entry filled and ten seconds
+  later the tender resized it back up to 79. Minnesota Senate dem,
+  23:49Z 09-25: journaled twice, read as 230 of 115, the exit rested at
+  230 for three minutes. House control rep, 04:17Z: an exit sold
+  unbooked and a second exit rested on the closed position. Now:
+  (1) the pass a tender order shrinks or leaves the book, the tender
+  reads the exchange's trade record (recent_trades, the SIGNED account
+  api, one try, 8 s, at most every FOCUS_RECORD_EVERY_S = 30 s and
+  FOCUS_RECORD_TRIES = 4 reads an order) and the family books what the
+  record names by order id at once (fam.book_record_fill, under the
+  family's _fill_lock, which reconcile now takes too; the order leaves
+  limbo so the feed's later move is not booked again; never more than
+  the order lost that time); (2) while an entry's shrink is unexplained
+  its side grows nothing — no new entry, no resize, no move — for up to
+  FOCUS_VANISH_WAIT_S; a placement withdrawn because the list never
+  showed it is checked but does not hold the side; (3) one trade is
+  booked once: the hourly match leaves an execution of an order still
+  on our books or in limbo to the live paths for RECORD_ADD_GRACE_S
+  (900 s), the tender's orders count as ours there (not "your own
+  trade"), and the tender counts a journal episode by its total, capped
+  at what the order lost. Found while building it and fixed with it: the
+  tender's "back at full size" test compared an order's remainder with
+  what it LOST (48 left >= 42 filled read as a read that missed it), so
+  a partial fill whose remainder was the larger part was dropped at
+  once; it now compares with the size the order had. The gap left: an
+  order the tender itself moves or pulls in the seconds before the
+  family sees it shrink is still found only by the hourly match. P27
+  grades it.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."

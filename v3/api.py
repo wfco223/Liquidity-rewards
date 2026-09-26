@@ -404,12 +404,16 @@ class Client:
                 break
         return out
 
-    def recent_trades(self, limit: int = 25) -> list[dict]:
+    def recent_trades(self, limit: int = 25, tries: int = 4,
+                      timeout: float | None = None) -> list[dict]:
         """Latest trade activities. The feed returns BOTH sides of every
         trade — treating that as a self-cross once dropped 1,623 of 1,623
-        real fills. Deduplication is the caller's job; this returns raw."""
+        real fills. Deduplication is the caller's job; this returns raw.
+        The focus tender reads it one try with a short timeout, so its
+        pass never waits out a retry ladder."""
         j = self.get(TRADE_API + "/v1/portfolio/activities", signed=True,
-                     params={"types": ["ACTIVITY_TYPE_TRADE"], "pageSize": limit})
+                     params={"types": ["ACTIVITY_TYPE_TRADE"], "pageSize": limit},
+                     tries=tries, timeout=timeout)
         return list(j.get("activities") or [])
 
     # -- orders (read only here) --------------------------------------------

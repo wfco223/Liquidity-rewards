@@ -294,6 +294,18 @@ FOCUS_VANISH_WAIT_S = 600.0     # an order gone from the open list is a fill onl
                                 # governor bid out for one read (13:35Z) and the tender
                                 # took it for a fill, held the side and pulled the
                                 # restored order
+# the exchange's own trade record, asked by order id the pass one of the
+# tender's orders shrinks or leaves the book (owner, 2026-09-26 "Yes,
+# build it"): until then a fill the position feed had not caught up with
+# was found only by the hourly match, and the tender planned as if
+# nothing had filled — 05:25Z, Texas Senate dem, 42 of a 90-share entry
+# filled and ten seconds later it was resized back up to 79; 04:17Z,
+# House control rep, the exit of 9 sold unbooked and a second exit was
+# rested on the closed position at 04:36Z
+FOCUS_RECORD_EVERY_S = 30.0     # at most one read of the record this often
+FOCUS_RECORD_LIMIT = 50         # the account's newest executions it reads
+FOCUS_RECORD_TIMEOUT_S = 8.0    # one try, this long: the pass never waits on it
+FOCUS_RECORD_TRIES = 4          # reads an unexplained order gets before the hourly match has it
 MINE_IDS_KEEP = 600
 FOCUS_ACTIONS_PER_PASS = 8      # places, moves and pulls a pass
 # the stream's 200 subscriptions (owner, 2026-09-10: "we'll have to
@@ -338,6 +350,48 @@ PURPOSE = "focus"
 
 def _r4(x: float) -> float:
     return round(float(x), 4)
+
+
+
+def _num(x) -> float | None:
+    """The record's number shapes: plain, a string, or {"value": "0.60"}."""
+    if isinstance(x, dict):
+        x = x.get("value")
+    try:
+        return float(x)
+    except (TypeError, ValueError):
+        return None
+
+
+def record_executions(rows, wanted: set) -> dict[str, tuple[float, float]]:
+    """Order id -> (shares, average price) over the executions the
+    exchange's activity rows name for the orders in `wanted`. A trade
+    carries both sides and the feed can repeat a row: each execution is
+    counted once, by its own id."""
+    seen: set = set()
+    acc: dict[str, list] = {}
+    for a in rows or []:
+        t = (a or {}).get("trade") or {}
+        for k in ("passiveExecution", "aggressorExecution"):
+            ex = t.get(k) or {}
+            o = ex.get("order") or {}
+            oid = str(o.get("id") or "")
+            if not oid or oid not in wanted:
+                continue
+            xid = str(ex.get("id") or "") or "|".join(
+                str(v) for v in (t.get("id"), k, ex.get("transactTime"), ex.get("lastShares")))
+            if xid in seen:
+                continue
+            seen.add(xid)
+            sh = _num(ex.get("lastShares"))
+            if not sh or sh <= 0.0:
+                continue
+            px = (_num(ex.get("lastPx")) or _num(o.get("avgPx")) or _num(o.get("price")) or 0.0)
+            got = acc.setdefault(oid, [0.0, 0.0])
+            got[0] += sh
+            got[1] += sh * px
+    return {oid: (round(sh, 4), round(n / sh, 4) if sh > 0 else 0.0)
+            for oid, (sh, n) in acc.items()}
 
 
 class Focus:
@@ -413,8 +467,12 @@ class Focus:
         self._vanish_feed: dict[str, float] = {}  # oid -> the feed's net when it vanished
         self._last_mine: dict[str, tuple] = {}    # id -> (slug, side, qty) of the tender's entries
         self._gone_by_me: dict[str, float] = {}   # ids the tender itself cancelled or replaced -> when
-        self._vanished: dict[str, tuple] = {}     # id -> (slug, side, qty, since): awaiting the journal
-        self._journaled: set[str] = set()         # journal rows already counted (oid|ts)
+        self._vanished: dict[str, tuple] = {}     # id -> (slug, side, lost, since, exit, size before): awaiting the journal
+        self._credited: dict[str, float] = {}     # "oid|since" -> journal shares already counted
+        self._record_at = 0.0                     # the last read of the exchange's trade record
+        self._record_tries: dict[str, int] = {}   # id -> reads of the record it has had
+        self._withdrawn: dict[str, float] = {}    # placements withdrawn unseen -> when
+        self.record_note = ""                     # the last read's failure, in its own words
         self.mine_ids: list[str] = []             # every order id the tender ever placed (bounded)
         self._bp_reads: list[tuple] = []          # (ts, bp) over the last window
         self.markets: list[str] = []
@@ -1011,7 +1069,8 @@ class Focus:
         a fill of it in the meantime is booked to the tender through
         the journal like any other."""
         self._claim_id(oid)
-        self._vanished[oid] = (slug, side, qty, now, is_exit)
+        self._vanished[oid] = (slug, side, qty, now, is_exit, qty)
+        self._withdrawn[oid] = now                # never rested: the record checks it, the side is not held
         if cancel:
             try:
                 r = self.fam.desk.cancel(oid, slug, initiator="auto")
@@ -1022,21 +1081,69 @@ class Focus:
 
     def _journal_fills(self, oid: str, since: float) -> float:
         """Shares the family's fill journal books to this order since
-        `since` — the one record that separates a fill from an order
-        the open list merely left out for a read."""
-        got = 0.0
+        `since` that this episode has not counted yet — the one record
+        that separates a fill from an order the open list merely left out
+        for a read. Counted by the episode's TOTAL, never row by row, so a
+        row the hourly match trims or replaces is never counted twice
+        (2026-09-26: the Minnesota Senate dem fill of 115 read as 230)."""
+        total = 0.0
         for row in list(getattr(self.fam, "fills", None) or [])[-400:]:
             if str(row.get("oid") or "") != oid:
                 continue
-            ts = float(row.get("ts") or 0.0)
-            key = f"{oid}|{ts}"
-            if ts < since - 120.0 or key in self._journaled:
+            if float(row.get("ts") or 0.0) < since - 120.0:
                 continue
-            self._journaled.add(key)
-            got += float(row.get("qty") or 0.0)
-        if len(self._journaled) > 2000:
-            self._journaled = set(list(self._journaled)[-1000:])
-        return got
+            total += float(row.get("qty") or 0.0)
+        key = f"{oid}|{since}"
+        done = self._credited.get(key, 0.0)
+        self._credited[key] = max(done, total)
+        if len(self._credited) > 2000:
+            for k in list(self._credited)[:1000]:
+                self._credited.pop(k, None)
+        return max(total - done, 0.0)
+
+    def _book_from_record(self, now: float, cur: dict) -> None:
+        """Ask the exchange's trade record, by order id, about every order
+        of the tender's that shrank or left the book with no word yet from
+        the journal (owner, 2026-09-26 "Yes, build it"). The family books
+        what the record names at once — position, cost and journal — so
+        this same pass sees the fill: the side holds, the rest of an entry
+        comes off, and the exit is sized to what is held. One try on the
+        signed account connection, never the throttled gateway; at most
+        every FOCUS_RECORD_EVERY_S, and FOCUS_RECORD_TRIES reads an order,
+        after which the hourly match still has it."""
+        for oid in list(self._record_tries):
+            if oid not in self._vanished:
+                self._record_tries.pop(oid, None)
+        waiting = [oid for oid in self._vanished
+                   if self._record_tries.get(oid, 0) < FOCUS_RECORD_TRIES]
+        if not waiting or now - self._record_at < FOCUS_RECORD_EVERY_S:
+            return
+        self._record_at = now
+        try:
+            rows = self.client.recent_trades(limit=FOCUS_RECORD_LIMIT, tries=1,
+                                             timeout=FOCUS_RECORD_TIMEOUT_S)
+        except Exception as e:  # noqa: BLE001 — the hourly match still has it
+            self.record_note = f"{type(e).__name__}: {e}"[:160]
+            return
+        self.record_note = ""
+        found = record_executions(rows, set(waiting))
+        for oid in waiting:
+            self._record_tries[oid] = self._record_tries.get(oid, 0) + 1
+            if oid not in found:
+                continue
+            slug, side, gone = self._vanished[oid][0], self._vanished[oid][1], self._vanished[oid][2]
+            shares, px = found[oid]
+            have = sum(float(r.get("qty") or 0.0) for r in list(self.fam.fills)
+                       if r.get("oid") == oid)
+            # never more than the order lost this time: a record row read
+            # twice must not book shares that never left the book
+            shares = min(shares, have + gone)
+            booked = self.fam.book_record_fill(oid, cur.get(oid), shares, px, now)
+            if booked > 0.005:
+                self._log(event="record_fill", market=slug, side=side, price=px,
+                          qty=round(booked, 2),
+                          note="booked from the exchange's trade record by order id "
+                               "— the position feed had not shown it yet")
 
     @staticmethod
     def _exit_order(o: FamilyOrder) -> bool:
@@ -1081,7 +1188,9 @@ class Focus:
             o = cur.get(oid)
             gone = qty if o is None else (qty - o.qty if o.qty < qty - 0.5 else 0.0)
             if gone > 0.0 and oid not in self._vanished:
-                self._vanished[oid] = (slug, side, gone, now, was_exit)
+                # the size it had before, beside what it lost: a shrink is
+                # "back at full size" only when it is back at THAT size
+                self._vanished[oid] = (slug, side, gone, now, was_exit, qty)
                 feed = float(((positions or {}).get(slug) or (0.0,))[0] or 0.0)
                 # a market the feed carried no row for a pass ago was flat
                 # (03:57Z, 2026-09-11: a fresh short of 337 read as 674 and
@@ -1112,10 +1221,13 @@ class Focus:
                     if abs(delta) > 0.005:
                         self._pos_adj[oid] = {"slug": slug, "delta": delta, "feed": before,
                                               "ts": now, "confirmed": False}
+        self._book_from_record(now, cur)
         for oid, rec in list(self._vanished.items()):
             slug, side, qty, since = rec[0], rec[1], rec[2], rec[3]
             was_exit = bool(rec[4]) if len(rec) > 4 else False
-            got = self._journal_fills(oid, since)
+            # never more than the order lost: a trade journaled twice read
+            # as 230 of a 115-share entry and the exit was sized to it
+            got = min(self._journal_fills(oid, since), qty)
             if got >= 0.5:
                 delta = got if side == "BUY" else -got
                 a = self._pos_adj.get(oid)
@@ -1136,8 +1248,14 @@ class Focus:
                               note=f"an entry filled — nothing new rests on this side for "
                                    f"{FOCUS_REFILL_WAIT_S / 60:g} min")
                 self._vanished.pop(oid, None)
-            elif oid in cur and cur[oid].qty >= qty - 0.5 and now - since < FOCUS_VANISH_WAIT_S:
-                # back at full size: the list had left it out for a read
+            elif (oid in cur and cur[oid].qty >= (rec[5] if len(rec) > 5 else qty) - 0.5
+                  and now - since < FOCUS_VANISH_WAIT_S):
+                # back at full size: the list had left it out for a read.
+                # Measured against the size it HAD, never against what it
+                # lost (05:25Z, 2026-09-26, Texas Senate dem: 42 of 90
+                # filled, the 48 left was "at least 42", the fill was
+                # dropped as a read that missed it, and the entry was
+                # resized back up to 79)
                 self._vanished.pop(oid, None)
                 self._pos_adj.pop(oid, None)
                 self._vanish_feed.pop(oid, None)
@@ -2182,6 +2300,15 @@ class Focus:
                     actions -= 1
                     self._log(event="pull", market=o.market, side=o.side, price=o.price,
                               qty=o.qty, why=f"over the ${self.loss_cap:,.0f} loss cap")
+        # an entry that shrank or left the book with no word yet from the
+        # exchange's record or the journal (owner, 2026-09-26): its side
+        # grows nothing until it is explained
+        # (a placement withdrawn because the list never showed it did not
+        # shrink or leave a resting order: the record still checks it, the
+        # side is not held)
+        self._withdrawn = {k: t for k, t in self._withdrawn.items() if k in self._vanished}
+        unexplained = {f"{v[0]}|{v[1]}" for oid, v in self._vanished.items()
+                       if not (len(v) > 4 and v[4]) and oid not in self._withdrawn}
         wants: list[tuple[float, str, str, dict, bool]] = []
         for slug in self.markets:
             row = self.rows.get(slug) or {}
@@ -2288,6 +2415,17 @@ class Focus:
                                else f"no book read in the last {FOCUS_ACT_AGE_S:.0f}s")
                 continue
             self.weak_since.pop(key, None)
+            if not is_exit and key in unexplained:
+                # an entry here shrank or left the book and neither the
+                # exchange's record nor the journal has said why yet: no
+                # new entry, no resize, no move — this can only stop an
+                # order, never place one. What rests stays as it is; the
+                # pulls above still run.
+                if cur is None:
+                    self._idle(key, slug, side, plan, None, now,
+                               "an order here shrank or left the book — waiting for "
+                               "the exchange's record before resting more")
+                continue
             if cur is None:
                 # a refused placement waits out the cooldown before another
                 # try (12:29-12:34Z, 2026-09-11: four orders refused every
