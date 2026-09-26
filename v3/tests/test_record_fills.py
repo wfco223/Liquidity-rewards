@@ -251,3 +251,126 @@ class TestOneTradeIsBookedOnce(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestABootReadsOnePositionFeed(Base):
+    """14:38Z, 2026-09-26, the first boot of the record read: the Texas
+    Senate dem cover of 41 filled during the restart and the new build
+    booked it from the record at 14:39:10Z. But the tender had read the
+    positions itself (flat) while the first cycle kept Texas at its last
+    value (short 41): the 41 was added to the flat reading and it rested
+    an exit sale of 41 at 67c (long 41); then, on the cycle's read, a
+    cover of 41 at 60c (short 41) — on a position that was flat. It came
+    off at 14:47:44Z; neither filled."""
+
+    def short_with_cover(self):
+        self.f.set_fair(NC, 45.0)
+        self.r.positions[NC] = (-41.0, 41 * 0.40)
+        self.r.fam.positions_seen[NC] = -41.0
+        self.r.fam.inventory[NC] = {"qty": -41.0, "cost": -41 * 0.60}
+        self.tick()
+        covers = [o for o in self.mine(NC, "BUY") if self.f._exit_order(o)]
+        self.assertEqual(len(covers), 1)
+        return covers[0]
+
+    def restart(self):
+        """A new build: a tender with no memory, the ids and fairs restored."""
+        f2 = focus_mod.Focus(self.r.fam, self.r.exchange, self.b,
+                             fair=lambda s: self.silver.get(s), alert=lambda t, m: None,
+                             clock=lambda: self.r.now, switch_on=lambda: True,
+                             buying_power=lambda: 2000.0)
+        f2.fairs = dict(self.f.fairs)
+        f2.mine_ids = list(self.f.mine_ids)
+        f2.seed(self.r.now)
+        self.f = f2
+
+    def exits(self):
+        return [o for o in self.mine(NC) if self.f._exit_order(o)]
+
+    def test_a_cover_that_filled_across_the_restart_is_booked_and_nothing_rests_on_the_flat_position(self):
+        cov = self.short_with_cover()
+        # the cover fills during the restart; the feed still says short 41
+        self.r.exchange.trades.append(trade_row(cov.id, cov.intent, cov.price, 41.0, self.r.now))
+        self.r.exchange.live.pop(cov.id, None)
+        self.restart()
+        # the first cycle runs before the tender's first pass: the cover is
+        # gone from the list and the feed has not moved, so it waits in limbo
+        self.r.switch = False
+        self.r.cycle(advance=1.0)
+        self.r.switch = True
+        self.assertIn(cov.id, self.r.fam.gone_pending)
+        for _ in range(4):                     # the tender on the cycle's read: short 41
+            self.tick()
+            self.assertFalse(self.exits(), "an exit rested on a position already closed")
+        self.assertAlmostEqual(self.booked(cov.id), 41.0, places=2)
+        view = self.f._positions_view(dict(self.r.positions), self.r.now)
+        self.assertAlmostEqual(float((view.get(NC) or (0.0,))[0]), 0.0, places=2)
+        # the feed catches up
+        self.r.positions.pop(NC, None)
+        self.r.switch = False
+        self.r.cycle(advance=60.0)
+        self.r.switch = True
+        for _ in range(4):
+            self.tick()
+            self.assertFalse(self.exits())
+        self.assertAlmostEqual(self.booked(cov.id), 41.0, places=2)
+
+    def booked(self, oid):
+        return sum(float(r.get("qty") or 0.0) for r in self.r.fam.fills if r.get("oid") == oid)
+
+    def test_an_exit_booked_while_the_feed_already_reads_flat_adds_nothing(self):
+        # the 14:39:10Z count: the booked 41 added to a flat reading made long 41
+        cov = self.short_with_cover()
+        cid = cov.id
+        self.r.exchange.live.pop(cid, None)
+        self.r.fam.orders.pop(cid, None)
+        self.f._last_mine = {cid: (NC, "BUY", 41.0, True)}
+        self.f._feed_prev = {}                 # a pass ago the feed carried no row: flat
+        self.f._feed_prev_at = self.r.now - 15.0
+        self.r.fam.fills.append({"ts": self.r.now, "market": NC, "side": "BUY", "qty": 41.0,
+                                 "px": cov.price, "oid": cid, "purpose": "sell"})
+        self.f._note_fills(self.r.now, {})
+        view = self.f._positions_view({}, self.r.now)
+        self.assertAlmostEqual(float((view.get(NC) or (0.0,))[0]), 0.0, places=2)
+        self.assertFalse(self.f._pos_adj)
+
+
+class TestTheTenderWaitsForTheCyclesPositions(unittest.TestCase):
+    """The tender works from the positions the cycle read and reconciled
+    against, from its first pass — never from a read of its own."""
+
+    def setUp(self):
+        from v3.main import Monitor
+        self.dir = tempfile.TemporaryDirectory()
+        os.environ["V3_STATE_PATH"] = os.path.join(self.dir.name, "s.json")
+        os.environ["V3_FLOOR_PATH"] = os.path.join(self.dir.name, "f.json")
+        os.environ["GITHUB_TOKEN"] = ""
+        os.environ["V3_FLATTEN"] = "0"
+        self.mon = Monitor()
+        self.calls = []
+        self.mon.focus.cycle = lambda t, pos, on: self.calls.append(dict(pos))
+        self.reads = 0
+
+        def reads(*a, **k):
+            self.reads += 1
+            return {NC: (0.0, 0.0)}
+        self.mon.client.positions_net = reads
+
+    def tearDown(self):
+        for k in ("V3_STATE_PATH", "V3_FLOOR_PATH", "V3_FLATTEN"):
+            os.environ.pop(k, None)
+        self.dir.cleanup()
+
+    def test_before_the_first_cycle_it_does_not_run_and_reads_nothing(self):
+        self.assertIsNone(getattr(self.mon, "_bond_positions", None))
+        self.assertFalse(self.mon._focus_pass(time.time()))
+        self.assertEqual(self.calls, [])
+        self.assertEqual(self.reads, 0)
+
+    def test_it_runs_on_the_cycles_read(self):
+        self.mon._bond_positions = {NC: (-41.0, 3.21)}
+        self.assertTrue(self.mon._focus_pass(time.time()))
+        self.assertEqual(self.calls, [{NC: (-41.0, 3.21)}])
+        self.assertEqual(self.reads, 0)
+        self.calls[0][NC] = (0.0, 0.0)                  # the tender's copy, not the cycle's
+        self.assertEqual(self.mon._bond_positions[NC], (-41.0, 3.21))

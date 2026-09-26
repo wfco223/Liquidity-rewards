@@ -2396,3 +2396,15 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790431137.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,2,0.44,void,0.1081,0,0.486725,45,49,0.582,0.43,0.44,0.0467,-2,voided: the exchange has no trade for order CQSS1M1T6YBE — the row of 09-26 12:3,CQSS1M1T6YBE
 1790431137.6,politics,vtc-usseto-de-2026-11-03-gt350k,SELL,0.06,0.55,backfill,,1.97,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQREN5R6GYC6
 1790431137.6,politics,vtc-usgubto-md-2026-11-03-gt2m,SELL,1,0.57,backfill,,4.67,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQP3ARJ16YBQ
+1790432275.1,politics,vtc-usseto-al-2026-11-03-gt1pt5m,BUY,0.91,0.53,sell,0.0014,0.78,,41,68,0,0.53,0.88,-0.01,-0.09,buying back the short at or under what it sold for — the bid earns while it wait,CQTKVERX6YC3
+1790433550.4,politics,ewc-usse-tx-2026-11-03-dem,BUY,41,0.6,sell,0.069,8.7,0.728025,60,63,0.786,0.6,0.61,-0.128,0,an exit — its fill reduces the position it sits on,CQM43AJRCYBE
+1790433598.2,politics,scc-hrep-rep-2026-11-03-gte200,SELL,2,0.44,void,0.1103,-0.02,0.486725,45,49,0.684,0.43,0.44,0.0467,-2,voided: the exchange has no trade for order CQV17SZK2YB5 — the row of 09-26 13:5,CQV17SZK2YB5
+1790433598.2,politics,ushrewc-ushr-tx-15-2026-11-03-dem,BUY,66.09,0.87,hand,,1.04,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CPGSFRZM4XPK
+1790433598.2,politics,ushrewc-ushr-ny-17-2026-11-03-dem,SELL,15,0.67,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CPHT9NWHTXDR
+1790433598.2,politics,ewc-usse-tx-2026-11-03-dem,BUY,14,0.58,backfill,,3.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPFT8Y7ZEXDJ
+1790433598.2,politics,scc-senate-gop-2026-11-03-lte45,BUY,0.45,0.09,backfill,,4.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPG6KAGS8XPK
+1790433598.2,politics,ussewc-usse-co-2026-11-03-dem,BUY,330,0.98,hand,,4.29,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CPGQYZAT8XDS
+1790433598.2,politics,scc-senate-gop-2026-11-03-50,BUY,40,0.14,backfill,,0.07,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPMKCMAKTXDS
+1790433598.2,politics,ewc-usse-oh-2026-11-03-dem,SELL,6,0.62,backfill,,7.95,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CPH09SJWAXDS
+1790433598.2,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,3,0.74,hand,,10.32,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CPH98V786XDS
+1790433598.2,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,-1.1,0.15,fix,0,0.04,,5,15,0.238,0.02,0.15,-0.05,1,size trimmed by 1.1 to the exchange's count (order CFVM19KVRTN1),CFVM19KVRTN1
