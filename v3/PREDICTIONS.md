@@ -1195,3 +1195,44 @@ the "filled" or the ten-minute wait).
 **Resolves:** 48 hours after the deploy (fam_politics.fills, purpose,
 oid against focus.mine_ids; the family log's journal_fixed lines; the
 focus log).
+
+### P28 — written 2026-09-26 ~19:30Z, BEFORE stage 2 (the tier value) deploys
+Three claims, each graded on its own.
+**(a) The paper fills are calibrated.** Once the hazards have a day of
+tape behind them, the fills the model predicts for its paper orders
+match the fills seen: over the 48 hours after the first 24, in each of
+Tiers 1-3 with at least 30 paper orders finished in that window, fills
+seen over fills predicted lies between 0.67 and 1.5.
+**Why:** each paper order's fill odds are written down when it is laid,
+from hazards learned on the same kind of order (tier, side, distance
+from the touch, line ahead); the tape changes from day to day, but not
+by half in a day in these books (the midpoint moves 0.01-0.4c an hour on
+average, 09-26 17:24Z).
+**Falsified if:** the ratio falls outside 0.67-1.5 in any of Tiers 1-3
+with 30 or more finished (tiervalue.grades — the difference between
+two saves a window apart, [finished, predicted, seen]).
+**(b) Tier 4 takes little of the money.** In the joint best split, both
+Tier 4 programs together hold under 10% of the $1,000 in at least half
+the plans over the same 48 hours.
+**Why:** a Tier 4 side pays $1.25 (the $5 program) or $0.50 (the $2) a
+day against a 2,000-share Target Size; Tier 1 pays $281 a side against
+25,000. At a dollar tied up, Tier 1-3 slots claim more until well past
+$1,000, and a Tier 4 side whose book already holds its target cannot pay
+a $5 slice its 0.5% a day.
+**Falsified if:** Tier 4's share of the joint split's collateral is 10%
+or more in more than half the saved states over the window
+(tiervalue view: joint.by_tier).
+**(c) The reward arithmetic holds per tier.** For our real orders, what
+the exchange pays over what the meter estimated, on the markets posted,
+lies between 0.75 and 1.25 in each of Tiers 1-3, over every day from
+09-25 to 09-28 that has 10 or more market-days posted in the tier. On
+09-24, the first day of the tier programs, it read 0.99 (Tier 1, 16
+markets), 0.85 (Tier 2, 43) and 1.06 (Tier 3, 20).
+**Why:** the value's reward is the meter's arithmetic (scoring.py's
+level reading, the pool split per event and side), which landed within
+those bounds on the first day.
+**Falsified if:** any of the three is outside 0.75-1.25 over those days
+(mkt_claim_day against paid_seen, per tier, posted markets only — the
+/tiers page's pay line).
+**Resolves:** 72 hours after the deploy for (a) and (b); (c) once 09-28
+has posted.
