@@ -2356,3 +2356,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790403900.8,politics,paccc-usho-midterms-2026-11-03-rep,SELL,2,0.088,hand,,0.08,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQMCFAHAPYB5
 1790404899.1,politics,ussewc-usse-al-2026-11-03-rep,SELL,1,0.98,void,0,0,0.9981,96,99,0.391,0.98,0.99,0.0181,0,voided: the exchange has no trade for order CQKGHH2EEYB5 — the row of 09-26 05:0,CQKGHH2EEYB5
 1790404899.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,2,0.088,hand,,0.08,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQMCFAHAPYB5
+1790407469.8,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,12,0.94,manual,0.0244,8.27,,92,97,0,0.93,0.95,0,50,the owner's own order — the engine leaves it alone,CQEAXDNVMYCD
+1790407738.3,politics,vtc-usseto-wy-2026-11-03-gt210k,BUY,0.99,0.54,earn,0.1441,0.06,,40,57,0,0.54,0.58,0.04,0.99,3 ticks behind the touch — we would hold 86% of the bid side,CQNAFAAMTYAQ
+1790408538.1,politics,ewc-usse-oh-2026-11-03-dem,SELL,-6,0.62,fix,0.0466,8.01,0.71765,61,64,0.672,0.61,0.62,0.0977,0,size trimmed by 6 to the exchange's count (order CPH09SJWAXDS),CPH09SJWAXDS
