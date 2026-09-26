@@ -1196,7 +1196,7 @@ the "filled" or the ten-minute wait).
 oid against focus.mine_ids; the family log's journal_fixed lines; the
 focus log).
 
-### P28 — written 2026-09-26 ~19:30Z, BEFORE stage 2 (the tier value) deploys
+### P28 — written 2026-09-26 ~17:50Z, BEFORE stage 2 (the tier value) deploys (PR #343, merged 17:57Z)
 Three claims, each graded on its own.
 **(a) The paper fills are calibrated.** Once the hazards have a day of
 tape behind them, the fills the model predicts for its paper orders
