@@ -2294,3 +2294,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790383798.6,politics,ushrewc-ushr-tx-15-2026-11-03-dem,BUY,-34,0.87,fix,,1.04,,,,,,,,,size trimmed by 34 to the exchange's count (order CPGSFRZM4XPK),CPGSFRZM4XPK
 1790383798.6,politics,ewc-usse-mn-2026-11-03-dem,BUY,-115,0.9,fix,15.0767,0.01,0.8917,87,91,0.573,0.89,0.9,0.0083,115,size trimmed by 115 to the exchange's count (order CQF2J1DPJYB5),CQF2J1DPJYB5
 1790383798.6,politics,vtc-usgubto-vt-2026-11-03-gt325k,BUY,1,0.73,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQFXTHBJJYB5
+1790384067.0,politics,vmc-ushrmov-ca-47-2026-11-03-rwin,SELL,1,0.02,manual,0.0833,1.89,,1,7,0,0.01,0.02,0.01,-1,the owner's own order — the engine leaves it alone,CQE9P9GT6YCD
+1790386596.8,politics,vtc-usseto-ri-2026-11-03-gt400k,BUY,0.96,0.29,earn,0.098,0.3,,28,37,0.324,0.29,0.32,-0.03,1.96,1 tick in front of the touch — we would hold 71% of the bid side,CQGB4Z1R6YB5
+1790388418.0,politics,ussewc-usse-co-2026-11-03-dem,BUY,-36,0.98,fix,0.1184,4.4,0.99605,95,99,0.351,0.98,0.99,-0.0161,0,size trimmed by 36 to the exchange's count (order CPGQYZAT8XDS),CPGQYZAT8XDS
+1790388418.0,politics,ussewc-usse-co-2026-11-03-dem,BUY,-294,0.98,fix,,0.73,,,,,,,,,size trimmed by 294 to the exchange's count (order CPGQYZAT8XDS),CPGQYZAT8XDS
+1790388418.0,politics,vtc-usgubto-vt-2026-11-03-gt325k,BUY,-1,0.73,fix,0.1543,0.03,,42,91,0,0.72,0.99,0.06,1,size trimmed by 1 to the exchange's count (order CQFXTHBJJYB5),CQFXTHBJJYB5
