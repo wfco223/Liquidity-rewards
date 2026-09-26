@@ -2410,3 +2410,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790433598.2,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,-1.1,0.15,fix,0,0.04,,5,15,0.238,0.02,0.15,-0.05,1,size trimmed by 1.1 to the exchange's count (order CFVM19KVRTN1),CFVM19KVRTN1
 1790435841.7,politics,usgubewc-usgub-co-2026-11-03-dem,BUY,6.94,0.97,earn,1.318,6.81,0.997725,96,99,0.053,0.97,0.98,-0.0277,6.94,at the touch — a fill here is 3 ticks inside value (Silver + evidence),CQP697R3CYAQ
 1790435901.8,nfl,aqc-nfl-nfc-2027-01-24-champq-nyg,SELL,-1.4,0.15,fix,0,0.04,,5,15,0.238,0.02,0.15,-0.05,1,size trimmed by 1.4 to the exchange's count (order CFVM19KVRTN1),CFVM19KVRTN1
+1790438501.5,politics,vtc-usseto-mn-2026-11-03-gt2pt75m,SELL,0.96,0.05,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQWT09BY4YBY
+1790438694.3,politics,cpoc-ussegubc-oh-2026-11-03-rsweep,SELL,5,0.19,sell,2.5,0.79,,25,31,0.659,0.19,0.2,0.08,0,selling filled stock — it earns while it waits,CQW4BP9F2YC3
+1790439465.8,politics,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,SELL,27.81,0.12,sell,2.5,1.01,,12,19,0.212,0.09,0.12,0.03,12.19,selling filled stock — it earns while it waits,CQW4DFV1AYBQ
+1790439582.2,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,-3,0.74,fix,0.6718,10.37,,70,75,0.472,0.72,0.74,0.01,0,size trimmed by 3 to the exchange's count (order CPH98V786XDS),CPH98V786XDS
+1790439582.2,politics,ewc-usse-oh-2026-11-03-dem,SELL,-6,0.62,fix,0.0466,8.01,0.71765,61,64,0.672,0.61,0.62,0.0977,0,size trimmed by 6 to the exchange's count (order CPH09SJWAXDS),CPH09SJWAXDS
+1790439582.2,politics,scc-hrep-rep-2026-11-03-gte200,SELL,3,0.44,void,0.1287,-0.01,0.486725,46,50,0.745,0.43,0.44,0.0467,-3,voided: the exchange has no trade for order CQW5GKYF2YCA — the row of 09-26 15:1,CQW5GKYF2YCA
+1790439582.2,politics,vtc-usseto-mn-2026-11-03-gt2pt75m,SELL,0.96,0.05,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQWT09BY4YBY
