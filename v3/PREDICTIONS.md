@@ -1026,6 +1026,20 @@ cover whose short fell by its size within five minutes is still logged
 **Resolves:** 48 hours after the deploy (the saved state's
 fam_politics.fills, purpose and side; the family log's silent_cancel).
 
+
+**Graded 2026-09-26 ~18:30Z (owner: "Yes, add them") — neither held nor
+falsified.** Window 09-24 17:14:39Z to 09-26 17:14:39Z. By the letter,
+10 of the 60 bid-side exit fills of a share or more (purpose sell, focus
+or backfill, side BUY) came in only through the backfill: 16.7%, above
+the 10% claim and under the 20% falsifier. Counting covers alone
+(excluding the tender's entry bids, which the letter's "focus" takes in),
+4 of 43: 9.3%, under 10%. Before the fix the share had been about 40%
+(48 backfill rows against 72 booked live over three days), so the sign
+fix did most of what it was for. What it taught: the letter counted the
+tender's entry bids as "exit fills", which blurred the measure — six of
+the ten backfill rows were House seat buys on 09-24 20:54-23:23Z, not
+covers. No cover whose short fell by its size was logged silent_cancel
+in the logs kept (12:59Z onward on 09-26).
 ### P22 — written 2026-09-24 ~20:50Z, BEFORE 2026-09-22 finishes posting
 **Claim:** a market that joins a reward program partway through an ET
 day gets no row from the rewards endpoint for that day, whatever we
@@ -1196,6 +1210,29 @@ the "filled" or the ten-minute wait).
 oid against focus.mine_ids; the family log's journal_fixed lines; the
 focus log).
 
+
+**Graded early, 2026-09-26 ~18:30Z (owner: "Yes, add them") — falsified
+by the letter; the cause is not the record read.** One order id was
+journaled past the exchange's count at the hourly match after it: the
+tender's 3-share ask on House seats R >=200 (CQW5GKYF2YCA, 44c), booked
+as sold at 15:18:21Z, still journaled at the 15:19:59Z match and voided
+at the 16:19:53Z one ("no exchange trade for this order — it was
+cancelled, not filled"). The cause: the family's last-seen position for
+that market had been stuck at 148 since at least 13:45Z (before this
+deploy) while the feed carried no row for it — flat — so every cycle read
+a move of -148, and any of our asks there that left the order list was
+matched to it and booked as a sale. It happened three times that day
+(14:00:49Z and 14:40:46Z, 2 @ 44c each, before the record read existed;
+15:18Z, 3 @ 44c), all voided by the hourly match; after the third the
+tender rested a 3-share cover on the flat position, which was moved into
+an entry bid and never filled — nothing traded on that market that day.
+The record read itself did what it claimed so far: one booking (Texas
+Senate dem 41 @ 60c at 14:39:10Z, correct against the exchange's record)
+and no tender fill found only by the backfill by 18:02Z. What it taught:
+a fill booked from a position move is only as good as the last position
+seen, and a market that drops out of the feed never refreshes it. The fix
+(reset it to zero when the guarded feed shows no row) was proposed and is
+NOT built (owner, 18:25Z: "None for now").
 ### P28 — written 2026-09-26 ~17:50Z, BEFORE stage 2 (the tier value) deploys (PR #343, merged 17:57Z)
 Three claims, each graded on its own.
 **(a) The paper fills are calibrated.** Once the hazards have a day of
