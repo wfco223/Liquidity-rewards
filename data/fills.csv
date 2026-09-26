@@ -2423,3 +2423,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790446490.3,politics,cpoc-ussegubc-ia-2026-11-03-rsweep,SELL,10,0.15,earn,0.7253,20.61,,10,15,0,0.14,0.15,-0.02,-11,joins the touch — the book has been quiet,CQD1MK756YCC
 1790447740.2,politics,paccc-usho-midterms-2026-11-03-rep,BUY,2,0.087,sell,0.006,11.87,0.0884,8,11,0.795,0.087,0.088,-0.0014,0,an exit — its fill reduces the position it sits on,CQMQ2WYNJYBY
 1790448129.2,politics,ewc-usgub-az-2026-11-03-rep,BUY,1,0.13,sell,0.2071,29.73,0.0639,10,15,0.39,0.13,0.14,0.0661,-20,an exit — its fill reduces the position it sits on,CQ5KRBM68YC3
+1790449068.5,politics,paccc-usse-midterms-2026-11-03-dem,BUY,5,0.618,sell,0.339,9.92,0.5,61,65,0.433,0.618,0.619,0.118,-48,an exit — its fill reduces the position it sits on,CQPNEHE9AYBY
+1790449862.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,45,0.618,sell,0.3073,10.14,0.5,60,64,0.614,0.618,0.619,0.118,-3,an exit — its fill reduces the position it sits on,CQPNEHE9AYBY
+1790450631.2,politics,paccc-usse-midterms-2026-11-03-dem,BUY,3,0.618,sell,0.0192,10.36,0.5,60,63,0.707,0.618,0.619,0.118,0,an exit — its fill reduces the position it sits on,CQPNEHE9AYBY
+1790452218.5,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,-1,0.74,fix,0.6718,10.37,,70,75,0.472,0.72,0.74,0.01,0,size trimmed by 1 to the exchange's count (order CPH98V786XDS),CPH98V786XDS
+1790452218.5,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,-2,0.74,fix,,10.32,,,,,,,,,size trimmed by 2 to the exchange's count (order CPH98V786XDS),CPH98V786XDS
