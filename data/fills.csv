@@ -2371,3 +2371,17 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790421019.1,politics,vtc-usgubto-md-2026-11-03-gt2pt15m,SELL,0.99,0.21,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQRFRRGEWYCA
 1790423738.3,politics,cpoc-ussegubc-mi-2026-11-03-dsweep,BUY,-2,0.74,fix,0.6718,10.37,,70,75,0.472,0.72,0.74,0.01,0,size trimmed by 2 to the exchange's count (order CPH98V786XDS),CPH98V786XDS
 1790423738.3,politics,vtc-usgubto-md-2026-11-03-gt2pt15m,SELL,0.99,0.21,backfill,,0.03,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQRFRRGEWYCA
+1790424536.1,politics,vtc-usgubto-pa-2026-11-03-gt6pt5m,BUY,0.87,0.2,probe,0.1667,0.08,,18,25,0.289,0.2,0.24,-0.01,1.87,a scout — this market's pool could pay; but I don't know enough yet; what happen,CQSAHD4VMYBQ
+1790425817.2,politics,scc-senate-gop-2026-11-03-lte45,SELL,44,0.09,sell,5.1684,5.62,0.149775,8,13,0.559,0.09,0.1,0.0598,0,an exit — its fill reduces the position it sits on,CQMV7725YYBY
+1790425962.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,2,0.44,focus,0.1081,0,0.486725,45,49,0.582,0.43,0.44,0.0467,-2,focus entry: ~$0.11/day; fill odds 34%/day; EV +0.00/day,CQSS1M1T6YBE
+1790426229.4,politics,vtc-usgubto-ny-2026-11-03-gt6pt5m,BUY,0.99,0.52,backfill,,5.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQMR54WMAYCC
+1790426241.8,politics,vtc-usgubto-ny-2026-11-03-gt6m,SELL,1,0.44,earn,0.1538,0.12,,29,52,0,0.22,0.45,-0.04,-1,1 tick in front of the touch — we would hold 92% of the ask side,CQSRG6JB4YB5
+1790426805.8,politics,vtc-usseto-al-2026-11-03-gt1pt7m,BUY,0.99,0.53,earn,0.1236,0.11,,45,63,0,0.45,0.65,-0.01,0.99,3 ticks behind the touch — we would hold 86% of the bid side,CQSYBJZTAYAQ
+1790426961.8,politics,vmc-ussemov-al-2026-11-03-r20-25,SELL,1,0.11,backfill,,0.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQSAQ5CNRYCA
+1790427024.2,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,83,0.77,backfill,,5.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQMYSJQF2YCD
+1790427172.1,politics,vmc-usgubmov-il-2026-11-03-d10-15,SELL,1,0.08,earn,0.0961,0.08,,11,24,0,0.12,0.32,0.09,-1,3 ticks behind the touch — we would hold 86% of the ask side,CQT0FR6MGYBQ
+1790427172.1,politics,usgubewc-usgub-tx-2026-11-03-dem,BUY,148,0.24,focus,38.4312,0.04,0.2657,21,25,0.546,0.23,0.24,-0.0257,175,focus entry: ~$22.17/day; fill odds 49%/day; EV +13.77/day,CQT0TK016YB5
+1790427484.1,politics,scc-senate-gop-2026-11-03-50,BUY,-40,0.14,fix,11.2604,0.08,0.109575,11,16,0,0.13,0.14,0.0304,112,size trimmed by 40 to the exchange's count (order CPMKCMAKTXDS),CPMKCMAKTXDS
+1790427484.1,politics,vtc-usgubto-ny-2026-11-03-gt6pt5m,BUY,0.99,0.52,backfill,,5.85,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQMR54WMAYCC
+1790427484.1,politics,vmc-ussemov-al-2026-11-03-r20-25,SELL,1,0.11,backfill,,0.73,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQSAQ5CNRYCA
+1790427484.1,politics,usgubewc-usgub-tx-2026-11-03-rep,SELL,83,0.77,backfill,,5.84,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQMYSJQF2YCD
