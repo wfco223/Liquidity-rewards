@@ -2493,3 +2493,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790541549.1,politics,scc-hrep-rep-2026-11-03-gte195,SELL,27.18,0.61,backfill,,1.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRMHCTDBCYBY
 1790544332.3,politics,vtc-usseto-wy-2026-11-03-gt250k,BUY,-0.8,0.31,fix,0.1389,0.04,,21,33,0,0.31,0.32,0.03,0.99,size trimmed by 0.8 to the exchange's count (order CPXPQT3ZCXDS),CPXPQT3ZCXDS
 1790544332.3,politics,scc-hrep-rep-2026-11-03-gte195,SELL,27.18,0.61,backfill,,1.23,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRMHCTDBCYBY
+1790547450.6,politics,vtc-usseto-la-2026-11-03-gt1pt4m,BUY,1,0.76,earn,0.1296,0.09,,73,95,0.245,0.57,0.98,-0.08,0,5 ticks in front of the touch — we would hold 91% of the bid side,CRPWJQW60YBE
