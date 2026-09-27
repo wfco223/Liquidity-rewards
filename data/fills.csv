@@ -2456,3 +2456,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790490873.6,politics,ushrewc-ushr-nc-01-2026-11-03-rep,BUY,7,0.4,sell,0,0.02,,37,43,0.014,0.39,0.4,0,7,buying back the short at or under what it sold for — the bid earns while it wait,CR97KNSH0YCC
 1790495230.2,politics,ussewc-usse-al-2026-11-03-dem,SELL,6,0.02,earn,1.0057,39.22,0.0025,1,3,0.447,0.01,0.03,-0.0175,-10,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CQ8Q90308YBE
 1790495620.2,politics,scc-hrep-rep-2026-11-03-gte180,SELL,12,0.85,focus,0.6166,-0,0.890625,83,88,0,0.84,0.85,0.0406,-12,focus entry: ~$0.62/day; fill odds 36%/day; EV +0.01/day,CRAAGSYMWYAQ
+1790496152.2,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,10.94,0.02,backfill,,43.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ440V4PAYBY
+1790496627.2,politics,vtc-usseto-ok-2026-11-03-gt900k,SELL,0.9,0.75,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRAJFGCF2YBQ
+1790496992.3,politics,cpoc-ussegubc-tx-2026-11-03-dsweep,SELL,9,0.24,sell,0,0,,22,27,0.344,0.24,0.25,0.01,0,taker dump — sold into the bid (the carved exception),CRAP3PT5YYCA
+1790500241.6,politics,scc-hrep-rep-2026-11-03-gte180,SELL,12,0.85,void,0.6166,-0,0.890625,83,88,0,0.84,0.85,0.0406,-12,voided: the exchange has no trade for order CRAAGSYMWYAQ — the row of 09-27 07:5,CRAAGSYMWYAQ
+1790500241.6,politics,usgubewc-usgub-ct-2026-11-03-rep,BUY,10.94,0.02,backfill,,43.96,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ440V4PAYBY
+1790500241.6,politics,vtc-usseto-ok-2026-11-03-gt900k,SELL,0.9,0.75,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRAJFGCF2YBQ
