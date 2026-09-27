@@ -12596,3 +12596,7 @@ date,market,program_type,reward_usd,status
 2026-09-24,ussewc-usse-va-2026-11-03-dem,liquidityProgram,0.01,PENDING
 2026-09-24,ussewc-usse-wv-2026-11-03-rep,liquidityProgram,0.04,PENDING
 2026-09-24,ussewc-usse-wy-2026-11-03-dem,liquidityProgram,0.01,PENDING
+2026-09-25,ewc-usgub-ks-2026-11-03-dem,liquidityProgram,0.16,PENDING
+2026-09-25,ewc-usse-me-2026-11-03-dem,liquidityProgram,0.5,PENDING
+2026-09-25,scc-senate-gop-2026-11-03-55,liquidityProgram,0.15,PENDING
+2026-09-25,usgubewc-usgub-ar-2026-11-03-rep,liquidityProgram,0.05,PENDING
