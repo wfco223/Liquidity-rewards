@@ -2476,3 +2476,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790507479.3,cfb,aachc-cfb-wins-2026-11-28-pennst-7pt5wins,BUY,0.45,0.83,backfill,,1.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRBVK5PX0YAQ
 1790507479.3,politics,ussewc-usse-nm-2026-11-03-dem,SELL,10,0.97,sell,0,0,0.99635,96,99,0.436,0.97,0.98,0.0264,0,taker dump — sold into the bid (the carved exception),CRD7H4C7EYCD
 1790509820.8,politics,ewc-usgub-az-2026-11-03-rep,BUY,1,0.13,sell,0.098,46.87,0.064475,10,14,0.514,0.13,0.14,0.0655,-19,an exit — its fill reduces the position it sits on,CQ5KRBM68YC3
+1790512527.5,politics,ushrewc-ushr-nc-01-2026-11-03-rep,SELL,7,0.39,sell,0,0,,36,41,0.43,0.39,0.4,0,0,taker dump — sold into the bid (the carved exception),CREDY3QKWYC6
+1790514362.0,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.26,sell,1.4277,2.6,,19,27,0.575,0.26,0.27,0.03,0,buying back the short at or under what it sold for — the bid earns while it wait,CRCN3QCQMYCD
