@@ -2487,3 +2487,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790523605.0,politics,cpoc-ussegubc-ia-2026-11-03-rsweep,BUY,1,0.14,sell,0.0082,45.96,,12,16,0.355,0.14,0.15,0,-10,buying back the short at or under what it sold for — the bid earns while it wait,CQ9QDEZGGYBQ
 1790525001.5,politics,usgubewc-usgub-ct-2026-11-03-dem,SELL,3,0.97,sell,0,0,0.9955,95,99,0.311,0.97,0.98,0.0255,0,taker dump — sold into the bid (the carved exception),CRHH6A5ZYYAQ
 1790525870.8,politics,ewc-usgub-az-2026-11-03-rep,BUY,1,0.13,backfill,,50.24,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5KRBM68YC3
+1790530437.5,politics,ewc-usgub-ia-2026-11-03-dem,SELL,6,0.85,sell,0.0035,53.47,0.917975,83,87,0.466,0.84,0.85,0.068,4,an exit — its fill reduces the position it sits on,CQ3WBZ830YAQ
