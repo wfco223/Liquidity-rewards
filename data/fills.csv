@@ -2440,3 +2440,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790476122.7,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,0.94,0.24,probe,0,0.08,,23,31,0.095,0.27,0.28,-0.03,0.94,a scout — this market's pool could pay; but I don't know enough yet; what happen,CR5XWZ5W4YAQ
 1790476259.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,20,0.45,earn,3.6909,5.51,,45,49,0,0.45,0.46,-0.02,20,joins the touch — the book has been quiet,CR19874E8YBY
 1790477573.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,64.68,0.22,sell,0.9066,13.73,0.265775,21,25,0.757,0.21,0.22,0.0458,106.32,an exit — its fill reduces the position it sits on,CQT8F9FJ0YCD
+1790478324.6,politics,usgubewc-usgub-ne-2026-11-03-rep,BUY,0.01,0.91,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CR64TAA2TYC6
+1790478775.4,politics,vmc-ushrmov-ca-47-2026-11-03-rwin,SELL,9,0.02,manual,0.0803,28.2,,1,5,0.334,0.01,0.02,0.01,-10,the owner's own order — the engine leaves it alone,CQE9P9GT6YCD
+1790479549.5,politics,cpoc-ussegubc-me-2026-11-03-rsweep,SELL,10,0.05,earn,0.5685,20.71,,1,4,0.365,0.05,0.08,-0.03,-10,joins the touch — the book has been quiet,CQMQEQ1ZAYBQ
+1790481833.1,politics,usgubewc-usgub-ne-2026-11-03-rep,BUY,0.01,0.91,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CR64TAA2TYC6
