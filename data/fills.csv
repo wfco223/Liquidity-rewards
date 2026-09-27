@@ -2451,3 +2451,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790488841.3,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,SELL,1,0.36,sell,0,0,,32,40,0.323,0.36,0.37,0,0,taker dump — sold into the bid (the carved exception),CR8TT3M5YYB5
 1790488841.3,cfb,aachc-cfb-wins-2026-11-28-hou-9pt5wins,SELL,1,0.19,sell,0,0,,20,27,0.419,0.19,0.2,0.05,0,taker dump — sold into the bid (the carved exception),CR8TSZ7ZEYAQ
 1790488841.3,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.3,sell,0,0,,11,36,0.417,0.3,0.31,-0.05,0,taker dump — sold into the bid (the carved exception),CR8TNW2D8YBE
+1790489228.0,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.3,sell,2.8549,0.08,,22,37,0.417,0.3,0.31,0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CR8V6EEHGYCA
+1790490873.6,politics,ushrewc-ushr-nc-01-2026-11-03-rep,BUY,7,0.4,sell,0.0163,42.36,,37,43,0.014,0.39,0.4,0,0,buying back the short at or under what it sold for — the bid earns while it wait,CQ4YH8RM4YBY
+1790490873.6,politics,ushrewc-ushr-nc-01-2026-11-03-rep,BUY,7,0.4,sell,0,0.02,,37,43,0.014,0.39,0.4,0,7,buying back the short at or under what it sold for — the bid earns while it wait,CR97KNSH0YCC
