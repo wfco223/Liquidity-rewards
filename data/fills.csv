@@ -2444,3 +2444,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790478775.4,politics,vmc-ushrmov-ca-47-2026-11-03-rwin,SELL,9,0.02,manual,0.0803,28.2,,1,5,0.334,0.01,0.02,0.01,-10,the owner's own order — the engine leaves it alone,CQE9P9GT6YCD
 1790479549.5,politics,cpoc-ussegubc-me-2026-11-03-rsweep,SELL,10,0.05,earn,0.5685,20.71,,1,4,0.365,0.05,0.08,-0.03,-10,joins the touch — the book has been quiet,CQMQEQ1ZAYBQ
 1790481833.1,politics,usgubewc-usgub-ne-2026-11-03-rep,BUY,0.01,0.91,backfill,,0.42,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CR64TAA2TYC6
+1790483239.2,politics,vtc-usseto-mi-2026-11-03-gt4pt6m,SELL,1,0.98,sell,0.0001,2.51,,78,94,0.316,0.58,0.99,-0.09,0,selling filled stock — it earns while it waits,CR5HSYBAYYC3
+1790484761.7,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,50,0.77,sell,0.2793,23.13,0.7236,75,79,0.289,0.77,0.78,0.0464,0,buying back the short at or under what it sold for — the bid earns while it wait,CQKZV7PMTYCA
