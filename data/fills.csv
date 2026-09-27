@@ -2436,3 +2436,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790467069.6,politics,scc-hrep-rep-2026-11-03-gte210,BUY,-108.42,0.28,fix,9.9551,0.03,0.22455,27,32,0.351,0.28,0.29,0.0555,119.84,size trimmed by 108.42 to the exchange's count (order CPQS1CVS0XDJ),CPQS1CVS0XDJ
 1790467087.5,politics,scc-hrep-rep-2026-11-03-gte180,SELL,88,0.82,sell,18.7341,0.74,0.8926,88,95,0.215,0.82,0.88,0.0726,0,an exit — its fill reduces the position it sits on,CR36B7HMPYBY
 1790468933.1,politics,ewc-usse-me-2026-11-03-rep,BUY,42,0.4,sell,1.1164,0.46,0.2775,34,39,0.657,0.4,0.41,0.1225,0,an exit — its fill reduces the position it sits on,CR3WGHFRPYCA
+1790475166.8,politics,paccc-usho-midterms-2026-11-03-rep,BUY,128,0.087,focus,1.4893,0.11,0.0877,7,10,0.828,0.087,0.088,-0.0007,171,focus entry: ~$49.46/day; fill odds 60%/day; EV +35.09/day,CR5NBMYYTYCA
+1790476122.7,politics,cpoc-ussec-tx-mi-me-2026-11-03-rsweep,BUY,0.94,0.24,probe,0,0.08,,23,31,0.095,0.27,0.28,-0.03,0.94,a scout — this market's pool could pay; but I don't know enough yet; what happen,CR5XWZ5W4YAQ
+1790476259.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,BUY,20,0.45,earn,3.6909,5.51,,45,49,0,0.45,0.46,-0.02,20,joins the touch — the book has been quiet,CR19874E8YBY
+1790477573.6,politics,usgubewc-usgub-tx-2026-11-03-dem,SELL,64.68,0.22,sell,0.9066,13.73,0.265775,21,25,0.757,0.21,0.22,0.0458,106.32,an exit — its fill reduces the position it sits on,CQT8F9FJ0YCD
