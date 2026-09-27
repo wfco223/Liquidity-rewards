@@ -2480,3 +2480,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790514362.0,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,BUY,1,0.26,sell,1.4277,2.6,,19,27,0.575,0.26,0.27,0.03,0,buying back the short at or under what it sold for — the bid earns while it wait,CRCN3QCQMYCD
 1790515854.2,politics,ussewc-usse-ks-2026-11-03-rep,SELL,20,0.67,earn,1.2044,0.57,0.651875,66,71,0,0.69,0.7,-0.0181,-20,at the touch — a fill here is 2 ticks inside value (Silver + evidence),CREQHJB18YAQ
 1790518156.3,politics,cpoc-ussec-tx-mi-me-2026-11-03-dsweep,SELL,20,0.43,sell,0,0,,43,47,0.4,0.43,0.44,0.02,0,taker dump — sold into the bid (the carved exception),CRFV3WGW2YBY
+1790519819.2,politics,vtc-usseto-mt-2026-11-03-gt550k,BUY,1,0.26,earn,0.1403,0.73,,25,52,0,0.25,0.55,-0.13,1,1 tick in front of the touch — we would hold 36% of the bid side,CRFK8626TYCA
+1790520742.7,politics,ewc-usse-me-2026-11-03-rep,SELL,22,0.41,focus,6.9669,0.56,0.2929,34,39,0.672,0.4,0.41,-0.1171,-22,focus entry: ~$6.78/day; fill odds 54%/day; EV +4.60/day,CRFZ4YW3YYB5
