@@ -2474,3 +2474,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790506033.1,politics,vmc-ussemov-id-2026-11-03-rgte40,BUY,1,0.11,earn,0.048,0.06,,4,16,0,0.11,0.12,0.01,1,joins the touch — the book has been quiet,CRCTKA04GYB5
 1790507479.3,politics,scc-hrep-rep-2026-11-03-gte205,BUY,-16.98,0.33,fix,,10.83,,,,,,,,,size trimmed by 16.98 to the exchange's count (order CPGRTR4PCXDN),CPGRTR4PCXDN
 1790507479.3,cfb,aachc-cfb-wins-2026-11-28-pennst-7pt5wins,BUY,0.45,0.83,backfill,,1.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRBVK5PX0YAQ
+1790507479.3,politics,ussewc-usse-nm-2026-11-03-dem,SELL,10,0.97,sell,0,0,0.99635,96,99,0.436,0.97,0.98,0.0264,0,taker dump — sold into the bid (the carved exception),CRD7H4C7EYCD
+1790509820.8,politics,ewc-usgub-az-2026-11-03-rep,BUY,1,0.13,sell,0.098,46.87,0.064475,10,14,0.514,0.13,0.14,0.0655,-19,an exit — its fill reduces the position it sits on,CQ5KRBM68YC3
