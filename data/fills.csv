@@ -2552,3 +2552,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790610952.8,politics,vmc-usgubmov-ga-2026-11-03-r9-12,BUY,0.9,0.23,backfill,,2.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CS31Z0TEPYAQ
 1790610952.8,politics,vmc-usgubmov-ga-2026-11-03-r0-3,BUY,0.9,0.27,backfill,,15.48,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRQYYK5D2YBQ
 1790610952.8,politics,scc-hrep-rep-2026-11-03-gte185,SELL,0.06,0.9,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CS5NZCHMCYCD
+1790611045.5,cfb,aachc-cfb-wins-2026-11-28-gtech-6pt5wins,BUY,0.2,0.05,backfill,,0.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CS59Z5XDWYBE
+1790612709.9,cfb,aachc-cfb-wins-2026-11-28-pennst-9pt5wins,SELL,1,0.24,sell,0,0,,21,27,0.564,0.24,0.25,0,0,taker dump — sold into the bid (the carved exception),CS69ASPKRYC6
+1790614679.5,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,-1,0.71,fix,5.0696,0.04,0.85555,72,79,0.478,0.7,0.71,0.1455,-60,size trimmed by 1 to the exchange's count (order CQ4XE4FJ0YC6),CQ4XE4FJ0YC6
+1790614679.5,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,-29,0.71,fix,,0.02,,,,,,,,,size trimmed by 29 to the exchange's count (order CQ4XE4FJ0YC6),CQ4XE4FJ0YC6
+1790614679.5,cfb,aachc-cfb-wins-2026-11-28-gtech-6pt5wins,BUY,0.2,0.05,backfill,,0.6,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CS59Z5XDWYBE
