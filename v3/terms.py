@@ -93,6 +93,11 @@ class TermsStore:
         self.seeded_at: dict[str, float] = {}
         self.empty_at: dict[str, float] = {}    # last read that found no program
         self.joined_at: dict[str, float] = {}   # when a market joined a program mid-day
+        # programId -> every field the exchange's record carried for it,
+        # whatever the reader above uses (owner, 2026-09-28: a spread
+        # rule on some Tier 4 programs is read from the source). Kept in
+        # memory only; the 1-cent report carries the tier ones
+        self.raw_seen: dict[str, dict] = {}
         self._sink = history_sink or (lambda row: None)
 
     def get(self, slug: str) -> Program | None:
@@ -113,6 +118,10 @@ class TermsStore:
         now = now or time.time()
         changes: list[TermsChange] = []
         for slug, raw in raw_programs.items():
+            try:
+                self._note_raw(slug, raw, now)
+            except Exception:  # noqa: BLE001 — a record of the record, never in the way
+                pass
             tp = pick_period(raw.get("timePeriods") or [], slug)
             new = (with_event_n(program_from_period(tp),
                                 max(event_sizes.get(slug, 1), 1))
@@ -147,6 +156,29 @@ class TermsStore:
             self.current[slug] = new
         self._prune(now)
         return changes
+
+    def _note_raw(self, slug: str, raw: dict, now: float) -> None:
+        """Every field of the program row and of each period, per
+        programId: one example of each, the union of the field names seen
+        and how many market reads carried it."""
+        row = {k: v for k, v in raw.items() if k != "timePeriods"}
+        for tp in raw.get("timePeriods") or []:
+            if not isinstance(tp, dict):
+                continue
+            pid = str(tp.get("programId") or "")
+            if not pid:
+                continue
+            r = self.raw_seen.get(pid)
+            if r is None:
+                r = self.raw_seen[pid] = {"row": {}, "period": {}, "row_keys": [],
+                                          "period_keys": [], "reads": 0, "at": 0.0}
+            r["row"] = row
+            r["row"]["marketSlug"] = slug
+            r["period"] = dict(tp)
+            r["row_keys"] = sorted(set(r["row_keys"]) | set(row))
+            r["period_keys"] = sorted(set(r["period_keys"]) | set(tp))
+            r["reads"] += 1
+            r["at"] = now
 
     def _note_join(self, slug: str, prog: Program, now: float) -> None:
         """A program on a market that had none: a JOIN when a read found
