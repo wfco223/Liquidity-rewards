@@ -12750,7 +12750,13 @@ date,market,program_type,reward_usd,status
 2026-09-25,ussewc-usse-wv-2026-11-03-dem,liquidityProgram,0.08,PENDING
 2026-09-25,ussewc-usse-wv-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-25,ussewc-usse-wy-2026-11-03-dem,liquidityProgram,0.05,PENDING
+2026-09-26,cpoc-ussegubc-ks-2026-11-03-dgov-rsen,liquidityProgram,0.36,PENDING
+2026-09-26,cpoc-ussegubc-me-2026-11-03-rsweep,liquidityProgram,0.49,PENDING
 2026-09-26,ewc-usgub-az-2026-11-03-rep,liquidityProgram,0.17,PENDING
+2026-09-26,ewc-usgub-oh-2026-11-03-rep,liquidityProgram,0.03,PENDING
+2026-09-26,scc-hrep-rep-2026-11-03-gte225,liquidityProgram,0.37,PENDING
+2026-09-26,usgubewc-usgub-ct-2026-11-03-dem,liquidityProgram,0.15,PENDING
+2026-09-26,usgubewc-usgub-ri-2026-11-03-dem,liquidityProgram,1.16,PENDING
 2026-09-26,ussewc-usse-al-2026-11-03-dem,liquidityProgram,0.97,PENDING
 2026-09-26,ussewc-usse-al-2026-11-03-rep,liquidityProgram,0.34,PENDING
 2026-09-26,ussewc-usse-ky-2026-11-03-rep,liquidityProgram,0.01,PENDING
