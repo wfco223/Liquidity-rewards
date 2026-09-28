@@ -2499,3 +2499,13 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790548893.6,politics,cpoc-ussegubc-nh-2026-11-03-dsweep,SELL,0.87,0.07,sell,0.1137,0.19,,7,12,0.636,0.05,0.07,0.02,38.06,selling filled stock — it earns while it waits,CRQ578TRWYAQ
 1790551712.2,politics,ussewc-usse-id-2026-11-03-rep,SELL,-0.1,0.91,fix,,1.39,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CPY5Z28NYXPM),CPY5Z28NYXPM
 1790551712.2,politics,ushrewc-ushr-nj-07-2026-11-03-rep,SELL,-4,0.18,fix,0,0,,15,20,0,0.18,0.19,0,0,size trimmed by 4 to the exchange's count (order CPYC05GVEXPM),CPYC05GVEXPM
+1790551712.2,politics,cpoc-ussegubc-ks-2026-11-03-rgov-dsen,SELL,5,0.2,earn,2.4941,7.02,,12,17,0.544,0.24,0.25,-0.05,-8,at the touch — a fill here is 3 ticks inside value (evidence band only; confiden,CRHV9ZA22YC6
+1790551712.2,politics,cpoc-ussegubc-oh-2026-11-03-rgov-dsen,SELL,2,0.08,sell,1.1787,0.5,,10,17,0.273,0.07,0.08,0.06,3,selling filled stock — it earns while it waits,CRQJAS9SGYBY
+1790551750.8,politics,scc-senate-gop-2026-11-03-49,BUY,19,0.12,sell,0.0148,59.31,0.130725,13,17,0.297,0.12,0.13,-0.0107,0,an exit — its fill reduces the position it sits on,CQ40M7ANYYBE
+1790552343.5,politics,ewc-usgub-ia-2026-11-03-dem,SELL,2,0.85,backfill,,59.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ3WBZ830YAQ
+1790552380.9,politics,ewc-usgub-ia-2026-11-03-dem,SELL,2,0.85,sell,0.0028,59.57,0.917975,84,88,0.603,0.84,0.85,0.068,2,an exit — its fill reduces the position it sits on,CQ3WBZ830YAQ
+1790553358.6,politics,cpoc-ussegubc-oh-2026-11-03-rgov-dsen,SELL,3,0.08,backfill,,0.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRQJAS9SGYBY
+1790553641.5,politics,vtc-usgubto-wi-2026-11-03-gt3m,BUY,1,0.34,earn,0.166,0.96,,31,38,0.298,0.04,0.35,0,2,1 tick in front of the touch — we would hold 71% of the bid side,CRQM2YWYYYBQ
+1790555504.7,politics,ushrewc-ushr-nj-07-2026-11-03-rep,SELL,-28.78,0.18,fix,0,0,,15,20,0,0.18,0.19,0,0,size trimmed by 28.78 to the exchange's count (order CPYC05GVEXPM),CPYC05GVEXPM
+1790555504.7,politics,ewc-usgub-ia-2026-11-03-dem,SELL,2,0.85,backfill,,59.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ3WBZ830YAQ
+1790555504.7,politics,cpoc-ussegubc-oh-2026-11-03-rgov-dsen,SELL,3,0.08,backfill,,0.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRQJAS9SGYBY
