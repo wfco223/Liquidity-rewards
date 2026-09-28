@@ -1304,3 +1304,29 @@ goes, and the move rules. Those should cost something, not everything.
 of the "pred" total, or negative (tierpaper days, net against pred).
 **Resolves:** (a) 72 hours after the deploy; (b) after the third full ET
 day.
+
+### P30 — written 2026-09-28 ~10:23Z, BEFORE the 1-cent report deploys
+Two claims about what the report will show on its first runs.
+**(a) The program record carries no spread rule.** The fields of every
+tier program's record (period and row) will be the ones the August probe
+saw — createdAt, discountFactor, end, period, programId, programType,
+rewardPool, start, status, targetSize on the period — with no field that
+names a spread, a distance from the midpoint or a two-sided requirement.
+**Why:** the exchange's liquidity docs say "the spread between your bid
+and offer doesn't matter", and our reader has never met a field it did
+not expect.
+**Falsified if:** any tier program's period_keys or row_keys in
+state["tiercent"]["programs"] carry a field beyond those (a new field
+of any kind), and especially one about a spread — then the owner's rule
+is in the record and every order must be checked against it.
+**(b) A cent a day is cheap near the touch in Tiers 1-3 and dear in
+Tier 4.** Summed over every paying side, a cent a day at the nearest
+price ties up under $50 in Tiers 1-3 together and over $500 in the two
+Tier 4 programs together.
+**Why:** the Tier 1-3 pools are $300-$1,500 a day per event, so a cent
+is a sliver of a side; a Tier 4 side pays $0.50-$1.25 a day, so a cent is
+about 1% of it, and 1% of a side of 2,000+ shares at a 40-60c price is
+$8-$15 a side.
+**Falsified if:** the first report's coll_nearest for t1+t2+t3 is $50 or
+more, or for t4+t4c is $500 or less.
+**Resolves:** at the first report after the deploy.

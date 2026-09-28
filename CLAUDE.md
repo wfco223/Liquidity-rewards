@@ -1593,6 +1593,38 @@ long and accreted, so search it rather than reading it through.
   switches (it places nothing); the hand-over of markets from the tender
   and the old engine is stage 4.
 
+- THE 1-CENT REPORT (owner, 2026-09-28: "Just do the minimal amount to
+  earn rewards 1 cent per day. Just to see how many actually get filled.
+  Then ramp it up. And that means at different price levels within
+  markets as well." ... "Is this actually coming from data? Or the pool
+  rules? Don't you need to know how many shares are resting?" ... "The
+  nearest you should sit to the midpoint is the closest necessary to earn
+  rewards. But then you can offer further back from there until it is no
+  longer possible to earn rewards. On some tier 4 markets, the bid and
+  the ask must be sufficiently close to earn rewards. Make sure those
+  rules are satisfied before placing an order." ... "Yes" to the report).
+  RULE 0, his words: "Why would any order that is not earning rewards
+  stay where it is" — an order not earning moves to where it earns or
+  comes off. v3/tiercent.py, READ-ONLY, on the tier fairs' thread every
+  CENT_EVERY_S (600 s): for every tier market with a book under five
+  minutes old, each side that holds its Target Size, every price from the
+  side's best (joined, never improved on) back to the last price inside
+  the Target Size window, the least size (a hundredth of a share) that
+  earns a cent a day on the book as it rests — solved on tiervalue's
+  side_share, the exchange's arithmetic, including our own size pushing
+  the boundary level out — and the money it ties up; a side under its
+  Target Size lists no price, only the shares it is short and what a wall
+  would take. Per tier: sides paying and under, the pool on each, the
+  cent at the nearest price summed, the prices where a cent takes $1 or
+  less and $10 or less, the spreads. The program record: TermsStore
+  keeps raw_seen, every field of the row and of each period per
+  programId (memory only, not in its to_dict; the family's and the
+  tender's stores both), and the report carries the tier programs' —
+  the spread rule is read from the source, not assumed (P30). Saved as
+  state["tiercent"] (Tiers 1-3 in full, Tier 4's 60 cheapest), shown as
+  a card on /tiers. It places nothing; the live 1-cent probe needs its
+  own switch and his yes.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."

@@ -96,6 +96,44 @@ class TestTheMoney(unittest.TestCase):
         tp._split(T0 + DAY_S)
         self.assertAlmostEqual(tp.tiers["t2"].money, 750.0)
 
+    def test_a_plan_with_nothing_in_it_splits_nothing(self):
+        # 2026-09-26 18:45Z: the first plan after the boot ran before the
+        # books arrived, every tier read $0, and every tier got $0 for the day
+        fam, tf, tv, tp, clk = rig()
+        zero = {"ok": True, "tiers": {t: {"alone": {"value": 0.0}}
+                                      for t in ("t1", "t2", "t3", "t4", "t4c")}}
+        tv._view = zero
+        tp._split(T0)
+        self.assertEqual(tp.shares, {})
+        self.assertEqual(tp.tiers["t1"].money, 0.0)
+        tv._view = {"ok": True, "tiers": dict(zero["tiers"], t2={"alone": {"value": 5.0}})}
+        tp._split(T0 + 1)
+        self.assertAlmostEqual(tp.tiers["t2"].money, POT_USD)
+
+    def test_a_saved_all_zero_split_is_redone(self):
+        fam, tf, tv, tp, clk = rig()
+        tp.restore({"shares": {t: 0.0 for t in ("t1", "t2", "t3", "t4", "t4c")},
+                    "split_day": "2026-09-26", "split_why": "the first plan after a boot"})
+        tv._view = {"ok": True, "tiers": {"t1": {"alone": {"value": 1.0}},
+                                          "t3": {"alone": {"value": 3.0}}}}
+        tp._split(T0)
+        self.assertAlmostEqual(tp.tiers["t3"].money, 750.0)
+
+    def test_after_a_boot_the_split_is_refined_for_a_while(self):
+        fam, tf, tv, tp, clk = rig()
+        tv._view = {"ok": True, "tiers": {"t1": {"alone": {"value": 1.0}},
+                                          "t2": {"alone": {"value": 1.0}}}}
+        tp._split(T0)
+        self.assertAlmostEqual(tp.tiers["t1"].money, 500.0)
+        tv._view["tiers"]["t1"]["alone"]["value"] = 3.0          # more books are in
+        tp._split(T0 + 30)                                       # not yet a minute
+        self.assertAlmostEqual(tp.tiers["t1"].money, 500.0)
+        tp._split(T0 + 61)
+        self.assertAlmostEqual(tp.tiers["t1"].money, 750.0)
+        tv._view["tiers"]["t2"]["alone"]["value"] = 9.0
+        tp._split(T0 + 1000)                                     # past the window: it holds
+        self.assertAlmostEqual(tp.tiers["t1"].money, 750.0)
+
     def test_nothing_runs_before_stage_two_has_planned(self):
         fam, tf, tv, tp, clk = rig()
         fam.add(A, T1P, [(0.50, 800.0)], [(0.55, 800.0)])
