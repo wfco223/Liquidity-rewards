@@ -2515,3 +2515,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790558687.2,politics,cpoc-ussegubc-ks-2026-11-03-rgov-dsen,BUY,8,0.23,sell,0.0393,0.35,,15,19,0.661,0.2,0.21,0.06,0,buying back the short at or under what it sold for — the bid earns while it wait,CRS8GW8X0YC3
 1790558747.2,politics,scc-hrep-rep-2026-11-03-gte210,BUY,110,0.33,focus,18.7499,0.06,0.224725,22,29,0,0.24,0.26,0.1053,110,focus entry: ~$5.10/day; fill odds 31%/day; EV +1.51/day,CRSH6QRPGYC3
 1790559139.3,politics,ussewc-usse-id-2026-11-03-rep,SELL,-0.1,0.91,fix,,1.39,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CPY5Z28NYXPM),CPY5Z28NYXPM
+1790560025.0,politics,cpoc-ussegubc-ia-2026-11-03-rsweep,BUY,10,0.19,sell,0.2827,9.81,,10,15,0.533,0.16,0.19,0.06,0,buying back the short at or under what it sold for — the bid earns while it wait,CRHDPZ2G0YCC
+1790560378.3,politics,ewc-usse-mi-2026-11-03-dem,BUY,151,0.73,sell,4.031,26.06,0.79815,71,76,0.196,0.73,0.74,-0.0682,0,an exit — its fill reduces the position it sits on,CR3PZFBK0YBY
+1790560929.0,cfb,aachc-cfb-wins-2026-11-28-mspst-5pt5wins,BUY,0.01,0.97,earn,0.101,0.72,,84,94,0,0.97,0.98,0.09,0.01,joins the touch — the book has been quiet,CRSFYKB26YCD
+1790561329.7,politics,cpoc-ussegubc-me-2026-11-03-rsweep,BUY,4,0.08,sell,0.1169,19.66,,2,6,0.634,0.07,0.08,0.04,0,buying back the short at or under what it sold for — the bid earns while it wait,CR96WH3ZCYC6
+1790562062.5,politics,scc-hrep-demst-2026-11-03-gte235,SELL,20,0.52,sell,5,0.2,,58,65,0.271,0.63,0.64,0.1,0,selling filled stock — it earns while it waits,CRT37W7H8YCC
+1790562686.5,politics,usgubewc-usgub-hi-2026-11-03-rep,SELL,10,0.02,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRTF81KWAYC3
+1790562799.1,politics,usgubewc-usgub-hi-2026-11-03-rep,SELL,10,0.02,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRTF81KWAYC3
