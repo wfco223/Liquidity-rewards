@@ -2103,9 +2103,21 @@ function pList(p,key){if(!p||!p.ok)return '';var t=(p.tiers||{})[key];if(!t)retu
  if((t.list||[]).length){o+='<div class="sub"><b>paper orders</b></div><div class="muted" style="margin-left:10px">';t.list.forEach(function(x){o+=esc(x.name)+' — '+(x.kind==='exit'?'exit ':'')+(x.side==='BUY'?'bid':'ask')+' '+x.qty.toLocaleString()+' @ '+pc(x.px)+'<br>';});o+='</div>';}
  if((t.positions||[]).length){o+='<div class="sub"><b>paper positions</b></div><div class="muted" style="margin-left:10px">';t.positions.forEach(function(x){o+=esc(x.name)+': '+(x.qty>0?'long ':'short ')+Math.abs(x.qty).toLocaleString()+' @ '+pc(x.avg)+(x.mid!=null?' (mid '+pc(x.mid)+')':'')+'<br>';});o+='</div>';}
  return o;}
+function cCard(c){if(!c)return '';if(!c.ok)return '<div class="card muted">1¢ report: '+esc(c.note||'not run yet')+'</div>';
+ var names={t1:'Tier 1',t2:'Tier 2',t3:'Tier 3',t4:'Tier 4 ($5)',t4c:'Tier 4 ($2)'};
+ var o='<div class="card"><b>1¢ report</b> <span class="pill">read only</span>'
+  +'<div class="muted">From the live books, every '+Math.round((c.every_s||600)/60)+' minutes: on every side that holds its Target Size, the shares an order needs to earn 1¢ a day at each price from the side’s best back to where rewards stop, and the money it ties up. A side under its Target Size pays nobody. Nothing here places an order.</div>';
+ ['t1','t2','t3','t4','t4c'].forEach(function(k){var t=(c.tiers||{})[k];if(!t||!t.markets)return;
+  var sp=t.spreads||{};var spl=['<=1c','<=2c','<=5c','<=10c','>10c','none'].filter(function(x){return sp[x];}).map(function(x){return x.replace('<=','≤')+' '+sp[x];}).join(', ');
+  o+='<div class="sub"><b>'+names[k]+':</b> '+t.fresh.toLocaleString()+' of '+t.markets.toLocaleString()+' with a fresh book · '+t.sides_paying+' sides pay ('+usd(t.pool_paying)+'/day), '+t.sides_under+' under Target Size ('+usd(t.pool_under)+'/day'+(t.sides_empty?', '+t.sides_empty+' empty':'')+')</div>'
+   +'<div class="sub muted">1¢ a day at the nearest price on every paying side: '+usd(t.coll_nearest)+' · '+((t.le1||[0])[0]).toLocaleString()+' prices where it takes $1 or less ('+usd((t.le1||[0,0])[1])+'), '+((t.le10||[0])[0]).toLocaleString()+' at $10 or less ('+usd((t.le10||[0,0])[1])+') · every price that pays ('+t.levels.toLocaleString()+'): '+usd(t.coll_all)+(t.sides_under?' · bringing the under sides to Target Size with walls: '+usd(t.coll_under_wall):'')+(spl?' · spreads: '+spl:'')+'</div>';});
+ var pr=c.programs||{};var ks=Object.keys(pr);
+ if(ks.length){o+='<div class="sub"><b>program record fields</b></div><div class="muted" style="margin-left:10px">';ks.forEach(function(pid){var x=pr[pid];o+=esc(pid)+': '+esc((x.period_keys||[]).join(', '))+' | row: '+esc((x.row_keys||[]).join(', '))+'<br>';});o+='</div>';}
+ if(c.error)o+='<div class="warn">'+esc(c.error)+'</div>';
+ return o+'</div>';}
 function tRender(t){var o='<div class="card"><b>Tier fairs</b> <span class="pill">stage 1 — read only</span>'
   +'<div class="muted">A fair for every midterm-tier market, worked out again every second: the midpoint, moved only by what the book at depth, the last trade, the event’s other markets and Silver have proven they add. Each is written down every minute and checked against the midpoint 10 minutes and an hour later. Nothing on this page places, moves or cancels an order.</div>'
-  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+tStream(t.t4_stream)+'</div>'+vCard(t.value)+pCard(t.paper);
+  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+tStream(t.t4_stream)+'</div>'+cCard(t.cent)+vCard(t.value)+pCard(t.paper);
  (t.tiers||[]).forEach(function(tr){var k='t-'+tr.key;var open=(window._tOpen||{})[k];
   o+='<div class="card"><div style="cursor:pointer" onclick="tTog(\''+k+'\')"><b>'+esc(tr.name)+'</b> <span class="muted">· '+tr.markets+' markets, '+tr.with_fair+' with a fair'+((tr.pool_day||[]).length?' · pays '+tr.pool_day.map(function(x){return '$'+x.toLocaleString();}).join('/')+' a day per event · Target Size '+(tr.target||[]).map(function(x){return x.toLocaleString();}).join('/'):' · no program on the ledger now')+'</span></div>'
    +(tr.slow?'<div class="sub muted">'+(tr.fresh||0).toLocaleString()+' with a fresh book, '+(tr.narrow||0).toLocaleString()+' with a touch 10¢ or narrower · worked out every 10 s'+(tr.rows_shown?' · the list shows the '+tr.rows_shown+' most recently traded':'')+'</div>':'')

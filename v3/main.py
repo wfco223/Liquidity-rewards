@@ -50,6 +50,7 @@ from .ws import STREAM_SHARDS, WS_MAX_SUBS, Stream
 from .tierfair import SLOW_TIERS, TierFair, tier_of
 from .tiervalue import TierValue
 from .tierpaper import TierPaper
+from .tiercent import TierCent
 
 try:
     from zoneinfo import ZoneInfo
@@ -1223,6 +1224,17 @@ class Monitor:
                           if self.tiervalue is not None else None)
         if self.tierfair is not None:
             self.tierfair.paper = self.tierpaper
+        # the 1-cent report (owner, 2026-09-28 "Yes"): from the live books,
+        # the size that earns a cent a day at every price a tier side
+        # pays at, and every field the program records carry. READ-ONLY,
+        # see v3/tiercent.py
+        self.tiercent = (TierCent(self.tierfair, pol,
+                                  raws=lambda: [getattr(pol.terms, "raw_seen", {}),
+                                                getattr(getattr(self.focus, "terms", None),
+                                                        "raw_seen", {})])
+                         if self.tierfair is not None else None)
+        if self.tierfair is not None:
+            self.tierfair.cent = self.tiercent
         self._restore()
         # the focus ground is claimed before the first family cycle can
         # act on it: the family's terms stand in until the tender reads
@@ -1901,6 +1913,8 @@ class Monitor:
                           if getattr(self, "tiervalue", None) is not None else {}),
             "tierpaper": (self.tierpaper.to_dict()
                           if getattr(self, "tierpaper", None) is not None else {}),
+            "tiercent": (self.tiercent.to_dict()
+                         if getattr(self, "tiercent", None) is not None else {}),
             "ladder_day": getattr(self, "ladder_day", ""),
             "ladder_seen": dict(getattr(self, "ladder_seen", {})),
             "actuals_by_day": self.actuals_by_day,
@@ -4482,6 +4496,7 @@ class Monitor:
                      ("tierfair", lambda: self.tierfair.to_dict()),
                      ("tiervalue", lambda: self.tiervalue.to_dict()),
                      ("tierpaper", lambda: self.tierpaper.to_dict()),
+                     ("tiercent", lambda: self.tiercent.to_dict()),
                      ("bonds", lambda: self.bonds.to_dict()),
                      ("sweep", lambda: self.sweep.to_dict()),
                      ("maint", lambda: self.maint.to_dict()),
@@ -5250,7 +5265,7 @@ class Monitor:
         books already in the cache. Reads nothing from the exchange and
         touches no order. Stages 2 (the value) and 3 (the paper engines)
         run on the same clock."""
-        said = said_v = said_p = 0.0
+        said = said_v = said_p = said_c = 0.0
         while True:
             t0 = time.time()
             try:
@@ -5280,6 +5295,16 @@ class Monitor:
                     if t0 - said_p > 600.0:
                         said_p = t0
                         self._note(f"tier paper: {type(e).__name__}: {e}")
+            tc = getattr(self, "tiercent", None)
+            if tc is not None:
+                # the 1-cent report, every ten minutes on the same clock
+                try:
+                    tc.tick(t0)
+                except Exception as e:  # noqa: BLE001 — nor does the report
+                    tc.error = f"{type(e).__name__}: {e}"[:160]
+                    if t0 - said_c > 600.0:
+                        said_c = t0
+                        self._note(f"tier 1c report: {type(e).__name__}: {e}")
             time.sleep(max(TIERFAIR_TICK_S - (time.time() - t0), 0.2))
 
     def sweep_op(self, op: str) -> dict:
