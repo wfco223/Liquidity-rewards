@@ -2522,3 +2522,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790562062.5,politics,scc-hrep-demst-2026-11-03-gte235,SELL,20,0.52,sell,5,0.2,,58,65,0.271,0.63,0.64,0.1,0,selling filled stock — it earns while it waits,CRT37W7H8YCC
 1790562686.5,politics,usgubewc-usgub-hi-2026-11-03-rep,SELL,10,0.02,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRTF81KWAYC3
 1790562799.1,politics,usgubewc-usgub-hi-2026-11-03-rep,SELL,10,0.02,backfill,,0.01,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRTF81KWAYC3
+1790566518.9,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,BUY,1,0.48,probe,0.0011,0.44,,47,54,0.127,0.47,0.5,-0.03,1,a scout — this market's pool could pay; but I don't know enough yet; what happen,CRV2FSPNYYBY
+1790570118.7,cfb,aachc-cfb-wins-2026-11-28-pennst-7pt5wins,BUY,0.5,0.84,earn,0.1473,16.8,,83,88,0,0.84,0.85,-0.01,0.5,joins the touch — the book has been quiet,CRDRSRNRCYB5
