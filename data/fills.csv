@@ -2509,3 +2509,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790555504.7,politics,ushrewc-ushr-nj-07-2026-11-03-rep,SELL,-28.78,0.18,fix,0,0,,15,20,0,0.18,0.19,0,0,size trimmed by 28.78 to the exchange's count (order CPYC05GVEXPM),CPYC05GVEXPM
 1790555504.7,politics,ewc-usgub-ia-2026-11-03-dem,SELL,2,0.85,backfill,,59.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ3WBZ830YAQ
 1790555504.7,politics,cpoc-ussegubc-oh-2026-11-03-rgov-dsen,SELL,3,0.08,backfill,,0.93,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CRQJAS9SGYBY
+1790556027.0,politics,scc-hrep-rep-2026-11-03-gte195,BUY,27,0.7,sell,2.1421,3.96,0.620975,64,69,0.244,0.7,0.71,0.079,0,an exit — its fill reduces the position it sits on,CRNMP2XRRYB5
+1790557002.1,politics,usgubewc-usgub-tn-2026-11-03-rep,BUY,10,0.94,earn,0.5167,0.04,0.99565,91,96,0.02,0.92,0.93,-0.0556,10,at the touch — a fill here is 5 ticks inside value (Silver + evidence),CRS52H1Q8YC6
+1790558348.0,politics,cpoc-ussegubc-me-2026-11-03-rsweep,BUY,6,0.08,sell,0.2563,18.83,,2,7,0.48,0.08,0.09,0.04,-4,buying back the short at or under what it sold for — the bid earns while it wait,CR96WH3ZCYC6
+1790558687.2,politics,cpoc-ussegubc-ks-2026-11-03-rgov-dsen,BUY,8,0.23,sell,0.0393,0.35,,15,19,0.661,0.2,0.21,0.06,0,buying back the short at or under what it sold for — the bid earns while it wait,CRS8GW8X0YC3
+1790558747.2,politics,scc-hrep-rep-2026-11-03-gte210,BUY,110,0.33,focus,18.7499,0.06,0.224725,22,29,0,0.24,0.26,0.1053,110,focus entry: ~$5.10/day; fill odds 31%/day; EV +1.51/day,CRSH6QRPGYC3
+1790559139.3,politics,ussewc-usse-id-2026-11-03-rep,SELL,-0.1,0.91,fix,,1.39,,,,,,,,,size trimmed by 0.1 to the exchange's count (order CPY5Z28NYXPM),CPY5Z28NYXPM
