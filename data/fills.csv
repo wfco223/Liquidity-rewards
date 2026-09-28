@@ -2585,3 +2585,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790621400.5,politics,vtc-usseto-me-2026-11-03-gt800k,SELL,1,0.19,sell,0,0,,16,22,0.214,0.19,0.2,0,0,taker dump — sold into the bid (the carved exception),CS8BQK5E4YBQ
 1790622847.2,politics,vtc-usseto-wy-2026-11-03-gt230k,SELL,1,0.11,sell,0.0059,0.7,,8,17,0.119,0.1,0.11,0.01,0,selling filled stock — it earns while it waits,CS831H0EGYAQ
 1790631085.1,politics,paccc-usho-midterms-2026-11-03-rep,SELL,171,0.088,sell,34.888,0.52,0.0859,7,10,0.71,0.089,0.09,-0.0021,0,an exit — its fill reduces the position it sits on,CSA4Y4KE8YBY
+1790632126.3,politics,vtc-usgubto-hi-2026-11-03-gt370k,BUY,1,0.89,backfill,,41.81,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CR78800FCYCD
+1790632220.2,politics,vtc-usgubto-hi-2026-11-03-gt370k,BUY,1,0.89,earn,0.0794,0.04,,90,98,0,0.32,0.99,-0.05,1,1 tick in front of the touch — we would hold 56% of the bid side,CSAVNW2ATYCD
+1790635010.8,politics,vtc-usgubto-hi-2026-11-03-gt370k,BUY,1,0.89,backfill,,41.81,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CR78800FCYCD
