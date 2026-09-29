@@ -2609,3 +2609,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790651848.0,politics,scc-hrep-rep-2026-11-03-gte200,SELL,41,0.44,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSEZ5N24MYBY
 1790651848.0,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.01,0.59,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSF0HJG74YCC
 1790651848.0,politics,usgubewc-usgub-id-2026-11-03-dem,BUY,0.83,0.01,backfill,,74.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQFDK01MTYB5
+1790652158.3,politics,scc-hrep-rep-2026-11-03-gte230,SELL,123,0.02,sell,11.0276,86.15,0.010175,1,4,0.175,0.01,0.02,-0.0098,0,an exit — its fill reduces the position it sits on,CQ5TP66D4YC6
+1790652990.2,politics,ushrewc-ushr-ia-01-2026-11-03-dem,BUY,11,0.81,sell,0.0473,10.06,,78,84,0,0.81,0.82,0,0,buying back the short at or under what it sold for — the bid earns while it wait,CS798EVSAYAQ
+1790652990.2,politics,ushrewc-ushr-wa-03-2026-11-03-rep,SELL,51,0.1,sell,0.8817,0.49,,7,13,0.122,0.1,0.11,0,0,selling filled stock — it earns while it waits,CSFM6JR1RYBE
+1790654703.1,politics,vmc-ushrmov-ca-47-2026-11-03-rwin,BUY,1,0.1,sell,0.0742,0.28,,3,9,0.343,0.01,0.11,0.04,-9,buying back the short at or under what it sold for — the bid earns while it wait,CSG1GBR32YCA
+1790655547.2,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,-86.39,0.71,fix,,0,,,,,,,,,size trimmed by 86.39 to the exchange's count (order CQ6FWEAW2YBE),CQ6FWEAW2YBE
+1790655547.2,politics,scc-hrep-rep-2026-11-03-gte230,SELL,123,0.02,void,7.4086,-0,0.010175,1,4,0.175,0.01,0.02,-0.0098,0,voided: the exchange has no trade for order CSFSSX3H4YBE — the row of 09-29 03:2,CSFSSX3H4YBE
