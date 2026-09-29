@@ -1352,3 +1352,23 @@ minutes old, over $500 as claimed. What it taught: the nearest price is
 where the size is, so a cent is cheapest elsewhere. Prices where a cent
 takes $1 or less: Tier 1 16 ($7.21), Tier 2 75 ($30.78), Tier 3 66
 ($22.64), Tier 4 $5 662 ($326.43), Tier 4 $2 2,635 ($758.98).
+
+### P31 — written 2026-09-29 ~15:49Z, BEFORE the margin check deploys
+**The exchange nets mutually exclusive outcomes in its margin.** Over the
+three days after the deploy, the exchange's marginRequirement (the balance
+row) tracks what we hold priced with negative risk netted — each event swept
+over who wins, held positions credited with their gains — and not the same
+positions each at its own collateral: the median of |margin − netted| /
+margin across the report's checks is 3% or less, and the median of |margin
+− plain| / margin is more than 3%.
+**Why:** on the 2026-09-29 state (before the deploy) the balance row said
+$1,662.17, the netted price of our held positions $1,641.93 (1.2% under)
+and the plain $1,792.67 (7.9% over), on 126 of the 153 positions the
+exchange's feed shows (23 at an estimated cost).
+**Caveats written down now:** the 27 positions our books do not carry are
+missing from both of our numbers, so both read low by the same amount; an
+estimated cost moves both; and the balance row's openOrders ($5.02 that
+day) is not in the check.
+**Falsified if:** with 100 or more checks (state["tiercent"]["margin_hist"]),
+the netted median miss is over 3%, or the plain median miss is 3% or
+less. **Resolves:** three days after the deploy.

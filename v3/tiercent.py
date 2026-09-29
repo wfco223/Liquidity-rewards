@@ -29,8 +29,11 @@ read from the source before any order depends on it."""
 from __future__ import annotations
 
 import math
+import re
 import time
 
+from . import risk
+from .intents import BUY_LONG, BUY_SHORT
 from .tierfair import SLOW_TIERS, TIERS
 from .tiervalue import side_share
 
@@ -40,7 +43,8 @@ CENT_MAX_TICKS = 20        # at most this many prices a side
 CENT = 0.01                  # a day: the smallest amount worth earning
 QTY_MAX = 20000.0            # the desk's largest order
 PAGE_ROWS_SLOW = 60          # Tier 4 markets kept in full in the report (the cheapest)
-VERSION = "cent-2026-09-29"
+VERSION = "cent-2026-09-29b"
+MARGIN_KEEP = 432            # margin checks kept: three days at one a run
 SPREAD_EPS = 1e-6            # a price exactly at the band's edge is inside it
 
 
@@ -139,6 +143,137 @@ def _exact(side, levels, tick, df, target, pool, px, q_hi) -> float:
     return q
 
 
+# -- negative risk (owner, 2026-09-29: "We also need to account for negative
+# risk and mutually exclusive outcomes" ... "Sure") ---------------------------
+#
+# The exchange names every market "<event> — <outcome>", and the markets of
+# one event are its outcomes (the name groups match its own event size on
+# every tier market but one). Where only one outcome can resolve Yes, orders
+# and positions across them cannot all lose: priced over who wins, as
+# v3/risk.py prices the engine's book. Grouping is by the event's NAME, not
+# the slug: the slug's last token splits a margin bracket like "d0-10", and
+# 5,027 Tier 4 coverage markets read as 4,109 slug groups against 594 events.
+# Only a group that can be CLASSIFIED is netted: exact outcomes (parties,
+# candidates, margin brackets, seat counts); nested thresholds ("over 2.5
+# million", gte/lt on anything but a seat count) can resolve Yes together
+# and stay at plain collateral, as does a "wins" beside that side's brackets.
+
+_THRESH = re.compile(r"^(gt|lt|gte|lte)\d")
+_BUCKET = re.compile(r"^([dri])(\d+-\d+|gte\d+)$")
+
+
+def event_of(slug: str, name: str | None) -> tuple[str, str]:
+    """(the event, the outcome) from the exchange's name, else the slug."""
+    if name and " — " in name:
+        ev, tok = name.split(" — ", 1)
+        return ev.strip(), tok.strip()
+    return risk.race_key(slug), risk.rung_token(slug)
+
+
+def group_kind(tokens) -> str | None:
+    """How a group of outcomes resolves: "numeric" (seat-count rungs, the
+    count sweep), "categorical" (one of them wins), or None (not known to
+    be exclusive — priced plain)."""
+    toks = set(tokens)
+    if toks and all(risk.numeric_rung(t) for t in toks):
+        return "numeric"
+    if any(_THRESH.match(t) for t in toks):
+        return None
+    for p in "dri":
+        if p + "win" in toks and any(_BUCKET.match(t) and t[0] == p for t in toks):
+            return None
+    return "categorical"
+
+
+def _loss(leg, yes: bool) -> float:
+    x = leg.loss_if(yes)
+    # a resting order gets no credit for a gain: nothing obliges the
+    # market to fill it (v3/risk.py's rule); a held position's gain is real
+    return x if leg.firm else max(x, 0.0)
+
+
+def netted(legs, names) -> float:
+    """The worst case of a set of legs with negative risk netted, each
+    event swept over its outcomes; a group of one market, or one not known
+    to be exclusive, is the sum of each market's own worst case."""
+    groups: dict[str, list] = {}
+    for leg in legs:
+        ev, tok = event_of(leg.market, names.get(leg.market))
+        groups.setdefault(ev, []).append((leg, tok))
+    total = 0.0
+    for items in groups.values():
+        tok_of = {leg.market: tok for leg, tok in items}
+        kind = group_kind(tok_of.values()) if len(tok_of) > 1 else None
+        if kind is None:
+            by_mkt: dict[str, list] = {}
+            for leg, _t in items:
+                by_mkt.setdefault(leg.market, []).append(leg)
+            for ls in by_mkt.values():
+                total += max(max(sum(_loss(l, y) for l in ls) for y in (True, False)), 0.0)
+            continue
+        worst = 0.0
+        if kind == "numeric":
+            marks: set[int] = set()
+            for t in tok_of.values():
+                n = int(t[3:]) if t.startswith(("gte", "lte")) else int(t)
+                marks.update((n - 1, n, n + 1))
+            for k in marks:
+                worst = max(worst, sum(_loss(l, risk.rung_pays(tok_of[l.market], k))
+                                       for l, _t in items))
+        else:
+            for winner in list(tok_of) + [None]:
+                worst = max(worst, sum(_loss(l, l.market == winner) for l, _t in items))
+        total += max(worst, 0.0)
+    return round(total, 4)
+
+
+def plain(legs) -> float:
+    """The same legs with every one at its own collateral."""
+    return round(sum(l.stake for l in legs), 4)
+
+
+def _order_leg(slug: str, side: str, px: float, q: float):
+    return risk.leg_for_order(slug, BUY_LONG if side == "BUY" else BUY_SHORT, px, q)
+
+
+def _risk_view(sets: dict, names: dict) -> dict:
+    """{set: {"n", "plain", "netted"}} for each probe set's legs."""
+    return {k: {"n": len(v), "plain": round(plain(v), 2), "netted": round(netted(v, names), 2)}
+            for k, v in sets.items()}
+
+
+def margin_check(inv, row: dict | None, feed_n: int, names: dict, now: float) -> dict:
+    """Our held positions priced plain and netted, beside what the
+    exchange's balance row says it holds as margin. `inv` is
+    [(slug, qty, cost, estimated)]."""
+    legs = []
+    n_est = skipped = 0
+    for slug, qty, cost, est in inv:
+        q = float(qty or 0.0)
+        if abs(q) < 1e-9:
+            continue
+        avg = float(cost or 0.0) / q
+        if not (0.0 <= avg <= 1.0):
+            skipped += 1
+            continue
+        n_est += int(bool(est))
+        if q > 0:
+            legs.append(risk.Leg(slug, True, q, q * avg, firm=True))
+        else:
+            legs.append(risk.Leg(slug, False, -q, -q * (1.0 - avg), firm=True))
+    row = row or {}
+    out = {"at": round(now, 1), "n": len(legs), "feed_n": int(feed_n), "est": n_est,
+           "skipped": skipped, "plain": round(plain(legs), 2),
+           "netted": round(netted(legs, names), 2)}
+    for k, k2 in (("marginRequirement", "mr"), ("openOrders", "oo"), ("buyingPower", "bp"),
+                  ("currentBalance", "bal")):
+        try:
+            out[k2] = round(float(row[k]), 2)
+        except (KeyError, TypeError, ValueError):
+            out[k2] = None
+    return out
+
+
 def _ctr() -> dict:
     """The counters one reading of the spread rule keeps per tier."""
     return {"sides_paying": 0, "sides_under": 0, "sides_off": 0, "levels": 0,
@@ -190,9 +325,14 @@ class TierCent:
     """`tf` is the tier fairs (its markets and books), `fam` the politics
     family (the pools, the first-day record, the program records)."""
 
-    def __init__(self, tf, fam, raws=None, clock=None):
+    def __init__(self, tf, fam, raws=None, margin=None, clock=None):
         self.tf = tf
         self.fam = fam
+        # what we hold and the exchange's balance row, for the margin check:
+        # {"inv": [(slug, qty, cost, est)], "row": {...}, "feed_n": int,
+        #  "names": {slug: name}}
+        self.margin = margin or (lambda: None)
+        self.margin_hist: list[dict] = []
         # the program records' raw fields: the family's ledger and the
         # tender's each read the exchange (TermsStore.raw_seen)
         self.raws = raws or (lambda: [getattr(fam.terms, "raw_seen", {})])
@@ -222,6 +362,11 @@ class TierCent:
         rows: dict[str, dict] = {}
         slow_rows: list[tuple] = []
         programs = self._programs(mk)
+        uni = getattr(self.fam, "universe", {}) or {}
+        names = {slug: str((uni.get(slug) or {}).get("name") or "") for slug in mk}
+        # each tier's probe sets as order legs, for the negative-risk view
+        sets = {k: {"nearest": [], "le1": [], "le10": []} for k, _n, _p in TIERS}
+        events: dict[str, set] = {k: set() for k, _n, _p in TIERS}
         for slug, (tier, prog) in mk.items():
             t = tiers[tier]
             t["markets"] += 1
@@ -249,6 +394,7 @@ class TierCent:
                 continue
             fd = slug in first
             t["first_day"] += int(fd)
+            events[tier].add(event_of(slug, names.get(slug))[0])
             bids = [(float(p), float(q)) for p, q in bk.bids]
             asks = [(float(p), float(q)) for p, q in bk.asks]
             spread = (round(asks[0][0] - bids[0][0], 4) if bids and asks else None)
@@ -262,6 +408,16 @@ class TierCent:
             cost_near = cost_all = 0.0
             for side, lv in (("BUY", bids), ("SELL", asks)):
                 lad = cent_ladder(side, lv, bk.tick, float(prog.df), float(prog.target), pool)
+                for i, r_ in enumerate(lad.get("rows") or []):
+                    leg = _order_leg(slug, side, r_[1], r_[2])
+                    if leg is None:
+                        continue
+                    if i == 0:
+                        sets[tier]["nearest"].append(leg)
+                    if r_[3] <= 1.0:
+                        sets[tier]["le1"].append(leg)
+                    if r_[3] <= 10.0:
+                        sets[tier]["le10"].append(leg)
                 if lad.get("rows"):
                     t["sides_paying"] += 1
                     t["pool_paying"] += pool
@@ -292,6 +448,13 @@ class TierCent:
                                 pool, mid, ms)
                     _tally(t["A"], la, pool)
                     _tally(t["B"], lad if spread <= ms + SPREAD_EPS else None, pool)
+                    for key, lx in (("A_nearest", la),
+                                    ("B_nearest", lad if spread <= ms + SPREAD_EPS else None)):
+                        if lx and lx.get("rows"):
+                            r_ = lx["rows"][0]
+                            leg = _order_leg(slug, side, r_[1], r_[2])
+                            if leg is not None:
+                                sets[tier].setdefault(key, []).append(leg)
                     row.setdefault("A", {"mid": round(mid, 4)})[side] = la
                     row["B"] = spread <= ms + SPREAD_EPS
             if ms is not None:
@@ -317,11 +480,41 @@ class TierCent:
             for k in ("A", "B"):
                 if k in t:
                     _round_ctr(t[k])
+        # negative risk: each tier's probe sets, plain and netted
+        for key, t in tiers.items():
+            t["events"] = len(events[key])
+            t["risk"] = _risk_view(sets[key], names)
+        every = {}
+        for key in ("nearest", "le1", "le10"):
+            every[key] = [leg for k in sets for leg in sets[k].get(key, [])]
+        risk_all = _risk_view(every, names)
+        margin = self._margin(now)
         self.error = ""
         self.report = {"ok": True, "version": VERSION, "at": round(now, 1),
                        "took_s": round(time.time() - t0, 2),
                        "cent": CENT, "every_s": CENT_EVERY_S, "tiers": tiers, "markets": rows,
-                       "programs": programs}
+                       "programs": programs, "risk_all": risk_all, "margin": margin,
+                       "margin_hist": list(self.margin_hist)}
+
+    def _margin(self, now: float) -> dict | None:
+        """This run's margin check, kept for P31."""
+        try:
+            m = self.margin()
+        except Exception as e:  # noqa: BLE001 — a readout
+            return {"error": f"{type(e).__name__}: {e}"[:120]}
+        if not m:
+            return None
+        c = margin_check(m.get("inv") or [], m.get("row"), m.get("feed_n") or 0,
+                         m.get("names") or {}, now)
+        if c.get("mr") is not None:
+            self.margin_hist.append(c)
+            del self.margin_hist[:-MARGIN_KEEP]
+        return c
+
+    def restore(self, d: dict) -> None:
+        """The margin checks carry across a restart; the rest is redone."""
+        hist = (d or {}).get("margin_hist") or []
+        self.margin_hist = [h for h in hist if isinstance(h, dict)][-MARGIN_KEEP:]
 
     @staticmethod
     def _max_spread(programs: dict, pid: str) -> float | None:
@@ -350,6 +543,7 @@ class TierCent:
         # the page does not need every market's ladder, nor every
         # program's example values: the field names answer the question
         r.pop("markets", None)
+        r.pop("margin_hist", None)
         r["error"] = self.error
         r["programs"] = {pid: {"row_keys": p.get("row_keys"), "period_keys": p.get("period_keys"),
                                "reads": p.get("reads"), "extra": p.get("extra")}

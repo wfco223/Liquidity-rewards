@@ -15,8 +15,10 @@ from v3.books import BookCache
 from v3.programs import Program
 from v3.scoring import Book
 from v3.terms import TermsStore
-from v3.tiercent import (CENT, CENT_EVERY_S, PAGE_ROWS_SLOW, QTY_MAX, TierCent,
-                         cent_ladder, window_edge, within)
+from v3 import risk
+from v3.tiercent import (CENT, CENT_EVERY_S, MARGIN_KEEP, PAGE_ROWS_SLOW, QTY_MAX, TierCent,
+                         cent_ladder, event_of, group_kind, margin_check, netted, plain,
+                         window_edge, within)
 from v3.tierfair import TierFair
 from v3.tiervalue import side_share
 
@@ -278,6 +280,131 @@ class TestTheSpreadRule(unittest.TestCase):
         tc.tick(T0)
         self.assertNotIn("A", tc.report["tiers"]["t4"])
         self.assertEqual(tc.report["tiers"]["t4"]["sides_paying"], 2)
+
+
+def short(m, px, q):
+    return risk.Leg(m, False, q, (1 - px) * q, firm=False)
+
+
+def long_(m, px, q):
+    return risk.Leg(m, True, q, px * q, firm=False)
+
+
+class TestNegativeRisk(unittest.TestCase):
+    """Owner, 2026-09-29: "We also need to account for negative risk and
+    mutually exclusive outcomes." Only one outcome of an event resolves
+    Yes, so orders across its outcomes cannot all lose."""
+
+    NAMES = {"d": "TX-15 House Election Winner — dem", "r": "TX-15 House Election Winner — rep",
+             "b1": "TX-15 House Election Margin of Victory — d0-3",
+             "b2": "TX-15 House Election Margin of Victory — d3-6",
+             "bw": "TX-15 House Election Margin of Victory — rwin",
+             "dw": "TX-15 House Election Margin of Victory — dwin",
+             "t1": "Texas Senate Election: Turnout — gt10pt5m",
+             "t2": "Texas Senate Election: Turnout — gt11m",
+             "s50": "2026 Midterms: Republican Senate Seats? — 50",
+             "s51": "2026 Midterms: Republican Senate Seats? — 51",
+             "s57": "2026 Midterms: Republican Senate Seats? — gte57"}
+
+    def test_the_event_is_the_name_and_a_bracket_is_one_outcome(self):
+        self.assertEqual(event_of("vmc-ushrmov-tx-15-2026-11-03-d0-3", self.NAMES["b1"]),
+                         ("TX-15 House Election Margin of Victory", "d0-3"))
+        # no name: the slug, as the engine groups it
+        self.assertEqual(event_of("ushrewc-ushr-tx-15-2026-11-03-dem", ""),
+                         ("ushrewc-ushr-tx-15-2026-11-03", "dem"))
+
+    def test_what_is_known_to_be_exclusive(self):
+        self.assertEqual(group_kind(["dem", "rep"]), "categorical")
+        self.assertEqual(group_kind(["d0-3", "d3-6", "rwin", "dgte12"]), "categorical")
+        self.assertEqual(group_kind(["50", "51", "gte57", "lte45"]), "numeric")
+        # nested thresholds can all resolve Yes together
+        self.assertIsNone(group_kind(["gt10pt5m", "gt11m"]))
+        self.assertIsNone(group_kind(["gte2", "gt3k"]))
+        # a side's "wins" overlaps its own brackets
+        self.assertIsNone(group_kind(["dwin", "d0-3"]))
+
+    def test_shorts_across_one_event_share_one_collateral(self):
+        legs = [short("d", 0.40, 100), short("r", 0.58, 100)]
+        self.assertAlmostEqual(plain(legs), 60 + 42)
+        # dem wins: the dem short loses 60, the rep short loses nothing
+        self.assertAlmostEqual(netted(legs, self.NAMES), 60)
+
+    def test_bids_get_no_credit_for_what_would_win(self):
+        legs = [long_("d", 0.40, 100), long_("r", 0.58, 100)]
+        # an order that would gain need not fill: "none of them" loses both
+        self.assertAlmostEqual(netted(legs, self.NAMES), plain(legs))
+
+    def test_nested_thresholds_stay_at_plain_collateral(self):
+        legs = [short("t1", 0.30, 100), short("t2", 0.20, 100)]
+        self.assertAlmostEqual(netted(legs, self.NAMES), plain(legs))
+
+    def test_a_wins_beside_its_own_brackets_stays_plain(self):
+        legs = [short("dw", 0.50, 100), short("b1", 0.20, 100)]
+        self.assertAlmostEqual(netted(legs, self.NAMES), plain(legs))
+
+    def test_seat_counts_are_swept_over_the_count(self):
+        legs = [short("s50", 0.20, 100), short("s51", 0.25, 100), short("s57", 0.05, 100)]
+        # one count wins: the worst is the dearest single short
+        self.assertAlmostEqual(netted(legs, self.NAMES), 95)
+        self.assertAlmostEqual(plain(legs), 80 + 75 + 95)
+
+    def test_held_positions_count_their_gains(self):
+        # a complete set of Yes held pays a dollar a share whoever wins
+        firm = [risk.Leg("d", True, 100, 40, firm=True), risk.Leg("r", True, 100, 58, firm=True)]
+        # the "none" outcome stays in, as in v3/risk.py: both lose there
+        self.assertAlmostEqual(netted(firm, self.NAMES), 98)
+        firm = [risk.Leg("d", True, 100, 40, firm=True), risk.Leg("r", False, 100, 42, firm=True)]
+        # long dem and short rep: rep winning loses both
+        self.assertAlmostEqual(netted(firm, self.NAMES), 82)
+
+    def test_the_margin_check_prices_what_we_hold_beside_the_exchange(self):
+        inv = [("d", -100, -40.0, False), ("r", -100, -58.0, True), ("x", 10, 30.0, False)]
+        c = margin_check(inv, {"marginRequirement": 61.5, "openOrders": 1.0, "buyingPower": 5,
+                               "currentBalance": 70}, 3, self.NAMES, T0)
+        # the 30-dollar lot of 10 shares is not a price: skipped, and said
+        self.assertEqual((c["n"], c["skipped"], c["est"], c["feed_n"]), (2, 1, 1, 3))
+        self.assertAlmostEqual(c["plain"], 102)
+        # HELD shorts on both outcomes took in 98 against one dollar owed a
+        # share whoever wins: 2 at worst (a resting order would get no such
+        # credit)
+        self.assertAlmostEqual(c["netted"], 2)
+        self.assertEqual(c["mr"], 61.5)
+
+    def test_the_report_carries_both_and_keeps_its_margin_checks(self):
+        fam, tf, tc = make()
+        for slug, name in (("ushrewc-tx15-dem", "TX-15 House Election Winner — dem"),
+                           ("ushrewc-tx15-rep", "TX-15 House Election Winner — rep")):
+            fam.add(slug, T1P, [(0.40, 2000)], [(0.42, 2000)])
+            fam.universe[slug]["name"] = name
+        tc.margin = lambda: {"inv": [("ushrewc-tx15-dem", -10, -4.0, False)],
+                             "row": {"marginRequirement": 6.0}, "feed_n": 1,
+                             "names": {"ushrewc-tx15-dem": "TX-15 House Election Winner — dem"}}
+        tc.tick(T0)
+        t1 = tc.report["tiers"]["t1"]
+        self.assertEqual(t1["events"], 1)
+        r = t1["risk"]["nearest"]
+        self.assertEqual(r["n"], 4)
+        self.assertLess(r["netted"], r["plain"])
+        self.assertEqual(tc.report["risk_all"]["nearest"], r)
+        self.assertEqual(tc.report["margin"]["mr"], 6.0)
+        self.assertEqual(len(tc.report["margin_hist"]), 1)
+        self.assertNotIn("margin_hist", tc.view())
+        # the checks carry across a restart, three days of them at most
+        tc2 = TierCent(tf, fam, clock=lambda: T0)
+        tc2.restore({"margin_hist": [{"mr": 1.0}] * (MARGIN_KEEP + 5)})
+        self.assertEqual(len(tc2.margin_hist), MARGIN_KEEP)
+        json.dumps(tc.to_dict())
+
+    def test_a_failing_margin_read_is_said_and_the_report_stands(self):
+        fam, tf, tc = make()
+        fam.add(A, T1P, [(0.40, 2000)], [(0.42, 2000)])
+
+        def boom():
+            raise RuntimeError("no row")
+        tc.margin = boom
+        tc.tick(T0)
+        self.assertTrue(tc.report["ok"])
+        self.assertIn("no row", tc.report["margin"]["error"])
 
 
 class TestTheProgramRecord(unittest.TestCase):
