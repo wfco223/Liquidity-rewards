@@ -2596,3 +2596,16 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790647751.0,politics,vmc-usgubmov-vt-2026-11-03-dwin,SELL,1,0.12,backfill,,13.52,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CS2ZV4CEWYC6
 1790647869.9,politics,scc-senate-demst-2026-11-03-gte51,SELL,10,0.42,sell,0.6502,0.56,,56,69,0.507,0.78,0.79,0.2,0,selling filled stock — it earns while it waits,CSEC0K9B8YCD
 1790648243.8,politics,vmc-usgubmov-vt-2026-11-03-dwin,SELL,1,0.12,backfill,,13.52,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CS2ZV4CEWYC6
+1790648699.7,politics,scc-hrep-rep-2026-11-03-gte200,SELL,41,0.44,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSEZ5N24MYBY
+1790648869.0,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.01,0.59,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSF0HJG74YCC
+1790650098.3,politics,scc-hrep-rep-2026-11-03-gte200,BUY,41,0.58,sell,18.5215,0.25,0.47,46,55,0,0.57,0.59,0.11,0,an exit — its fill reduces the position it sits on,CSF3GV7PGYBQ
+1790650310.4,politics,scc-hrep-rep-2026-11-03-gte200,BUY,84,0.58,focus,18.75,0.05,0.47,45,54,0,0.57,0.59,0.11,43,focus entry: ~$15.28/day; fill odds 32%/day; EV +12.37/day,CSFAQ5MJEYBY
+1790650370.4,politics,usgubewc-usgub-tn-2026-11-03-rep,SELL,10,0.91,sell,3.0823,0.54,0.995575,91,96,0.341,0.92,0.93,0.0856,0,selling filled stock — it earns while it waits,CSEXR26P4YC3
+1790650926.9,politics,usgubewc-usgub-id-2026-11-03-dem,BUY,0.83,0.01,backfill,,74.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQFDK01MTYB5
+1790650939.1,politics,usgubewc-usgub-id-2026-11-03-dem,BUY,8,0.01,sell,0.0027,74.8,0.001225,1,4,0.165,0.01,0.02,0.0088,-12,buying back the short at or under what it sold for — the bid earns while it wait,CQFDK01MTYB5
+1790650939.1,politics,usgubewc-usgub-sd-2026-11-03-dem,BUY,10,0.02,sell,0.0046,74.75,0.00445,1,5,0.165,0.02,0.03,0.0156,0,buying back the short at or under what it sold for — the bid earns while it wait,CQFFF5FC4YC6
+1790651848.0,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,-124.39,0.71,fix,26.1292,0.3,0.85555,73,80,0.568,0.71,0.72,0.1455,-217,size trimmed by 124.39 to the exchange's count (order CQ67QZBN0YAQ),CQ67QZBN0YAQ
+1790651848.0,politics,scc-hrep-rep-2026-11-03-gte185,SELL,0.1,0.86,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSETCN3P8YC3
+1790651848.0,politics,scc-hrep-rep-2026-11-03-gte200,SELL,41,0.44,backfill,,0.02,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSEZ5N24MYBY
+1790651848.0,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.01,0.59,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSF0HJG74YCC
+1790651848.0,politics,usgubewc-usgub-id-2026-11-03-dem,BUY,0.83,0.01,backfill,,74.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQFDK01MTYB5
