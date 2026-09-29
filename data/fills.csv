@@ -2639,3 +2639,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790709615.0,politics,paccc-usse-midterms-2026-11-03-rep,BUY,5,0.39,backfill,,7.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5E5ZGNYYC6
 1790709908.9,politics,vtc-usgubto-wi-2026-11-03-gt3m,BUY,1,0.3,earn,0.1651,0.13,,29,36,0.353,0.28,0.33,-0.02,3,2 ticks in front of the touch — we would hold 85% of the bid side,CSXFNKBCMYBE
 1790713369.7,politics,paccc-usse-midterms-2026-11-03-rep,BUY,-5,0.39,fix,0.2923,7.82,0.3097,38,40,0.792,0.39,0.391,0.0803,0,size trimmed by 5 to the exchange's count (order CQ5E5ZGNYYC6),CQ5E5ZGNYYC6
+1790716732.9,politics,paccc-usho-midterms-2026-11-03-rep,BUY,275,0.09,focus,187.262,0.05,0.0723,6,10,0.675,0.09,0.091,0.0177,275,focus entry: ~$186.70/day; fill odds 59%/day; EV +141.40/day,CSZ1AHV72YBE
