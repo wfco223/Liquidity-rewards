@@ -2590,3 +2590,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790635010.8,politics,vtc-usgubto-hi-2026-11-03-gt370k,BUY,1,0.89,backfill,,41.81,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CR78800FCYCD
 1790637342.0,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,34,0.94,sell,2.1493,0.29,0.9873,92,98,0.223,0.93,0.96,0.0473,0,selling filled stock — it earns while it waits,CSBV7H6YJYBE
 1790641536.1,politics,vtc-usgubto-ct-2026-11-03-gt1pt4m,BUY,1,0.41,sell,0.1429,10.65,,14,42,0.189,0.14,0.43,0.08,0,buying back the short at or under what it sold for — the bid earns while it wait,CS3YTYSXYYC3
+1790644532.3,politics,usgubewc-usgub-fl-2026-11-03-rep,BUY,110.84,0.78,backfill,,8.27,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNAJBQSZTWPE
+1790644532.3,politics,ushrewc-ushr-tx-34-2026-11-03-rep,SELL,17.9,0.15,hand,,0.33,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQ42AWN52YBQ
+1790644532.3,politics,ewc-usgub-ia-2026-11-03-rep,SELL,236,0.13,backfill,,0.61,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ4ASYFG0YCC
