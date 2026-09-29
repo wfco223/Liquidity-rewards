@@ -37,6 +37,22 @@ How it decides:
   the best reward plus gain on its fill against the fair; exits go first
   in the action budget.
 
+THE FULL RUN (owner, 2026-09-29: "What would happen if we changed the
+numbers to allow all 1000 to be deployed across all tiers. Since buying
+power is not depleted until an order is filled" ... "Yes" to running it on
+paper beside the split): a second engine, mode "full", the same in every
+way but the money. Every tier may rest up to the whole pot of orders; one
+shared pot is spent only by what positions hold (the exchange's balance
+row on 2026-09-29: $4.93 held for open orders, the margin on positions);
+an order is placed only up to what the pot still has free (the exchange
+refused or trimmed placements past it, 2026-09-10/12); a fill takes only
+what the pot can fund and the rest comes off; after a fill every entry
+the pot can no longer fund comes off (the six batches of 2026-09-12 — his
+diagnosis, not confirmed); and capital is charged on what positions hold,
+not on resting orders. Its fills teach stage 2 nothing and it keeps no
+twins of the tender's orders — the split engine does both — so the two
+runs differ only in the money rules.
+
 The check on the paper fills (owner, 2026-09-26: "How will you know how
 well it is estimating when everything is read only"): every real order of
 the tender's gets a paper twin at the same price and size, filled by the
@@ -162,6 +178,8 @@ class PaperTier:
         return {"day": day, "reward": 0.0, "capital": 0.0, "realized": 0.0, "fills": 0,
                 "actions": 0, "moves": 0, "skipped": 0, "pred": 0.0,
                 "unreal0": unreal,
+                # the full run: orders taken off or trimmed for want of money
+                "unfunded": 0, "trimmed": 0, "low_free": None,
                 "secs": 0.0}
 
     def oid(self) -> str:
@@ -204,10 +222,12 @@ class TierPaper:
     fairs, `fam` the politics family (the real orders and their fills),
     `tender_ids()` the tender's order ids."""
 
-    def __init__(self, tv, tf, fam, tender_ids=None, clock=None):
+    def __init__(self, tv, tf, fam, tender_ids=None, clock=None, mode: str = "split"):
         self.tv, self.tf, self.fam = tv, tf, fam
         self.tender_ids = tender_ids or (lambda: set())
         self._clock = clock or time.time
+        self.mode = mode
+        self.full = mode == "full"
         self.tiers = {k: PaperTier(k) for k, _n, _p in TIERS}
         self.avg = AvgBooks()
         self.shares: dict[str, float] = {}
@@ -232,6 +252,15 @@ class TierPaper:
         the split is refined once a minute for BOOT_SPLIT_S, as the books
         fill in."""
         day = _day(now)
+        if self.full:
+            # every tier the whole pot, from the first look
+            if not self.shares:
+                self.shares = {t: 1.0 for t, _n, _p in TIERS}
+                self.split_day, self.split_at = day, now
+                self.split_why = "each tier the whole pot"
+            for pt in self.tiers.values():
+                pt.money = POT_USD
+            return
         split = bool(self.shares) and sum(self.shares.values()) > 0
         if split and self.split_day == day:
             if not (self.split_why == "the first plan after a boot"
@@ -282,10 +311,17 @@ class TierPaper:
                 self._run(pt, by_tier.get(t, []), now, mine_all)
             except Exception as e:  # noqa: BLE001 — one tier never stops the others
                 self.error = f"{t}: {type(e).__name__}: {e}"[:160]
-        try:
-            self._shadows(now, mine_all)
-        except Exception as e:  # noqa: BLE001
-            self.error = f"shadows: {type(e).__name__}: {e}"[:160]
+        if not self.full:
+            try:
+                self._shadows(now, mine_all)
+            except Exception as e:  # noqa: BLE001
+                self.error = f"shadows: {type(e).__name__}: {e}"[:160]
+        else:
+            free = self.bp_free()
+            for pt in self.tiers.values():
+                lo = pt.day.get("low_free")
+                if lo is None or free < lo:
+                    pt.day["low_free"] = round(free, 2)
         self.avg.drop(set(mk))
         self.tick_s = round(time.time() - t0, 4)
 
@@ -338,7 +374,11 @@ class TierPaper:
             filled, o["ahead"] = tape_fill(o["side"], o["px"], float(o["ahead"]), own, other,
                                            tick, pp)
             if filled:
+                if self.full and o.get("kind") == "entry" and not self._funded(pt, oid, o, now):
+                    continue
                 self._fill(pt, oid, o, now)
+                if self.full:
+                    self._unfund(now)
         # a position's exit side takes no entry: the lot is offered once,
         # by its exit (an entry there would open the other side on top)
         exit_sides = {(slug, "SELL" if q > 0 else "BUY") for slug, (q, _a) in pt.pos.items()
@@ -367,6 +407,50 @@ class TierPaper:
         moves += self._exits(pt, books, now, coc, first)
         moves += self._entries(pt, books, now, coc, first, alloc_due, ground)
         self._do(pt, moves, now)
+
+    # -- the full run's one pot ---------------------------------------------------
+
+    def bp_free(self) -> float:
+        """The shared pot less what every tier's positions hold."""
+        return POT_USD - sum(pt.collateral_held() for pt in self.tiers.values())
+
+    @staticmethod
+    def _cps(side: str, px: float) -> float:
+        return px if side == "BUY" else 1.0 - px
+
+    def _funded(self, pt, oid: str, o: dict, now: float) -> bool:
+        """An entry the tape fills takes only what the pot can fund: the
+        rest comes off. False when nothing of it is funded."""
+        cps = self._cps(o["side"], float(o["px"]))
+        can = self.bp_free() / cps if cps > 0 else float("inf")
+        can = math.floor(max(can, 0.0) * 100.0) / 100.0
+        if can < EXIT_MIN_QTY:
+            del pt.orders[oid]
+            pt.day["unfunded"] += 1
+            pt.log.append({"ts": round(now, 1), "ev": "unfunded", "market": o["slug"],
+                           "side": o["side"], "px": o["px"], "qty": round(float(o["qty"]), 2),
+                           "why": "filled with no money left in the pot"})
+            return False
+        if can < float(o["qty"]) - 1e-9:
+            pt.day["trimmed"] += 1
+            pt.log.append({"ts": round(now, 1), "ev": "trimmed", "market": o["slug"],
+                           "side": o["side"], "px": o["px"],
+                           "from": round(float(o["qty"]), 2), "to": can,
+                           "why": "filled past what the pot had free"})
+            o["qty"] = can
+        return True
+
+    def _unfund(self, now: float) -> None:
+        """After a fill, every entry the pot can no longer fund comes off."""
+        free = self.bp_free()
+        for pt in self.tiers.values():
+            for oid in [i for i, o in pt.orders.items() if o.get("kind") == "entry"
+                        and float(o["qty"]) * self._cps(o["side"], float(o["px"])) > free + 1e-9]:
+                o = pt.orders.pop(oid)
+                pt.day["unfunded"] += 1
+                pt.log.append({"ts": round(now, 1), "ev": "unfunded", "market": o["slug"],
+                               "side": o["side"], "px": o["px"], "qty": round(float(o["qty"]), 2),
+                               "why": f"the pot has ${max(free, 0.0):.2f} free after a fill"})
 
     # -- books --------------------------------------------------------------------
 
@@ -401,7 +485,10 @@ class TierPaper:
     def _pred_rate(self, tier: str) -> float:
         """What stage 2 says this tier's money earns a day now."""
         v = self.tv.view() if hasattr(self.tv, "view") else {}
-        return float((((v.get("tiers") or {}).get(tier) or {}).get("split") or {})
+        # the full run is held to what stage 2 says the tier earns alone
+        # with the whole pot
+        key = "alone" if self.full else "split"
+        return float((((v.get("tiers") or {}).get(tier) or {}).get(key) or {})
                      .get("value") or 0.0)
 
     def _accrue(self, pt: PaperTier, books: dict, dt: float, coc: float, first: set) -> None:
@@ -409,7 +496,9 @@ class TierPaper:
         for o in pt.orders.values():
             d = by_side.setdefault((o["slug"], o["side"]), {})
             d[o["px"]] = d.get(o["px"], 0.0) + o["qty"]
-            if o.get("kind") == "entry":
+            if o.get("kind") == "entry" and not self.full:
+                # the full run charges no capital on a resting order: the
+                # exchange takes none until it fills
                 c = o["px"] if o["side"] == "BUY" else 1.0 - o["px"]
                 pt.day["capital"] += o["qty"] * c * coc * dt / DAY_S
         for (slug, side), ours in by_side.items():
@@ -466,8 +555,11 @@ class TierPaper:
                        "side": o["side"], "px": px, "qty": round(q, 2), "kind": o.get("kind"),
                        "realized": round(realized, 4), "held": round(Q, 2)})
         # its loss a share is read an hour later, like the paper spots'
-        self.tv.marks.append({"tier": pt.key, "slug": o["slug"], "side": o["side"],
-                              "px": px, "ts": now, "done": []})
+        # (the split engine's alone: the full run's fills would count the
+        # same moves twice)
+        if not self.full:
+            self.tv.marks.append({"tier": pt.key, "slug": o["slug"], "side": o["side"],
+                                  "px": px, "ts": now, "done": []})
 
     # -- the decisions ---------------------------------------------------------------
 
@@ -571,7 +663,9 @@ class TierPaper:
 
     def _entries(self, pt, books, now, coc, first, alloc_due, ground=None) -> list:
         cap = MARKET_CAP_FRAC * POT_USD
-        free = max(pt.money - pt.collateral_held(), 0.0)
+        # the full run: what rests is bounded by the pot, not by what the
+        # pot has left after positions — the exchange takes nothing for it
+        free = pt.money if self.full else max(pt.money - pt.collateral_held(), 0.0)
         targets: dict[tuple, tuple] = {}
         if alloc_due:
             pt.last_alloc = now
@@ -671,7 +765,7 @@ class TierPaper:
                            cur, want, gain_day, gain, cost))
         scored.sort(key=lambda x: (x[0], x[1]))
         droppable.sort()
-        free = max(pt.money - pt.collateral_held(), 0.0)
+        free = pt.money if self.full else max(pt.money - pt.collateral_held(), 0.0)
         used = sum(self._coll(o["side"], {o["px"]: o["qty"]}) for o in pt.orders.values()
                    if o.get("kind") == "entry")
         skipped_best = 0.0
@@ -682,6 +776,20 @@ class TierPaper:
                 if math.isfinite(gain):
                     skipped_best = max(skipped_best, (gain - cost) / n_act + pt.act_price)
                 continue
+            if kind == "entry" and self.full and want:
+                # an order is placed only up to what the pot has free
+                bp = max(self.bp_free(), 0.0)
+                w2 = {}
+                for px, q in want.items():
+                    c = self._cps(side, px)
+                    q2 = min(q, math.floor(bp / c * 100.0) / 100.0) if c > 0 else q
+                    if q2 >= EXIT_MIN_QTY:
+                        w2[px] = q2
+                if w2 != want:
+                    pt.day["trimmed"] += 1
+                    want = w2
+                    if self._same(cur, want):
+                        continue
             if kind == "entry":
                 need = used + self._coll(side, want) - self._coll(side, cur) - free
                 while need > 1e-6 and droppable and len(pt.acts) + n_act + len(
@@ -826,6 +934,9 @@ class TierPaper:
                                   "net": round(net, 4), "pred": round(d["pred"], 4),
                                   "fills": d["fills"], "actions": d["actions"],
                                   "moves": d["moves"], "skipped": d["skipped"],
+                                  "unfunded": d.get("unfunded", 0),
+                                  "trimmed": d.get("trimmed", 0),
+                                  "low_free": d.get("low_free"),
                                   "hours": round(d["secs"] / 3600.0, 2)},
                         "waiting_money": pt.waiting_money,
                         "days": pt.days[-7:], "act_price": round(pt.act_price, 4),
@@ -836,6 +947,7 @@ class TierPaper:
                         "log": list(pt.log)[-12:],
                         "shadow": self.shadow_tally.get(t) or {}}
         return {"ok": bool(self.shares), "stage": 3, "read_only": True, "version": VERSION,
+                "mode": self.mode, "bp_free": round(self.bp_free(), 2),
                 "pot": POT_USD, "split_day": self.split_day, "split_why": self.split_why,
                 "actions_per_min": ACTIONS_PER_MIN, "tiers": tiers,
                 "shadows_open": len(self.shadows),
@@ -848,7 +960,8 @@ class TierPaper:
     # -- persistence -----------------------------------------------------------------
 
     def to_dict(self) -> dict:
-        return {"version": VERSION, "shares": self.shares, "split_day": self.split_day,
+        return {"version": VERSION, "mode": self.mode, "shares": self.shares,
+                "split_day": self.split_day,
                 "split_why": self.split_why,
                 "tiers": {t: pt.to_dict() for t, pt in self.tiers.items()},
                 "shadow_tally": self.shadow_tally,

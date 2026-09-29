@@ -1592,6 +1592,26 @@ long and accreted, so search it rather than reading it through.
   both filled, only the twin, only the real order, neither (P29). No
   switches (it places nothing); the hand-over of markets from the tender
   and the old engine is stage 4.
+  THE FULL RUN BESIDE IT (owner, 2026-09-29 "What would happen if we
+  changed the numbers to allow all 1000 to be deployed across all tiers.
+  Since buying power is not depleted until an order is filled. In other
+  words. Nothing stops me from having as many orders open as I want" ...
+  "Yes"): a second TierPaper, mode "full", state["tierpaper_full"],
+  identical but for the money. The balance row on 2026-09-29 held $4.93
+  for open orders while the margin matched our positions, so resting
+  orders take nothing; what binds is the fills. Every tier may rest up to
+  the whole pot (POT_USD); one shared pot less what every tier's
+  positions hold (bp_free) is what fills spend; an order is placed only
+  up to what the pot has free (the exchange refused or trimmed past it,
+  2026-09-10/12); a fill takes only what the pot funds and the rest comes
+  off ("trimmed"/"unfunded"); after a fill every entry the pot can no
+  longer fund comes off (the 2026-09-12 batch drops — his diagnosis, not
+  confirmed); capital is charged on positions only; its predicted rate is
+  stage 2's "alone". Its fills do NOT feed stage 2's loss marks and it
+  keeps no twins of the tender's orders, so the split run is unchanged.
+  /tiers shows the two side by side (pFull, pTierFull); each day carries
+  unfunded, trimmed and low_free (the pot's lowest free money). The pot
+  is priced plain, not netted (conservative). P32 grades it.
 
 - THE 1-CENT REPORT (owner, 2026-09-28: "Just do the minimal amount to
   earn rewards 1 cent per day. Just to see how many actually get filled.

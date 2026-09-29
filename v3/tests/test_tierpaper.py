@@ -395,6 +395,128 @@ class TestTheSave(unittest.TestCase):
         self.assertEqual(tp2.shadow_tally["t1"]["neither"], 3)
 
 
+def full_rig():
+    fam = Fam()
+    clk = Clock()
+    tf = TierFair(fam, clock=clk)
+    tv = TierValue(tf, fam, clock=clk)
+    tp = TierPaper(tv, tf, fam, clock=clk, mode="full")
+    return fam, tf, tv, tp, clk
+
+
+def coll(o):
+    return o["qty"] * (o["px"] if o["side"] == "BUY" else 1 - o["px"])
+
+
+class TestTheFullRun(unittest.TestCase):
+    """Owner, 2026-09-29: "What would happen if we changed the numbers to
+    allow all 1000 to be deployed across all tiers. Since buying power is
+    not depleted until an order is filled" ... "Yes" to running it on
+    paper beside the split."""
+
+    def test_every_tier_may_rest_the_whole_pot_from_the_first_look(self):
+        fam, tf, tv, tp, clk = full_rig()
+        tp._split(T0)                                # no plan from stage 2 is needed
+        self.assertEqual({t: pt.money for t, pt in tp.tiers.items()},
+                         {t: POT_USD for t in tp.tiers})
+        self.assertEqual(tp.split_why, "each tier the whole pot")
+        self.assertAlmostEqual(tp.bp_free(), POT_USD)
+
+    def test_resting_orders_take_nothing_from_the_pot_and_cost_no_capital(self):
+        fam, tf, tv, tp, clk = full_rig()
+        fam.add(A, T1P, [(0.50, 1200.0)], [(0.55, 1200.0)], pool=400.0)
+        tp.tick(T0)
+        pt = tp.tiers["t1"]
+        self.assertTrue(pt.orders)
+        self.assertAlmostEqual(tp.bp_free(), POT_USD)
+        clk.t = T0 + 60
+        fam.put(A, [(0.50, 1200.0)], [(0.55, 1200.0)], T0 + 60)
+        tp.tick(T0 + 60)
+        self.assertEqual(pt.day["capital"], 0.0)
+        self.assertGreater(pt.day["reward"], 0.0)
+
+    def test_an_order_is_placed_only_up_to_what_the_pot_has_free(self):
+        fam, tf, tv, tp, clk = full_rig()
+        tp.tiers["t2"].pos["held-elsewhere"] = [1990.0, 0.5]     # $995 held
+        fam.add(A, T1P, [(0.50, 1200.0)], [(0.55, 1200.0)], pool=400.0)
+        tp.tick(T0)
+        pt = tp.tiers["t1"]
+        self.assertTrue(pt.orders)
+        for o in pt.orders.values():
+            self.assertLessEqual(coll(o), 5.0 + 1e-6)
+        self.assertGreater(pt.day["trimmed"], 0)
+
+    def test_a_fill_takes_only_what_the_pot_funds_and_the_rest_comes_off(self):
+        fam, tf, tv, tp, clk = full_rig()
+        fam.add(A, T1P, [(0.50, 1200.0)], [(0.55, 1200.0)], pool=400.0)
+        tp.tick(T0)
+        pt = tp.tiers["t1"]
+        bid = next(o for o in pt.orders.values() if o["side"] == "BUY")
+        px, q0 = bid["px"], round(bid["qty"], 2)
+        # another tier's position takes all but $10 of the pot
+        tp.tiers["t2"].pos["held-elsewhere"] = [1980.0, 0.5]
+        clk.t = T0 + 5
+        fam.put(A, [(0.45, 800.0)], [(px, 300.0), (0.55, 800.0)], T0 + 5)
+        tp.tick(T0 + 5)
+        self.assertAlmostEqual(pt.pos[A][0], int(10.0 / px * 100) / 100.0)
+        # the fill's own trim is written down (the same pass may also trim a
+        # new placement to the empty pot)
+        tr = [e for e in pt.log if e.get("ev") == "trimmed"]
+        self.assertEqual(len(tr), 1)
+        self.assertEqual((tr[0]["from"], tr[0]["to"]), (q0, pt.pos[A][0]))
+        # and every entry the pot can no longer fund came off
+        self.assertLessEqual(tp.bp_free(), 0.01)
+        self.assertFalse([o for o in pt.orders.values() if o["kind"] == "entry"
+                          and coll(o) > tp.bp_free() + 1e-6])
+        self.assertGreaterEqual(pt.day["unfunded"], 1)
+
+    def test_a_fill_with_nothing_left_in_the_pot_takes_nothing(self):
+        fam, tf, tv, tp, clk = full_rig()
+        fam.add(A, T1P, [(0.50, 1200.0)], [(0.55, 1200.0)], pool=400.0)
+        tp.tick(T0)
+        pt = tp.tiers["t1"]
+        bid = next(o for o in pt.orders.values() if o["side"] == "BUY")
+        tp.tiers["t2"].pos["held-elsewhere"] = [2000.0, 0.5]     # the whole pot
+        clk.t = T0 + 5
+        fam.put(A, [(0.45, 800.0)], [(bid["px"], 300.0), (0.55, 800.0)], T0 + 5)
+        tp.tick(T0 + 5)
+        self.assertNotIn(A, pt.pos)
+        self.assertGreaterEqual(pt.day["unfunded"], 1)
+
+    def test_the_full_run_teaches_stage_two_nothing_and_keeps_no_twins(self):
+        fam, tf, tv, tp, clk = full_rig()
+        fam.add(A, T1P, [(0.50, 1200.0)], [(0.55, 1200.0)], pool=400.0)
+        tp.tick(T0)
+        pt = tp.tiers["t1"]
+        bid = next(o for o in pt.orders.values() if o["side"] == "BUY")
+        clk.t = T0 + 5
+        fam.put(A, [(0.45, 800.0)], [(bid["px"], 300.0), (0.55, 800.0)], T0 + 5)
+        tp.tick(T0 + 5)
+        self.assertIn(A, pt.pos)
+        self.assertEqual(tv.marks and [m for m in tv.marks if m.get("tier") == "t1"
+                                       and m.get("slug") == A and "px" in m
+                                       and m["px"] == bid["px"]], [])
+        self.assertEqual(tp.shadows, {})
+
+    def test_it_is_held_to_what_stage_two_says_a_tier_earns_alone(self):
+        fam, tf, tv, tp, clk = full_rig()
+        tv._view = {"ok": True, "tiers": {"t1": {"alone": {"value": 40.0},
+                                                 "split": {"value": 10.0}}}}
+        self.assertEqual(tp._pred_rate("t1"), 40.0)
+
+    def test_it_saves_and_comes_back(self):
+        fam, tf, tv, tp, clk = full_rig()
+        fam.add(A, T1P, [(0.50, 1200.0)], [(0.55, 1200.0)], pool=400.0)
+        tp.tick(T0)
+        d = json.loads(json.dumps(tp.to_dict()))
+        self.assertEqual(d["mode"], "full")
+        tp2 = TierPaper(tv, tf, fam, clock=clk, mode="full")
+        tp2.restore(d)
+        self.assertEqual(set(tp2.tiers["t1"].orders), set(tp.tiers["t1"].orders))
+        v = tp.view()
+        self.assertEqual((v["mode"], v["bp_free"]), ("full", POT_USD))
+
+
 class TestItTouchesNothing(unittest.TestCase):
     def test_a_full_run_never_reaches_the_desk(self):
         fam, tf, tv, tp, clk = rig()
@@ -438,9 +560,15 @@ class TestTheAppRunsIt(unittest.TestCase):
         mon.tiervalue.tick(now)
         mon.tierpaper.tick(now)
         mon.tierfair._freeze(now)
+        mon.tierpaper_full.tick(now)
+        mon.tierfair._freeze(now)
         j = json.loads(mon.tiers_json())
         self.assertIn("paper", j)
-        self.assertIn("tierpaper", mon._state(now, {}))
+        self.assertEqual(j["paper_full"]["mode"], "full")
+        self.assertIs(mon.tierfair.paper_full, mon.tierpaper_full)
+        st = mon._state(now, {})
+        self.assertIn("tierpaper", st)
+        self.assertEqual(st["tierpaper_full"]["mode"], "full")
 
 
 HARNESS = r"""
@@ -464,6 +592,8 @@ try {
   const out = tRender(t);
   if (!out.includes('Paper trading') || !out.includes('stage 3 (paper)')) throw new Error('no stage 3');
   if (!out.includes('paper orders')) throw new Error('no paper list');
+  if (t.paper_full && !out.includes('the full run')) throw new Error('no full run');
+  if (t.paper_full && !out.includes('full run:')) throw new Error('no full run tier line');
   console.log('OK');
 } catch (e) { console.log('THREW: ' + e.message); process.exit(1); }
 """
@@ -475,10 +605,12 @@ class TestThePageRenders(unittest.TestCase):
         from v3.web import TIERS_JS
         fam, tf, tv, tp, clk = rig()
         tf.value, tf.paper = tv, tp
+        tf.paper_full = TierPaper(tv, tf, fam, clock=clk, mode="full")
         fam.add(A, T1P, [(0.50, 800.0)], [(0.55, 800.0)], pool=400.0)
         tf.tick(T0)
         tv.tick(T0)
         tp.tick(T0)
+        tf.paper_full.tick(T0)
         tp.tiers["t1"].pos[B] = [5.0, 0.4]
         tf._freeze(T0)
         with tempfile.TemporaryDirectory() as td:
