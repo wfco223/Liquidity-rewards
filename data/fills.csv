@@ -2633,3 +2633,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790697388.9,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,124.39,0.71,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ67QZBN0YAQ
 1790697388.9,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,86.39,0.71,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ6FWEAW2YBE
 1790697388.9,politics,paccc-usse-midterms-2026-11-03-rep,BUY,5,0.39,backfill,,7.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5E5ZGNYYC6
+1790701247.4,politics,paccc-usse-midterms-2026-11-03-rep,BUY,-5,0.39,fix,0.2923,7.82,0.3097,38,40,0.792,0.39,0.391,0.0803,0,size trimmed by 5 to the exchange's count (order CQ5E5ZGNYYC6),CQ5E5ZGNYYC6
+1790701247.4,politics,vmc-ussemov-nj-2026-11-03-d20-25,SELL,-0.94,0.06,fix,,0.03,,,,,,,,,size trimmed by 0.94 to the exchange's count (order CQ9Q7P8HYYC3),CQ9Q7P8HYYC3
