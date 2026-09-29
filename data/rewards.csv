@@ -12833,4 +12833,9 @@ date,market,program_type,reward_usd,status
 2026-09-26,ussewc-usse-nm-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-26,ussewc-usse-sd-2026-11-03-rep,liquidityProgram,0.39,PENDING
 2026-09-26,ussewc-usse-wy-2026-11-03-dem,liquidityProgram,0.02,PENDING
+2026-09-27,cpoc-ussegubc-me-2026-11-03-rgov-dsen,liquidityProgram,0.1,PENDING
+2026-09-27,scc-hrep-demst-2026-11-03-gte235,liquidityProgram,0.65,PENDING
+2026-09-27,scc-hrep-rep-2026-11-03-gte200,liquidityProgram,11.42,PENDING
+2026-09-27,usgubewc-usgub-tx-2026-11-03-dem,liquidityProgram,0.76,PENDING
+2026-09-27,ushrewc-ushr-tx-15-2026-11-03-rep,liquidityProgram,0.1,PENDING
 2026-09-27,ussewc-usse-sd-2026-11-03-rep,liquidityProgram,0.59,PENDING
