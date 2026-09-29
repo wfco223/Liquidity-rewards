@@ -77,6 +77,12 @@ def _iso_ts(s: str) -> float | None:
         return None
 
 
+# the period fields programs.program_from_period and pick_period read, and
+# the ones the August probe showed; anything else is noted with its values
+_KNOWN_PERIOD = frozenset(("createdAt", "discountFactor", "end", "period", "programId",
+                           "programType", "rewardPool", "start", "status", "targetSize"))
+
+
 class TermsStore:
     """Current terms per market plus change detection.
 
@@ -179,6 +185,15 @@ class TermsStore:
             r["period_keys"] = sorted(set(r["period_keys"]) | set(tp))
             r["reads"] += 1
             r["at"] = now
+            # the fields our reader does not use: every value seen, so a
+            # rule that differs market by market shows as more than one
+            ex = r.setdefault("extra", {})
+            for k, v in tp.items():
+                if k in _KNOWN_PERIOD or isinstance(v, (dict, list)):
+                    continue
+                vals = ex.setdefault(k, [])
+                if v not in vals and len(vals) < 10:
+                    vals.append(v)
 
     def _note_join(self, slug: str, prog: Program, now: float) -> None:
         """A program on a market that had none: a JOIN when a read found

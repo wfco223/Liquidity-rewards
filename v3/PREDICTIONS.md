@@ -1330,3 +1330,25 @@ $8-$15 a side.
 **Falsified if:** the first report's coll_nearest for t1+t2+t3 is $50 or
 more, or for t4+t4c is $500 or less.
 **Resolves:** at the first report after the deploy.
+**Graded 2026-09-28 17:37Z, the first report with books (build 02c128ef,
+deployed 17:24Z as PR #345; the boot-time run at 17:27Z had no books yet).**
+**(a) FALSIFIED.** Both Tier 4 programs' periods carry a field the reader
+had never used: `maxSpread: 0.06` on midterms_t4_house_winners_20260924
+(477 reads) and politics_t4_coverage_20260924 (5,720 reads). Tiers 1-3
+(midterms_t1/t2/t3_..._20260924) carry the ten August fields and no
+more; the row fields are the same six everywhere (category,
+eventStartTime, instrumentProduct, instrumentState, marketSlug,
+subcategory). The owner was right that Tier 4 has a spread rule. What it
+means on this exchange is NOT settled: the August copy of the US docs
+does not mention it, and both docs.polymarket.us and polymarket.us are
+blocked from the build container. On polymarket.com a max spread is how
+far an order may sit from the midpoint; his reading is that the bid and
+the ask must be close. The report's Tier 4 ladders do not apply it yet.
+**(b) HALF FALSIFIED.** Tiers 1-3: $779.56 ($115.91 + $368.76 +
+$294.89), not under $50. The books are deep: a cent at the nearest
+price on a Tier 1 side took $2.63 on average. Tier 4: $12,006.30
+($3,532.44 + $8,473.86) on 983 of 5,838 markets with a book under five
+minutes old, over $500 as claimed. What it taught: the nearest price is
+where the size is, so a cent is cheapest elsewhere. Prices where a cent
+takes $1 or less: Tier 1 16 ($7.21), Tier 2 75 ($30.78), Tier 3 66
+($22.64), Tier 4 $5 662 ($326.43), Tier 4 $2 2,635 ($758.98).

@@ -16,7 +16,7 @@ from v3.programs import Program
 from v3.scoring import Book
 from v3.terms import TermsStore
 from v3.tiercent import (CENT, CENT_EVERY_S, PAGE_ROWS_SLOW, QTY_MAX, TierCent,
-                         cent_ladder, window_edge)
+                         cent_ladder, window_edge, within)
 from v3.tierfair import TierFair
 from v3.tiervalue import side_share
 
@@ -215,6 +215,71 @@ class TestTheReport(unittest.TestCase):
         self.assertEqual(tf._cent_view()["tiers"]["t1"]["fresh"], 1)
 
 
+def t4_raws(ms=0.06):
+    return lambda: [{T4P: {"row": {"marketSlug": "x"},
+                           "period": {"programId": T4P, "maxSpread": ms},
+                           "row_keys": ["marketSlug"], "period_keys": ["maxSpread", "programId"],
+                           "reads": 1, "at": T0, "extra": {"maxSpread": [ms]}}}]
+
+
+class TestTheSpreadRule(unittest.TestCase):
+    """Tier 4's program records carry maxSpread (0.06 on 2026-09-28). What
+    it means is not settled, so both readings are reported side by side:
+    A, every order within it of the midpoint; B, the book's bid-ask gap
+    within it."""
+
+    def test_reading_a_counts_only_the_band_toward_the_target_size(self):
+        bids = [(0.40, 1500), (0.37, 300), (0.33, 1000)]
+        # midpoint 41c: 40c and 37c are inside 6c, 33c is 8c out
+        base = cent_ladder("BUY", bids, 0.01, 0.4, 2000, 1.25)
+        self.assertTrue(base["rows"])
+        a = within("BUY", bids, 0.01, 0.4, 2000, 1.25, 0.41, 0.06)
+        self.assertEqual(a["rows"], [])
+        self.assertEqual(a["under"], 200)
+
+    def test_reading_a_takes_a_price_exactly_at_the_edge(self):
+        asks = [(0.42, 1000), (0.47, 1500)]
+        # midpoint 41c: 47c is exactly 6c out
+        a = within("SELL", asks, 0.01, 0.4, 2000, 1.25, 0.41, 0.06)
+        self.assertEqual([r[1] for r in a["rows"]][-1], 0.47)
+
+    def test_both_readings_are_counted_per_tier_and_the_others_are_untouched(self):
+        fam, tf, tc = make(raws=t4_raws())
+        # a 2c book: both readings agree with the book as it rests
+        fam.add("ushrewc-a", T4P, [(0.40, 2500)], [(0.42, 2500)], pool=5.0, target=2000.0,
+                df=0.4)
+        # a 10c book: B shuts it; A keeps what sits within 6c of 45c
+        fam.add("ushrewc-b", T4P, [(0.40, 2500)], [(0.50, 2500)], pool=5.0, target=2000.0,
+                df=0.4)
+        # one side only: no midpoint, no gap
+        fam.add("ushrewc-c", T4P, [(0.40, 2500)], [], pool=5.0, target=2000.0, df=0.4)
+        fam.add(A, T1P, [(0.40, 2000)], [(0.42, 2000)])
+        tc.tick(T0)
+        t4 = tc.report["tiers"]["t4"]
+        self.assertEqual(t4["max_spread"], [0.06])
+        self.assertEqual(t4["sides_paying"], 5)
+        self.assertEqual((t4["A"]["sides_paying"], t4["A"]["sides_off"]), (4, 2))
+        self.assertEqual((t4["B"]["sides_paying"], t4["B"]["sides_off"]), (2, 4))
+        self.assertEqual(t4["no_mid"], 1)
+        rb = tc.report["markets"]["ushrewc-b"]
+        self.assertFalse(rb["B"])
+        self.assertEqual(rb["A"]["mid"], 0.45)
+        self.assertEqual(rb["ms"], 0.06)
+        self.assertTrue(tc.report["markets"]["ushrewc-a"]["B"])
+        # Tier 1's program carries no spread rule: no readings there
+        self.assertNotIn("A", tc.report["tiers"]["t1"])
+        self.assertNotIn("ms", tc.report["markets"][A])
+        json.dumps(tc.to_dict())
+
+    def test_a_program_without_the_field_gets_no_readings(self):
+        fam, tf, tc = make(raws=lambda: [{}])
+        fam.add("ushrewc-a", T4P, [(0.40, 2500)], [(0.50, 2500)], pool=5.0, target=2000.0,
+                df=0.4)
+        tc.tick(T0)
+        self.assertNotIn("A", tc.report["tiers"]["t4"])
+        self.assertEqual(tc.report["tiers"]["t4"]["sides_paying"], 2)
+
+
 class TestTheProgramRecord(unittest.TestCase):
     RAW = {A: {"marketSlug": A, "instrumentState": "INSTRUMENT_STATE_OPEN", "newField": 7,
                "timePeriods": [{"programId": T1P, "programType": "liquidityProgram",
@@ -232,6 +297,12 @@ class TestTheProgramRecord(unittest.TestCase):
         self.assertIn("maxSpread", r["period_keys"])
         self.assertIn("instrumentState", r["row_keys"])
         self.assertEqual(r["reads"], 1)
+        # a field the reader does not use keeps every value it has shown
+        self.assertEqual(r["extra"], {"maxSpread": [0.04]})
+        st.refresh({A: dict(self.RAW[A], timePeriods=[dict(self.RAW[A]["timePeriods"][0],
+                                                             maxSpread=0.03)])},
+                   {A: 2}, now=T0 + 60)
+        self.assertEqual(st.raw_seen[T1P]["extra"]["maxSpread"], [0.04, 0.03])
         prog = st.get(A)
         self.assertEqual((prog.pool, prog.target, prog.df, prog.pid, prog.event_n),
                          (1000, 25000, 0.3, T1P, 2))

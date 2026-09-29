@@ -1624,6 +1624,26 @@ long and accreted, so search it rather than reading it through.
   state["tiercent"] (Tiers 1-3 in full, Tier 4's 60 cheapest), shown as
   a card on /tiers. It places nothing; the live 1-cent probe needs its
   own switch and his yes.
+  THE TIER 4 SPREAD RULE IS IN THE RECORD (the first report with books,
+  2026-09-28 17:37Z; P30 (a) falsified): both Tier 4 programs' periods
+  carry maxSpread 0.06 (midterms_t4_house_winners, politics_t4_coverage);
+  Tiers 1-3 carry none. What it means on this exchange is not settled —
+  the saved US docs predate it and docs.polymarket.us is blocked from the
+  build container; on polymarket.com a max spread is how far an order may
+  sit from the midpoint; his reading is that the bid and the ask must be
+  close. So (owner, 2026-09-29 "Yes") the report shows both side by side
+  for every tier whose program carries it: A, an order farther than
+  maxSpread from the touch midpoint neither scores nor counts toward the
+  Target Size (the side is walked on the band alone — the best price is
+  nearest the midpoint, so the band never moves it); B, a book whose
+  bid-ask gap is over maxSpread pays neither side. A one-sided book has
+  no midpoint and no gap and is shut under both (no_mid). Per tier:
+  t["A"], t["B"] (sides paying, under, shut, the cent at the nearest
+  price, prices at $1 and $10 or less), t["max_spread"]; per market row
+  "ms", "A" (the midpoint and each side's band ladder) and "B". And
+  TermsStore.raw_seen keeps, per program, every value each field the
+  reader does not use has shown (extra, up to ten), so a rule that
+  differs market by market shows as more than one value.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

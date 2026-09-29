@@ -2103,6 +2103,11 @@ function pList(p,key){if(!p||!p.ok)return '';var t=(p.tiers||{})[key];if(!t)retu
  if((t.list||[]).length){o+='<div class="sub"><b>paper orders</b></div><div class="muted" style="margin-left:10px">';t.list.forEach(function(x){o+=esc(x.name)+' — '+(x.kind==='exit'?'exit ':'')+(x.side==='BUY'?'bid':'ask')+' '+x.qty.toLocaleString()+' @ '+pc(x.px)+'<br>';});o+='</div>';}
  if((t.positions||[]).length){o+='<div class="sub"><b>paper positions</b></div><div class="muted" style="margin-left:10px">';t.positions.forEach(function(x){o+=esc(x.name)+': '+(x.qty>0?'long ':'short ')+Math.abs(x.qty).toLocaleString()+' @ '+pc(x.avg)+(x.mid!=null?' (mid '+pc(x.mid)+')':'')+'<br>';});o+='</div>';}
  return o;}
+function cRule(t){var ms=(t.max_spread||[]).map(function(x){return (x*100).toFixed(1).replace(/\.0$/,'')+'¢';}).join('/');
+ function one(c,what){return what+': '+c.sides_paying+' sides pay ('+usd(c.pool_paying)+'/day)'+(c.sides_under?', '+c.sides_under+' under Target Size':'')+(c.sides_off?', '+c.sides_off+' shut by the rule':'')+' · 1¢ at the nearest price '+usd(c.coll_nearest)+' · '+c.le1[0].toLocaleString()+' prices at $1 or less ('+usd(c.le1[1])+')';}
+ return '<div class="sub muted" style="margin-left:10px">its program carries a max spread of '+ms+', and what that means is not settled, so both readings:<br>'
+  +one(t.A,'<b>A</b> — every order within '+ms+' of the midpoint')+'<br>'
+  +one(t.B,'<b>B</b> — the bid–ask gap '+ms+' or less')+(t.no_mid?'<br>'+t.no_mid+' books with one side have no midpoint and no gap: shut under both':'')+'</div>';}
 function cCard(c){if(!c)return '';if(!c.ok)return '<div class="card muted">1¢ report: '+esc(c.note||'not run yet')+'</div>';
  var names={t1:'Tier 1',t2:'Tier 2',t3:'Tier 3',t4:'Tier 4 ($5)',t4c:'Tier 4 ($2)'};
  var o='<div class="card"><b>1¢ report</b> <span class="pill">read only</span>'
@@ -2110,7 +2115,8 @@ function cCard(c){if(!c)return '';if(!c.ok)return '<div class="card muted">1¢ r
  ['t1','t2','t3','t4','t4c'].forEach(function(k){var t=(c.tiers||{})[k];if(!t||!t.markets)return;
   var sp=t.spreads||{};var spl=['<=1c','<=2c','<=5c','<=10c','>10c','none'].filter(function(x){return sp[x];}).map(function(x){return x.replace('<=','≤')+' '+sp[x];}).join(', ');
   o+='<div class="sub"><b>'+names[k]+':</b> '+t.fresh.toLocaleString()+' of '+t.markets.toLocaleString()+' with a fresh book · '+t.sides_paying+' sides pay ('+usd(t.pool_paying)+'/day), '+t.sides_under+' under Target Size ('+usd(t.pool_under)+'/day'+(t.sides_empty?', '+t.sides_empty+' empty':'')+')</div>'
-   +'<div class="sub muted">1¢ a day at the nearest price on every paying side: '+usd(t.coll_nearest)+' · '+((t.le1||[0])[0]).toLocaleString()+' prices where it takes $1 or less ('+usd((t.le1||[0,0])[1])+'), '+((t.le10||[0])[0]).toLocaleString()+' at $10 or less ('+usd((t.le10||[0,0])[1])+') · every price that pays ('+t.levels.toLocaleString()+'): '+usd(t.coll_all)+(t.sides_under?' · bringing the under sides to Target Size with walls: '+usd(t.coll_under_wall):'')+(spl?' · spreads: '+spl:'')+'</div>';});
+   +'<div class="sub muted">1¢ a day at the nearest price on every paying side: '+usd(t.coll_nearest)+' · '+((t.le1||[0])[0]).toLocaleString()+' prices where it takes $1 or less ('+usd((t.le1||[0,0])[1])+'), '+((t.le10||[0])[0]).toLocaleString()+' at $10 or less ('+usd((t.le10||[0,0])[1])+') · every price that pays ('+t.levels.toLocaleString()+'): '+usd(t.coll_all)+(t.sides_under?' · bringing the under sides to Target Size with walls: '+usd(t.coll_under_wall):'')+(spl?' · spreads: '+spl:'')+'</div>'
+   +(t.A?cRule(t):'');});
  var pr=c.programs||{};var ks=Object.keys(pr);
  if(ks.length){o+='<div class="sub"><b>program record fields</b></div><div class="muted" style="margin-left:10px">';ks.forEach(function(pid){var x=pr[pid];o+=esc(pid)+': '+esc((x.period_keys||[]).join(', '))+' | row: '+esc((x.row_keys||[]).join(', '))+'<br>';});o+='</div>';}
  if(c.error)o+='<div class="warn">'+esc(c.error)+'</div>';

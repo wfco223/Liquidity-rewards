@@ -40,7 +40,8 @@ CENT_MAX_TICKS = 20        # at most this many prices a side
 CENT = 0.01                  # a day: the smallest amount worth earning
 QTY_MAX = 20000.0            # the desk's largest order
 PAGE_ROWS_SLOW = 60          # Tier 4 markets kept in full in the report (the cheapest)
-VERSION = "cent-2026-09-28"
+VERSION = "cent-2026-09-29"
+SPREAD_EPS = 1e-6            # a price exactly at the band's edge is inside it
 
 
 def window_edge(levels, target: float) -> int:
@@ -138,6 +139,53 @@ def _exact(side, levels, tick, df, target, pool, px, q_hi) -> float:
     return q
 
 
+def _ctr() -> dict:
+    """The counters one reading of the spread rule keeps per tier."""
+    return {"sides_paying": 0, "sides_under": 0, "sides_off": 0, "levels": 0,
+            "coll_nearest": 0.0, "pool_paying": 0.0, "le1": [0, 0.0], "le10": [0, 0.0]}
+
+
+def _tally(c: dict, lad: dict | None, pool: float) -> None:
+    """Count one side under a reading: None is a side the rule shuts."""
+    if lad is None:
+        c["sides_off"] += 1
+        return
+    rows = lad.get("rows") or []
+    if rows:
+        c["sides_paying"] += 1
+        c["pool_paying"] += pool
+        c["levels"] += len(rows)
+        c["coll_nearest"] += rows[0][3]
+        for r in rows:
+            for key, lim in (("le1", 1.0), ("le10", 10.0)):
+                if r[3] <= lim:
+                    c[key][0] += 1
+                    c[key][1] += r[3]
+    elif "under" in lad:
+        c["sides_under"] += 1
+
+
+def _round_ctr(c: dict) -> None:
+    c["coll_nearest"] = round(c["coll_nearest"], 2)
+    c["pool_paying"] = round(c["pool_paying"], 2)
+    for k in ("le1", "le10"):
+        c[k][1] = round(c[k][1], 2)
+
+
+def within(side: str, levels, tick: float, df: float, target: float, pool: float,
+           mid: float, ms: float) -> dict:
+    """Reading A of the program's maxSpread: an order farther than `ms`
+    from the midpoint neither scores nor counts toward the Target Size.
+    The side is walked on the levels inside the band alone, and a price
+    outside it is never listed. The best price is the level nearest the
+    midpoint, so the band never moves it."""
+    band = [(p, q) for p, q in levels if abs(float(p) - mid) <= ms + SPREAD_EPS]
+    lad = cent_ladder(side, band, tick, df, target, pool)
+    if lad.get("rows"):
+        lad["rows"] = [r for r in lad["rows"] if abs(r[1] - mid) <= ms + SPREAD_EPS]
+    return lad
+
+
 class TierCent:
     """`tf` is the tier fairs (its markets and books), `fam` the politics
     family (the pools, the first-day record, the program records)."""
@@ -173,9 +221,21 @@ class TierCent:
                      "first_day": 0, "spreads": {}} for k, _n, _p in TIERS}
         rows: dict[str, dict] = {}
         slow_rows: list[tuple] = []
+        programs = self._programs(mk)
         for slug, (tier, prog) in mk.items():
             t = tiers[tier]
             t["markets"] += 1
+            # the program's own spread rule (owner, 2026-09-28: "On some tier
+            # 4 markets, the bid and the ask must be sufficiently close to earn
+            # rewards"): Tier 4's records carry maxSpread, 0.06 on 09-28
+            ms = self._max_spread(programs, getattr(prog, "pid", ""))
+            if ms is not None:
+                t.setdefault("max_spread", [])
+                if ms not in t["max_spread"]:
+                    t["max_spread"].append(ms)
+                t.setdefault("A", _ctr())
+                t.setdefault("B", _ctr())
+                t.setdefault("no_mid", 0)
             bk = self.tf._book(slug)
             if bk is None or now - float(bk.fetched_at or 0.0) > CENT_BOOK_MAX_S:
                 continue
@@ -219,6 +279,24 @@ class TierCent:
                     t["pool_under"] += pool
                     t["coll_under_wall"] += lad["coll_wall"]
                 row[side] = lad
+                if ms is not None:
+                    # reading A: every order within maxSpread of the midpoint;
+                    # reading B: the book's bid-ask gap within maxSpread. A
+                    # book with one side has neither a midpoint nor a gap
+                    if spread is None:
+                        _tally(t["A"], None, pool)
+                        _tally(t["B"], None, pool)
+                        continue
+                    mid = (bids[0][0] + asks[0][0]) / 2.0
+                    la = within(side, lv, bk.tick, float(prog.df), float(prog.target),
+                                pool, mid, ms)
+                    _tally(t["A"], la, pool)
+                    _tally(t["B"], lad if spread <= ms + SPREAD_EPS else None, pool)
+                    row.setdefault("A", {"mid": round(mid, 4)})[side] = la
+                    row["B"] = spread <= ms + SPREAD_EPS
+            if ms is not None:
+                row["ms"] = ms
+                t["no_mid"] += int(spread is None)
             t["coll_nearest"] += cost_near
             t["coll_all"] += cost_all
             row["coll_nearest"] = round(cost_near, 2)
@@ -236,11 +314,24 @@ class TierCent:
                 t[k] = round(t[k], 2)
             for k in ("le1", "le10"):
                 t[k][1] = round(t[k][1], 2)
+            for k in ("A", "B"):
+                if k in t:
+                    _round_ctr(t[k])
         self.error = ""
         self.report = {"ok": True, "version": VERSION, "at": round(now, 1),
                        "took_s": round(time.time() - t0, 2),
                        "cent": CENT, "every_s": CENT_EVERY_S, "tiers": tiers, "markets": rows,
-                       "programs": self._programs(mk)}
+                       "programs": programs}
+
+    @staticmethod
+    def _max_spread(programs: dict, pid: str) -> float | None:
+        """The program's maxSpread as its record carries it, or None."""
+        v = ((programs.get(pid) or {}).get("period") or {}).get("maxSpread")
+        try:
+            v = float(v)
+        except (TypeError, ValueError):
+            return None
+        return v if v > 0 else None
 
     def _programs(self, mk: dict) -> dict:
         """Every field the exchange's program record carried, per tier
@@ -261,7 +352,7 @@ class TierCent:
         r.pop("markets", None)
         r["error"] = self.error
         r["programs"] = {pid: {"row_keys": p.get("row_keys"), "period_keys": p.get("period_keys"),
-                               "reads": p.get("reads")}
+                               "reads": p.get("reads"), "extra": p.get("extra")}
                          for pid, p in (self.report.get("programs") or {}).items()}
         return r
 
