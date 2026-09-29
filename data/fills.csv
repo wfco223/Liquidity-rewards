@@ -2589,3 +2589,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790632220.2,politics,vtc-usgubto-hi-2026-11-03-gt370k,BUY,1,0.89,earn,0.0794,0.04,,90,98,0,0.32,0.99,-0.05,1,1 tick in front of the touch — we would hold 56% of the bid side,CSAVNW2ATYCD
 1790635010.8,politics,vtc-usgubto-hi-2026-11-03-gt370k,BUY,1,0.89,backfill,,41.81,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CR78800FCYCD
 1790637342.0,politics,usgubewc-usgub-me-2026-11-03-dem,SELL,34,0.94,sell,2.1493,0.29,0.9873,92,98,0.223,0.93,0.96,0.0473,0,selling filled stock — it earns while it waits,CSBV7H6YJYBE
+1790641536.1,politics,vtc-usgubto-ct-2026-11-03-gt1pt4m,BUY,1,0.41,sell,0.1429,10.65,,14,42,0.189,0.14,0.43,0.08,0,buying back the short at or under what it sold for — the bid earns while it wait,CS3YTYSXYYC3
