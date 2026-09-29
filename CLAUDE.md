@@ -1644,6 +1644,33 @@ long and accreted, so search it rather than reading it through.
   TermsStore.raw_seen keeps, per program, every value each field the
   reader does not use has shown (extra, up to ten), so a rule that
   differs market by market shows as more than one value.
+  NEGATIVE RISK AND MUTUALLY EXCLUSIVE OUTCOMES (owner, 2026-09-29 "We
+  also need to account for negative risk and mutually exclusive outcomes"
+  ... "Sure"): the report groups every tier market by its EVENT — the
+  exchange's name, "<event> — <outcome>" (the name groups match its own
+  event size on every tier market but one) — never by the slug, whose
+  last token splits a margin bracket like "d0-10" (5,027 Tier 4 coverage
+  markets read as 4,109 slug groups against 594 events; v3/risk.py's
+  race_key has that flaw for the engine's book and is NOT changed here).
+  Each tier's probe sets (1¢ at the nearest price on every paying side;
+  every price where 1¢ takes $1 or less; $10 or less; Tier 4's nearest
+  under readings A and B) are priced both ways, t["risk"] and
+  report["risk_all"]: plain, each order at its own collateral, and
+  netted, each event swept over who wins with v3/risk.py's rules (a
+  resting order gets no credit for a gain, a held position does, "none of
+  them" stays in). Only a group known to be exclusive is netted: parties,
+  candidates, margin brackets, balance-of-power combos (categorical) and
+  seat counts (the count sweep); nested thresholds (turnout "gt10pt5m",
+  any gt/lt/gte/lte not on a seat count) can all resolve Yes and stay
+  plain, as does a "dwin" beside that side's own brackets. On 2026-09-29
+  in Tiers 1-3 the nearest-price set was $698.18 plain, $467.72 netted.
+  THE MARGIN CHECK, each run: what the families hold (their inventory,
+  one row a market), priced plain and netted, beside the balance row's
+  marginRequirement, openOrders and buyingPower (client.balances_last, the
+  tender's twenty-second read — nothing new is read from the exchange),
+  with how many of the feed's positions it covers and how many costs are
+  estimated; the checks are kept three days (MARGIN_KEEP) and restored
+  across a restart. P31: the exchange's margin tracks the netted number.
 
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep

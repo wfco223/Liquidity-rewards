@@ -1231,7 +1231,8 @@ class Monitor:
         self.tiercent = (TierCent(self.tierfair, pol,
                                   raws=lambda: [getattr(pol.terms, "raw_seen", {}),
                                                 getattr(getattr(self.focus, "terms", None),
-                                                        "raw_seen", {})])
+                                                        "raw_seen", {})],
+                                  margin=self._cent_margin)
                          if self.tierfair is not None else None)
         if self.tierfair is not None:
             self.tierfair.cent = self.tiercent
@@ -1760,6 +1761,8 @@ class Monitor:
             self.tiervalue.restore(saved["tiervalue"])
         if saved.get("tierpaper") and getattr(self, "tierpaper", None) is not None:
             self.tierpaper.restore(saved["tierpaper"])
+        if saved.get("tiercent") and getattr(self, "tiercent", None) is not None:
+            self.tiercent.restore(saved["tiercent"])
         self.ladder_seen = {str(k): str(v) for k, v in
                             (saved.get("ladder_seen") or {}).items()}
         self.actuals_by_day = dict(saved.get("actuals_by_day") or {})
@@ -5306,6 +5309,30 @@ class Monitor:
                         said_c = t0
                         self._note(f"tier 1c report: {type(e).__name__}: {e}")
             time.sleep(max(TIERFAIR_TICK_S - (time.time() - t0), 0.2))
+
+    def _cent_margin(self) -> dict:
+        """For the 1-cent report's margin check (owner, 2026-09-29 "Sure"):
+        every held position the families book, with its event's name, the
+        exchange's balance row and how many positions its own feed shows.
+        Reads nothing from the exchange: the balance row is the last one
+        the tender's twenty-second read left."""
+        bal = getattr(self.client, "balances_last", None) or {}
+        rows = [r for r in (bal.get("rows") or []) if isinstance(r, dict)]
+        row = next((r for r in rows if r.get("currency") in ("USD", None)), rows[0] if rows else None)
+        inv, names, seen = [], {}, set()
+        for fam in list(self.families.values()):
+            uni = getattr(fam, "universe", None) or {}
+            for slug, v in list((getattr(fam, "inventory", None) or {}).items()):
+                q = float((v or {}).get("qty") or 0.0)
+                if slug in seen or abs(q) < 1e-9:
+                    continue
+                seen.add(slug)
+                inv.append((slug, q, float(v.get("cost") or 0.0), bool(v.get("est"))))
+                names[slug] = str((uni.get(slug) or {}).get("name") or "")
+        feed = getattr(self, "_pos_last", None) or {}
+        feed_n = sum(1 for v in list(feed.values()) if abs(float((v or [0])[0] or 0.0)) > 1e-9)
+        return {"inv": inv, "row": dict(row) if row else None, "feed_n": feed_n,
+                "names": names}
 
     def sweep_op(self, op: str) -> dict:
         """His taps on the sweep card (owner, 2026-09-13): preview reads
