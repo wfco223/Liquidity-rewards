@@ -2085,15 +2085,23 @@ function vRow(r){var x=r.val;if(!x)return '';var o='';if(x.first_day)o+='<span c
 function pNet(d){if(!d)return '–';return '<b>'+usd(d.net)+'</b> <span class="muted">(reward '+usd(d.reward)+' − capital '+usd(d.capital)+' + fills '+usd((d.realized||0)+(d.unreal||0))+')</span>';}
 function pShadow(sh){if(!sh)return '';var n=(sh.both||0)+(sh.paper_only||0)+(sh.real_only||0)+(sh.neither||0);if(!n)return '';
  return 'real orders checked: '+n+' — both filled '+(sh.both||0)+', only the paper twin '+(sh.paper_only||0)+', only the real order '+(sh.real_only||0)+', neither '+(sh.neither||0);}
-function pCard(p){if(!p)return '';if(!p.ok)return '<div class="card muted">stage 3: waiting for stage 2’s first plan to split the money</div>';
+function pCard(p,f){if(!p)return '';if(!p.ok)return '<div class="card muted">stage 3: waiting for stage 2’s first plan to split the money</div>';
  var o='<div class="card"><b>Paper trading</b> <span class="pill">stage 3 — read only</span>'
   +'<div class="muted">An engine per tier decides every second (Tier 4 every ten) what it would rest with its share of the $'+Math.round(p.pot).toLocaleString()+', fills its paper orders off the real order book, holds the positions, rests one exit per position, and keeps books: the reward its orders would claim, less the money they tie up, plus or minus what the fills made or lost at the midpoint. Orders that come and go count for the time they are there. It changes a side only when the new orders beat the old by more than the move costs, and at most '+p.actions_per_min+' places and cancels a minute a tier. The money was split '+esc(p.split_day)+' ('+esc(p.split_why)+'). Nothing here places an order.</div>';
  var tot=0,pred=0;['t1','t2','t3','t4','t4c'].forEach(function(k){var t=(p.tiers||{})[k];if(!t)return;tot+=(t.today||{}).net||0;pred+=(t.today||{}).pred||0;});
  o+='<div class="sub"><b>today on paper:</b> '+usd(tot)+' <span class="muted">(stage 2 expected '+usd(pred)+' for the same hours)</span></div>';
  var sr=p.shadow_recent||[];var ss={both:0,paper_only:0,real_only:0,neither:0};['t1','t2','t3','t4','t4c'].forEach(function(k){var t=((p.tiers||{})[k]||{}).shadow||{};for(var x in ss)ss[x]+=t[x]||0;});
  var line=pShadow(ss);o+='<div class="sub muted">'+(line?line:'no real tender order scored against its paper twin yet')+' · '+(p.shadows_open||0)+' being followed</div>';
+ o+=pFull(p,f);
  if(p.error)o+='<div class="warn">'+esc(p.error)+'</div>';
+ if(f&&f.error)o+='<div class="warn">full run: '+esc(f.error)+'</div>';
  return o+'</div>';}
+function pSum(p){var o={net:0,pred:0,fills:0,unf:0,trim:0,lo:null,reward:0};if(!p||!p.ok)return o;['t1','t2','t3','t4','t4c'].forEach(function(k){var t=(p.tiers||{})[k];if(!t)return;var d=t.today||{};o.net+=d.net||0;o.reward+=d.reward||0;o.pred+=d.pred||0;o.fills+=d.fills||0;o.unf+=d.unfunded||0;o.trim+=d.trimmed||0;if(d.low_free!=null&&(o.lo==null||d.low_free<o.lo))o.lo=d.low_free;});return o;}
+function pFull(p,f){if(!f)return '';if(!f.ok)return '<div class="sub muted">the full run: not started yet</div>';var a=pSum(p),b=pSum(f);
+ return '<div class="sub"><b>the full run</b> <span class="muted">(every tier may rest up to the whole $'+Math.round(f.pot).toLocaleString()+'; one shared $'+Math.round(f.pot).toLocaleString()+' is spent only by fills; capital charged on positions only)</span>: today '+usd(b.net)+' net ('+usd(b.reward)+' reward) against the split’s '+usd(a.net)+' ('+usd(a.reward)+') · '+b.fills+' fills to the split’s '+a.fills
+  +' · '+b.unf+' orders off for want of money, '+b.trim+' trimmed · the pot has '+usd(f.bp_free)+' free now'+(b.lo!=null?', '+usd(b.lo)+' at its lowest today':'')+' · stage 2 expected '+usd(b.pred)+'</div>';}
+function pTierFull(f,key){if(!f||!f.ok)return '';var t=(f.tiers||{})[key];if(!t)return '';var d=t.today||{};
+ return '<div class="sub muted"><b>full run:</b> '+t.entries+' entries ('+usd(t.coll_orders)+' of orders), '+t.exits+' exits, '+(t.positions||[]).length+' positions ('+usd(t.coll_held)+' held) · today '+pNet(d)+' · '+(d.fills||0)+' fills'+(d.unfunded?', '+d.unfunded+' off for want of money':'')+' · stage 2 alone expected '+usd(d.pred)+'</div>';}
 function pTier(p,key){if(!p||!p.ok)return '';var t=(p.tiers||{})[key];if(!t)return '';var d=t.today||{};
  var o='<div class="sub"><b>stage 3 (paper):</b> '+Math.round((t.share||0)*100)+'% = '+usd(t.money)+' · '+t.entries+' entries ('+usd(t.coll_orders)+'), '+t.exits+' exits, '+(t.positions||[]).length+' positions ('+usd(t.coll_held)+' held) · today '+pNet(d)+'</div>';
  o+='<div class="sub muted">'+(d.hours||0).toFixed(1)+' h today: '+(d.fills||0)+' fills, '+(d.moves||0)+' changes, '+(d.actions||0)+' places and cancels'+(d.skipped?', '+d.skipped+' waited for the action budget':'')+(t.waiting_money?' · '+t.waiting_money+' sides waiting for money its positions hold':'')+' · stage 2 expected '+usd(d.pred)+'</div>';
@@ -2131,11 +2139,11 @@ function cCard(c){if(!c)return '';if(!c.ok)return '<div class="card muted">1¢ r
  return o+'</div>';}
 function tRender(t){var o='<div class="card"><b>Tier fairs</b> <span class="pill">stage 1 — read only</span>'
   +'<div class="muted">A fair for every midterm-tier market, worked out again every second: the midpoint, moved only by what the book at depth, the last trade, the event’s other markets and Silver have proven they add. Each is written down every minute and checked against the midpoint 10 minutes and an hour later. Nothing on this page places, moves or cancels an order.</div>'
-  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+tStream(t.t4_stream)+'</div>'+cCard(t.cent)+vCard(t.value)+pCard(t.paper);
+  +'<div class="sub">all tiers — '+tMiss(t.all,3600)+'</div>'+(t.error?'<div class="warn">'+esc(t.error)+'</div>':'')+tStream(t.t4_stream)+'</div>'+cCard(t.cent)+vCard(t.value)+pCard(t.paper,t.paper_full);
  (t.tiers||[]).forEach(function(tr){var k='t-'+tr.key;var open=(window._tOpen||{})[k];
   o+='<div class="card"><div style="cursor:pointer" onclick="tTog(\''+k+'\')"><b>'+esc(tr.name)+'</b> <span class="muted">· '+tr.markets+' markets, '+tr.with_fair+' with a fair'+((tr.pool_day||[]).length?' · pays '+tr.pool_day.map(function(x){return '$'+x.toLocaleString();}).join('/')+' a day per event · Target Size '+(tr.target||[]).map(function(x){return x.toLocaleString();}).join('/'):' · no program on the ledger now')+'</span></div>'
    +(tr.slow?'<div class="sub muted">'+(tr.fresh||0).toLocaleString()+' with a fresh book, '+(tr.narrow||0).toLocaleString()+' with a touch 10¢ or narrower · worked out every 10 s'+(tr.rows_shown?' · the list shows the '+tr.rows_shown+' most recently traded':'')+'</div>':'')
-   +'<div class="sub">'+tMiss(tr.grade,3600)+'</div><div class="sub">'+tMiss(tr.grade,600)+'</div>'+vTier(t.value,tr.key)+pTier(t.paper,tr.key);
+   +'<div class="sub">'+tMiss(tr.grade,3600)+'</div><div class="sub">'+tMiss(tr.grade,600)+'</div>'+vTier(t.value,tr.key)+pTier(t.paper,tr.key)+pTierFull(t.paper_full,tr.key);
   if(open){o+=vTop(t.value,tr.key)+pList(t.paper,tr.key);(t.rows||[]).filter(function(r){return r.tier===tr.key;}).forEach(function(r){o+=tRow(r);});
    if(!tr.with_fair)o+='<div class="muted">no market in this tier has a book to read yet</div>';}
   else if(tr.with_fair)o+='<div class="muted">tap to list its markets</div>';

@@ -1224,6 +1224,13 @@ class Monitor:
                           if self.tiervalue is not None else None)
         if self.tierfair is not None:
             self.tierfair.paper = self.tierpaper
+        # beside it (owner, 2026-09-29 "Yes"): the same paper engines with
+        # every tier resting up to the whole pot and one shared pot spent
+        # only by fills — v3/tierpaper.py, THE FULL RUN. READ-ONLY
+        self.tierpaper_full = (TierPaper(self.tiervalue, self.tierfair, pol, mode="full")
+                               if self.tiervalue is not None else None)
+        if self.tierfair is not None:
+            self.tierfair.paper_full = self.tierpaper_full
         # the 1-cent report (owner, 2026-09-28 "Yes"): from the live books,
         # the size that earns a cent a day at every price a tier side
         # pays at, and every field the program records carry. READ-ONLY,
@@ -1761,6 +1768,8 @@ class Monitor:
             self.tiervalue.restore(saved["tiervalue"])
         if saved.get("tierpaper") and getattr(self, "tierpaper", None) is not None:
             self.tierpaper.restore(saved["tierpaper"])
+        if saved.get("tierpaper_full") and getattr(self, "tierpaper_full", None) is not None:
+            self.tierpaper_full.restore(saved["tierpaper_full"])
         if saved.get("tiercent") and getattr(self, "tiercent", None) is not None:
             self.tiercent.restore(saved["tiercent"])
         self.ladder_seen = {str(k): str(v) for k, v in
@@ -1916,6 +1925,8 @@ class Monitor:
                           if getattr(self, "tiervalue", None) is not None else {}),
             "tierpaper": (self.tierpaper.to_dict()
                           if getattr(self, "tierpaper", None) is not None else {}),
+            "tierpaper_full": (self.tierpaper_full.to_dict()
+                               if getattr(self, "tierpaper_full", None) is not None else {}),
             "tiercent": (self.tiercent.to_dict()
                          if getattr(self, "tiercent", None) is not None else {}),
             "ladder_day": getattr(self, "ladder_day", ""),
@@ -4499,6 +4510,7 @@ class Monitor:
                      ("tierfair", lambda: self.tierfair.to_dict()),
                      ("tiervalue", lambda: self.tiervalue.to_dict()),
                      ("tierpaper", lambda: self.tierpaper.to_dict()),
+                     ("tierpaper_full", lambda: self.tierpaper_full.to_dict()),
                      ("tiercent", lambda: self.tiercent.to_dict()),
                      ("bonds", lambda: self.bonds.to_dict()),
                      ("sweep", lambda: self.sweep.to_dict()),
@@ -5268,7 +5280,7 @@ class Monitor:
         books already in the cache. Reads nothing from the exchange and
         touches no order. Stages 2 (the value) and 3 (the paper engines)
         run on the same clock."""
-        said = said_v = said_p = said_c = 0.0
+        said = said_v = said_p = said_c = said_f = 0.0
         while True:
             t0 = time.time()
             try:
@@ -5298,6 +5310,16 @@ class Monitor:
                     if t0 - said_p > 600.0:
                         said_p = t0
                         self._note(f"tier paper: {type(e).__name__}: {e}")
+            tpf = getattr(self, "tierpaper_full", None)
+            if tpf is not None:
+                # the full run, after the split it is compared with
+                try:
+                    tpf.tick(t0)
+                except Exception as e:  # noqa: BLE001 — nor does the full run
+                    tpf.error = f"{type(e).__name__}: {e}"[:160]
+                    if t0 - said_f > 600.0:
+                        said_f = t0
+                        self._note(f"tier paper (full): {type(e).__name__}: {e}")
             tc = getattr(self, "tiercent", None)
             if tc is not None:
                 # the 1-cent report, every ten minutes on the same clock

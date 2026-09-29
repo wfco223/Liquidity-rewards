@@ -1372,3 +1372,24 @@ day) is not in the check.
 **Falsified if:** with 100 or more checks (state["tiercent"]["margin_hist"]),
 the netted median miss is over 3%, or the plain median miss is 3% or
 less. **Resolves:** three days after the deploy.
+
+### P32 — written 2026-09-29 ~19:10Z, BEFORE the full run deploys
+Three claims about the full paper run (every tier may rest up to the
+whole $1,000; one shared $1,000 spent only by fills) against the split
+paper run, over the first three full ET days after the deploy (09-30,
+10-01, 10-02), all tiers summed.
+**(a) Reward at least doubles.** The full run's reward is at least twice
+the split's. **Why:** each tier's orders are 3-16 times bigger than its
+split share, and the reward a side pays saturates, so less than
+proportional but well over double. **Falsified if** the ratio is under 2.
+**(b) Net is higher.** The full run's net (reward − capital on positions
++ realized + marked) beats the split's net. **Why:** resting orders cost
+no capital there, and on 09-27/28 the split's fills cost about $38 on
+$230 of reward. **Falsified if** the full run's net is at or below the
+split's.
+**(c) The pot runs low.** On at least one of the three days the full
+run's free money falls under $500 — positions lock half the pot at some
+point. **Why:** the split made 18-20 paper fills a day at a quarter of
+the size. **Falsified if** its lowest free money stays at $500 or more
+on all three days (tierpaper_full days, low_free).
+**Resolves:** after 10-02 ET closes.
