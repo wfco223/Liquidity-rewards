@@ -2615,3 +2615,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790654703.1,politics,vmc-ushrmov-ca-47-2026-11-03-rwin,BUY,1,0.1,sell,0.0742,0.28,,3,9,0.343,0.01,0.11,0.04,-9,buying back the short at or under what it sold for — the bid earns while it wait,CSG1GBR32YCA
 1790655547.2,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,-86.39,0.71,fix,,0,,,,,,,,,size trimmed by 86.39 to the exchange's count (order CQ6FWEAW2YBE),CQ6FWEAW2YBE
 1790655547.2,politics,scc-hrep-rep-2026-11-03-gte230,SELL,123,0.02,void,7.4086,-0,0.010175,1,4,0.175,0.01,0.02,-0.0098,0,voided: the exchange has no trade for order CSFSSX3H4YBE — the row of 09-29 03:2,CSFSSX3H4YBE
+1790657798.0,politics,vtc-usseto-mt-2026-11-03-gt550k,SELL,1,0.29,sell,0.0076,13.35,,23,30,0.285,0.23,0.29,-0.03,0,an exit — its fill reduces the position it sits on,CS5GTN4KEYBY
+1790658980.9,politics,usgubewc-usgub-ct-2026-11-03-rep,SELL,10,0.03,earn,1.0493,1.81,0.004025,1,5,0.185,0.02,0.03,-0.026,-10,2 ticks in front of the touch — we would hold 28% of the ask side,CSFTA5H8PYCC
