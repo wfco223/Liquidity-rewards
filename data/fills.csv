@@ -2628,3 +2628,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790690038.3,politics,vmc-ussemov-mi-2026-11-03-r3-6,SELL,1,0.17,sell,0,0,,16,22,0.426,0.17,0.18,0.02,0,taker dump — sold into the bid (the carved exception),CSRRZ3J88YBE
 1790695717.1,politics,ussewc-usse-ks-2026-11-03-rep,BUY,20,0.7,sell,0.0618,34.15,0.651825,65,71,0.241,0.69,0.7,0.0482,0,buying back the short at or under what it sold for — the bid earns while it wait,CRWSA6316YAQ
 1790696331.0,politics,paccc-usse-midterms-2026-11-03-rep,BUY,-5,0.39,fix,0.2923,7.82,0.3097,38,40,0.792,0.39,0.391,0.0803,0,size trimmed by 5 to the exchange's count (order CQ5E5ZGNYYC6),CQ5E5ZGNYYC6
+1790696511.9,politics,cpoc-ussegubc-nh-2026-11-03-dsweep,BUY,7,0.07,sell,0.1239,0.46,,5,10,0.626,0.06,0.07,0,0,buying back the short at or under what it sold for — the bid earns while it wait,CSSW9VJG6YC6
+1790697317.4,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,0.1,0.33,sell,0.004,4.08,,,,0.135,,,,-0.9,an exit — its fill reduces the position it sits on,CSPYZ8YZ2YB5
+1790697388.9,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,124.39,0.71,backfill,,0.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ67QZBN0YAQ
+1790697388.9,politics,usgubewc-usgub-ak-2026-11-03-jonkre,SELL,86.39,0.71,backfill,,0,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ6FWEAW2YBE
+1790697388.9,politics,paccc-usse-midterms-2026-11-03-rep,BUY,5,0.39,backfill,,7.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ5E5ZGNYYC6
