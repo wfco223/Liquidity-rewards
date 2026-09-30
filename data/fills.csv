@@ -2706,3 +2706,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790799714.6,politics,ewc-usse-ak-2026-11-03-dem,BUY,163,0.67,sell,13.4045,0.25,0.5548,63,68,0,0.66,0.67,0.1152,0,an exit — its fill reduces the position it sits on,CTJQ42YSGYBY
 1790802707.0,politics,scc-hrep-rep-2026-11-03-gte200,BUY,84.74,0.56,backfill,,0.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTJY4D1ATYCC
 1790803741.6,politics,scc-hrep-rep-2026-11-03-gte200,BUY,84.74,0.56,backfill,,0.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTJY4D1ATYCC
+1790804146.1,politics,ewc-usse-tx-2026-11-03-rep,BUY,28,0.39,focus,0.6586,0.03,0.265825,35,40,0.041,0.38,0.39,0.1242,28,focus entry: ~$2.01/day; fill odds 52%/day; EV +0.01/day,CTKYFWPK6YBE
+1790805241.1,politics,scc-hrep-rep-2026-11-03-gte205,SELL,70,0.34,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTM64Z0Q4YCA
+1790805783.6,politics,scc-hrep-rep-2026-11-03-gte205,SELL,2.1,0.34,hand,,0.08,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTM9D2W46YAQ
+1790807901.7,politics,scc-hrep-rep-2026-11-03-gte205,SELL,70,0.34,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTM64Z0Q4YCA
+1790807901.7,politics,scc-hrep-rep-2026-11-03-gte205,SELL,2.1,0.34,hand,,0.08,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTM9D2W46YAQ
