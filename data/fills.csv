@@ -2667,3 +2667,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790752056.1,cfb,aachc-cfb-wins-2026-11-28-arzst-4pt5wins,BUY,0.5,0.92,earn,0.0283,15.28,,91,95,0,0.92,0.93,-0.01,0.5,joins the touch — the book has been quiet,CSTD6DVY8YBY
 1790753130.8,politics,vtc-usgubto-ct-2026-11-03-gt1pt4m,SELL,1,0.26,earn,0.1109,0.02,,10,29,0.37,0.18,0.3,-0.05,-1,2 ticks in front of the touch — we would hold 78% of the ask side,CT7P5MMA4YCC
 1790754250.0,politics,vmc-usgubmov-hi-2026-11-03-d25-30,SELL,-0.74,0.05,fix,0.0701,2.41,,2,11,0,0.01,0.06,0.01,-1,size trimmed by 0.74 to the exchange's count (order CQAXYB1NWYAQ),CQAXYB1NWYAQ
+1790755840.9,politics,cpoc-ussegubc-me-2026-11-03-rgov-dsen,BUY,5,0.01,sell,0.0021,44.94,,1,5,0.26,0.01,0.03,-0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CS1VNPS7MYBY
+1790757793.0,politics,vmc-usgubmov-nh-2026-11-03-r12-15,BUY,1,0.3,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT8GWAKRMYC6
+1790757861.7,politics,vmc-usgubmov-nh-2026-11-03-r12-15,BUY,1,0.3,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT8GWAKRMYC6
