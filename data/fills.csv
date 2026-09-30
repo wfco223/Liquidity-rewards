@@ -2670,3 +2670,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790755840.9,politics,cpoc-ussegubc-me-2026-11-03-rgov-dsen,BUY,5,0.01,sell,0.0021,44.94,,1,5,0.26,0.01,0.03,-0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CS1VNPS7MYBY
 1790757793.0,politics,vmc-usgubmov-nh-2026-11-03-r12-15,BUY,1,0.3,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT8GWAKRMYC6
 1790757861.7,politics,vmc-usgubmov-nh-2026-11-03-r12-15,BUY,1,0.3,backfill,,0.28,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT8GWAKRMYC6
+1790757867.5,politics,vmc-usgubmov-vt-2026-11-03-r5-10,BUY,1,0.34,backfill,,12.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSYJAVC0EYBQ
+1790761588.4,politics,vmc-usgubmov-vt-2026-11-03-r5-10,BUY,1,0.34,backfill,,12.11,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSYJAVC0EYBQ
