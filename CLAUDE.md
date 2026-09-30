@@ -1692,6 +1692,22 @@ long and accreted, so search it rather than reading it through.
   estimated; the checks are kept three days (MARGIN_KEEP) and restored
   across a restart. P31: the exchange's margin tracks the netted number.
 
+- HIS ORDERS ARE RECORDED WHATEVER THE SWITCHES (owner, 2026-09-30
+  "Why isn't this order showing as earning anything on the positions
+  tab?" ... "Yes"). With the master, politics and focus switches off
+  (22:45Z that day) the family's cycle returned before its adoption
+  step, so his 275-share House control R ask at 9.1c — placed at 23:2xZ,
+  inside the 25,000 window at the ask touch, about $2.40 a day — had no
+  record, and the positions tab and the meter (both read the records'
+  live_est) showed $0. Family.cycle now records every order it did not
+  place (purpose "manual", hands off) BEFORE the switch check; reconcile,
+  the book refresh of active markets and the scoring already ran on or
+  off, so a recorded order is priced and one that fills or is cancelled
+  comes off the books with the switch off. Recording places, moves and
+  cancels nothing. Found beside it and NOT fixed: our inventory carries
+  that lot's cost as $24.75 (9c a share) where the exchange says $144.66
+  (52.6c); the positions tab shows ours.
+
 ## Evidence and predictions (owner, 2026-08-23)
 - "We want verifiable and testable predictions and we want to keep
   getting closer to the goal of stable and high earnings."
