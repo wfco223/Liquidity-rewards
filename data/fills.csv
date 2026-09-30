@@ -2649,3 +2649,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790723782.4,politics,scc-hrep-rep-2026-11-03-gte205,SELL,86,0.24,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT03TGD12YC3
 1790724365.4,politics,ushrewc-ushr-ny-17-2026-11-03-dem,SELL,-2.98,0.61,fix,0,0,,60,66,0,0.61,0.62,0.02,48,size trimmed by 2.98 to the exchange's count (order CQAX8XHNWYCA),CQAX8XHNWYCA
 1790724365.4,politics,scc-hrep-rep-2026-11-03-gte205,SELL,86,0.24,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT03TGD12YC3
+1790725064.5,politics,vmc-usgubmov-ia-2026-11-03-d3-6,BUY,1,0.19,earn,0.0278,5.54,,21,38,0,0.02,0.39,-0.1,1,1 tick in front of the touch — we would hold 56% of the bid side,CSWCEHNVWYBQ
+1790728006.2,politics,scc-hrep-rep-2026-11-03-gte195,BUY,30,0.7,backfill,,1.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT05C5N10YC6
+1790728131.1,politics,scc-hrep-rep-2026-11-03-gte195,BUY,30,0.7,backfill,,1.94,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT05C5N10YC6
