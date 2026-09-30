@@ -566,14 +566,32 @@ class TestAdoption(unittest.TestCase):
         r.exchange.live["far"] = self.foreign("far", "not-our-market")
         return r
 
-    def test_observing_previews_but_claims_nothing(self):
+    def test_observing_records_his_orders_and_places_nothing(self):
+        """Owner, 2026-09-30 "Yes": with the switches off his orders were
+        never recorded, so the positions tab and the meter counted $0 for
+        a House control ask earning about $2.40 a day. They are recorded
+        whatever the switch — hands off, and nothing is placed."""
         r = self.rig_with_foreign(switch=False)
+        before = dict(r.exchange.live)
         s = r.cycle()
         # v1a + v1x + own: an exchange-flagged MANUAL order is RECORDED
         # too since 2026-08-24, so the cover math can see it. Only the
         # far market (not our ground) is left out.
-        self.assertEqual(s["would_adopt"], 3)
-        self.assertEqual(set(r.fam.orders), set())
+        self.assertEqual(s["mode"], "observing")
+        self.assertEqual(set(r.fam.orders), {"v1a", "v1x", "own"})
+        self.assertTrue(all(o.purpose == "manual" for o in r.fam.orders.values()))
+        self.assertEqual(s["would_adopt"], 0)
+        # nothing placed, moved or cancelled
+        self.assertEqual(set(r.exchange.live), set(before))
+        # the next cycle prices it, switch still off — what the positions
+        # tab and the meter read
+        r.cycle()
+        self.assertTrue(str(r.fam.orders["v1a"].verdict).startswith("earning"))
+        # and one he cancels comes off the books with the switch still off
+        del r.exchange.live["v1x"]
+        r.cycle()
+        self.assertNotIn("v1x", r.fam.orders)
+        self.assertEqual(set(r.exchange.live), set(before) - {"v1x"})
 
     def test_armed_records_unknown_orders_hands_off(self):
         """Since 2026-08-22 ("Don't let it cancel orders I set by hand"):

@@ -2711,12 +2711,19 @@ class Family:
                                     if self.active_until and now < self.active_until else 0.0),
                    "refreshed": refreshed,
                    "would_adopt": len(pending)}
-        if not switch_on:
-            return self._finish(summary, now)
+        # his orders are RECORDED whatever the switch (owner, 2026-09-30
+        # "Yes": his 275-share House control R ask at 9.1c, placed at
+        # 23:2xZ with the switches off since 22:45Z, had no record, so the
+        # positions tab and the meter counted $0 for an order earning
+        # about $2.40 a day). Recording places, moves and cancels nothing;
+        # reconcile runs every cycle, on or off, so a recorded order that
+        # fills or is cancelled comes off the books as it always has
         if pending:
             self._adopt(pending, positions, now)
             summary["would_adopt"] = 0
             summary["active"] = len(self.active_markets())
+        if not switch_on:
+            return self._finish(summary, now)
         if self.cfg.adopt:
             self._seed_inventory(positions)
         if exits_only:
