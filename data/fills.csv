@@ -2680,3 +2680,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790774451.7,politics,scc-senate-demst-2026-11-03-gte51,SELL,0.05,0.82,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTC4JK67EYAQ
 1790776569.4,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,-1,0.94,fix,0.0244,8.27,,92,97,0,0.93,0.95,0,50,size trimmed by 1 to the exchange's count (order CQEAXDNVMYCD),CQEAXDNVMYCD
 1790776569.4,politics,scc-senate-demst-2026-11-03-gte51,SELL,0.05,0.82,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTC4JK67EYAQ
+1790782649.8,politics,vtc-usseto-va-2026-11-03-gt3pt25m,BUY,1,0.62,earn,0.0325,0.16,,41,86,0,0.61,0.9,-0.03,1,1 tick in front of the touch — we would hold 71% of the bid side,CTEN5SJH2YB5
+1790783509.8,cfb,aachc-cfb-wins-2026-11-28-arzst-8pt5wins,BUY,1,0.28,backfill,,13.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT3EEZXGGYAQ
+1790785125.1,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,-11,0.94,fix,0.0244,8.27,,92,97,0,0.93,0.95,0,50,size trimmed by 11 to the exchange's count (order CQEAXDNVMYCD),CQEAXDNVMYCD
+1790785125.1,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,-26,0.94,fix,,0,,,,,,,,,size trimmed by 26 to the exchange's count (order CQEAXDNVMYCD),CQEAXDNVMYCD
+1790785125.1,cfb,aachc-cfb-wins-2026-11-28-arzst-8pt5wins,BUY,1,0.28,backfill,,13.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT3EEZXGGYAQ
