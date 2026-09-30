@@ -2657,3 +2657,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790728265.4,politics,vmc-usgubmov-hi-2026-11-03-d25-30,BUY,1,0.15,sell,0.0995,16.59,,4,16,0.11,0.01,0.19,0.06,0,buying back the short at or under what it sold for — the bid earns while it wait,CSKJRC64EYAQ
 1790728265.4,politics,scc-hrep-rep-2026-11-03-gte225,BUY,31,0.05,sell,0.2683,107.1,0.02265,2,7,0.066,0.05,0.06,0.0274,0,an exit — its fill reduces the position it sits on,CQ5ZEA58RYAQ
 1790731942.1,politics,ewc-usgub-ia-2026-11-03-dem,SELL,-2,0.85,fix,0.0028,59.57,0.917975,84,88,0.603,0.84,0.85,0.068,2,size trimmed by 2 to the exchange's count (order CQ3WBZ830YAQ),CQ3WBZ830YAQ
+1790737836.3,politics,usgubewc-usgub-sc-2026-11-03-dem,BUY,10,0.04,sell,0.0035,100.37,0.026775,2,6,0.108,0.04,0.05,0.0132,0,buying back the short at or under what it sold for — the bid earns while it wait,CQE2T76FGYBE
