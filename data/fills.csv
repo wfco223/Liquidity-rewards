@@ -2711,3 +2711,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790805783.6,politics,scc-hrep-rep-2026-11-03-gte205,SELL,2.1,0.34,hand,,0.08,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTM9D2W46YAQ
 1790807901.7,politics,scc-hrep-rep-2026-11-03-gte205,SELL,70,0.34,hand,,0.05,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTM64Z0Q4YCA
 1790807901.7,politics,scc-hrep-rep-2026-11-03-gte205,SELL,2.1,0.34,hand,,0.08,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTM9D2W46YAQ
+1790808191.3,politics,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,SELL,12,0.1,sell,0.0847,1.14,,11,18,0.133,0.14,0.15,0.05,0,selling filled stock — it earns while it waits,CTKYNMRR8YC6
+1790808398.0,politics,ewc-usse-mn-2026-11-03-dem,SELL,115,0.89,hand,,58.08,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CS30XDENTYBE
+1790810993.5,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,7,0.8,focus,3.2647,2.25,0.72115,77,82,0.138,0.8,0.81,0.0789,7,focus entry: ~$2.87/day; fill odds 48%/day; EV +0.56/day,CTKNAJM9RYBQ
+1790810998.8,politics,usgubewc-usgub-tx-2026-11-03-rep,BUY,0.38,0.8,focus,3.2647,2.25,0.72115,77,81,0.498,0.8,0.81,0.0789,7.38,focus entry: ~$2.87/day; fill odds 48%/day; EV +0.56/day,CTKNAJM9RYBQ
+1790811547.0,politics,ewc-usse-mn-2026-11-03-dem,SELL,115,0.89,hand,,58.08,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CS30XDENTYBE
