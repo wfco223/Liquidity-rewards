@@ -2685,3 +2685,11 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790785125.1,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,-11,0.94,fix,0.0244,8.27,,92,97,0,0.93,0.95,0,50,size trimmed by 11 to the exchange's count (order CQEAXDNVMYCD),CQEAXDNVMYCD
 1790785125.1,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,-26,0.94,fix,,0,,,,,,,,,size trimmed by 26 to the exchange's count (order CQEAXDNVMYCD),CQEAXDNVMYCD
 1790785125.1,cfb,aachc-cfb-wins-2026-11-28-arzst-8pt5wins,BUY,1,0.28,backfill,,13.53,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT3EEZXGGYAQ
+1790785521.9,politics,vmc-usgubmov-mn-2026-11-03-d5-10,SELL,1,0.3,backfill,,17.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT08BF5EMYC6
+1790786971.5,politics,cpoc-ussegubc-ks-2026-11-03-rgov-dsen,SELL,10,0.21,earn,0.5209,4.98,,14,20,0.451,0.23,0.25,-0.04,-10,at the touch — a fill here is 1 ticks inside value (evidence band only; confiden,CTBHX1YZ0YBQ
+1790787213.2,politics,cpoc-ussegubc-ks-2026-11-03-dgov-rsen,BUY,2,0.11,sell,0.0542,109.62,,6,11,0.136,0.11,0.12,0.02,0,buying back the short at or under what it sold for — the bid earns while it wait,CQJ0DFS0PYBQ
+1790787414.9,politics,cpoc-ussec-tx-me-2026-11-03-dsweep,SELL,1,0.47,sell,0,0,,47,52,0.231,0.47,0.48,0.02,0,taker dump — sold into the bid (the carved exception),CTG0RC0FJYBY
+1790787838.8,politics,scc-hrep-rep-2026-11-03-gte200,SELL,84,0.41,backfill,,5.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTB0KVCXGYBY
+1790788791.9,politics,usgubewc-usgub-ak-2026-11-03-jonkre,BUY,-192,0.75,fix,,0,,,,,,,,,size trimmed by 192 to the exchange's count (order CQECVR1WMYCD),CQECVR1WMYCD
+1790788791.9,politics,vmc-usgubmov-mn-2026-11-03-d5-10,SELL,1,0.3,backfill,,17.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT08BF5EMYC6
+1790788791.9,politics,scc-hrep-rep-2026-11-03-gte200,SELL,84,0.41,backfill,,5.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTB0KVCXGYBY
