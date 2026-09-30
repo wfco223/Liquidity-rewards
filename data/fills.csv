@@ -2676,3 +2676,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790768892.7,politics,vmc-usgubmov-ct-2026-11-03-d20-25,BUY,1,0.28,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTAYHEF7MYC6
 1790769044.2,politics,vmc-usgubmov-pa-2026-11-03-d10-15,BUY,1,0.19,backfill,,13.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSZQQ97XTYB5
 1790769044.2,politics,vmc-usgubmov-ct-2026-11-03-d20-25,BUY,1,0.28,backfill,,0.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTAYHEF7MYC6
+1790773289.4,politics,vtc-usgubto-hi-2026-11-03-gt370k,BUY,1,0.72,earn,0.1429,6.45,,77,87,0.281,0.32,0.79,-0.1,3,5 ticks in front of the touch — we would hold 99% of the bid side,CT71DHJ2CYB5
+1790774451.7,politics,scc-senate-demst-2026-11-03-gte51,SELL,0.05,0.82,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTC4JK67EYAQ
+1790776569.4,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,-1,0.94,fix,0.0244,8.27,,92,97,0,0.93,0.95,0,50,size trimmed by 1 to the exchange's count (order CQEAXDNVMYCD),CQEAXDNVMYCD
+1790776569.4,politics,scc-senate-demst-2026-11-03-gte51,SELL,0.05,0.82,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTC4JK67EYAQ
