@@ -12943,6 +12943,7 @@ date,market,program_type,reward_usd,status
 2026-09-29,cpoc-ussegubc-ga-2026-11-03-rgov-dsen,liquidityProgram,0.2,PENDING
 2026-09-29,cpoc-ussegubc-me-2026-11-03-dgov-rsen,liquidityProgram,1.02,PENDING
 2026-09-29,cpoc-ussegubc-me-2026-11-03-dsweep,liquidityProgram,0.11,PENDING
+2026-09-29,cpoc-ussegubc-nh-2026-11-03-dsweep,liquidityProgram,0.1,PENDING
 2026-09-29,cpoc-ussegubc-oh-2026-11-03-dgov-rsen,liquidityProgram,0.16,PENDING
 2026-09-29,ewc-usse-ia-2026-11-03-rep,liquidityProgram,0.03,PENDING
 2026-09-29,ewc-usse-me-2026-11-03-dem,liquidityProgram,0.05,PENDING
@@ -12952,6 +12953,7 @@ date,market,program_type,reward_usd,status
 2026-09-29,scc-hrep-rep-2026-11-03-gte230,liquidityProgram,4.05,PENDING
 2026-09-29,usgubewc-usgub-ak-2026-11-03-berwil,liquidityProgram,0.18,PENDING
 2026-09-29,usgubewc-usgub-ct-2026-11-03-dem,liquidityProgram,0.01,PENDING
+2026-09-29,usgubewc-usgub-ct-2026-11-03-rep,liquidityProgram,0.09,PENDING
 2026-09-29,usgubewc-usgub-hi-2026-11-03-rep,liquidityProgram,0.01,PENDING
 2026-09-29,usgubewc-usgub-md-2026-11-03-dem,liquidityProgram,0.03,PENDING
 2026-09-29,usgubewc-usgub-sc-2026-11-03-dem,liquidityProgram,0.3,PENDING
