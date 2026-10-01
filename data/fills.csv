@@ -3430,3 +3430,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790824812.5,politics,vmc-ussemov-nc-2026-11-03-d12-15,SELL,4,0.04,sweep,0.039,1.11,,11,18,0.577,0.01,0.18,0.1,0,the dust sweep (owner; 2026-09-13): 5 sh worth $0.55 at the midpoint; crossed at,CTQZ7NQCPYBE
 1790827214.6,politics,vmc-ussemov-mi-2026-11-03-r3-6,SELL,-0.1,0.17,fix,0,0,,16,22,0.426,0.17,0.18,0.02,0,size trimmed by 0.1 to the exchange's count (order CSRRZ3J88YBE),CSRRZ3J88YBE
 1790855070.2,politics,vmc-ussemov-mi-2026-11-03-r3-6,SELL,0.1,0.17,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CSRRZ3J88YBE
+1790856786.5,politics,ewc-usse-nh-2026-11-03-dem,BUY,226,0.87,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CV0FS2558YH0
+1790856856.9,politics,usgovcc-26mid-rep-2026-11-03-20-21,BUY,1.56,0.2,hand,,0.33,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTZWVBXZPYHC
+1790856859.9,nfl,aqc-nfl-nfc-2027-01-24-champq-sea,SELL,1.3,0.82,hand,,0.24,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTZSM8ZVEYGW
+1790858446.9,politics,scc-hrep-rep-2026-11-03-gte200,SELL,84.5,0.57,manual,18.75,0.42,0.445625,55,59,0.459,0.57,0.65,-0.1244,0.5,the owner's own order — the engine leaves it alone,CV0GFX6ZEYHH
+1790858455.5,politics,scc-hrep-rep-2026-11-03-gte195,BUY,3,0.5964,backfill,,0.48,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV0F77Y12YGW
+1790858566.9,politics,scc-hrep-rep-2026-11-03-gte195,BUY,112.58,0.5964,manual,18.75,0.5,0.579125,65,70,0.142,0.43,0.61,0.0209,-0.42,the owner's own order — the engine leaves it alone · price corrected to 59.64c f,CV0F77Y12YGW
+1790858686.9,politics,scc-hrep-rep-2026-11-03-gte195,BUY,112.58,0.5964,fix,18.75,0.5,0.579125,65,70,0.142,0.43,0.61,0.0209,-0.42,price corrected 60c -> 59.64c per the exchange record (order CV0F77Y12YGW),CV0F77Y12YGW
+1790858686.9,politics,ewc-usse-nh-2026-11-03-dem,BUY,226,0.87,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CV0FS2558YH0
+1790858686.9,politics,usgovcc-26mid-rep-2026-11-03-20-21,BUY,1.56,0.2,hand,,0.33,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTZWVBXZPYHC
+1790858686.9,politics,scc-hrep-rep-2026-11-03-gte195,BUY,3,0.5964,backfill,,0.48,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV0F77Y12YGW
+1790858686.9,nfl,aqc-nfl-nfc-2027-01-24-champq-sea,SELL,1.3,0.82,hand,,0.24,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTZSM8ZVEYGW
