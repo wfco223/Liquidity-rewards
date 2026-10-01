@@ -3454,3 +3454,10 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790884045.6,politics,scc-hrep-rep-2026-11-03-gte205,BUY,48.58,0.26,manual,7.1662,2.66,0.310025,27,31,0.636,0.26,0.27,-0.05,48.58,the owner's own order — the engine leaves it alone,CV4RS3MV8YH8
 1790884165.6,politics,scc-hrep-rep-2026-11-03-gte200,BUY,5.88,0.57,manual,0.0283,2.69,0.445625,56,60,0.697,0.63,0.64,0.1244,-144.12,the owner's own order — the engine leaves it alone,CV4RT27REYHK
 1790884285.6,politics,scc-hrep-rep-2026-11-03-gte205,SELL,-81.52,0.24,fix,,0.82,,,,,,,,,size trimmed by 81.52 to the exchange's count (order CT03TGD12YC3),CT03TGD12YC3
+1790884345.6,politics,scc-senate-gop-2026-11-03-52,SELL,199,0.07,manual,1.7537,7.63,0.046975,4,7,0.454,0.06,0.07,-0.023,80,the owner's own order — the engine leaves it alone,CV0GD1FBPYHC
+1790884405.6,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,50,0.94,manual,1.1142,7.68,,91,95,0.061,0.9,0.94,0.01,100,the owner's own order — the engine leaves it alone,CV0FQKF9TYGW
+1790884585.6,politics,cpoc-ussegubc-me-2026-11-03-dsweep,SELL,9,0.58,manual,0.0138,7.7,,54,59,0.031,0.57,0.58,-0.02,0,the owner's own order — the engine leaves it alone,CV0G50VBMYGP
+1790886565.6,politics,ewc-usse-ia-2026-11-03-dem,BUY,23,0.44,sell,0.4617,8.26,0.600775,43,48,0.07,0.44,0.45,-0.1608,-53,an exit — its fill reduces the position it sits on,CV0G03C4RYHC
+1790886685.6,politics,scc-hrep-rep-2026-11-03-gte185,SELL,204.98,0.72,manual,18.75,0.48,0.798625,80,84,0.503,0.87,0.89,0.0786,0.02,the owner's own order — the engine leaves it alone,CV76YX6RRYGE
+1790886929.3,politics,scc-hrep-rep-2026-11-03-gte200,BUY,0.01,0.57,backfill,,3.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV4RT27REYHK
+1790887885.6,politics,scc-hrep-rep-2026-11-03-gte200,BUY,0.01,0.57,backfill,,3.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV4RT27REYHK
