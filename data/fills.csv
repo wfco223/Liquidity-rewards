@@ -3464,3 +3464,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790891570.5,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,15,0.91,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CV8RW07V2YG6
 1790895085.8,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,15,0.95,void,0.041,9.68,,90,94,0.464,0.9,0.92,-0.03,85,voided: the exchange has no trade for order CV0FH6YD0YHH — the row of 10-01 21:5,CV0FH6YD0YHH
 1790895085.8,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,15,0.91,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CV8RW07V2YG6
+1790895168.6,politics,ewc-usse-ia-2026-11-03-dem,BUY,28,0.44,sell,0.3243,10.65,0.600775,42,47,0.465,0.44,0.45,-0.1608,-25,an exit — its fill reduces the position it sits on,CV0G03C4RYHC
+1790896848.7,politics,scc-hrep-rep-2026-11-03-gte205,SELL,150,0.27,manual,18.7497,6.22,0.310025,28,32,0.707,0.33,0.34,0.04,-101,the owner's own order — the engine leaves it alone,CV4R751T4YGP
+1790896968.7,politics,scc-hrep-rep-2026-11-03-gte220,SELL,100,0.07,manual,5.5445,6.27,0.05375,5,8,0.619,0.06,0.07,-0.0163,-100,the owner's own order — the engine leaves it alone,CV4QW6AFRYGE
+1790897268.7,politics,scc-senate-gop-2026-11-03-46,SELL,1,0.11,manual,1.6427,10.35,0.124575,9,13,0,0.1,0.11,0.0146,-1,the owner's own order — the engine leaves it alone,CV181WCCJYHC
