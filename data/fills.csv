@@ -3427,3 +3427,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790823612.5,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,5.94,0.03,hand,,4.33,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTM4VK3JRYBY
 1790823612.5,nfl,ftsc-nfl-kmostfp-2027-01-10-caisan,BUY,0.01,0.03,hand,,48.04,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CSEMMXEF2YCA
 1790823612.5,nfl,ftsc-nfl-wrtop12fp-2027-01-10-romodu,BUY,0.01,0.03,hand,,18.54,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CT7WQEFR0YCC
+1790824812.5,politics,vmc-ussemov-nc-2026-11-03-d12-15,SELL,4,0.04,sweep,0.039,1.11,,11,18,0.577,0.01,0.18,0.1,0,the dust sweep (owner; 2026-09-13): 5 sh worth $0.55 at the midpoint; crossed at,CTQZ7NQCPYBE
+1790827214.6,politics,vmc-ussemov-mi-2026-11-03-r3-6,SELL,-0.1,0.17,fix,0,0,,16,22,0.426,0.17,0.18,0.02,0,size trimmed by 0.1 to the exchange's count (order CSRRZ3J88YBE),CSRRZ3J88YBE
