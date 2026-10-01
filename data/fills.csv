@@ -3038,3 +3038,82 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790816351.8,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,-38,0.94,fix,,8.31,,,,,,,,,size trimmed by 38 to the exchange's count (order CQEAXDNVMYCD),CQEAXDNVMYCD
 1790816351.8,politics,ussewc-usse-fl-2026-11-03-rep,BUY,-29.48,0.86,fix,,9.49,,,,,,,,,size trimmed by 29.48 to the exchange's count (order CQBTRFXSAYBE),CQBTRFXSAYBE
 1790816351.8,politics,vmc-ushrmov-ca-47-2026-11-03-rwin,SELL,-1,0.02,fix,0.0803,28.2,,1,5,0.334,0.01,0.02,0.01,-10,size trimmed by 1 to the exchange's count (order CQE9P9GT6YCD),CQE9P9GT6YCD
+1790816543.0,politics,scc-hrep-rep-2026-11-03-gte205,BUY,69,0.33,sell,18.3665,2.35,0.310025,30,34,0,0.33,0.34,0.02,-3,an exit — its fill reduces the position it sits on,CTMW4Z8RYYC6
+1790816564.7,politics,scc-hrep-rep-2026-11-03-gte205,BUY,0.33,0.33,sell,18.3665,2.36,0.310025,30,34,0.455,0.33,0.34,0.02,-2.67,an exit — its fill reduces the position it sits on,CTMW4Z8RYYC6
+1790817128.8,politics,vmc-ussemov-va-2026-11-03-d0-5,BUY,1,0.2,earn,0.1,50.06,,23,41,0,0.01,0.21,-0.12,1,joins the touch — the book has been quiet,CSBZRMY76YCA
+1790818346.6,politics,scc-senate-gop-2026-11-03-54,BUY,24,0.05,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQCRBV3AYBE
+1790818363.2,politics,scc-senate-gop-2026-11-03-lte45,BUY,0.41,0.07,hand,,27,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CT06A3CNGYC3
+1790818366.6,politics,scc-senate-gop-2026-11-03-49,BUY,0.21,0.13,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQCRC0MCYBE
+1790818371.5,politics,scc-senate-gop-2026-11-03-51,BUY,0.1,0.09,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQCQRZCTYB5
+1790818413.2,politics,vtc-usgubto-ct-2026-11-03-gt1pt4m,BUY,1,0.29,sell,0.1429,16.82,,26,34,0.5,0.01,0.3,-0.01,0,buying back the short at or under what it sold for — the bid earns while it wait,CT8T4WYERYBY
+1790818715.8,politics,ushrewc-ushr-tx-34-2026-11-03-dem,BUY,223.14,0.83,hand,,125.89,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQBDMH3CYYCD
+1790818715.8,politics,ushrewc-ushr-tx-34-2026-11-03-dem,BUY,38,0.83,hand,,133.52,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ47C7AH8YC6
+1790818727.2,politics,ushrewc-ushr-tx-34-2026-11-03-rep,SELL,79.99,0.14,hand,,133.51,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ40M5Z7PYBE
+1790818767.6,politics,ushrewc-ushr-ca-45-2026-11-03-dem,SELL,49.91,0.94,hand,,34.45,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CSSVCP04WYBE
+1790818834.6,politics,scc-hrep-rep-2026-11-03-gte235,BUY,47.3,0.03,hand,,77.49,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CRN4Y3KWYYCA
+1790818840.7,politics,scc-hrep-rep-2026-11-03-gte195,SELL,23.96,0.7,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQFYW490YCD
+1790818840.7,politics,scc-hrep-rep-2026-11-03-gte195,SELL,0.01,0.7,hand,,10.3,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTEHSVG1PYCA
+1790818840.7,politics,scc-hrep-rep-2026-11-03-gte195,SELL,0.85,0.7,hand,,18.95,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CT74ZTYFTYC3
+1790818840.7,politics,scc-hrep-rep-2026-11-03-gte195,SELL,5,0.7,hand,,24.96,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CT236B6M4YB5
+1790818847.4,politics,scc-hrep-rep-2026-11-03-gte190,SELL,10.66,0.79,hand,,3.9,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTM4EGMHAYCC
+1790818847.4,politics,scc-hrep-rep-2026-11-03-gte190,SELL,0.01,0.79,hand,,9.03,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTFQ7Y9FMYCC
+1790818847.4,politics,scc-hrep-rep-2026-11-03-gte190,SELL,9.64,0.79,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQFVRA26YC6
+1790818853.8,politics,scc-hrep-rep-2026-11-03-gte220,BUY,6.85,0.08,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQFZZCD2YBY
+1790818860.2,politics,scc-hrep-rep-2026-11-03-gte205,BUY,2.68,0.34,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQFYSH22YB5
+1790818860.2,politics,scc-hrep-rep-2026-11-03-gte205,BUY,0.05,0.34,hand,,3.7,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTMA0CN3AYAQ
+1790818862.9,politics,scc-hrep-rep-2026-11-03-gte180,BUY,0.33,0.85,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQFZZEYGYBY
+1790818865.8,politics,scc-hrep-rep-2026-11-03-gte230,SELL,0.28,0.02,hand,,46.33,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CSFQWS6H2YCD
+1790818869.1,politics,scc-hrep-rep-2026-11-03-gte225,SELL,0.05,0.06,hand,,131.77,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQ6D5A6BJYCC
+1790818920.9,politics,scc-hrep-demst-2026-11-03-gte235,BUY,0.17,0.46,hand,,24.51,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CT2FQ3GDTYCA
+1790819170.7,politics,ushrewc-ushr-ca-45-2026-11-03-dem,SELL,49.91,0.95,sell,0.0532,133.5,,91,96,0.068,0.94,0.95,-0.01,0.09,selling filled stock — it earns while it waits,CQ500H8QCYCA
+1790819170.7,politics,ushrewc-ushr-ca-45-2026-11-03-dem,SELL,0.09,0.95,sell,0.0001,126.52,,91,96,0.068,0.94,0.95,-0.01,0,selling filled stock — it earns while it waits,CQB1QF1HMYCD
+1790819170.7,politics,scc-hrep-rep-2026-11-03-gte235,BUY,45,0.01,sell,0.0122,118.14,0.003025,2,6,0.079,0.02,0.03,0.007,-2,an exit — its fill reduces the position it sits on,CQJ9GWXFWYAQ
+1790819575.4,politics,ushrewc-ushr-ia-01-2026-11-03-rep,SELL,95,0.18,hand,,0.3,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQDPQ6SAYC3
+1790819575.4,politics,ushrewc-ushr-ia-01-2026-11-03-rep,SELL,45,0.18,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQN010ARYCA
+1790819607.5,politics,ewc-usse-me-2026-11-03-rep,BUY,22,0.42,hand,,5.44,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTK094W8WYB5
+1790819660.2,politics,paccc-balpow-2026-11-03-rsweep,SELL,210.92,0.09,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQNQVBNWYBE
+1790819689.6,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,0.45,0.3,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQNTC0Q2YAQ
+1790819912.4,politics,ewc-usse-me-2026-11-03-rep,BUY,22,0.34,sell,0,83.1,0.286625,38,42,0.367,0.41,0.42,0.0534,0,an exit — its fill reduces the position it sits on,CRGE8PSFEYC6
+1790819912.4,politics,ushrewc-ushr-ia-01-2026-11-03-rep,SELL,140,0.21,sell,0,3.34,,15,21,0,0.18,0.19,-0.03,0,selling filled stock — it earns while it waits,CTMVTXCEGYCA
+1790819917.2,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,0.28,0.02,hand,,117.91,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQJN6APN4YCC
+1790819920.3,politics,usgubewc-usgub-ak-2026-11-03-adacru,SELL,0.06,0.01,hand,,132.29,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQ66F1JXWYBY
+1790819944.1,politics,usgubewc-usgub-nm-2026-11-03-dem,SELL,28,0.94,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQR3CKZRYCA
+1790819944.1,politics,usgubewc-usgub-nm-2026-11-03-dem,BUY,1,0.94,hand,,79.26,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CRKWB3NFWYCD
+1790819963.2,politics,ushrewc-ushr-nj-07-2026-11-03-dem,SELL,113.62,0.85,hand,,109.28,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQSXJAVJEYCD
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte220,BUY,-6.85,0.07,fix,0.1232,10.94,0.05375,3,8,0.621,0.07,0.08,0.0163,-0.15,size trimmed by 6.85 to the exchange's count (order CTE1XESFWYCC),CTE1XESFWYCC
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte205,BUY,-2.67,0.33,fix,0.0777,2.99,0.310025,30,33,0.622,0.33,0.34,0.02,-0.33,size trimmed by 2.67 to the exchange's count (order CTMW4Z8RYYC6),CTMW4Z8RYYC6
+1790819972.4,politics,scc-senate-gop-2026-11-03-54,BUY,24,0.05,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQCRBV3AYBE
+1790819972.4,politics,scc-senate-gop-2026-11-03-lte45,BUY,0.41,0.07,hand,,27,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CT06A3CNGYC3
+1790819972.4,politics,scc-senate-gop-2026-11-03-49,BUY,0.21,0.13,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQCRC0MCYBE
+1790819972.4,politics,scc-senate-gop-2026-11-03-51,BUY,0.1,0.09,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQCQRZCTYB5
+1790819972.4,politics,ushrewc-ushr-tx-34-2026-11-03-dem,BUY,223.14,0.83,hand,,125.89,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQBDMH3CYYCD
+1790819972.4,politics,ushrewc-ushr-tx-34-2026-11-03-dem,BUY,38,0.83,hand,,133.52,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ47C7AH8YC6
+1790819972.4,politics,ushrewc-ushr-tx-34-2026-11-03-rep,SELL,79.99,0.14,hand,,133.51,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CQ40M5Z7PYBE
+1790819972.4,politics,ushrewc-ushr-ca-45-2026-11-03-dem,SELL,49.91,0.94,hand,,34.45,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CSSVCP04WYBE
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte235,BUY,47.3,0.03,hand,,77.49,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CRN4Y3KWYYCA
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte195,SELL,23.96,0.7,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQFYW490YCD
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte195,SELL,0.01,0.7,hand,,10.3,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTEHSVG1PYCA
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte195,SELL,0.85,0.7,hand,,18.95,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CT74ZTYFTYC3
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte195,SELL,5,0.7,hand,,24.96,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CT236B6M4YB5
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte190,SELL,10.66,0.79,hand,,3.9,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTM4EGMHAYCC
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte190,SELL,0.01,0.79,hand,,9.03,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTFQ7Y9FMYCC
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte190,SELL,9.64,0.79,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQFVRA26YC6
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte220,BUY,6.85,0.08,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQFZZCD2YBY
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte205,BUY,2.68,0.34,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQFYSH22YB5
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte205,BUY,0.05,0.34,hand,,3.7,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTMA0CN3AYAQ
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte180,BUY,0.33,0.85,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQFZZEYGYBY
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte230,SELL,0.28,0.02,hand,,46.33,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CSFQWS6H2YCD
+1790819972.4,politics,scc-hrep-rep-2026-11-03-gte225,SELL,0.05,0.06,hand,,131.77,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQ6D5A6BJYCC
+1790819972.4,politics,scc-hrep-demst-2026-11-03-gte235,BUY,0.17,0.46,hand,,24.51,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CT2FQ3GDTYCA
+1790819972.4,politics,ushrewc-ushr-ia-01-2026-11-03-rep,SELL,95,0.18,hand,,0.3,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQDPQ6SAYC3
+1790819972.4,politics,ushrewc-ushr-ia-01-2026-11-03-rep,SELL,45,0.18,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTQN010ARYCA
+1790819972.4,politics,ewc-usse-me-2026-11-03-rep,BUY,22,0.42,hand,,5.44,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CTK094W8WYB5
+1790819972.4,politics,paccc-balpow-2026-11-03-rsweep,SELL,210.92,0.09,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQNQVBNWYBE
+1790819972.4,politics,paccc-balpow-2026-11-03-dhou-rsen,BUY,0.45,0.3,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQNTC0Q2YAQ
+1790819972.4,politics,usgubewc-usgub-ak-2026-11-03-davbro,SELL,0.28,0.02,hand,,117.91,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQJN6APN4YCC
+1790819972.4,politics,usgubewc-usgub-ak-2026-11-03-adacru,SELL,0.06,0.01,hand,,132.29,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQ66F1JXWYBY
+1790819972.4,politics,usgubewc-usgub-nm-2026-11-03-dem,SELL,28,0.94,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTQR3CKZRYCA
+1790819972.4,politics,usgubewc-usgub-nm-2026-11-03-dem,BUY,1,0.94,hand,,79.26,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CRKWB3NFWYCD
+1790819972.4,politics,ushrewc-ushr-nj-07-2026-11-03-dem,SELL,113.62,0.85,hand,,109.28,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQSXJAVJEYCD
+1790819972.4,politics,ussewc-usse-co-2026-11-03-dem,SELL,0.03,0.97,hand,,4.12,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTM71FHQJYCC
+1790819982.4,politics,ussewc-usse-co-2026-11-03-dem,SELL,0.03,0.97,hand,,4.12,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTM71FHQJYCC
