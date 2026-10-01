@@ -3446,3 +3446,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790866246.8,politics,scc-senate-gop-2026-11-03-52,SELL,21,0.07,manual,1.8211,2.6,0.046975,3,7,0.077,0.06,0.07,-0.023,279,the owner's own order — the engine leaves it alone,CV0GD1FBPYHC
 1790866726.8,politics,ewc-usgub-wi-2026-11-03-rep,SELL,149,0.16,sell,9.367,2.75,0.291375,14,19,0.008,0.15,0.16,0.1314,32,an exit — its fill reduces the position it sits on,CV0FV42DCYH4
 1790869846.9,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,-0.06,0.33,fix,0.004,4.08,,,,0.135,,,,-0.9,size trimmed by 0.06 to the exchange's count (order CSPYZ8YZ2YB5),CSPYZ8YZ2YB5
+1790873396.0,politics,ewc-usgub-wi-2026-11-03-rep,SELL,32,0.16,sell,1.7022,4.6,0.291375,15,20,0.448,0.15,0.16,0.1314,0,an exit — its fill reduces the position it sits on,CV0FV42DCYH4
