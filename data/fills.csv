@@ -3443,3 +3443,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790858686.9,nfl,aqc-nfl-nfc-2027-01-24-champq-sea,SELL,1.3,0.82,hand,,0.24,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CTZSM8ZVEYGW
 1790864936.6,politics,scc-senate-gop-2026-11-03-48,SELL,50,0.15,manual,0.7948,1.22,0.14825,14,18,0.019,0.14,0.15,-0.0018,-58,the owner's own order — the engine leaves it alone,CV1BWQN84YG6
 1790866246.8,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,-0.02,0.33,fix,0.004,4.08,,,,0.135,,,,-0.9,size trimmed by 0.02 to the exchange's count (order CSPYZ8YZ2YB5),CSPYZ8YZ2YB5
+1790866246.8,politics,scc-senate-gop-2026-11-03-52,SELL,21,0.07,manual,1.8211,2.6,0.046975,3,7,0.077,0.06,0.07,-0.023,279,the owner's own order — the engine leaves it alone,CV0GD1FBPYHC
+1790866726.8,politics,ewc-usgub-wi-2026-11-03-rep,SELL,149,0.16,sell,9.367,2.75,0.291375,14,19,0.008,0.15,0.16,0.1314,32,an exit — its fill reduces the position it sits on,CV0FV42DCYH4
+1790869846.9,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,-0.06,0.33,fix,0.004,4.08,,,,0.135,,,,-0.9,size trimmed by 0.06 to the exchange's count (order CSPYZ8YZ2YB5),CSPYZ8YZ2YB5
