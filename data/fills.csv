@@ -3461,3 +3461,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790886685.6,politics,scc-hrep-rep-2026-11-03-gte185,SELL,204.98,0.72,manual,18.75,0.48,0.798625,80,84,0.503,0.87,0.89,0.0786,0.02,the owner's own order — the engine leaves it alone,CV76YX6RRYGE
 1790886929.3,politics,scc-hrep-rep-2026-11-03-gte200,BUY,0.01,0.57,backfill,,3.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV4RT27REYHK
 1790887885.6,politics,scc-hrep-rep-2026-11-03-gte200,BUY,0.01,0.57,backfill,,3.47,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV4RT27REYHK
+1790891570.5,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,15,0.91,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CV8RW07V2YG6
+1790895085.8,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,15,0.95,void,0.041,9.68,,90,94,0.464,0.9,0.92,-0.03,85,voided: the exchange has no trade for order CV0FH6YD0YHH — the row of 10-01 21:5,CV0FH6YD0YHH
+1790895085.8,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,15,0.91,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CV8RW07V2YG6
