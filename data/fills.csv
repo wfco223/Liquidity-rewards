@@ -3029,3 +3029,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790812609.7,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,SELL,1,0.11,backfill,,0.55,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ1YGQRVWVNP
 1790812609.7,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,BUY,1,0.49,backfill,,6.83,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CJ30N7CJ4VNA
 1790812609.7,cfb,aachc-cfb-wins-ou-2026-11-28-utahst,SELL,1,0.15,backfill,,0.5,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CNGR9J3YCWPF
+1790814859.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,51,0.091,sell,1.7374,0.64,0.0728,6,10,0.633,0.09,0.091,-0.0182,224,an exit — its fill reduces the position it sits on,CTMYP5RHEYBE
+1790814929.5,politics,paccc-usho-midterms-2026-11-03-rep,SELL,224,0.091,sell,1.4487,0.66,0.0728,8,11,0.719,0.09,0.091,-0.0182,0,an exit — its fill reduces the position it sits on,CTMYP5RHEYBE
+1790815279.5,politics,vmc-usgubmov-mn-2026-11-03-d5-10,BUY,1,0.55,sell,0.0281,1.97,,7,28,0,0.29,0.99,0.36,0,buying back the short at or under what it sold for — the bid earns while it wait,CTMXH5PSAYAQ
+1790815459.5,politics,scc-hrep-rep-2026-11-03-gte220,BUY,51,0.07,sell,0.3019,10,0.05375,4,10,0,0.07,0.08,0.0163,-7,an exit — its fill reduces the position it sits on,CTE1XESFWYCC
+1790815469.5,politics,scc-hrep-rep-2026-11-03-gte220,BUY,0.15,0.07,sell,0.3019,10,0.05375,3,8,0.455,0.07,0.08,0.0163,-6.85,an exit — its fill reduces the position it sits on,CTE1XESFWYCC
+1790816351.8,politics,ewc-usgub-ia-2026-11-03-dem,SELL,-2,0.85,fix,,59.56,,,,,,,,,size trimmed by 2 to the exchange's count (order CQ3WBZ830YAQ),CQ3WBZ830YAQ
+1790816351.8,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,-38,0.94,fix,,8.31,,,,,,,,,size trimmed by 38 to the exchange's count (order CQEAXDNVMYCD),CQEAXDNVMYCD
+1790816351.8,politics,ussewc-usse-fl-2026-11-03-rep,BUY,-29.48,0.86,fix,,9.49,,,,,,,,,size trimmed by 29.48 to the exchange's count (order CQBTRFXSAYBE),CQBTRFXSAYBE
+1790816351.8,politics,vmc-ushrmov-ca-47-2026-11-03-rwin,SELL,-1,0.02,fix,0.0803,28.2,,1,5,0.334,0.01,0.02,0.01,-10,size trimmed by 1 to the exchange's count (order CQE9P9GT6YCD),CQE9P9GT6YCD
