@@ -3471,3 +3471,9 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790901224.5,politics,scc-hrep-rep-2026-11-03-gte190,SELL,50,0.76,manual,0,7.42,0.7029,72,76,0.432,0.75,0.76,-0.0571,-11,the owner's own order — the engine leaves it alone,CV4RS447WYH8
 1790902254.2,politics,scc-senate-gop-2026-11-03-53,SELL,150,0.06,backfill,,11.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV1CZ7YQGYGW
 1790903238.2,politics,scc-senate-gop-2026-11-03-53,SELL,150,0.06,backfill,,11.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV1CZ7YQGYGW
+1790903238.2,politics,scc-hrep-rep-2026-11-03-gte200,BUY,19,0.57,manual,13.1246,7.99,0.44765,55,58,0.739,0.5,0.54,0.1223,-125,the owner's own order — the engine leaves it alone,CV4RT27REYHK
+1790903478.2,politics,paccc-balpow-2026-11-03-dsweep,BUY,22.99,0.61,sell,0.0337,12.96,,59,63,0.013,0.61,0.62,0,-56.01,an exit — its fill reduces the position it sits on,CV0G33FK8YHH
+1790903838.2,politics,scc-senate-gop-2026-11-03-46,SELL,2,0.11,manual,1.2127,12.17,0.124825,10,13,0.446,0.1,0.11,0.0148,-3,the owner's own order — the engine leaves it alone,CV181WCCJYHC
+1790904138.4,politics,ewc-usse-ia-2026-11-03-dem,BUY,20,0.44,sell,0.0822,13.14,0.600025,42,46,0.619,0.44,0.45,-0.16,-5,an exit — its fill reduces the position it sits on,CV0G03C4RYHC
+1790906838.9,politics,scc-senate-gop-2026-11-03-53,SELL,-150,0.06,fix,5.2877,11.84,0.03065,2,7,0,0.06,0.07,-0.0293,-150,size trimmed by 150 to the exchange's count (order CV1CZ7YQGYGW),CV1CZ7YQGYGW
+1790906838.9,politics,scc-hrep-rep-2026-11-03-gte200,BUY,0.11,0.57,backfill,,8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV4RT27REYHK
