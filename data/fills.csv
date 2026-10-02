@@ -3523,3 +3523,8 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790977915.0,politics,paccc-balpow-2026-11-03-dsweep,BUY,22.99,0.61,backfill,,33.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV0G33FK8YHH
 1790977959.4,politics,paccc-balpow-2026-11-03-dsweep,BUY,10.18,0.61,sell,0.0156,33.65,,57,61,0.757,0.61,0.62,0.02,-22.82,an exit — its fill reduces the position it sits on,CV0G33FK8YHH
 1790978370.5,politics,paccc-balpow-2026-11-03-dsweep,BUY,22.99,0.61,backfill,,33.64,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV0G33FK8YHH
+1790980470.6,politics,scc-senate-gop-2026-11-03-46,BUY,29.82,0.1,manual,0.1391,33.46,0.124825,10,13,0.521,0.1,0.11,-0.0248,26.82,the owner's own order — the engine leaves it alone,CV182FJW0YG6
+1790980519.3,politics,scc-senate-gop-2026-11-03-46,BUY,0.18,0.1,backfill,,33.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV182FJW0YG6
+1790980530.6,politics,scc-senate-gop-2026-11-03-lte45,BUY,250,0.07,manual,0.1023,33.61,0.1663,7,10,0.098,0.07,0.08,-0.0963,250,the owner's own order — the engine leaves it alone,CV0YXZJZGYH4
+1790980530.6,politics,scc-senate-gop-2026-11-03-46,BUY,170,0.1,manual,0.0968,33.48,0.124825,9,12,0.657,0.1,0.11,-0.0248,196.82,the owner's own order — the engine leaves it alone,CV182FJW0YG6
+1790981970.6,politics,scc-senate-gop-2026-11-03-46,BUY,0.18,0.1,backfill,,33.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV182FJW0YG6
