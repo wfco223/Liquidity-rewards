@@ -3497,3 +3497,12 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790911739.4,politics,paccc-balpow-2026-11-03-dsweep,BUY,0.14,0.61,sell,0.0218,15.26,,58,62,0.622,0.61,0.62,0.01,-52.86,an exit — its fill reduces the position it sits on,CV0G33FK8YHH
 1790913236.9,politics,paccc-balpow-2026-11-03-dsweep,BUY,3.93,0.61,sell,0.0201,15.67,,57,61,0.711,0.61,0.62,0.02,-49.07,an exit — its fill reduces the position it sits on,CV0G33FK8YHH
 1790914076.9,politics,ewc-usgub-wi-2026-11-03-dem,BUY,-50,0.84,fix,10.4259,1.71,0.708625,78,84,0.469,0.84,0.85,0.1314,0,size trimmed by 50 to the exchange's count (order CTH8ZVCWPYBE),CTH8ZVCWPYBE
+1790916923.2,politics,ussewc-usse-fl-2026-11-03-rep,BUY,29.48,0.86,hand,,9.49,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQBTRFXSAYBE
+1790916923.2,politics,ushrewc-ushr-ca-47-2026-11-03-dem,BUY,38,0.94,hand,,8.31,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQEAXDNVMYCD
+1790916923.2,politics,vmc-ushrmov-ca-47-2026-11-03-rwin,SELL,1,0.02,hand,,28.19,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CQE9P9GT6YCD
+1790916923.2,politics,ewc-usgub-ia-2026-11-03-dem,SELL,2,0.85,backfill,,59.56,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CQ3WBZ830YAQ
+1790916923.2,politics,scc-hrep-rep-2026-11-03-gte205,SELL,81.52,0.24,backfill,,0.82,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CT03TGD12YC3
+1790916923.2,politics,ewc-usgub-wi-2026-11-03-dem,BUY,50,0.84,backfill,,1.65,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CTH8ZVCWPYBE
+1790916923.2,cfb,aachc-cfb-wins-2026-11-28-kan-5pt5wins,BUY,0.08,0.33,backfill,,4.04,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CSPYZ8YZ2YB5
+1790916923.2,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.16,0.23,fix,,71.05,,,,,,,,,size trimmed by 0.16 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
+1790916923.2,nfl,aqc-nfl-afc-2027-01-24-champq-den,SELL,-0.04,0.23,fix,,71.05,,,,,,,,,size trimmed by 0.04 to the exchange's count (order CG308Z0T6VB7),CG308Z0T6VB7
