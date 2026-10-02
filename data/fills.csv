@@ -3493,3 +3493,7 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.01,0.52,hand,,0.94,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVC4CT7CCYH8
 1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,6,0.44,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVCXYJX2GYH0
 1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,9,0.44,hand,,1.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVBT81RKCYHC
+1790911736.8,politics,paccc-balpow-2026-11-03-dsweep,BUY,3,0.61,sell,0.0231,15.25,,58,62,0.447,0.61,0.62,0.01,-53,an exit — its fill reduces the position it sits on,CV0G33FK8YHH
+1790911739.4,politics,paccc-balpow-2026-11-03-dsweep,BUY,0.14,0.61,sell,0.0218,15.26,,58,62,0.622,0.61,0.62,0.01,-52.86,an exit — its fill reduces the position it sits on,CV0G33FK8YHH
+1790913236.9,politics,paccc-balpow-2026-11-03-dsweep,BUY,3.93,0.61,sell,0.0201,15.67,,57,61,0.711,0.61,0.62,0.02,-49.07,an exit — its fill reduces the position it sits on,CV0G33FK8YHH
+1790914076.9,politics,ewc-usgub-wi-2026-11-03-dem,BUY,-50,0.84,fix,10.4259,1.71,0.708625,78,84,0.469,0.84,0.85,0.1314,0,size trimmed by 50 to the exchange's count (order CTH8ZVCWPYBE),CTH8ZVCWPYBE
