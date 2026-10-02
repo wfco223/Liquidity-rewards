@@ -3509,3 +3509,5 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790916983.2,politics,scc-senate-gop-2026-11-03-48,BUY,7.95,0.14,manual,0.0251,16.7,0.1455,15,18,0.392,0.14,0.15,-0.0055,-50.05,the owner's own order — the engine leaves it alone,CV0G6XWWYYGW
 1790916983.2,politics,scc-senate-gop-2026-11-03-48,BUY,38.8,0.14,manual,1.5779,15.67,0.1455,15,18,0.392,0.14,0.15,-0.0055,-11.25,the owner's own order — the engine leaves it alone,CV1BZQWK8YH0
 1790917103.2,politics,scc-hrep-rep-2026-11-03-gte220,BUY,100,0.09,manual,11.5136,4.58,0.052875,6,9,0.688,0.07,0.08,0.0371,0,the owner's own order — the engine leaves it alone,CVAZ9C9J2YGP
+1790929845.2,politics,paccc-balpow-2026-11-03-dsweep,BUY,0.01,0.61,backfill,,20.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV0G33FK8YHH
+1790931512.8,politics,paccc-balpow-2026-11-03-dsweep,BUY,0.01,0.61,backfill,,20.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV0G33FK8YHH
