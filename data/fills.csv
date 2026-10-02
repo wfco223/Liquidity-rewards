@@ -3477,3 +3477,19 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790904138.4,politics,ewc-usse-ia-2026-11-03-dem,BUY,20,0.44,sell,0.0822,13.14,0.600025,42,46,0.619,0.44,0.45,-0.16,-5,an exit — its fill reduces the position it sits on,CV0G03C4RYHC
 1790906838.9,politics,scc-senate-gop-2026-11-03-53,SELL,-150,0.06,fix,5.2877,11.84,0.03065,2,7,0,0.06,0.07,-0.0293,-150,size trimmed by 150 to the exchange's count (order CV1CZ7YQGYGW),CV1CZ7YQGYGW
 1790906838.9,politics,scc-hrep-rep-2026-11-03-gte200,BUY,0.11,0.57,backfill,,8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV4RT27REYHK
+1790907659.7,politics,scc-hrep-rep-2026-11-03-gte205,BUY,0.47,0.33,backfill,,2.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CVAZAJBRYYGW
+1790907679.2,politics,scc-hrep-rep-2026-11-03-gte205,BUY,15,0.33,manual,7.1779,1.96,0.309725,29,33,0.754,0.33,0.34,0.0203,-86,the owner's own order — the engine leaves it alone,CVAZAJBRYYGW
+1790908184.4,politics,scc-hrep-rep-2026-11-03-gte200,SELL,2.2,0.5159,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVCXS2MJ2YG6
+1790908184.4,politics,scc-hrep-rep-2026-11-03-gte200,SELL,1,0.52,hand,,0.51,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVCFB9ZZ0YH8
+1790908184.4,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.01,0.52,hand,,0.9,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVC5ARFEYYG6
+1790908184.4,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.01,0.52,hand,,0.94,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVC4CT7CCYH8
+1790908224.5,politics,scc-hrep-rep-2026-11-03-gte200,SELL,6,0.44,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVCXYJX2GYH0
+1790908224.5,politics,scc-hrep-rep-2026-11-03-gte200,SELL,9,0.44,hand,,1.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVBT81RKCYHC
+1790910356.6,politics,scc-hrep-rep-2026-11-03-gte230,SELL,100,0.02,manual,13.1248,9.99,0.008575,1,3,0.208,0.01,0.1,-0.0114,-100,the owner's own order — the engine leaves it alone,CV4QV6J04YHC
+1790910476.6,politics,scc-hrep-rep-2026-11-03-gte205,BUY,0.47,0.33,backfill,,2.05,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CVAZAJBRYYGW
+1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,2.2,0.5159,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVCXS2MJ2YG6
+1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,1,0.52,hand,,0.51,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVCFB9ZZ0YH8
+1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.01,0.52,hand,,0.9,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVC5ARFEYYG6
+1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,0.01,0.52,hand,,0.94,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVC4CT7CCYH8
+1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,6,0.44,hand,,0.01,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVCXYJX2GYH0
+1790910476.6,politics,scc-hrep-rep-2026-11-03-gte200,SELL,9,0.44,hand,,1.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVBT81RKCYHC
