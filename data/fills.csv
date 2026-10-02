@@ -3528,3 +3528,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790980530.6,politics,scc-senate-gop-2026-11-03-lte45,BUY,250,0.07,manual,0.1023,33.61,0.1663,7,10,0.098,0.07,0.08,-0.0963,250,the owner's own order — the engine leaves it alone,CV0YXZJZGYH4
 1790980530.6,politics,scc-senate-gop-2026-11-03-46,BUY,170,0.1,manual,0.0968,33.48,0.124825,9,12,0.657,0.1,0.11,-0.0248,196.82,the owner's own order — the engine leaves it alone,CV182FJW0YG6
 1790981970.6,politics,scc-senate-gop-2026-11-03-46,BUY,0.18,0.1,backfill,,33.49,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV182FJW0YG6
+1790984278.9,politics,scc-senate-gop-2026-11-03-47,SELL,0.86,0.15,backfill,,34.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV1BWQE72YG6
+1790984310.8,politics,scc-senate-gop-2026-11-03-47,SELL,18,0.15,manual,0.245,34.39,0.142325,12,15,0.432,0.14,0.15,-0.0077,-41,the owner's own order — the engine leaves it alone,CV1BWQE72YG6
+1790985570.8,politics,scc-senate-gop-2026-11-03-47,SELL,0.86,0.15,backfill,,34.39,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV1BWQE72YG6
