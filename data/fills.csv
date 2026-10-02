@@ -3468,3 +3468,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790896848.7,politics,scc-hrep-rep-2026-11-03-gte205,SELL,150,0.27,manual,18.7497,6.22,0.310025,28,32,0.707,0.33,0.34,0.04,-101,the owner's own order — the engine leaves it alone,CV4R751T4YGP
 1790896968.7,politics,scc-hrep-rep-2026-11-03-gte220,SELL,100,0.07,manual,5.5445,6.27,0.05375,5,8,0.619,0.06,0.07,-0.0163,-100,the owner's own order — the engine leaves it alone,CV4QW6AFRYGE
 1790897268.7,politics,scc-senate-gop-2026-11-03-46,SELL,1,0.11,manual,1.6427,10.35,0.124575,9,13,0,0.1,0.11,0.0146,-1,the owner's own order — the engine leaves it alone,CV181WCCJYHC
+1790901224.5,politics,scc-hrep-rep-2026-11-03-gte190,SELL,50,0.76,manual,0,7.42,0.7029,72,76,0.432,0.75,0.76,-0.0571,-11,the owner's own order — the engine leaves it alone,CV4RS447WYH8
+1790902254.2,politics,scc-senate-gop-2026-11-03-53,SELL,150,0.06,backfill,,11.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV1CZ7YQGYGW
+1790903238.2,politics,scc-senate-gop-2026-11-03-53,SELL,150,0.06,backfill,,11.57,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV1CZ7YQGYGW
