@@ -3513,3 +3513,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790931512.8,politics,paccc-balpow-2026-11-03-dsweep,BUY,0.01,0.61,backfill,,20.29,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV0G33FK8YHH
 1790938173.0,politics,scc-senate-gop-2026-11-03-52,SELL,79.5,0.07,manual,2.6339,22.58,0.0502,4,7,0.555,0.06,0.07,-0.0198,0.5,the owner's own order — the engine leaves it alone,CV0GD1FBPYHC
 1790948493.7,politics,ewc-usse-ia-2026-11-03-dem,BUY,5,0.44,sell,0.0119,25.47,0.600025,42,46,0.659,0.44,0.45,-0.16,0,an exit — its fill reduces the position it sits on,CV0G03C4RYHC
+1790956490.2,politics,ewc-usse-me-2026-11-03-dem,SELL,75,0.58,sell,0.1773,27.7,0.690125,55,61,0.099,0.57,0.58,0.1101,0,an exit — its fill reduces the position it sits on,CV0G02Y3CYHC
