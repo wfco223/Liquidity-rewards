@@ -3517,3 +3517,6 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1790957979.5,politics,scc-senate-gop-2026-11-03-52,SELL,6,0.07,manual,0.0964,27.05,0.0502,4,7,0.652,0.06,0.07,-0.0198,-6,the owner's own order — the engine leaves it alone,CV1CEGY94YG6
 1790967640.1,politics,scc-senate-gop-2026-11-03-47,SELL,22.53,0.15,manual,0.2468,29.76,0.14525,11,15,0,0.14,0.15,-0.0048,-22.53,the owner's own order — the engine leaves it alone,CV1BWQE72YG6
 1790968600.2,politics,paccc-balpow-2026-11-03-dsweep,BUY,15.7,0.61,sell,0.0229,31.05,,57,61,0.71,0.61,0.62,0.01,-33.3,an exit — its fill reduces the position it sits on,CV0G33FK8YHH
+1790972020.3,politics,scc-senate-gop-2026-11-03-51,BUY,150,0.07,manual,0.0934,30.96,0.071275,6,10,0,0.07,0.08,-0.0013,150,the owner's own order — the engine leaves it alone,CV1CC8RXWYGW
+1790973340.4,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,15,0.92,manual,0.4443,22.7,,89,93,0.523,0.9,0.93,-0.01,70,the owner's own order — the engine leaves it alone,CV8S9KR5WYGP
+1790973340.4,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,5,0.93,manual,0.3555,22.7,,89,93,0.523,0.9,0.93,-0.02,65,the owner's own order — the engine leaves it alone,CV8SA6EWWYH8
