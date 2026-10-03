@@ -1,36 +1,36 @@
 state,abbr,winner_Dparty,winner_Rparty,name_D1,name_D2,name_D3,name_D4,name_R1,name_R2,name_R3,name_R4,winner_D1,winner_D2,winner_D3,winner_D4,winner_R1,winner_R2,winner_R3,winner_R4,rating
-Alabama,AL,0.1825,99.8175,Everett Wess,,,,Barry Moore,,,,0.1825,,,,99.817502,,,,3
-Alaska,AK,53.265,46.735,Mary Peltola,,,,Daniel S. Sullivan,Daniel J. Sullivan Jr.,Gerald Heikes,,53.264999,,,,46.735001,0,0,,0
-Arkansas,AR,2.035,97.965,Hallie Shoffner,,,,Tom Cotton,,,,2.035,,,,97.965002,,,,3
-Colorado,CO,99.68,0.32,John Hickenlooper,,,,Mark Baisley,,,,99.680001,,,,0.32,,,,-3
-Delaware,DE,99.9425,0.0575,Chris Coons,,,,Michael Katz,,,,99.942499,,,,0.0575,,,,-3
-Florida,FL,13.575,86.425,Angela Nixon,,,,Ashley B. Moody,,,,13.575,,,,86.425,,,,2
-Georgia,GA,96.145,3.855,Jon Ossoff,,,,Mike Collins,,,,96.144998,,,,3.855,,,,-3
-Idaho,ID,0.245,99.755,,,,,Jim Risch,,,,,,,,99.755001,,,,3
-Illinois,IL,99.805,0.195,Juliana Stratton,,,,Don Tracy,,,,99.804997,,,,0.195,,,,-3
-Iowa,IA,59.3525,40.6475,Josh Turek,,,,Ashley Hinson,,,,59.352499,,,,40.647501,,,,0
-Kansas,KS,36.7425,63.2575,Adam Hamilton,,,,Roger Marshall,,,,36.742499,,,,63.257498,,,,1
-Kentucky,KY,0.475,99.525,Charles Booker,,,,Andy Barr,,,,0.475,,,,99.524999,,,,3
-Louisiana,LA,5.095,94.905,Jamie Davis,,,,Julia Letlow,,,,5.095,,,,94.905001,,,,2
-Maine,ME,69.1875,30.8125,Troy Jackson,,,,Susan M. Collins,,,,69.187498,,,,30.812499,,,,-1
-Massachusetts,MA,99.9875,0.0125,Edward J. Markey,,,,John Deaton,,,,99.987501,,,,0.0125,,,,-3
-Michigan,MI,81.6775,18.3225,Abdul El-Sayed,,,,Mike Rogers,,,,81.677502,,,,18.322501,,,,-2
-Minnesota,MN,88.3025,11.6975,Peggy Flanagan,,,,Michele Tafoya,,,,88.302499,,,,11.6975,,,,-2
-Mississippi,MS,2.865,97.135,Scott Colom,,,,Cindy Hyde-Smith,,,,2.8625,,,,97.135001,,,,3
-Montana,MT,2.1675,97.8325,Alani Bankhead,,,,Kurt Alme,,,,0.98,,,,96.742499,,,,3
-Nebraska,NE,27.3575,72.6425,,,,,Pete Ricketts,,,,,,,,72.642499,,,,1
-New Hampshire,NH,91.36,8.64,Chris Pappas,,,,John Sununu,,,,91.360003,,,,8.64,,,,-2
-New Jersey,NJ,99.705,0.295,Cory Booker,,,,Justin Murphy,,,,99.704999,,,,0.295,,,,-3
-New Mexico,NM,99.6925,0.3075,Ben Ray LujÃ¡n,,,,Larry E. Marker,,,,99.6925,,,,0.3075,,,,-3
-North Carolina,NC,94.6,5.4,Roy A. Cooper III,,,,Michael Whatley,,,,94.599998,,,,5.4,,,,-2
-Ohio,OH,73.42,26.58,Sherrod Brown,,,,Jon Husted,,,,73.42,,,,26.58,,,,-1
-Oklahoma,OK,0.0475,99.9525,N'Kiyla Thomas,,,,Kevin Hern,,,,0.0475,,,,99.952501,,,,3
-Oregon,OR,99.8825,0.1175,Jeff Merkley,,,,David Brock Smith,,,,99.882501,,,,0.1175,,,,-3
-Rhode Island,RI,99.95,0.05,Jack Reed,,,,Raymond McKay,,,,99.949998,,,,0.05,,,,-3
-South Carolina,SC,20.015,79.985,Annie Andrews,,,,Darline Graham,,,,20.015,,,,79.984999,,,,2
-South Dakota,SD,0.7175,99.2825,,,,,Mike Rounds,,,,,,,,99.282503,,,,3
-Tennessee,TN,0.055,99.945,Marquita Bradshaw,,,,Bill Hagerty,,,,0.055,,,,99.945003,,,,3
-Texas,TX,72.5175,27.4825,James Talarico,,,,Ken Paxton,,,,72.517502,,,,27.482501,,,,-1
-Virginia,VA,99.695,0.305,Mark Warner,,,,Bert Mizusawa,,,,99.695003,,,,0.305,,,,-3
-West Virginia,WV,0.0175,99.9825,Rachel Fetty Anderson,,,,Shelley Moore Capito,,,,0.0175,,,,99.9825,,,,3
+Alabama,AL,0.145,99.855,Everett Wess,,,,Barry Moore,,,,0.145,,,,99.855,,,,3
+Alaska,AK,62.7025,37.2975,Mary Peltola,,,,Daniel S. Sullivan,Daniel J. Sullivan Jr.,Gerald Heikes,,62.702501,,,,37.297499,0,0,,-1
+Arkansas,AR,2.0075,97.9925,Hallie Shoffner,,,,Tom Cotton,,,,2.0075,,,,97.992504,,,,3
+Colorado,CO,99.7,0.3,John Hickenlooper,,,,Mark Baisley,,,,99.699998,,,,0.3,,,,-3
+Delaware,DE,99.945,0.055,Chris Coons,,,,Michael Katz,,,,99.945003,,,,0.055,,,,-3
+Florida,FL,13.97,86.03,Angela Nixon,,,,Ashley B. Moody,,,,13.97,,,,86.03,,,,2
+Georgia,GA,95.985,4.015,Jon Ossoff,,,,Mike Collins,,,,95.985001,,,,4.015,,,,-3
+Idaho,ID,0.19,99.81,,,,,Jim Risch,,,,,,,,99.809998,,,,3
+Illinois,IL,99.775,0.225,Juliana Stratton,,,,Don Tracy,,,,99.774998,,,,0.225,,,,-3
+Iowa,IA,58.975,41.025,Josh Turek,,,,Ashley Hinson,,,,58.974999,,,,41.0225,,,,0
+Kansas,KS,42.0925,57.9075,Adam Hamilton,,,,Roger Marshall,,,,42.092499,,,,57.907498,,,,0
+Kentucky,KY,0.4675,99.5325,Charles Booker,,,,Andy Barr,,,,0.4675,,,,99.532503,,,,3
+Louisiana,LA,4.9875,95.0125,Jamie Davis,,,,Julia Letlow,,,,4.9875,,,,95.012498,,,,3
+Maine,ME,68.415,31.585,Troy Jackson,,,,Susan M. Collins,,,,68.414998,,,,31.584999,,,,-1
+Massachusetts,MA,99.985,0.015,Edward J. Markey,,,,John Deaton,,,,99.984998,,,,0.015,,,,-3
+Michigan,MI,81.91,18.09,Abdul El-Sayed,,,,Mike Rogers,,,,81.910002,,,,18.090001,,,,-2
+Minnesota,MN,88.42,11.58,Peggy Flanagan,,,,Michele Tafoya,,,,88.419998,,,,11.58,,,,-2
+Mississippi,MS,2.8,97.2,Scott Colom,,,,Cindy Hyde-Smith,,,,2.8,,,,97.2,,,,3
+Montana,MT,2.0425,97.9575,Alani Bankhead,,,,Kurt Alme,,,,0.8725,,,,96.757501,,,,3
+Nebraska,NE,24.6025,75.3975,,,,,Pete Ricketts,,,,,,,,75.397497,,,,2
+New Hampshire,NH,91.4625,8.5375,Chris Pappas,,,,John Sununu,,,,91.462499,,,,8.5375,,,,-2
+New Jersey,NJ,99.7175,0.2825,Cory Booker,,,,Justin Murphy,,,,99.717498,,,,0.2825,,,,-3
+New Mexico,NM,99.71,0.29,Ben Ray LujÃ¡n,,,,Larry E. Marker,,,,99.71,,,,0.29,,,,-3
+North Carolina,NC,94.8275,5.1725,Roy A. Cooper III,,,,Michael Whatley,,,,94.827497,,,,5.1725,,,,-2
+Ohio,OH,73.905,26.095,Sherrod Brown,,,,Jon Husted,,,,73.905003,,,,26.095,,,,-1
+Oklahoma,OK,0.05,99.95,N'Kiyla Thomas,,,,Kevin Hern,,,,0.05,,,,99.949998,,,,3
+Oregon,OR,99.885,0.115,Jeff Merkley,,,,David Brock Smith,,,,99.884999,,,,0.115,,,,-3
+Rhode Island,RI,99.9475,0.0525,Jack Reed,,,,Raymond McKay,,,,99.9475,,,,0.0525,,,,-3
+South Carolina,SC,19.9825,80.0175,Annie Andrews,,,,Darline Graham,,,,19.9825,,,,80.017501,,,,2
+South Dakota,SD,0.7875,99.2125,,,,,Mike Rounds,,,,,,,,99.212503,,,,3
+Tennessee,TN,0.05,99.95,Marquita Bradshaw,,,,Bill Hagerty,,,,0.05,,,,99.949998,,,,3
+Texas,TX,74.205,25.795,James Talarico,,,,Ken Paxton,,,,74.204999,,,,25.795001,,,,-1
+Virginia,VA,99.71,0.29,Mark Warner,,,,Bert Mizusawa,,,,99.71,,,,0.29,,,,-3
+West Virginia,WV,0.0125,99.9875,Rachel Fetty Anderson,,,,Shelley Moore Capito,,,,0.0125,,,,99.987501,,,,3
 Wyoming,WY,0,100,James Byrd,,,,Harriet Hageman,,,,0,,,,100,,,,3
