@@ -3536,3 +3536,14 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1791007171.9,politics,ussewc-usse-co-2026-11-03-rep,SELL,0.48,0.02,backfill,,41.14,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CV0G50Q8EYGP
 1791008732.0,politics,ussewc-usse-co-2026-11-03-rep,SELL,0.5,0.02,manual,0.1234,42.18,0.0032,1,3,0.461,0.01,0.02,-0.0168,116.5,the owner's own order — the engine leaves it alone,CV0G50Q8EYGP
 1791015992.3,politics,scc-senate-gop-2026-11-03-51,SELL,150,0.08,manual,7.3445,43.18,0.0763,6,9,0.397,0.08,0.09,-0.0037,0,the owner's own order — the engine leaves it alone,CV1CC8PVYYGW
+1791029436.3,politics,scc-senate-gop-2026-11-03-46,SELL,47,0.1,hand,,3.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CW6S54JAYYG6
+1791029436.3,politics,scc-senate-gop-2026-11-03-46,SELL,150,0.1,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CW9N811E6YGE
+1791029969.6,politics,scc-hrep-rep-2026-11-03-gte190,BUY,0.84,0.76,hand,,6.03,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CW4JW0R6TYG6
+1791029969.6,politics,scc-hrep-rep-2026-11-03-gte190,BUY,0.04,0.76,hand,,8.05,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CW2XSBA12YGP
+1791029969.6,politics,scc-hrep-rep-2026-11-03-gte190,BUY,10.12,0.76,hand,,33.35,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVDAYS8F2YHH
+1791030006.8,politics,scc-hrep-rep-2026-11-03-gte230,BUY,20.46,0.04,manual,0.0777,0.03,0.0089,1,6,0.366,0.06,0.07,0.0311,-59.54,the owner's own order — the engine leaves it alone,CW9REGYVWYHH
+1791030426.8,politics,scc-senate-gop-2026-11-03-46,SELL,47,0.1,hand,,3.31,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CW6S54JAYYG6
+1791030426.8,politics,scc-senate-gop-2026-11-03-46,SELL,150,0.1,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CW9N811E6YGE
+1791030426.8,politics,scc-hrep-rep-2026-11-03-gte190,BUY,0.84,0.76,hand,,6.03,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CW4JW0R6TYG6
+1791030426.8,politics,scc-hrep-rep-2026-11-03-gte190,BUY,0.04,0.76,hand,,8.05,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CW2XSBA12YGP
+1791030426.8,politics,scc-hrep-rep-2026-11-03-gte190,BUY,10.12,0.76,hand,,33.35,,,,,,,,,your own trade — from the exchange's record; direction from the position move,CVDAYS8F2YHH
