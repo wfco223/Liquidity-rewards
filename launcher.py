@@ -55,9 +55,25 @@ def children() -> dict[str, list[str]]:
         print("launcher: 3.0 disabled by V3_ENABLED=0", flush=True)
     elif not (os.environ.get("POLYMARKET_KEY_ID") and os.environ.get("POLYMARKET_SECRET_KEY")):
         print("launcher: 3.0 skipped — exchange keys not set", flush=True)
+    elif app_choice() == "lite":
+        # the simple app in 3.0's place (owner, 2026-10-04: "scale wayyy
+        # back"). Exactly one of the two runs: both serve $PORT.
+        print("launcher: the simple app (lite) — 3.0 not started", flush=True)
+        procs["lite"] = [sys.executable, "-u", "-m", "lite.main"]
     else:
         procs["3.0"] = [sys.executable, "-u", "-m", "v3.main"]
     return procs
+
+
+def app_choice() -> str:
+    """Which app serves the page: APP=lite|v3 in the environment wins;
+    otherwise the simple app when the marker file lite/ACTIVE ships in
+    the image, else 3.0. Switching back is deleting that one file on
+    main and deploying."""
+    want = os.environ.get("APP", "").strip().lower()
+    if want in ("lite", "v3"):
+        return want
+    return "lite" if os.path.exists(os.path.join(HERE, "lite", "ACTIVE")) else "v3"
 
 
 def main() -> int:
