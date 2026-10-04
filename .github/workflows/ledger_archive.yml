@@ -9,10 +9,17 @@ name: Ledger archive
 # overwrite any information there."
 #
 # Read-only against the exchange: GET only, places nothing, cancels nothing.
-# Manual dispatch ONLY — no schedule, no push trigger (owner, 2026-08-24).
+# No schedule (owner, 2026-08-24). It runs on a manual dispatch, or when
+# THIS FILE is pushed to main — the fill_history pattern, because the
+# session that built it can push but cannot dispatch. Every run writes a
+# new folder; none rewrites an old one.
 # The commit step refuses anything but additions inside the new folder.
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ledger_archive.yml
   workflow_dispatch:
     inputs:
       earnings_start:
