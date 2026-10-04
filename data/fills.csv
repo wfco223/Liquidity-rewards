@@ -3559,3 +3559,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1791144355.1,politics,ushrewc-ushr-ca-47-2026-11-03-dem,SELL,5,0.93,manual,0.496,70.21,,89,93,0.436,0.92,0.93,-0.02,60,the owner's own order — the engine leaves it alone,CV8SA6EWWYH8
 1791144680.0,politics,scc-hrep-rep-2026-11-03-gte190,BUY,-11,0.75,fix,0,74.67,0.703475,77,82,0.304,0.82,0.83,0.0465,11,size trimmed by 11 to the exchange's count (order CV4RS4W9MYHC),CV4RS4W9MYHC
 1791144680.0,politics,scc-hrep-rep-2026-11-03-gte200,BUY,-0.01,0.49,fix,1.0398,31.55,0.44335,51,55,0.602,0.5,0.51,0.0466,-242.99,size trimmed by 0.01 to the exchange's count (order CW9R616S4YH4),CW9R616S4YH4
+1791145047.9,politics,scc-senate-gop-2026-11-03-51,SELL,43.64,0.08,manual,0.8932,32.09,0.070625,5,9,0.428,0.07,0.08,-0.0094,-43.64,the owner's own order — the engine leaves it alone,CW9NKCEQ4YHH
