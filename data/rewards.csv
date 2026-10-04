@@ -13044,6 +13044,7 @@ date,market,program_type,reward_usd,status
 2026-10-01,ussewc-usse-co-2026-11-03-rep,liquidityProgram,0.28,PENDING
 2026-10-02,ewc-usse-me-2026-11-03-dem,liquidityProgram,0.05,PENDING
 2026-10-02,scc-hrep-rep-2026-11-03-gte200,liquidityProgram,0.39,PENDING
+2026-10-02,scc-hrep-rep-2026-11-03-gte210,liquidityProgram,5.4,PENDING
 2026-10-02,scc-hrep-rep-2026-11-03-gte215,liquidityProgram,1.2,PENDING
 2026-10-02,scc-hrep-rep-2026-11-03-gte220,liquidityProgram,0.4,PENDING
 2026-10-02,scc-hrep-rep-2026-11-03-gte230,liquidityProgram,0.28,PENDING
