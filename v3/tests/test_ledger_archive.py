@@ -125,6 +125,26 @@ class TestKeys(unittest.TestCase):
         self.assertEqual(la.activity_key(dep),
                          "ACTIVITY_TYPE_ACCOUNT_DEPOSIT|accountBalanceChange|D1")
 
+    def test_a_settlement_read_twice_is_one_row_whatever_its_market_says(self):
+        """positionResolution carries no id, and its embedded market is the
+        market as of the READ — a repeat a minute later can differ there."""
+        def res(synced, after=0):
+            return {"type": "ACTIVITY_TYPE_POSITION_RESOLUTION",
+                    "positionResolution": {
+                        "marketSlug": "m", "side": "LONG", "tradeId": "T9",
+                        "updateTime": "2026-09-15T16:24:00Z",
+                        "beforePosition": {"netPosition": 5},
+                        "afterPosition": {"netPosition": after},
+                        "market": {"slug": "m", "ep3SyncedAt": synced}}}
+        self.assertEqual(la.activity_key(res("16:24")), la.activity_key(res("16:31")))
+        self.assertNotEqual(la.activity_key(res("16:24")),
+                            la.activity_key(res("16:24", after=1)))
+        rows = [res("a"), res("b")]          # the same settlement, re-read
+        got, info = la.walk_activities(lambda h, p, q: {"activities": rows, "eof": True},
+                                       sleep=lambda s: None)
+        self.assertEqual(len(got), 1)
+        self.assertEqual(info["duplicates"], 1)
+
     def test_a_row_with_no_id_never_collapses_into_another(self):
         a = {"type": "X", "thing": {"amount": 1}}
         b = {"type": "X", "thing": {"amount": 2}}
@@ -153,6 +173,32 @@ class TestEarnings(unittest.TestCase):
         self.assertEqual(calls[1][1]["startDate"], "2025-01-01")
         self.assertEqual(calls[2][1]["pageToken"], "p2")
         self.assertIn("404", info["errors_before"][0])
+
+
+class TestEarningsHosts(unittest.TestCase):
+    def test_a_host_failing_part_way_hands_over_to_the_next(self):
+        def get(host, path, params):
+            if host == la.INCENTIVES_HOSTS[0]:
+                if params.get("pageToken"):
+                    raise RuntimeError("no answer after 6 tries — HTTP 502")
+                return {"rewards": [{"date": "2026-07-01"}], "nextPageToken": "p2"}
+            return {"rewards": [{"date": "2026-07-01"}, {"date": "2026-07-02"},
+                                {"date": "2026-07-03"}]}
+        rows, info = la.walk_earnings(get, "2025-01-01", sleep=lambda s: None)
+        self.assertEqual((len(rows), info["host"], info["complete"]),
+                         (3, la.INCENTIVES_HOSTS[1], True))
+        self.assertIn("1 rows", info["errors_before"][0])
+
+    def test_no_host_completing_keeps_the_longest_and_says_so(self):
+        def get(host, path, params):
+            if params.get("pageToken"):
+                raise RuntimeError("HTTP 502")
+            n = 2 if host == la.INCENTIVES_HOSTS[1] else 1
+            return {"rewards": [{"date": "d"}] * n, "nextPageToken": "p2"}
+        rows, info = la.walk_earnings(get, "2025-01-01", sleep=lambda s: None)
+        self.assertEqual((len(rows), info["host"], info["complete"]),
+                         (2, la.INCENTIVES_HOSTS[1], False))
+        self.assertEqual(len(info["errors_before"]), 2)
 
 
 class TestTheReadableLine(unittest.TestCase):
@@ -207,7 +253,7 @@ class TestWritingOnce(unittest.TestCase):
             {"complete": True, "stopped": "done", "start": "2025-01-01",
              "host": "h", "pages": 1},
             {"positions": {"m": {"netPosition": 3}}, "balances": {"rows": []},
-             "positions_read": {"n": 1}, "errors": []},
+             "positions_read": {"n": 1}, "errors": [], "complete": True},
             {"pulled_utc": "2026-10-04T15:00:00Z"})
 
     def test_everything_lands_in_one_new_folder_raw_and_exact(self):
@@ -292,6 +338,31 @@ class TestTheSignedRead(unittest.TestCase):
             get(la.TRADE_API, la.ACTIVITIES_PATH, {})
         self.assertEqual(sess.get.call_count, 1)
 
+    def test_a_transfer_cut_short_or_a_garbled_200_is_tried_again(self):
+        import requests
+
+        class Garbled(self.Resp):
+            def json(self):
+                raise ValueError("Expecting value: line 1 column 1")
+        get, sess, waits = self._getter([
+            requests.exceptions.ChunkedEncodingError("Connection broken: IncompleteRead"),
+            Garbled(200), self.Resp(200, {"ok": 2})])
+        self.assertEqual(get(la.TRADE_API, la.ACTIVITIES_PATH, {}), {"ok": 2})
+        self.assertEqual(sess.get.call_count, 3)
+        self.assertEqual(waits, [2, 4])
+
+    def test_no_error_carries_the_key(self):
+        import requests
+        seed = base64.b64encode(bytes(range(32))).decode()
+        sess = mock.Mock()
+        sess.get.side_effect = requests.exceptions.InvalidHeader(
+            "Invalid leading whitespace in header value: ' KEYID-1234567890'")
+        get = la.make_getter(" KEYID-1234567890", seed, session=sess, sleep=lambda s: None)
+        with self.assertRaises(RuntimeError) as e:
+            get(la.TRADE_API, la.ACTIVITIES_PATH, {})
+        self.assertNotIn("KEYID-1234567890", str(e.exception))
+        self.assertIn("***", str(e.exception))
+
     def test_a_5xx_backs_off_then_gives_up_saying_why(self):
         get, sess, waits = self._getter([self.Resp(502)] * la.TRIES)
         with self.assertRaises(RuntimeError) as e:
@@ -347,6 +418,68 @@ class TestTheWholeRun(unittest.TestCase):
         self.assertEqual([t["start"] for t in man["earnings"]["starts_tried"]],
                          ["2025-01-01", la.FALLBACK_EARNINGS_START])
         self.assertEqual(man["earnings"]["start"], la.FALLBACK_EARNINGS_START)
+
+    def test_a_failed_snapshot_is_not_complete(self):
+        feed = Feed([trade(i) for i in range(3)])
+
+        def get(host, path, params):
+            if path == la.ACTIVITIES_PATH:
+                return feed(host, path, params)
+            if path == la.EARNINGS_PATH:
+                return {"rewards": [{"date": "2026-07-01"}]}
+            raise RuntimeError("no answer after 6 tries — HTTP 503")
+        with tempfile.TemporaryDirectory() as root:
+            out_file = Path(root) / "gh_out"
+            env = {"POLYMARKET_KEY_ID": "k", "POLYMARKET_SECRET_KEY": "s",
+                   "ARCHIVE_ROOT": root, "GITHUB_OUTPUT": str(out_file)}
+            with mock.patch.dict("os.environ", env), \
+                    mock.patch.object(la, "make_getter", return_value=get), \
+                    mock.patch.object(la.time, "sleep"):
+                code = la.main()
+            stamp = out_file.read_text().strip().split("=", 1)[1]
+            readme = (Path(root) / "data" / "ledger" / stamp / "README.md").read_text()
+        self.assertEqual(code, 2)
+        self.assertIn("INCOMPLETE", readme)
+        self.assertIn("❌ positions:", readme)
+        self.assertIn("❌ balances:", readme)
+
+    def test_nothing_read_writes_nothing_and_names_no_folder(self):
+        def get(host, path, params):
+            raise la.HTTPError(401, "unauthorized", path)
+        with tempfile.TemporaryDirectory() as root:
+            out_file = Path(root) / "gh_out"
+            env = {"POLYMARKET_KEY_ID": "k", "POLYMARKET_SECRET_KEY": "s",
+                   "ARCHIVE_ROOT": root, "GITHUB_OUTPUT": str(out_file)}
+            with mock.patch.dict("os.environ", env), \
+                    mock.patch.object(la, "make_getter", return_value=get), \
+                    mock.patch.object(la.time, "sleep"):
+                code = la.main()
+            self.assertEqual(code, 1)
+            self.assertFalse(out_file.exists())
+            self.assertFalse((Path(root) / "data").exists())
+
+    def test_a_key_in_an_error_never_reaches_the_folder(self):
+        key = "KEYID-1234567890"
+        feed = Feed([trade(1)])
+
+        def get(host, path, params):
+            if path == la.ACTIVITIES_PATH:
+                return feed(host, path, params)
+            raise RuntimeError(f"header value: '{key}\\n'")
+        with tempfile.TemporaryDirectory() as root:
+            out_file = Path(root) / "gh_out"
+            env = {"POLYMARKET_KEY_ID": key + "\n", "POLYMARKET_SECRET_KEY": "s" * 44,
+                   "ARCHIVE_ROOT": root, "GITHUB_OUTPUT": str(out_file)}
+            with mock.patch.dict("os.environ", env), \
+                    mock.patch.object(la, "make_getter", return_value=get), \
+                    mock.patch.object(la.time, "sleep"):
+                la.main()
+            stamp = out_file.read_text().strip().split("=", 1)[1]
+            for f in (Path(root) / "data" / "ledger" / stamp).iterdir():
+                data = f.read_bytes()
+                if f.suffix == ".gz":
+                    data = gzip.decompress(data)
+                self.assertNotIn(key.encode(), data, f.name)
 
     def test_payouts_never_read_turn_the_run_red_but_keep_the_trades(self):
         def earn(host, path, params):

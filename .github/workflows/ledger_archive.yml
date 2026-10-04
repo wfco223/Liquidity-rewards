@@ -31,10 +31,15 @@ concurrency:
 
 jobs:
   archive:
+    # main only: a run dispatched from any other branch would carry that
+    # branch's commits onto main with the folder
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -67,9 +72,20 @@ jobs:
           if [ -n "$bad" ]; then echo "refusing to commit:"; echo "$bad"; exit 1; fi
           if git diff --cached --quiet; then echo "nothing to commit"; exit 1; fi
           git commit -m "Ledger archive $STAMP [skip ci]"
+          # what goes out must be exactly ONE commit on top of main, adding
+          # files inside the new folder and nothing else
+          outgoing_ok() {
+            [ "$(git rev-list --count FETCH_HEAD..HEAD)" = "1" ] || { echo "not one commit ahead of main"; return 1; }
+            extra=$(git diff --name-status FETCH_HEAD HEAD | grep -v -P "^A\t\Q$DIR\E/" || true)
+            [ -z "$extra" ] || { echo "outgoing touches more than the folder:"; echo "$extra"; return 1; }
+          }
           pushed=""
           for attempt in 1 2 3 4 5; do
-            if git pull --rebase origin main && git push origin HEAD:main; then pushed=yes; break; fi
+            git rebase --abort 2>/dev/null || true
+            if git fetch origin main && git rebase FETCH_HEAD; then
+              outgoing_ok || exit 1
+              if git push origin HEAD:main; then pushed=yes; break; fi
+            fi
             echo "push race lost (attempt $attempt) — retrying"
             sleep $((attempt * 3))
           done

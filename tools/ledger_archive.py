@@ -72,14 +72,30 @@ class HTTPError(RuntimeError):
         self.status = status
 
 
+def scrubber(*secrets):
+    """Text with every key value replaced by ***, for anything that is
+    printed or written: a malformed key makes requests quote the header
+    value in its error, and an error's words go into the manifest."""
+    keys = sorted({k for k in secrets if k and len(k) >= 8}, key=len, reverse=True)
+
+    def scrub(text: str) -> str:
+        text = str(text)
+        for k in keys:
+            text = text.replace(k, "***")
+        return text
+    return scrub
+
+
 def make_getter(key_id: str, secret: str, session=None, sleep=time.sleep):
     """A signed GET with its own retries: a 429 waits what the exchange
-    names (Retry-After, 20 s when it names none, 120 s at most); a 5xx or
-    a dropped connection backs off 2, 4, 8, 16, 32 s. Any other answer
-    (a 4xx) is returned as an error at once — it is a real answer."""
+    names (Retry-After, 20 s when it names none, 120 s at most); a 5xx, a
+    dropped or cut-off transfer, or a 200 whose body does not parse backs
+    off 2, 4, 8, 16, 32 s. Any other answer (a 4xx) is returned as an
+    error at once — it is a real answer. No error carries a key."""
     import requests
     import track_rewards as tr
     s = session or requests.Session()
+    scrub = scrubber(key_id, secret)
 
     def get(host: str, path: str, params: dict) -> dict:
         last = None
@@ -87,8 +103,8 @@ def make_getter(key_id: str, secret: str, session=None, sleep=time.sleep):
             try:
                 r = s.get(host + path, params=params, timeout=(10, 60),
                           headers=tr.auth_headers(key_id, secret, "GET", path))
-            except (requests.Timeout, requests.ConnectionError) as e:
-                last = f"{type(e).__name__}: {e}"
+            except requests.RequestException as e:
+                last = scrub(f"{type(e).__name__}: {e}")
                 if i < TRIES - 1:
                     sleep(2 ** (i + 1))
                 continue
@@ -107,22 +123,44 @@ def make_getter(key_id: str, secret: str, session=None, sleep=time.sleep):
                     sleep(2 ** (i + 1))
                 continue
             if r.status_code >= 400:
-                raise HTTPError(r.status_code, " ".join(r.text.split())[:300], path)
-            return r.json()
+                raise HTTPError(r.status_code,
+                                scrub(" ".join(r.text.split())[:300]), path)
+            try:
+                return r.json()
+            except ValueError as e:          # a body cut short or garbled
+                last = f"HTTP {r.status_code} with an unreadable body: {str(e)[:120]}"
+                if i < TRIES - 1:
+                    sleep(2 ** (i + 1))
         raise RuntimeError(f"{path}: no answer after {TRIES} tries — {last}")
     return get
 
 
+def _without_market(x):
+    """The row less every embedded `market` object. That object is the
+    market as it stands at the READ (its updatedAt, ep3SyncedAt and prices
+    move all day), not as it stood at the event, so the same settlement
+    read twice a minute apart can carry two different ones."""
+    if isinstance(x, dict):
+        return {k: _without_market(v) for k, v in x.items()
+                if not (k == "market" and isinstance(v, dict))}
+    if isinstance(x, list):
+        return [_without_market(v) for v in x]
+    return x
+
+
 def activity_key(a: dict) -> str:
     """The row's own id: trade.id for a trade, the id of the one object a
-    row of another type carries; a hash of the whole row when it has none,
-    so two different rows can never collapse into one."""
+    row of another type carries. A row with none — a settlement's
+    positionResolution carries marketSlug, side, tradeId, updateTime and
+    the positions before and after, but no id — is keyed by a hash of
+    everything it says about the event, so two different rows can never
+    collapse into one and the same row read twice is one."""
     typ = str(a.get("type") or "")
     for k, v in a.items():
         if k != "type" and isinstance(v, dict) and v.get("id"):
             return f"{typ}|{k}|{v['id']}"
     return "hash|" + hashlib.sha256(
-        json.dumps(a, sort_keys=True).encode()).hexdigest()
+        json.dumps(_without_market(a), sort_keys=True).encode()).hexdigest()
 
 
 def walk_activities(get, page_size: int = PAGE_SIZE, max_pages: int = MAX_PAGES,
@@ -183,9 +221,13 @@ def walk_activities(get, page_size: int = PAGE_SIZE, max_pages: int = MAX_PAGES,
 def walk_earnings(get, start: str, hosts=INCENTIVES_HOSTS,
                   page_size: int = EARN_PAGE_SIZE, max_pages: int = EARN_MAX_PAGES,
                   sleep=time.sleep, pause: float = PAGE_SLEEP_S):
-    """Every reward payout row from `start`, raw. Tries each host in turn
-    from the first page; the one that answers all the way is kept."""
-    errors = []
+    """Every reward payout row from `start`, raw. Each host is walked from
+    its first page on its own, so two hosts' rows never mix; the first
+    host to answer all the way is kept, and a host that fails part way
+    hands over to the next. When none completes, the longest partial walk
+    is kept and marked incomplete."""
+    errors: list[str] = []
+    best = None
     for host in hosts:
         rows: list[dict] = []
         info = {"host": host, "start": start, "pages": 0, "complete": False,
@@ -207,14 +249,17 @@ def walk_earnings(get, start: str, hosts=INCENTIVES_HOSTS,
                 sleep(pause)
             else:
                 info["stopped"] = f"still more pages after {max_pages}"
+        except Exception as e:  # noqa: BLE001
+            info["stopped"] = f"error on page {info['pages'] + 1}: {str(e)[:300]}"
+        if info["complete"]:
             info["errors_before"] = errors
             return rows, info
-        except Exception as e:  # noqa: BLE001
-            errors.append(f"{host}: {str(e)[:300]}")
-            if rows:
-                info.update(stopped=f"error on page {info['pages'] + 1}: {str(e)[:300]}",
-                            errors_before=errors[:-1])
-                return rows, info
+        errors.append(f"{host}: {info['stopped']} ({len(rows)} rows)")
+        if rows and (best is None or len(rows) > len(best[0])):
+            best = (rows, info)
+    if best:
+        best[1]["errors_before"] = errors
+        return best
     return [], {"host": None, "start": start, "pages": 0, "complete": False,
                 "stopped": "every host refused", "errors_before": errors}
 
@@ -222,7 +267,8 @@ def walk_earnings(get, start: str, hosts=INCENTIVES_HOSTS,
 def snapshot(get) -> dict:
     """What was held and the balance rows at the moment of the pull."""
     out: dict = {"positions": {}, "positions_read": {}, "balances": None,
-                 "errors": []}
+                 "errors": [], "complete": False}
+    ended = False
     try:
         cursor, pages, eof = None, 0, False
         for _ in range(50):
@@ -234,16 +280,19 @@ def snapshot(get) -> dict:
             out["positions"].update(j.get("positions") or {})
             cursor = j.get("nextCursor")
             if j.get("eof") or not cursor:
-                eof = bool(j.get("eof"))
+                eof, ended = bool(j.get("eof")), True
                 break
         out["positions_read"] = {"pages": pages, "n": len(out["positions"]),
-                                 "eof": eof}
+                                 "eof": eof, "ended": ended}
+        if not ended:
+            out["errors"].append("positions: still more pages after 50")
     except Exception as e:  # noqa: BLE001
         out["errors"].append(f"positions: {str(e)[:300]}")
     try:
         out["balances"] = get(TRADE_API, BALANCES_PATH, {})
     except Exception as e:  # noqa: BLE001
         out["errors"].append(f"balances: {str(e)[:300]}")
+    out["complete"] = ended and not out["errors"]
     return out
 
 
@@ -395,7 +444,8 @@ def _csv(cols, rows) -> bytes:
 
 
 def write_archive(root: Path, stamp: str, acts: list, act_info: dict,
-                  earn: list, earn_info: dict, snap: dict, meta: dict) -> Path:
+                  earn: list, earn_info: dict, snap: dict, meta: dict,
+                  scrub=str) -> Path:
     out = Path(root) / "data" / "ledger" / stamp
     if out.exists():
         raise FileExistsError(f"{out} already exists — refusing to write over it")
@@ -434,25 +484,27 @@ def write_archive(root: Path, stamp: str, acts: list, act_info: dict,
                      "last_date": dates[-1] if dates else None,
                      "paid_usd": paid},
         "snapshot": {"positions_read": snap.get("positions_read"),
+                     "complete": bool(snap.get("complete")),
                      "errors": snap.get("errors")},
         "files": files,
     }
     files_ = list(files)
-    manifest_bytes = json.dumps(manifest, indent=1, sort_keys=False).encode()
+    manifest_bytes = scrub(json.dumps(manifest, indent=1, sort_keys=False)).encode()
     _xwrite(out / "manifest.json", manifest_bytes)
-    _xwrite(out / "README.md", readme(stamp, manifest, files_).encode())
+    _xwrite(out / "README.md", scrub(readme(stamp, manifest, files_)).encode())
     return out
 
 
 def readme(stamp: str, m: dict, files: list) -> str:
-    a, e = m["activities"], m["earnings"]
-    ok = a["complete"] and e["complete"]
+    a, e, sn = m["activities"], m["earnings"], m["snapshot"]
+    ok = a["complete"] and e["complete"] and sn.get("complete")
     lines = [
         f"# Transaction record, pulled {m['pulled_utc']}",
         "",
         ("✅ Complete: both walks reached the end of the exchange's record."
          if ok else
-         "❌ INCOMPLETE — read the two \"stopped\" lines below before relying on this."),
+         "❌ INCOMPLETE — read the \"stopped\" lines and the snapshot below "
+         "before relying on this."),
         "",
         "Pulled from the exchange's own API by a read-only run. Nothing in this "
         "folder is ever edited after it is written; a later pull goes in a new "
@@ -470,6 +522,11 @@ def readme(stamp: str, m: dict, files: list) -> str:
         f"PAID rows add up to ${e['paid_usd']:,.2f}",
         f"- asked from {e['start']} on {e['host'] or 'no host'}; {e['pages']} pages",
         f"- stopped: {e['stopped']}",
+        "",
+        "## What was held at the pull",
+        f"- positions: {(sn.get('positions_read') or {}).get('n', '—')} markets "
+        f"read; balances: {'read' if not any(str(x).startswith('balances') for x in sn.get('errors') or []) else 'NOT read'}",
+        *[f"- ❌ {x}" for x in sn.get("errors") or []],
         "",
         "## Files",
         "- `activities-NNNN.jsonl.gz`: every activity row exactly as the exchange "
@@ -491,8 +548,8 @@ def readme(stamp: str, m: dict, files: list) -> str:
 
 
 def main() -> int:
-    kid = os.environ.get("POLYMARKET_KEY_ID", "")
-    sec = os.environ.get("POLYMARKET_SECRET_KEY", "")
+    kid = os.environ.get("POLYMARKET_KEY_ID", "").strip()
+    sec = os.environ.get("POLYMARKET_SECRET_KEY", "").strip()
     if not kid or not sec:
         print("no exchange key in the environment — nothing read")
         return 1
@@ -505,9 +562,13 @@ def main() -> int:
         print(f"data/ledger/{stamp} already exists — refusing")
         return 1
     get = make_getter(kid, sec)
+    scrub = scrubber(kid, sec)
+
+    def say(text: str) -> None:
+        print(scrub(text))
     t0 = time.time()
     acts, ainfo = walk_activities(get, max_pages=max_pages)
-    print(f"activities: {len(acts):,} rows, {ainfo['pages']} pages, "
+    say(f"activities: {len(acts):,} rows, {ainfo['pages']} pages, "
           f"{ainfo['duplicates']} repeats dropped — stopped: {ainfo['stopped']}")
     # an early start the exchange refuses must not cost the payouts: fall
     # back to the date the pay reader has always asked from
@@ -518,11 +579,11 @@ def main() -> int:
         if earn or einfo["complete"]:
             break
     einfo["starts_tried"] = tried
-    print(f"earnings: {len(earn):,} rows from {einfo['host']} — stopped: {einfo['stopped']}")
+    say(f"earnings: {len(earn):,} rows from {einfo['host']} — stopped: {einfo['stopped']}")
     for err in einfo.get("errors_before") or []:
-        print(f"  earlier host: {err}")
+        say(f"  earlier host: {err}")
     snap = snapshot(get)
-    print(f"positions: {snap['positions_read']}; errors: {snap['errors']}")
+    say(f"positions: {snap['positions_read']}; errors: {snap['errors']}")
     meta = {"pulled_utc": now.strftime("%Y-%m-%dT%H:%M:%SZ"), "stamp": stamp,
             "seconds": round(time.time() - t0, 1),
             "run": os.environ.get("RUN_URL", ""),
@@ -530,13 +591,19 @@ def main() -> int:
                                     "sortOrder=SORT_ORDER_DESCENDING, no type filter",
                       "earnings": f"GET {EARNINGS_PATH} startDate={start} "
                                   f"pageSize={EARN_PAGE_SIZE}"}}
-    out = write_archive(root, stamp, acts, ainfo, earn, einfo, snap, meta)
-    print(f"wrote {out}")
+    if not acts and not earn:
+        # every read refused (a key gone bad, the runner's address turned
+        # away): a folder of nothing, tagged for good, would only say so
+        # forever. Say it here and write nothing.
+        say("nothing was read — no folder written")
+        return 1
+    out = write_archive(root, stamp, acts, ainfo, earn, einfo, snap, meta, scrub)
+    say(f"wrote {out}")
     gh_out = os.environ.get("GITHUB_OUTPUT")
     if gh_out:
         with open(gh_out, "a") as f:
             f.write(f"stamp={stamp}\n")
-    return 0 if (ainfo["complete"] and einfo["complete"]) else 2
+    return 0 if (ainfo["complete"] and einfo["complete"] and snap["complete"]) else 2
 
 
 if __name__ == "__main__":
