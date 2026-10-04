@@ -3553,3 +3553,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1791072422.3,politics,scc-hrep-rep-2026-11-03-gte205,BUY,-1,0.34,fix,,0,,,,,,,,,size trimmed by 1 to the exchange's count (order CTQFYSH22YB5),CTQFYSH22YB5
 1791072422.3,politics,scc-senate-gop-2026-11-03-lte45,SELL,48.75,0.08,manual,0.3181,59.14,0.17985,5,9,0.365,0.07,0.08,0.0999,201.25,the owner's own order — the engine leaves it alone,CV0YXZQH4YH4
 1791081342.1,politics,scc-hrep-rep-2026-11-03-gte230,BUY,79.54,0.06,manual,8.9919,14.26,0.00865,1,5,0.517,0.04,0.05,0.0513,-0.46,the owner's own order — the engine leaves it alone,CW9S0XC4AYHK
+1791089205.5,politics,usgubewc-usgub-ak-2026-11-03-berwil,BUY,25,0.18,sell,0.118,64.55,0.088775,15,21,0.035,0.18,0.19,0.0912,-10,an exit — its fill reduces the position it sits on,CV0G0WFJ2YHK
