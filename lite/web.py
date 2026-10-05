@@ -41,7 +41,7 @@ html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--text);
  font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
  -webkit-font-smoothing:antialiased}
-.wrap{max-width:640px;margin:0 auto;padding:6px 16px 48px}
+.wrap{max-width:640px;margin:0 auto;padding:6px 16px calc(96px + env(safe-area-inset-bottom))}
 .top{display:flex;align-items:baseline;justify-content:space-between;padding:14px 2px 2px}
 .top h1{font-size:30px;font-weight:700;letter-spacing:-.025em;margin:0}
 .num{font-variant-numeric:tabular-nums}
@@ -152,6 +152,26 @@ input:focus{border-color:var(--accent);background:var(--card)}
 .bar>div{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
 .link{border:0;background:transparent;color:var(--accent);font-family:inherit;font-size:13.5px;line-height:1;font-weight:600;padding:4px 0;cursor:pointer}
 .banner{background:var(--card);border-radius:14px;padding:12px 16px;margin:12px 0;color:var(--sub);font-size:14px}
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;
+ background:var(--card);background:color-mix(in srgb,var(--card) 88%,transparent);
+ -webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);
+ border-top:1px solid var(--line);padding:6px 0 calc(6px + env(safe-area-inset-bottom))}
+.tabbar button{flex:1;max-width:220px;border:0;background:transparent;color:var(--faint);
+ font-family:inherit;font-size:11px;font-weight:600;line-height:1.2;display:flex;flex-direction:column;
+ align-items:center;gap:3px;padding:4px 0;cursor:pointer}
+.tabbar button.on{color:var(--accent)}
+.pd{display:flex;gap:22px;margin-top:6px}
+.pd .v{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.pd .l{font-size:12px;color:var(--sub)}
+.pbar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin-top:6px}
+.pbar>div{height:100%;border-radius:3px}
+.pbar .e{background:var(--fill2)}
+.pbar .a{background:var(--chart)}
+.ratio{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.pm{margin-top:8px;padding-top:6px;border-top:1px dashed var(--line)}
+.pm .nl{font-size:13px}
+.pmn{flex:1;min-width:0;line-height:1.3}
+.nl .amt{white-space:nowrap;text-align:right}
 """
 
 PAGE_JS = r"""
@@ -160,7 +180,8 @@ function LS(k,d){try{var v=localStorage.getItem(k);return v==null?d:v;}catch(e){
 function LSset(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 function hdrs(){var h=new Headers();h.set('X-Dash-Key',LS(K,''));return h;}
 function saveKey(){LSset(K,document.getElementById('k').value);load();}
-function usd(x){var v=x||0;return (v<0?'−$':'$')+Math.abs(v).toFixed(2);}
+function usd(x){var v=x||0,a=Math.abs(v);
+ return (v<0?'−$':'$')+(a>=1000?a.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):a.toFixed(2));}
 function usd0(x){var v=x||0;return '$'+(v>=100?Math.round(v).toLocaleString():v.toFixed(v%1?2:0));}
 function ct(x){var v=Math.round((x||0)*1000)/10;return (v%1?v.toFixed(1):''+Math.round(v))+'¢';}
 function pct(x){if(x==null)return '—';var v=x*100;return (v>=10?Math.round(v):v>=1?v.toFixed(1):v.toFixed(2))+'%';}
@@ -308,6 +329,7 @@ function typing(){var a=document.activeElement;
  return !!(a&&a.tagName==='INPUT'&&a.type!=='checkbox'&&a.closest&&a.closest('#sheet'));}
 function draw(d){
  window._d=d;
+ if(window._tab==='pay')return;
  if(window._win==null)window._win=21600;
  var b=function(sec,l){return '<button class="'+(window._win===sec?'on':'')+'" onclick="win('+sec+')">'+l+'</button>';};
  var h='';
@@ -611,7 +633,104 @@ function doScan(){
   refreshCard(true);load();});
 }
 
-load();setInterval(load,20000);
+// -- the pay tab: 3.0's pay page ------------------------------------------------------
+var _DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],_MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDay(d){var t=new Date(d+'T12:00:00');if(isNaN(t))return esc(d);return _DAYS[t.getDay()]+', '+_MON[t.getMonth()]+' '+t.getDate();}
+function tab(t){
+ window._tab=t==='pay'?'pay':'home';
+ try{history.replaceState(null,'',window._tab==='pay'?'#pay':location.pathname);}catch(e){}
+ document.getElementById('t-home').className=window._tab==='home'?'on':'';
+ document.getElementById('t-pay').className=window._tab==='pay'?'on':'';
+ document.getElementById('ttl').textContent=window._tab==='pay'?'Pay':'Rewards';
+ window.scrollTo(0,0);
+ if(window._tab==='pay'){if(window._p)drawPay(window._p);else document.getElementById('view').innerHTML='<div class="banner">Loading&hellip;</div>';loadPay();}
+ else if(window._d)draw(window._d);else load();
+}
+function loadPay(){
+ get('/pay.json',function(p){
+  if(p.ok===false&&window._p){window._payErr=p.note||'no answer';drawPay(window._p);return;}
+  window._payErr='';
+  document.getElementById('login').style.display='none';drawPay(p);});
+}
+function payDay(d){window._payOpen=window._payOpen===d?null:d;if(window._p)drawPay(window._p);}
+function progressHtml(list){
+ var h='';(list||[]).forEach(function(p){
+  h+='<div class="msub" style="margin-top:10px"><b>'+fmtDay(p.day)+'</b>: '+p.appeared+' of '+p.expected+' estimated markets have appeared ('+p.pct+'%)'
+   +(p.pending?' · '+p.pending+' pending':'')+(p.paid?' · '+p.paid+' paid':'')+(p.extra?' · '+p.extra+' not estimated':'')+'</div>'
+   +'<div class="bar"><div style="width:'+(p.pct||0)+'%"></div></div>';});
+ return h;
+}
+function newRowsHtml(j,tapped){
+ if(!j)return '';
+ var nr=j.new_rows||[],h='';
+ if(tapped&&!j.ok)return '<div class="note bad">'+esc(j.note||'failed')+'</div>';
+ if(!nr.length)return tapped?'<div class="note muted">Nothing new.</div>':'';
+ h+='<div class="label" style="margin-top:12px">'+(tapped?'New just now':'Last new rows')+(j.at?' · '+ago(Date.now()/1000-j.at)+' ago':'')+'</div>';
+ nr.slice(0,12).forEach(function(r){h+='<div class="nl"><span class="pmn">'
+  +esc(r.name||r.market)+'</span><span class="amt"><b>'+usd(r.usd)+'</b> <span class="dim">'+esc((r.date||'').slice(5))+'</span></span></div>';});
+ if(nr.length>12)h+='<div class="muted">+'+(nr.length-12)+' more</div>';
+ return h;
+}
+function dayHtml(r,mx){
+ var ratio=r.ratio_posted!=null?r.ratio_posted:(r.actual!=null&&r.est?r.actual/r.est:null);
+ var h='<div class="mrow" onclick="payDay(\''+esc(r.day)+'\')"><div class="mtop"><div class="mn">'+fmtDay(r.day)+'</div>'
+  +(ratio!=null?'<span class="ratio">'+ratio.toFixed(2)+'×</span>':'')+'</div>'
+  +'<div class="pd"><div><div class="v">'+(r.actual==null?'—':usd(r.actual))+'</div><div class="l">paid</div></div>'
+  +'<div><div class="v dim">'+(r.est==null?'—':usd(r.est))+'</div><div class="l">estimate</div></div></div>'
+  +(r.est!=null?'<div class="pbar"><div class="e" style="width:'+Math.round(100*(r.est||0)/mx)+'%"></div></div>':'')
+  +(r.actual!=null?'<div class="pbar"><div class="a" style="width:'+Math.round(100*(r.actual||0)/mx)+'%"></div></div>':'');
+ // the ratio is over the markets posted so far: say how far along, only while partial
+ if(r.ratio_posted!=null&&r.est_n&&r.posted_n<r.est_n)h+='<div class="msub">'+r.posted_n+' of '+r.est_n+' markets posted</div>';
+ if(window._payOpen===r.day){
+  h+='<div class="pm">';
+  (r.markets||[]).forEach(function(m){h+='<div class="nl"><span class="pmn">'+esc(m.name)+'</span><span class="amt">'
+   +(m.paid==null?'<span class="dim">not posted</span>':'<b>'+usd(m.paid)+'</b>')+' <span class="dim">/ '+(m.est==null?'—':usd(m.est))+'</span></span></div>';});
+  if((r.markets_n||0)>(r.markets||[]).length)h+='<div class="muted">+'+(r.markets_n-(r.markets||[]).length)+' more</div>';
+  if(!(r.markets||[]).length)h+='<div class="muted">No market figures for this day.</div>';
+  h+='<div class="muted" style="margin-top:4px">paid / estimate, each market</div></div>';
+ }
+ return h+'</div>';
+}
+function drawPay(p){
+ window._p=p;
+ if(window._tab!=='pay')return;
+ var v=document.getElementById('view');
+ if(!p.ok){v.innerHTML='<div class="card"><div class="note bad">'+esc(p.note||'no answer')+'</div></div>';return;}
+ var pt=p.paid_total||{usd:0,days:0},rate=p.tax_rate||0.22,tax=(pt.usd||0)*rate;
+ var h='<div class="card"><div class="label">Paid all time</div><div class="hero">'+usd(pt.usd)+'</div>'
+  +'<div class="muted">'+(pt.days||0)+' posted days'+(pt.since?' since '+fmtDay(pt.since):'')+'</div>'
+  +'<div class="kpis"><div><div class="v">'+usd(pt.usd)+'</div><div class="l">Gross paid</div></div>'
+  +'<div><div class="v warn">'+usd(tax)+'</div><div class="l">Set aside · tax '+Math.round(rate*100)+'%</div></div>'
+  +'<div><div class="v">'+usd((pt.usd||0)-tax)+'</div><div class="l">Yours after</div></div></div>'
+  +(window._payErr?'<div class="note warn">'+esc(window._payErr)+' — showing the last read</div>':'')+'</div>';
+ var rw=window._rw;
+ h+='<div class="card"><div class="sec-h" style="margin:0 0 4px"><h2 style="font-size:19px">New payouts</h2>'
+  +'<button class="btn small" id="ckpay" onclick="checkPay()"'+(window._rwbusy?' disabled':'')+'>'+(window._rwbusy?'Checking…':'Check now')+'</button></div>'
+  +'<div class="muted">'+(p.checked_age==null?'Not checked yet':'Checked '+ago(p.checked_age)+' ago · checked every 5 min')+'</div>'
+  +progressHtml(rw&&rw.ok?rw.progress:p.progress)+(rw?newRowsHtml(rw,true):newRowsHtml(p.last,false))+'</div>';
+ var mx=1;(p.days||[]).forEach(function(r){mx=Math.max(mx,r.est||0,r.actual||0);});
+ h+='<div class="sec-h"><h2>By day</h2><span class="muted">tap a day for its markets</span></div>'
+  +'<div class="legend"><span><span style="display:inline-block;width:10px;height:6px;border-radius:3px;background:var(--fill2)"></span> estimate'
+  +' &nbsp;<span style="display:inline-block;width:10px;height:6px;border-radius:3px;background:var(--chart)"></span> paid</span>'
+  +'<span>× = paid / estimate</span></div>'
+  +'<div class="card list">';
+ (p.days||[]).slice().reverse().forEach(function(r){h+=dayHtml(r,mx);});
+ if(!(p.days||[]).length)h+='<div class="mrow muted">No days yet.</div>';
+ h+='</div>';
+ v.innerHTML=h;
+}
+function checkPay(){
+ if(window._rwbusy)return;
+ window._rwbusy=true;if(window._p)drawPay(window._p);
+ post({op:'check_payouts'},function(j){window._rwbusy=false;window._rw=j;loadPay();});
+}
+
+window._tab=(location.hash==='#pay')?'pay':'home';
+window.addEventListener('hashchange',function(){tab(location.hash==='#pay'?'pay':'home');});
+tab(window._tab);                     // the home tab loads its data itself
+if(window._tab==='pay')load();       // the order cards read it on the pay tab too
+setInterval(load,20000);
+setInterval(function(){if(window._tab==='pay'&&!window._rwbusy)loadPay();},60000);
 setInterval(function(){if(window._card&&!typing())refreshCard();},5000);
 """
 
@@ -623,13 +742,17 @@ PAGE = f"""<!doctype html><html><head>
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <title>Rewards</title><style>{PAGE_CSS}</style></head><body>
 <div class="wrap">
-<div class="top"><h1>Rewards</h1></div>
+<div class="top"><h1 id="ttl">Rewards</h1></div>
 <div id="login" style="display:none" class="card">
  <div class="label">Dashboard key</div>
  <div class="frm"><input id="k" type="password" placeholder="key" style="flex:1"><button class="btn" onclick="saveKey()">Open</button></div>
 </div>
 <div id="view"><div class="banner">Loading&hellip;</div></div>
 </div>
+<nav class="tabbar">
+ <button id="t-home" onclick="tab('home')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-8"/><path d="M14 8h6v6"/></svg>Home</button>
+ <button id="t-pay" onclick="tab('pay')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="13" rx="2.5"/><circle cx="12" cy="12.5" r="2.6"/><path d="M6 9.5v.01M18 15.5v.01"/></svg>Pay</button>
+</nav>
 <script>{PAGE_JS}</script>
 </body></html>"""
 
@@ -651,6 +774,8 @@ def handle_op(app, body: dict) -> dict:
         return app.cancel(str(body.get("order_id") or ""))
     if op == "watch":
         return app.set_watch(str(body.get("market") or ""), bool(body.get("on")))
+    if op == "check_payouts":
+        return app.check_payouts_now()
     if op == "scan":
         if (g := app._gate()):
             return {"ok": False, "note": g}
@@ -696,14 +821,15 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(200, b"ok", "text/plain")
         if path in OLD_PAGES:
             self.send_response(302)
-            self.send_header("Location", "/")
+            # 3.0's pay page lives on: its own tab
+            self.send_header("Location", "/#pay" if path in ("/pay", "/grades") else "/")
             self.end_headers()
             return None
         q = parse_qs(u.query)
 
         def arg(k: str, d: str = "") -> str:
             return (q.get(k) or [d])[0]
-        if path in ("/data.json", "/book.json", "/math.json", "/scan.json"):
+        if path in ("/data.json", "/book.json", "/math.json", "/scan.json", "/pay.json"):
             if not self._authed(u.query):
                 return self._json({"ok": False, "note": "key"}, 401)
             try:
@@ -713,6 +839,8 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(self.app.book_view(arg("m"), stake=arg("stake") or None))
                 if path == "/scan.json":
                     return self._json(self.app.scanner.view(sort=arg("sort", "pct")))
+                if path == "/pay.json":
+                    return self._json(self.app.pay_view())
                 return self._json(self.app.order_math(arg("id")))
             except Exception as e:  # noqa: BLE001
                 return self._json({"ok": False, "note": str(e)[:200]}, 500)

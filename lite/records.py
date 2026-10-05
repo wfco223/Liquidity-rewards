@@ -100,25 +100,62 @@ def compose_rewards_csv(rows: list[dict], existing: str, start: str) -> str:
     return "\n".join([REWARDS_HEADER] + keep + lines) + "\n"
 
 
-def write_rewards(repo: Repo, rows: list[dict], start: str) -> str:
-    """Rewrite data/rewards.csv from `start` on. Returns what happened."""
+def write_rewards(repo: Repo, rows: list[dict], start: str, sink: dict | None = None) -> str:
+    """Rewrite data/rewards.csv from `start` on. Returns what happened;
+    `sink`, when given, receives the file as it now stands ("text")."""
     if not any(r["date"] >= start for r in rows):
         return "no rows in the window — file left as it is"
     existing, sha = repo.read(REWARDS_PATH)
     text = compose_rewards_csv(rows, existing, start)
     if text == existing:
+        if sink is not None:
+            sink["text"] = text
         return "unchanged"
     old_n = max(len(existing.splitlines()) - 1, 0)
     new_n = len(text.splitlines()) - 1
     if new_n < old_n * 0.9:
         return f"refused: the new file would have {new_n:,} rows where it has {old_n:,}"
     repo.write(REWARDS_PATH, text, sha, "Update rewards.csv [skip ci]")
+    if sink is not None:
+        sink["text"] = text
     return f"written: {new_n:,} rows"
+
+
+def day_totals(text: str) -> dict[str, float]:
+    """What the exchange paid each day, from the rewards file: every row
+    but the SKIPPED ones (3.0's day totals, to the cent, 2026-10-05)."""
+    out: dict[str, float] = {}
+    for ln in (text or "").splitlines():
+        parts = ln.split(",")
+        if len(parts) < 5 or parts[0] == "date":
+            continue
+        if parts[4].strip() == "SKIPPED":
+            continue
+        try:
+            out[parts[0]] = out.get(parts[0], 0.0) + float(parts[3])
+        except ValueError:
+            continue
+    return {d: round(v, 2) for d, v in out.items()}
 
 
 def utc_day(now: float, days_back: int = 0) -> str:
     return (dt.datetime.fromtimestamp(now, tz=dt.timezone.utc)
             - dt.timedelta(days=days_back)).strftime("%Y-%m-%d")
+
+
+def aggregate(rows: list[dict]) -> dict[str, dict]:
+    """The exchange's rows grouped per market-day (it splits one into a
+    SKIPPED and a PAID row, and lists PENDING ones before they pay)."""
+    agg: dict[str, dict] = {}
+    for r in rows:
+        key = f"{r['date']}|{r['market']}"
+        a = agg.setdefault(key, {"date": r["date"], "market": r["market"],
+                                 "usd": 0.0, "paid": 0.0, "status": set()})
+        a["usd"] += r["reward_usd"]
+        a["status"].add(str(r.get("status") or ""))
+        if r["status"] != "SKIPPED":
+            a["paid"] += r["reward_usd"]
+    return agg
 
 
 def check_rewards(rows: list[dict], seen: dict, paid_seen: dict, now: float) -> dict:
@@ -128,14 +165,7 @@ def check_rewards(rows: list[dict], seen: dict, paid_seen: dict, now: float) -> 
     The first check only records; a check where more than half the window
     reads new re-records instead of pushing old rows."""
     first = not seen
-    agg: dict[str, dict] = {}
-    for r in rows:
-        key = f"{r['date']}|{r['market']}"
-        a = agg.setdefault(key, {"date": r["date"], "market": r["market"],
-                                 "usd": 0.0, "paid": 0.0})
-        a["usd"] += r["reward_usd"]
-        if r["status"] != "SKIPPED":
-            a["paid"] += r["reward_usd"]
+    agg = aggregate(rows)
     fresh, totals = [], {}
     for key, a in agg.items():
         totals[a["date"]] = totals.get(a["date"], 0.0) + a["paid"]
@@ -154,7 +184,10 @@ def check_rewards(rows: list[dict], seen: dict, paid_seen: dict, now: float) -> 
         return {"new_count": 0, "days": days, "note": "baseline re-recorded"}
     show_from = utc_day(now, SHOW_DAYS)
     new = [a for a in fresh if a["date"] >= show_from]
-    return {"new_count": len(new), "days": days, "note": ""}
+    new.sort(key=lambda a: (a["date"], -a["usd"]), reverse=True)
+    return {"new_count": len(new), "days": days, "note": "",
+            "new_rows": [{"date": a["date"], "market": a["market"], "usd": round(a["usd"], 2)}
+                         for a in new[:50]]}
 
 
 def rewards_push_text(res: dict) -> str:

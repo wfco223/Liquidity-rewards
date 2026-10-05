@@ -93,6 +93,11 @@ STREAM_CHUNK = 200
 TERMS_SWEEP_CHUNK = 400    # the politics terms sweep after each discovery, this many at a time
 WATCH_FORGET_S = 30 * 86400.0  # an untrack is remembered this long: an older copy's save cannot undo it
 HOLD_READ_TRIES = 10       # end-of-hold reads of the old copy's last save before going on without it
+TAX_RATE = 0.22            # the pay page's set-aside (3.0's)
+PAY_DAYS = 14              # days the pay page lists
+POSTING_ACTIVE_S = 24 * 3600.0  # a day is "posting" while it gained a row within this
+CLAIMS_CAP = 8000          # market-days of the meter's per-market figures kept
+TAP_CHECK_WAIT_S = 30.0    # his "check now" waits this long for a check already running
 UNIVERSE_TRUST_S = 7 * 3600.0  # a market listed open this recently opens without the gateway check
 STATE_BRANCH = "lite-state"
 SEED_BRANCH = "v3-state"
@@ -299,6 +304,16 @@ class App:
         self.rewards_seen: dict[str, float] = {}
         self.paid_seen: dict[str, float] = {}
         self.rw_last: dict | None = None
+        # the pay page: what the exchange paid each day (rewards.csv's rows
+        # but the SKIPPED ones), what the meter claimed for each market
+        # each day, when each day last gained a row, and how far the
+        # posting has got
+        self.actuals_by_day: dict[str, float] = {}
+        self.claims: dict[str, float] = {}        # "day|market" -> the meter's figure
+        self.posting_last: dict[str, float] = {}
+        self.pay_progress: list[dict] = []
+        self.pay_checked_at = 0.0
+        self.rw_lock = threading.Lock()           # one payout check at a time
         self.placed_ids: dict[str, float] = {}
         self.pending: dict[tuple, tuple] = {}     # (market, side) -> (sent at, order id)
         self.busy: set[str] = set()               # order ids with a change in flight
@@ -380,6 +395,11 @@ class App:
             "rewards_seen": seen,
             "paid_seen": paid,
             "rw_last": self.rw_last,
+            "actuals_by_day": dict(self.actuals_by_day),
+            "claims": dict(self.claims),
+            "posting_last": dict(self.posting_last),
+            "pay_progress": list(self.pay_progress),
+            "pay_checked_at": round(self.pay_checked_at, 1),
             "placed_ids": dict(ids),
             "cancelled": {i: t for i, t in list(self.desk.cancelled.items()) if now - t < GHOST_S},
             "audit": list(self.audit)[-60:],
@@ -583,6 +603,11 @@ class App:
             self.rewards_seen = dict(st.get("rewards_seen") or {})
             self.paid_seen = dict(st.get("paid_seen") or {})
         self.rw_last = st.get("rw_last")
+        self.actuals_by_day = {str(d): float(v) for d, v in (st.get("actuals_by_day") or {}).items()}
+        self.claims = {str(k): float(v) for k, v in (st.get("claims") or {}).items()}
+        self.posting_last = {str(d): float(t) for d, t in (st.get("posting_last") or {}).items()}
+        self.pay_progress = list(st.get("pay_progress") or [])
+        self.pay_checked_at = float(st.get("pay_checked_at") or 0.0)
         self.placed_ids = dict(st.get("placed_ids") or {})
         for i, t in (st.get("cancelled") or {}).items():
             self.desk.remember_cancel(i, at=t)
@@ -948,6 +973,7 @@ class App:
             self._day_roll_gap(now)
             self.est.sample(now, meter, self.cache, self.terms,
                             side_pool=self.side_pool, verified_at=self.verified_at)
+            self._keep_claims()
         except Exception as e:  # noqa: BLE001
             self.note(f"meter: {e}")
         unverified = self.unverified(now)
@@ -1169,14 +1195,26 @@ class App:
                     self.note(f"terms sweep: {e}")
             self._sleep(DISCOVER_S if ok else DISCOVER_RETRY_S)
 
-    def check_rewards(self, now: float, write_file: bool) -> None:
+    def check_rewards(self, now: float, write_file: bool,
+                      wait: float | None = None) -> dict | None:
+        """The payout check: the loop's every five minutes, or his tap.
+        One at a time (a tap waits `wait` seconds for one running). Returns
+        what it found, or None when nothing was checked."""
+        if not self.rw_lock.acquire(timeout=-1 if wait is None else wait):
+            return None
+        try:
+            return self._check_rewards(now, write_file)
+        finally:
+            self.rw_lock.release()
+
+    def _check_rewards(self, now: float, write_file: bool) -> dict | None:
         days = 40 if write_file else 6
         start = records.utc_day(now, days)
         try:
             rows = self.client.earnings(start)
         except Exception as e:  # noqa: BLE001
             self.note(f"payouts: {e}")
-            return
+            return None
         if self.seeded_v3 and not self.seed_caught_up:
             # 3.0 ran on for a minute after the seed was read and may
             # have pushed rows in it: its final word wins
@@ -1186,13 +1224,25 @@ class App:
                 v3 = None
             if not v3:
                 self.note("payouts: 3.0's final save could not be read — check held")
-                return
+                return None
             with self.mem_lock:
                 self.rewards_seen.update(v3.get("rewards_seen") or {})
                 self.paid_seen.update(v3.get("paid_seen") or {})
             self.seed_caught_up = True
+        agg = records.aggregate(rows)
         with self.mem_lock:
+            self._mark_posting(agg, now)
             res = records.check_rewards(rows, self.rewards_seen, self.paid_seen, now)
+        # the day totals the read covers whole (strays from before the
+        # asked start are only parts of their days)
+        for d, v in res["days"].items():
+            if d >= start:
+                self.actuals_by_day[d] = round(v, 2)
+        try:
+            self.pay_progress = self._posting_progress(agg, now)
+        except Exception as e:  # noqa: BLE001 — a bar never breaks the check
+            self.note(f"posting progress: {e}")
+        self.pay_checked_at = now
         # the memory first, then the push: a copy that starts after this
         # one must not push the same rows again
         self.save(force_remote=bool(res["new_count"]))
@@ -1203,9 +1253,178 @@ class App:
             self.alerts.notify("Rewards posted", records.rewards_push_text(res))
         if res["new_count"] or write_file:
             try:
-                self.note("rewards.csv: " + records.write_rewards(self.repo, rows, start))
+                sink: dict = {}
+                self.note("rewards.csv: " + records.write_rewards(self.repo, rows, start, sink=sink))
+                if sink.get("text"):
+                    # every day the file holds: the all-time total is its
+                    # sum. Merged, never replaced: a day the file lacks is
+                    # not a day that paid nothing
+                    self.actuals_by_day = {**self.actuals_by_day,
+                                           **records.day_totals(sink["text"])}
             except Exception as e:  # noqa: BLE001
                 self.note(f"rewards.csv: {e}")
+        return res
+
+    def check_payouts_now(self) -> dict:
+        """His "Check for new payouts" tap: the same check the loop runs
+        (the push included), now, and what it found."""
+        if (g := self._gate()):
+            return {"ok": False, "note": g}
+        now = self.clock()
+        if self.state_unread:
+            return {"ok": False, "note": "the saved state could not be read yet — payouts are "
+                                         "not checked until it can"}
+        if now < self.boot_ts + BOOT_HOLD_S or self.upload_hold:
+            return {"ok": False, "note": "just restarted — payouts are checked from three "
+                                         "minutes after a restart (the old copy may still run)"}
+        res = self.check_rewards(now, write_file=False, wait=TAP_CHECK_WAIT_S)
+        if res is None:
+            return {"ok": False, "note": "the exchange did not answer, or a check is running — "
+                                         "try again in a moment"}
+        return {"ok": True, "new_count": res["new_count"], "note": res.get("note") or "",
+                "new_rows": [{**r, "name": self.label(r["market"])}
+                             for r in res.get("new_rows") or []],
+                "days": res["days"], "progress": self.pay_progress}
+
+    # -- the pay page --------------------------------------------------------
+
+    def _keep_claims(self) -> None:
+        """The meter's figure for each market today, written each sample:
+        what the pay page grades the exchange's postings against."""
+        day = self.est.day
+        if not day:
+            return
+        for m, v in list(self.est.per_market.items()):
+            self.claims[f"{day}|{m}"] = round(v, 4)
+        if len(self.claims) > CLAIMS_CAP:
+            for k in sorted(self.claims)[:len(self.claims) - CLAIMS_CAP]:
+                del self.claims[k]
+
+    def _claims_by_day(self) -> dict[str, dict[str, float]]:
+        """day -> market -> what the meter claimed: the closed days' own
+        record (exact at the close) and the running record, the larger."""
+        out: dict[str, dict[str, float]] = {}
+        for h in list(self.est.history):
+            for m, v in (h.get("per_market") or {}).items():
+                out.setdefault(str(h.get("day")), {})[m] = float(v or 0.0)
+        for key, v in list(self.claims.items()):
+            if "|" not in key:
+                continue
+            d, m = key.split("|", 1)
+            dd = out.setdefault(d, {})
+            dd[m] = max(dd.get(m, 0.0), float(v or 0.0))
+        return out
+
+    def _mark_posting(self, agg: dict, now: float) -> None:
+        """When each day last gained a row: a market-day the last check
+        had not seen, or whose amount changed (3.0's, the 14-day floor
+        included: older strays read as new on every check)."""
+        floor = et_day(now - 14 * 86400.0)
+        for key, a in agg.items():
+            d = str(a.get("date") or "")
+            if not d or d < floor:
+                continue
+            if abs(self.rewards_seen.get(key, -1.0) - round(float(a.get("usd") or 0.0), 2)) > 0.005:
+                self.posting_last[d] = now
+        if len(self.posting_last) > 40:
+            for k in sorted(self.posting_last)[:len(self.posting_last) - 40]:
+                del self.posting_last[k]
+
+    def _posting_progress(self, agg: dict, now: float) -> list[dict]:
+        """How much of what the meter claimed has the exchange posted yet,
+        for each day still posting (a new row within a day), 3.0's bars:
+        a row is an appearance whatever its status; the exchange never
+        posts every market claimed, so only time says a day is done."""
+        claims = self._claims_by_day()
+        today, yday = et_day(now), et_day(now - 86400.0)
+        out = []
+        for day in sorted({today, yday} | set(claims), reverse=True)[:14]:
+            if now - float(self.posting_last.get(day, 0.0)) > POSTING_ACTIVE_S:
+                continue
+            expected = {m for m, v in (claims.get(day) or {}).items() if v > 0.005}
+            rows = {a["market"]: a for a in agg.values() if a.get("date") == day}
+            if not expected or not rows:
+                continue
+            hit = expected & set(rows)
+            if len(hit) >= len(expected):
+                continue
+
+            def has(m: str, word: str) -> bool:
+                return any(word in str(x) for x in rows[m].get("status") or ())
+            out.append({
+                "day": day, "expected": len(expected), "appeared": len(hit),
+                "pct": round(100.0 * len(hit) / len(expected)),
+                "pending": sum(1 for m in hit if has(m, "PENDING")),
+                "paid": sum(1 for m in hit if has(m, "PAID") and not has(m, "PENDING")),
+                "extra": len(set(rows) - expected),
+            })
+        return out
+
+    def pay_view(self) -> dict:
+        """3.0's pay page: the all-time total and the tax set aside, and
+        for each of the last two weeks what the exchange paid against what
+        the meter estimated — over the markets posted so far, while the
+        day is still posting — with each day's markets for a tap."""
+        now = self.clock()
+        est_by_day: dict[str, tuple] = {}
+        for h in list(self.est.history):
+            est_by_day[str(h.get("day"))] = (float(h.get("earned") or 0.0),
+                                             float(h.get("stale_s") or 0.0))
+        if self.est.day:
+            est_by_day[self.est.day] = (self.est.earned, self.est.stale_s)
+        claims = self._claims_by_day()
+        with self.mem_lock:
+            items = list(self.paid_seen.items())
+        paid: dict[str, dict[str, float]] = {}
+        for key, v in items:
+            if "|" in key:
+                d, m = key.split("|", 1)
+                paid.setdefault(d, {})[m] = float(v or 0.0)
+        actuals = dict(self.actuals_by_day)
+        days = sorted(set(est_by_day) | set(actuals))[-PAY_DAYS:]
+        rows = []
+        for d in days:
+            posted = paid.get(d) or {}
+            est_m = claims.get(d) or {}
+            actual = actuals.get(d)
+            if actual is None and posted:
+                actual = round(sum(posted.values()), 2)
+            row: dict = {"day": d, "actual": actual,
+                         "est": round(est_by_day[d][0], 2) if d in est_by_day else None,
+                         "unmeasured_min": round(est_by_day[d][1] / 60.0, 1)
+                         if d in est_by_day else None}
+            if posted and est_m:
+                both = [m for m in posted if m in est_m]
+                p_est = sum(est_m[m] for m in both)
+                p_paid = sum(posted[m] for m in both)
+                row.update({
+                    "posted_n": len(both),
+                    "est_n": sum(1 for v in est_m.values() if v > 0.005),
+                    "posted_est": round(p_est, 2), "posted_paid": round(p_paid, 2),
+                    "extra_paid": round(sum(v for m, v in posted.items() if m not in est_m), 2),
+                    "ratio_posted": round(p_paid / p_est, 3) if p_est > 0.005 else None,
+                })
+            ms = {m for m, v in est_m.items() if v > 0.005} | set(posted)
+            mk = [{"m": m, "name": self.label(m),
+                   "est": round(est_m[m], 2) if m in est_m else None,
+                   "paid": round(posted[m], 2) if m in posted else None} for m in ms]
+            mk.sort(key=lambda r: -max(r["est"] or 0.0, r["paid"] or 0.0))
+            row["markets"] = mk[:80]
+            row["markets_n"] = len(mk)
+            rows.append(row)
+        total = round(sum(actuals.values()), 2)
+        last = dict(self.rw_last or {})
+        if last.get("new_rows"):
+            last["new_rows"] = [{**r, "name": self.label(r["market"])} for r in last["new_rows"]]
+        return {
+            "ok": True, "days": rows, "tax_rate": TAX_RATE,
+            "paid_total": {"usd": total, "days": len(actuals),
+                           "since": min(actuals) if actuals else None},
+            "progress": list(self.pay_progress),
+            "checked_at": round(self.pay_checked_at, 1) or None,
+            "checked_age": round(now - self.pay_checked_at) if self.pay_checked_at else None,
+            "last": last or None,
+        }
 
     def publish_trades(self) -> None:
         known = set(self.placed_ids) | {o["id"] for o in self.orders}

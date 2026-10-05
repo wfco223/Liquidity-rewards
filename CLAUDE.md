@@ -136,6 +136,23 @@ long and accreted, so search it rather than reading it through.
   (state["universe"]) and re-reads all their terms after each run (the
   sweep). The two book streams now carry 1,000 markets each (books only).
   The page has its own look: system font, light or dark with the phone.
+  THE PAY TAB (owner, 2026-10-05: "Also bring over the pay page. It
+  should be on its own tab"): a tab bar at the foot of the page, Home and
+  Pay; /pay and /grades open it (/#pay). It is 3.0's pay page: paid all
+  time, 22% set aside for tax, what is left; "Check now" runs the payout
+  check the loop runs every five minutes (the push included, one check at
+  a time, never inside the three-minute hold after a boot) and lists the
+  new rows and how far each still-posting day has got (3.0's bars: of the
+  markets the meter claimed that day, how many have a row in any status;
+  a day counts as posting while it gained a row in the last 24 h); then
+  the last 14 days, each with what the exchange paid, the meter's
+  estimate, and paid over estimate counted over the markets posted so far
+  while a day is still posting ("N of M markets posted"); a tap opens the
+  day's markets, paid against estimated. Paid per day is every row of
+  rewards.csv but the SKIPPED ones (the same as 3.0's totals, to the cent,
+  checked 2026-10-05), re-read hourly with the file and merged, never
+  replaced; the meter's per-market figures are kept each sample
+  (state["claims"], 8,000 market-days) beside its closed days' own.
 - STATUS.md is the phone-readable front page: one ✅/❌ freshness line up
   top, summary before detail, plain-English explanations of every number.
 - The live monitor (live/monitor.py) runs on DigitalOcean from the `deploy`
