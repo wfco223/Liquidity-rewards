@@ -169,9 +169,17 @@ def publish_trades(client, repo: Repo, known_ids, deep: bool) -> str:
     """Append the exchange's newest activity to data/trades.csv, the same
     rows 3.0 wrote (deduplicated line by line, so overlap costs nothing)."""
     from v3.main import parse_activities, trades_csv_append
-    raw = client.activities(pages=25 if deep else 3)
-    rows = parse_activities(raw, set(known_ids))
+    raw = client.activities(pages=25 if deep else 3, tries=2, timeout=20.0)
     existing, sha = repo.read(TRADES_PATH)
+    # every order id the file already names is ours: with them the parser
+    # reads which side of a trade was ours the way 3.0 did, not by the
+    # intent alone (which a counterparty's order can carry too)
+    known = set(known_ids)
+    for ln in existing.splitlines()[1:]:
+        parts = ln.split(",")
+        if len(parts) > 8 and parts[8]:
+            known.add(parts[8])
+    rows = parse_activities(raw, known)
     text, added = trades_csv_append(existing, rows)
     if not added:
         return f"{len(raw)} activities, nothing new"

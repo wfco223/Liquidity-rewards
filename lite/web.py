@@ -7,6 +7,7 @@ endpoint has kept since 1.0)."""
 
 from __future__ import annotations
 
+import gzip
 import json
 import os
 import threading
@@ -50,6 +51,7 @@ function sz(q){q=q||0;if(q>=1e6)return (q/1e6).toFixed(1)+'M';if(q>=1e4)return (
 function fmtT(ts){var d=new Date(ts*1000);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
 function side(s){return s==='BUY'?'Bid':'Ask';}
 function day(e){return e==null?'—':usd(e)+'/day';}
+function ago(s){s=Math.round(s||0);return s<120?s+'s':Math.round(s/60)+' min';}
 function get(url,cb){
  fetch(url,{headers:hdrs()}).then(function(r){
   if(r.status===401){document.getElementById('login').style.display='';return null;}
@@ -103,9 +105,12 @@ function draw(d){
   +'<div><div class="v">'+(d.bp==null?'—':usd(d.bp))+'</div><div class="l">buying power</div></div>'
   +'<div><div class="v">'+usd(d.holdings_value)+'</div><div class="l">holdings</div></div></div>'
   +(d.unmeasured_min>5?'<div class="muted">'+Math.round(d.unmeasured_min)+' min unmeasured today</div>':'')
+  +(d.bp_age>60?'<div class="warn">buying power read '+ago(d.bp_age)+' ago</div>':'')
+  +(d.state_note?'<div class="bad">'+esc(d.state_note)+'</div>':'')
   +'</div>';
  var tot=0;(d.orders||[]).forEach(function(o){tot+=(o.est||0);});
- h+='<div class="card"><b>Orders</b> <span class="muted">'+(d.orders||[]).length+' · '+usd(tot)+'/day</span>';
+ h+='<div class="card"><b>Orders</b> <span class="muted">'+(d.orders||[]).length+' · '+usd(tot)+'/day</span>'
+  +(d.orders_age>60?' <span class="warn">list read '+ago(d.orders_age)+' ago</span>':'');
  (d.orders||[]).forEach(function(o){
   h+='<div class="row" onclick="openOrder(\''+esc(o.id)+'\')"><div class="n">'+esc(o.name)+'</div>'
    +'<div class="l"><span class="a">'+side(o.side)+' '+ct(o.price)+' × '+sz(o.size)+'</span>'
@@ -117,8 +122,7 @@ function draw(d){
    +'<div class="l"><span class="a">'+(p.net>0?'Yes ':'No ')+sz(Math.abs(p.net))+'</span>'
    +'<span class="e">'+usd(p.value)+'</span></div></div>';});
  if(d.small_n)h+='<div class="muted">+'+d.small_n+' under $1 ('+usd(d.small_v)+')</div>';
- h+='</div><div class="card"><div class="frm"><input id="slug" placeholder="market slug" style="width:60%">'
-  +'<button onclick="openMarket(document.getElementById(\'slug\').value)">Open</button></div></div>';
+ h+='</div>';
  document.getElementById('view').innerHTML=h;
 }
 function load(){
@@ -181,10 +185,15 @@ function refreshCard(){
  else get('/book.json?m='+encodeURIComponent(c.m),function(j){if(window._card===c)drawMarket(j);});
 }
 function drawOrder(j){
- if(!j.ok){sheet(said()+'<div class="bad">'+esc(j.note)+'</div>');return;}
+ if(!j.ok){
+  // the order is still his to cancel when its book cannot be read
+  var c0=j.order?'<div class="hero" style="font-size:26px">'+side(j.order.side)+' '+ct(j.order.price)+' × '+sz(j.order.size)+'</div>'
+   +'<div class="frm"><button class="no" onclick="doCancel()">Cancel order</button></div>':'';
+  sheet(said()+'<div class="bad">'+esc(j.note)+'</div>'+c0);return;}
  var o=j.order,t=window._typed||{px:(Math.round(o.price*1000)/10),qty:o.size};
+ window._shown={px:o.price,qty:o.size};
  var h='<div><b>'+esc(j.name)+'</b></div><div class="hero" style="font-size:26px">'+side(o.side)+' '+ct(o.price)+' × '+sz(o.size)+'</div>'
-  +said()+mathHtml(o,j.math)+bookHtml(j,o)
+  +said()+(j.stale?'<div class="warn">'+esc(j.stale)+'</div>':'')+mathHtml(o,j.math)+bookHtml(j,o)
   +'<div class="frm"><input id="px" inputmode="decimal" value="'+esc(t.px)+'" oninput="typed()">¢'
   +'<input id="qty" inputmode="decimal" value="'+esc(t.qty)+'" oninput="typed()">'
   +'<button onclick="doMove()">Change</button><button class="no" onclick="doCancel()">Cancel order</button></div>';
@@ -195,7 +204,10 @@ function drawMarket(j){
  var sd=window._side||'BUY',t=window._typed||{px:'',qty:''};
  var h='<div><b>'+esc(j.name)+'</b></div>'
   +'<div class="muted">'+(j.net?(j.net>0?'Yes ':'No ')+sz(Math.abs(j.net))+' · '+usd(j.value)+' · ':'')
-  +(j.pool==null?'no pool read':usd(j.pool)+'/day a side, Target '+sz(j.target))+(j.first_day?' · first day':'')+'</div>'
+  +(j.pool!=null?usd(j.pool)+'/day a side, Target '+sz(j.target)
+    :(!j.prog?'no reward program read':(!j.live?'program not live':'event size unknown')))
+  +(j.first_day?' · first day':'')+'</div>'
+  +(j.stale?'<div class="warn">'+esc(j.stale)+'</div>':'')
   +said();
  (j.ours||[]).forEach(function(o){h+='<div class="row" onclick="openOrder(\''+esc(o.id)+'\')"><div class="l"><span class="a">'
   +side(o.side)+' '+ct(o.price)+' × '+sz(o.size)+'</span><span class="e">'+day(o.est)+'</span></div></div>';});
@@ -215,15 +227,20 @@ function doPlace(){var n=nums();if(!n)return;var c=window._card,sd=window._side|
  if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(cost?' — ties up '+usd(cost):'')+'?'))return;
  window._said={ok:true,note:'placing…'};drawMarket(j);
  post({op:'place',market:c.m,side:sd,px:n[0],qty:n[1]},function(r){window._typed=null;say(r);});}
-function doMove(){var n=nums();if(!n)return;var c=window._card;
- if(!confirm('Change to '+n[0]+'¢ × '+n[1]+'?'))return;
- post({op:'move',order_id:c.id,px:n[0],qty:n[1]},function(r){window._typed=null;
+function doMove(){var n=nums();if(!n)return;var c=window._card,w=window._shown||{};
+ // the size goes only when he changed it, and with it what the card
+ // showed: an order that filled meanwhile is refused, never regrown
+ var body={op:'move',order_id:c.id,px:n[0],was_price:Math.round(w.px*100000)/1000,was_size:w.qty};
+ if(Math.abs(n[1]-w.qty)>1e-9)body.qty=n[1];
+ if(!confirm('Change to '+n[0]+'¢ × '+(body.qty!=null?n[1]:w.qty)+'?'))return;
+ post(body,function(r){window._typed=null;
   if(r.ok&&r.id)window._card={kind:'order',id:r.id};say(r);});}
 function doCancel(){var c=window._card;if(!confirm('Cancel this order?'))return;
  post({op:'cancel',order_id:c.id},function(r){if(r.ok){closeSheet();load();alert(r.note);}else say(r);});}
 
 load();setInterval(load,20000);
-setInterval(function(){if(window._card&&!window._typed)refreshCard();},5000);
+setInterval(function(){var a=document.activeElement;
+ if(window._card&&!window._typed&&!(a&&a.tagName==='INPUT'&&a.closest&&a.closest('#sheet')))refreshCard();},5000);
 """
 
 PAGE = f"""<!doctype html><html><head>
@@ -235,6 +252,8 @@ PAGE = f"""<!doctype html><html><head>
  <input id="k" type="password" placeholder="key"><button onclick="saveKey()">Open</button>
 </div>
 <div id="view" class="muted">loading&hellip;</div>
+<div class="card"><div class="frm"><input id="slug" placeholder="market slug" style="width:60%">
+<button onclick="openMarket(document.getElementById('slug').value)">Open</button></div></div>
 <script>{PAGE_JS}</script>
 </body></html>"""
 
@@ -245,7 +264,8 @@ def handle_op(app, body: dict) -> dict:
         return app.place(str(body.get("market") or ""), body.get("side"),
                          body.get("px"), body.get("qty"))
     if op == "move":
-        return app.move(str(body.get("order_id") or ""), body.get("px"), body.get("qty"))
+        return app.move(str(body.get("order_id") or ""), body.get("px"), body.get("qty"),
+                        was_price=body.get("was_price"), was_size=body.get("was_size"))
     if op == "cancel":
         return app.cancel(str(body.get("order_id") or ""))
     return {"ok": False, "note": f"unknown op {op!r}"}
@@ -259,8 +279,13 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
     def _send(self, code: int, body: bytes, ctype: str) -> None:
+        gz = len(body) > 2048 and "gzip" in (self.headers.get("Accept-Encoding") or "")
+        if gz:
+            body = gzip.compress(body, 5)
         self.send_response(code)
         self.send_header("Content-Type", ctype)
+        if gz:
+            self.send_header("Content-Encoding", "gzip")
         self.send_header("Cache-Control", "no-store")
         self.send_header("Content-Length", str(len(body)))
         self.end_headers()

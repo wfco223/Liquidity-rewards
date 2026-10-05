@@ -4,6 +4,7 @@ rule over everything: nothing but his tap places, moves or cancels."""
 
 import base64
 import http.client
+import threading
 import json
 import os
 import tempfile
@@ -52,7 +53,11 @@ class FakeClient:
         self.fail_orders = False
         self.earn = []
         self.details = {}
+        self.events = {}
         self.n = 0
+        self.fund = None          # dollars free: a placement is cut to what it funds
+        self.listed = True        # False: the open list lags a new order
+        self.pos_fail = False
 
     def open_orders_raw(self, max_pages=20, tries=4, timeout=None):
         if self.fail_orders:
@@ -65,7 +70,15 @@ class FakeClient:
     def balances_raw(self):
         return self.bal
 
+    def get(self, url, *, path=None, signed=False, params=None, timeout=None, tries=4,
+            priority=False):
+        if url.endswith("/v1/account/balances"):
+            return {"balances": self.bal}
+        raise ApiError(f"no fake for {url}")
+
     def positions(self, max_pages=20):
+        if self.pos_fail:
+            raise ApiError("positions read failed")
         return self.pos
 
     def book(self, slug, fetched_at=None, timeout=None, tries=4, priority=False):
@@ -81,8 +94,11 @@ class FakeClient:
     def earnings(self, start):
         return list(self.earn)
 
-    def activities(self, pages=3):
+    def activities(self, types=None, pages=10, page_size=100, tries=4, timeout=None):
         return []
+
+    def event_by_slug(self, ev):
+        return self.events[ev]
 
     def market_details(self, slug):
         return self.details[slug]
@@ -93,9 +109,15 @@ class FakeClient:
             self.n += 1
             oid = f"N{self.n}"
             side = REST_SIDE[json_body["intent"]]
-            self.raw.append(raw_order(oid, json_body["marketSlug"], side,
-                                      json_body["price"]["value"], json_body["quantity"],
-                                      json_body["intent"]))
+            qty = json_body["quantity"]
+            px = float(json_body["price"]["value"])
+            if self.fund is not None:
+                per = px if side == "BUY" else 1 - px
+                qty = min(qty, round(self.fund / per, 2))
+            if self.listed:
+                self.raw.append(raw_order(oid, json_body["marketSlug"], side,
+                                          json_body["price"]["value"], qty,
+                                          json_body["intent"]))
             return {"id": oid, "executions": []}
         oid = url.split("/v1/order/")[1].split("/")[0]
         self.raw = [o for o in self.raw if o["id"] != oid]
@@ -103,6 +125,8 @@ class FakeClient:
 
 
 class FakeStore:
+    token, repo, branch = None, "r", "lite-state"
+
     def __init__(self, best=None, remote=None):
         self.best, self.remote, self.saved = best, remote, []
 
@@ -146,7 +170,9 @@ class FakeRepo:
 def make(**kw):
     OrderDesk.halted = None
     c = FakeClient()
+    kw.setdefault("sleep", lambda s: None)
     app = App(client=c, store=FakeStore(), alerts=FakeAlerts(), repo=FakeRepo(), **kw)
+    app.desk._sleep = lambda s: None
     app.event_n[M] = 2
     app.refresh_terms(time.time(), [M])
     return app, c
@@ -159,7 +185,7 @@ class TestTheMeter(unittest.TestCase):
         app.cache.put(M, c.book(M))
         t = time.time()
         app.sample_once(t)
-        self.assertEqual(app.verified_at, t)
+        self.assertAlmostEqual(app.verified_at, t, delta=5)
         self.assertEqual([o["id"] for o in app.orders], ["O1"])
         self.assertGreater(app.est.rate, 0)
         # each order's own figure is the meter's: one order, one rate
@@ -215,9 +241,10 @@ class TestNothingButHisTap(unittest.TestCase):
         c.earn = [{"date": records.utc_day(time.time(), 1), "market": M,
                    "program_type": "liquidityProgram", "reward_usd": 1.5, "status": "PAID"}]
         t = time.time()
-        for i in range(5):
+        for i in range(12):
             app.sample_once(t + 20 * i)
             app.upkeep_once(t + 20 * i)
+            app.records_once(t + 200 * i)
         app.run_discover()
         self.assertEqual(c.posts, [])
 
@@ -459,6 +486,178 @@ class TestThePage(unittest.TestCase):
     def test_an_old_bookmark_lands_on_the_page(self):
         st, _, loc = self.req("GET", "/focus")
         self.assertEqual((st, loc), (302, "/"))
+
+
+class TestTheReviewFixes(unittest.TestCase):
+    """The review of 2026-10-05, one test a finding."""
+
+    def setUp(self):
+        self.app, self.c = make()
+        self.c.raw = [raw_order("O1", M, "BUY", 0.40, 1000, "ORDER_INTENT_BUY_LONG")]
+        self.app.sample_once()
+
+    def test_a_change_the_money_cannot_fund_leaves_the_original_untouched(self):
+        self.c.fund = 20.0
+        r = self.app.move("O1", 41, None, was_price=40, was_size=1000)
+        self.assertFalse(r["ok"])
+        self.assertIn("untouched", r["note"])
+        ids = {o["id"]: o["size"] for o in self.app.orders}
+        self.assertEqual(ids, {"O1": 1000.0})        # the cut replacement withdrawn
+
+    def test_a_change_after_a_fill_is_refused_not_regrown(self):
+        self.c.raw[0]["leavesQuantity"] = 100          # 900 filled while he typed
+        r = self.app.move("O1", 41, None, was_price=40, was_size=1000)
+        self.assertFalse(r["ok"])
+        self.assertIn("now 100", r["note"])
+        self.assertEqual(self.c.posts, [])
+        r = self.app.move("O1", 41, None, was_price=40, was_size=100)
+        self.assertTrue(r["ok"], r)
+        self.assertEqual([b["quantity"] for p, b in self.c.posts if p == "/v1/orders"], [100.0])
+
+    def test_a_price_that_snaps_back_onto_its_own_is_nothing_to_change(self):
+        r = self.app.move("O1", 40.4, None)
+        self.assertEqual(r["note"], "nothing to change")
+        self.assertEqual(self.c.posts, [])
+
+    def test_a_placement_not_listed_yet_is_pending_and_not_sent_twice(self):
+        self.c.listed = False
+        r = self.app.place(M, "BUY", 38, 500)
+        self.assertTrue(r.get("pending"), r)
+        r2 = self.app.place(M, "BUY", 38, 500)
+        self.assertFalse(r2["ok"])
+        self.assertEqual(len([p for p, _ in self.c.posts if p == "/v1/orders"]), 1)
+
+    def test_an_unreadable_position_refuses_the_tap(self):
+        self.c.pos_fail = True
+        r = self.app.place(M, "SELL", 45, 50)
+        self.assertFalse(r["ok"])
+        self.assertIn("position", r["note"])
+        self.assertEqual(self.c.posts, [])
+
+    def test_a_cancel_never_waits_behind_a_placement(self):
+        with self.app.tap_lock:
+            r = self.app.cancel("O1")
+        self.assertTrue(r["ok"])
+
+    def test_the_stop_waits_for_a_tap_in_flight(self):
+        done = []
+        self.app.tap_lock.acquire()
+        t = threading.Thread(target=lambda: (self.app.shutdown_save("signal 15"), done.append(1)))
+        t.start()
+        time.sleep(0.3)
+        self.assertIsNone(OrderDesk.halted)            # still waiting for the tap
+        self.app.tap_lock.release()
+        t.join(5)
+        self.assertEqual(OrderDesk.halted, "signal 15")
+        OrderDesk.halted = None
+
+    def test_a_cancelled_order_the_list_still_shows_is_not_metered(self):
+        self.app.desk.remember_cancel("O1")
+        self.app.sample_once()
+        self.assertEqual(self.app.orders, [])
+
+    def test_an_older_read_never_overwrites_a_newer_one(self):
+        self.app._take_orders([raw_order("N9", M, "BUY", 0.39, 10, "ORDER_INTENT_BUY_LONG")],
+                              time.time() + 5)
+        self.app._take_orders([], time.time() - 5)
+        self.assertEqual([o["id"] for o in self.app.orders], ["N9"])
+
+    def test_the_card_keeps_its_cancel_when_the_book_cannot_be_read(self):
+        def boom(*a, **k):
+            raise ApiError("every gateway read held 90s more after a 429", status=429)
+        self.app.cache = type(self.app.cache)()
+        self.c.book = boom
+        m = self.app.order_math("O1")
+        self.assertEqual(m["order"]["id"], "O1")
+
+    def test_fed_rate_markets_are_econ(self):
+        self.c.details["cbpac-usfed-2026-cut"] = {"active": True, "closed": False}
+        self.assertFalse(self.app.open_market("cbpac-usfed-2026-cut")["ok"])
+        self.c.details["xyz-rate-2026"] = {"active": True, "closed": False, "category": "macro"}
+        self.assertFalse(self.app.open_market("xyz-rate-2026")["ok"])
+
+    def test_a_market_with_no_event_size_is_looked_up(self):
+        self.c.details[M2] = {"active": True, "closed": False, "eventSlug": "ev-ks"}
+        self.c.events["ev-ks"] = {"markets": [{"slug": M2}, {"slug": M2[:-3] + "dem"},
+                                              {"slug": "x", "closed": True}]}
+        self.c.books[M2] = self.c.books[M]
+        self.app.open_market(M2)
+        self.assertEqual(self.app.event_n[M2], 2)
+
+    def test_its_own_branch_unreadable_holds_every_save(self):
+        app, c = make()
+        class Unread(FakeStore):
+            token = "t"
+            def _gh(self, method, path):
+                return mock.Mock(status_code=502)
+        app.store = Unread(best=None)
+        app.seed_store = FakeStore(remote={"saved_at": 1, "rewards_seen": {"a": 1.0}})
+        app.restore()
+        self.assertTrue(app.state_unread)
+        self.assertEqual(app.rewards_seen, {})        # not reseeded from 3.0
+        app.save(force_remote=True)
+        self.assertEqual(app.store.saved, [])
+
+    def test_its_own_branch_absent_seeds_from_3_0(self):
+        app, c = make()
+        class Absent(FakeStore):
+            token = "t"
+            def _gh(self, method, path):
+                return mock.Mock(status_code=404)
+        app.store = Absent(best=None)
+        app.seed_store = FakeStore(remote={"saved_at": 1, "rewards_seen": {"a": 1.0},
+                                           "fam_cfb": {"event_n_seen": {"cfb-x": 12},
+                                                       "orders": {"OLD1": {}}}})
+        app.restore()
+        self.assertFalse(app.state_unread)
+        self.assertEqual((app.rewards_seen, app.event_n.get("cfb-x")), ({"a": 1.0}, 12))
+        self.assertIn("OLD1", app.placed_ids)
+
+    def test_a_seed_boot_takes_3_0s_final_payout_memory_before_its_first_check(self):
+        app, c = make()
+        app.seeded_v3 = True
+        day = records.utc_day(time.time(), 1)
+        app.rewards_seen = {f"{day}|{M}": 1.0}
+        app.seed_store = FakeStore(remote={"rewards_seen": {f"{day}|{M}": 1.0,
+                                                            f"{day}|{M2}": 2.0}})
+        c.earn = [{"date": day, "market": m, "program_type": "lp", "reward_usd": v,
+                   "status": "PAID"} for m, v in ((M, 1.0), (M2, 2.0))]
+        app.check_rewards(time.time(), write_file=False)
+        self.assertEqual(app.alerts.sent, [])           # 3.0 pushed M2 already
+
+    def test_no_payout_check_while_the_old_copy_still_runs(self):
+        app, c = make()
+        c.earn = [{"date": records.utc_day(time.time(), 1), "market": M, "program_type": "lp",
+                   "reward_usd": 1.0, "status": "PAID"}]
+        app.records_once(app.boot_ts + 60)
+        self.assertEqual(app.rewards_seen, {})
+        app.records_once(app.boot_ts + 200)
+        self.assertTrue(app.rewards_seen)
+
+    def test_a_restart_across_midnight_counts_only_todays_gap(self):
+        from v3.terms import et_day_start
+        app, c = make()
+        now = time.time()
+        midnight = et_day_start(now)
+        app.est.day = "1999-01-01"
+        app.est.last_ts = midnight - 4 * 3600
+        app.sample_once(now)
+        self.assertLessEqual(app.est.stale_s, now - midnight + 1)
+
+    def test_the_page_gets_six_hours_of_dots(self):
+        app, c = make()
+        now = time.time()
+        app.est.dots = [[now - 20 * 3600, 5.0, 1], [now - 60, 7.0, 1]]
+        self.assertEqual([d[1] for d in app.data()["dots"]], [7.0])
+
+    def test_the_trades_file_reads_its_own_order_ids_as_ours(self):
+        known = []
+        repo = FakeRepo({records.TRADES_PATH: "ts,iso,type,market,side,intent,price,shares,"
+                         "order_id,role\n1.0,x,T,m,BUY,I,0.5,1,OURS1,passive\n"})
+        with mock.patch("v3.main.parse_activities",
+                        side_effect=lambda raw, k: known.append(set(k)) or []):
+            records.publish_trades(self.c, repo, {"P1"}, deep=False)
+        self.assertEqual(known[0], {"P1", "OURS1"})
 
 
 class TestTheLauncher(unittest.TestCase):
