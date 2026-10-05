@@ -3579,3 +3579,22 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1791155516.0,politics,scc-senate-gop-2026-11-03-47,BUY,24.71,0.13,hand,,0,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CX7XQS3G0YGE
 1791155516.0,politics,scc-senate-gop-2026-11-03-48,SELL,10.2,0.19,hand,,13.9,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CWVRT0YGCYH0
 1791155516.0,politics,scc-senate-gop-2026-11-03-48,SELL,1,0.19,hand,,27.19,,,,,,,,,your own trade — from the exchange's record; direction from its order intent,CWGMD9BGEYH0
+1791156860.3,politics,scc-senate-gop-2026-11-03-53,BUY,8,0.06,manual,0.4258,0.37,0.03,3,8,0.177,0.06,0.07,0.03,-142,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791156920.3,politics,scc-senate-gop-2026-11-03-53,BUY,20,0.06,manual,0.3212,0.39,0.03,2,6,0.512,0.06,0.07,0.03,-122,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791156980.3,politics,scc-senate-gop-2026-11-03-53,BUY,20,0.06,manual,0.392,0.41,0.03,2,5,0.653,0.06,0.07,0.03,-102,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791157026.9,politics,ussewc-usse-ks-2026-11-03-dem,SELL,0.13,0.38,backfill,,4.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CX46F9EQMYH8
+1791157040.3,politics,ussewc-usse-ks-2026-11-03-dem,SELL,17,0.38,manual,0.0738,4.79,0.41635,35,40,0.001,0.37,0.38,0.0363,-17,the owner's own order — the engine leaves it alone,CX46F9EQMYH8
+1791157160.4,politics,scc-senate-gop-2026-11-03-53,BUY,10,0.06,manual,0.2518,0.46,0.03,1,5,0.731,0.06,0.07,0.03,-92,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791157280.4,politics,scc-senate-gop-2026-11-03-53,BUY,10,0.06,manual,0.1926,0.49,0.03,1,4,0.78,0.06,0.07,0.03,-82,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791157520.4,politics,scc-senate-gop-2026-11-03-53,BUY,10,0.06,manual,0.1402,0.56,0.03,1,4,0.814,0.06,0.07,0.03,-72,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791157580.4,politics,scc-senate-gop-2026-11-03-53,BUY,30,0.06,manual,0.2036,0.57,0.03,1,4,0.839,0.06,0.07,0.03,-42,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791157760.4,politics,scc-senate-gop-2026-11-03-53,BUY,10,0.06,manual,0.0782,0.62,0.03,1,3,0.858,0.06,0.07,0.03,-32,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791157820.4,politics,scc-senate-gop-2026-11-03-53,BUY,10,0.06,manual,0.0338,0.64,0.03,1,3,0.873,0.06,0.07,0.03,-22,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791158060.4,politics,scc-senate-gop-2026-11-03-53,BUY,10,0.06,manual,0.0203,0.71,0.03,1,3,0.885,0.06,0.07,0.03,-2,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791158285.3,politics,scc-senate-gop-2026-11-03-53,BUY,10.34,0.06,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CX7XA7KJ8YG6
+1791158411.0,politics,scc-senate-gop-2026-11-03-53,BUY,1.66,0.06,manual,0.0038,0.8,0.03,1,3,0.895,0.06,0.07,0.03,-0.34,the owner's own order — the engine leaves it alone,CX7XA7KJ8YG6
+1791158951.1,politics,scc-hrep-rep-2026-11-03-gte225,SELL,200,0.07,manual,6.8808,4.22,0.0221,3,7,0.083,0.07,0.08,-0.0479,-200,the owner's own order — the engine leaves it alone,CX54YRXW2YGW
+1791158951.1,politics,scc-senate-gop-2026-11-03-51,SELL,30,0.08,manual,0.431,0.91,0.071,6,9,0.696,0.07,0.08,-0.009,-30,the owner's own order — the engine leaves it alone,CX7YJ89KWYHC
+1791159131.1,politics,scc-senate-gop-2026-11-03-51,SELL,-31.36,0.08,fix,0.0829,35,0.070625,6,9,0.599,0.07,0.08,-0.0094,-75.36,size trimmed by 31.36 to the exchange's count (order CW9NKCEQ4YHH),CW9NKCEQ4YHH
+1791159131.1,politics,ussewc-usse-ks-2026-11-03-dem,SELL,0.13,0.38,backfill,,4.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CX46F9EQMYH8
+1791159131.1,politics,scc-senate-gop-2026-11-03-53,BUY,10.34,0.06,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CX7XA7KJ8YG6
