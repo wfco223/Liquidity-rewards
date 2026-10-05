@@ -74,6 +74,99 @@ long and accreted, so search it rather than reading it through.
   payout memory days old, so it can book his lite-period changes as
   fills and re-push old reward rows. Ask Claude first so that can be
   prepared.
+  THE MARKETS LIST, THE SCAN AND TRACKING (owner, 2026-10-05: "sort
+  between highest earning and highest current earning per dollar for an
+  order on the ask side and an order on the bid side, then also a sort by
+  market type where the house and senate collapse and below them are
+  states in alphabetical order ... I like it now where I only see markets
+  where I have orders or holdings. But have a button for me to scan for
+  new places to place orders. Give me a pop up with the politics end
+  points. Then show me the results of the scan and let me pick markets to
+  track. Also I'm in a market in an event but there are other sides or
+  other candidates in that event, show those ... give me a button to show
+  those at the top"; then "make the aesthetic a little less hacker and
+  more sleek and mainstream"). The orders and holdings lists became ONE
+  list of markets: his orders' markets, holdings worth $1, markets he
+  tracks, and every other open market of an event he has an order or a
+  $1 holding in. Each row shows, per side, his orders with what they earn
+  a day (the meter's figure) and per dollar behind them — an opening order
+  its collateral, an exit the shares it offers at its price, No priced at
+  one less the price — and on a side with no order of his, what a NEW
+  order of his stake (default $50, set in the scan pop-up, kept on the
+  phone) joining that side's best price would earn, never improving on
+  it. Sorts: Type (House, Senate, Governor, Other; each collapsible;
+  "National" first, then states A-Z, read from the slug), Bid $/day, Ask
+  $/day, Bid % per $, Ask % per $ — his orders first, then sides with no
+  order by the new-order figure. "No orders first" puts every market with
+  no order of his at the top. The SCAN pop-up lists the exchange's
+  politics reward programs (program id, date stamp off) paying on markets
+  discovery found under the politics and elections tags — the
+  "end points" read as those programs — with market counts and the pool
+  per event; he ticks programs and a stake; the scan re-reads the terms
+  not read in the last half hour (signed api, one quick try a request,
+  stopping at the first failure or after 150 s), reads their books over
+  up to THREE extra websocket connections (10 subscriptions x 200 markets
+  each, closed when done; 6,000 markets at most, the smallest pools past
+  that counted and named), a few one-try gateway reads for stragglers
+  (stopping after three failures or 30 s), all inside five minutes, and
+  ranks every side by the new-order figure; a star tracks a market
+  (state["watch"], with untracks kept as dated notes in state["unwatch"]
+  so a deploy's two copies merge his list by whichever came later).
+  Tracking only lists a market and keeps its book and terms fresh;
+  NOTHING about the list, the scan or tracking places, moves or cancels.
+  A market a full discovery (or a read of his event) listed open in the
+  last seven hours opens without the throttled market_details check;
+  older, the check runs. Three short discoveries in a row that agree are
+  taken as the new whole list (resolved races leave it) — but only reads
+  in which every tag answered (discover() names a tag whose feed failed).
+  The upload hold is saved with the state ("hold"); a restart inside it
+  keeps the hold if EITHER the copy it restores or its own disk copy says
+  so, and folds its disk copy's own taps back in. A failed read of the
+  old copy's save keeps the hold (no upload, no payout check) for up to
+  ten passes before going on. A copy stopped inside its hold merges the
+  old copy's last save before its stop upload, and if it cannot read it
+  saves to its disk only, never over the old copy's word; no payout
+  check runs once stopping. The page runs at most one placement or
+  change and one cancel at a time (a cancel may run beside a placement,
+  as the server allows), never two on one order; each answer goes to the
+  card it came from, his own tap's answer always redraws its card, and a
+  change is refused until the card has read the order (the server too
+  refuses a move without the card's was_price/was_size).
+  Discovery now keeps every open politics market's event
+  (state["universe"]) and re-reads all their terms after each run (the
+  sweep). The two book streams now carry 1,000 markets each (books only).
+  The page has its own look: system font, light or dark with the phone.
+  THE PAY TAB (owner, 2026-10-05: "Also bring over the pay page. It
+  should be on its own tab"): a tab bar at the foot of the page, Home and
+  Pay; /pay and /grades open it (/#pay). It is 3.0's pay page: paid all
+  time, 22% set aside for tax, what is left; "Check now" runs the payout
+  check the loop runs every five minutes (the push included, one check at
+  a time, never inside the three-minute hold after a boot) and lists the
+  new rows and how far each still-posting day has got (3.0's bars: of the
+  markets the meter claimed that day, how many have a row in any status;
+  a day counts as posting while it gained a row in the last 24 h); then
+  the last 14 days, each with what the exchange paid, the meter's
+  estimate, and paid over estimate counted over the markets posted so far
+  while a day is still posting ("N of M markets posted"); a tap opens the
+  day's markets, paid against estimated. Paid per day is every row of
+  rewards.csv but the SKIPPED ones (the same as 3.0's totals, to the cent,
+  checked 2026-10-05), re-read hourly with the file and merged, never
+  replaced; the meter's per-market figures are kept each sample
+  (state["claims"], 8,000 market-days) beside its closed days' own. The
+  days before the switch read as 3.0 graded them: 3.0's last save is read
+  once (read only; state["pay_seeded"]) for its day totals, its
+  per-market claims (every market — the meter's own closed days keep only
+  their top 50) and the sum of all its meters' estimates (state
+  ["est_v3"], used for days before state["v3_cut"], the ET day of that
+  save). Until any day total is read the tab says so, never "$0.00".
+  "Check now"'s answer shows until a newer check lands. New rows list the
+  newest day first, biggest first (3.0's order). Days before v3_cut are
+  graded on 3.0's claims alone (its page's figures); the switch day and
+  after take the larger of the running record and the closed day's own.
+  A late read of its own save folds in the pay records and the meter's
+  closed days this copy lacks; coming back from a spell on 3.0 keeps
+  lite's closed days and takes 3.0's claims, totals and estimates only for
+  the days lite has none of.
 - STATUS.md is the phone-readable front page: one ✅/❌ freshness line up
   top, summary before detail, plain-English explanations of every number.
 - The live monitor (live/monitor.py) runs on DigitalOcean from the `deploy`

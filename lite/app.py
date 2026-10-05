@@ -40,6 +40,7 @@ The taps keep 3.0's owner-tap rails and add the ones the two reviews of
 
 from __future__ import annotations
 
+import math
 import os
 import threading
 import time
@@ -48,12 +49,13 @@ from collections import deque
 from v3.api import GATEWAY, TRADE_API, Client, DEAD_ORDER_STATES, events_of
 from v3.alerts import Alerts
 from v3.books import BookCache
-from v3.estimator import BOOK_MAX_AGE, MAX_GAP_S, VERIFIED_MAX_S, Estimator, et_day, top_up_book
+from v3.estimator import (BOOK_MAX_AGE, HISTORY_DAYS, MAX_GAP_S, VERIFIED_MAX_S, Estimator,
+                          et_day, top_up_book)
 from v3.intents import BUY_LONG, BUY_SHORT, REST_SIDE, SELL_LONG, SELL_SHORT, capital_at_risk
 from v3.names import Names, disambiguate, name_from_market
 from v3.orders import QTY_MAX, OrderDesk, snap_price
 from v3.programs import is_econ, pool_days, to_num
-from v3.scoring import score_resting
+from v3.scoring import estimate_join, score_resting
 from v3.state import StateStore
 from v3.terms import TermsStore, et_day_start
 
@@ -81,7 +83,26 @@ GHOST_S = 600.0            # a cancelled id the list still shows is hidden this 
 EVENT_LOOKUP_S = 600.0     # one event-size lookup a market per this
 STOP_TAP_WAIT_S = 20.0     # the stop waits this long for a tap in flight
 STOP_SAVE_WAIT_S = 20.0    # ...and this long for its upload (launcher allows 45)
+STOP_RW_WAIT_S = 5.0       # ...and this long for a payout check past its read to finish
+STOP_TOTAL_S = 42.0        # all of it inside the launcher's 45
 DOTS_SENT_S = 6 * 3600.0 + 600.0
+STAKE_DEFAULT = 50.0       # the money a "new" figure assumes, unless he sets his own
+STAKE_MAX = 5000.0
+WS_VIEW_S = 1800.0         # a streamed book, while its stream is up, stands for a "new" figure this long
+EVENT_KEEP_S = 6 * 3600.0  # an event's market list read outside discovery is read again after this
+STREAM_SHARDS = 2
+STREAM_CAP = 1000          # markets a connection: five book subscriptions of 200
+STREAM_CHUNK = 200
+TERMS_SWEEP_CHUNK = 400    # the politics terms sweep after each discovery, this many at a time
+WATCH_FORGET_S = 30 * 86400.0  # an untrack is remembered this long: an older copy's save cannot undo it
+HOLD_READ_TRIES = 10       # end-of-hold reads of the old copy's last save before going on without it
+TAX_RATE = 0.22            # the pay page's set-aside (3.0's)
+PAY_DAYS = 14              # days the pay page lists
+POSTING_ACTIVE_S = 24 * 3600.0  # a day is "posting" while it gained a row within this
+CLAIMS_CAP = 8000          # market-days of the meter's per-market figures kept
+PAY_SEED_RETRY_S = 600.0   # 3.0's pay record, read once; a failed read is tried again after this
+TAP_CHECK_WAIT_S = 30.0    # his "check now" waits this long for a check already running
+UNIVERSE_TRUST_S = 7 * 3600.0  # a market listed open this recently opens without the gateway check
 STATE_BRANCH = "lite-state"
 SEED_BRANCH = "v3-state"
 TAGS = ("politics", "elections")
@@ -142,11 +163,69 @@ def category_ok(md: dict) -> bool:
     return any(c in OPEN_CATEGORIES for c in cats if c)
 
 
+STATES = {
+    "al": "Alabama", "ak": "Alaska", "az": "Arizona", "ar": "Arkansas", "ca": "California",
+    "co": "Colorado", "ct": "Connecticut", "de": "Delaware", "dc": "District of Columbia",
+    "fl": "Florida", "ga": "Georgia", "hi": "Hawaii", "id": "Idaho", "il": "Illinois",
+    "in": "Indiana", "ia": "Iowa", "ks": "Kansas", "ky": "Kentucky", "la": "Louisiana",
+    "me": "Maine", "md": "Maryland", "ma": "Massachusetts", "mi": "Michigan",
+    "mn": "Minnesota", "ms": "Mississippi", "mo": "Missouri", "mt": "Montana",
+    "ne": "Nebraska", "nv": "Nevada", "nh": "New Hampshire", "nj": "New Jersey",
+    "nm": "New Mexico", "ny": "New York", "nc": "North Carolina", "nd": "North Dakota",
+    "oh": "Ohio", "ok": "Oklahoma", "or": "Oregon", "pa": "Pennsylvania",
+    "ri": "Rhode Island", "sc": "South Carolina", "sd": "South Dakota", "tn": "Tennessee",
+    "tx": "Texas", "ut": "Utah", "vt": "Vermont", "va": "Virginia", "wa": "Washington",
+    "wv": "West Virginia", "wi": "Wisconsin", "wy": "Wyoming",
+}
+# the slug token that names a race's chamber, and the words that may sit
+# between it and the state ("vmc-usgubp-mov-ok-rep": Oklahoma governor)
+KINDS = (("House", ("ushr", "hrep", "usho", "housepop")),
+         ("Senate", ("usse", "senate")),
+         ("Governor", ("usgub", "usgov")))
+KIND_ORDER = ("House", "Senate", "Governor", "Other")
+
+
+def classify(slug: str) -> tuple[str, str]:
+    """(kind, state) for the page's grouping: House, Senate, Governor or
+    Other, and the state's name when the slug names one right after its
+    chamber token. National races (control, seat counts, the closest
+    race) carry no state."""
+    toks = str(slug or "").lower().split("-")
+    for i, t in enumerate(toks):
+        for kind, heads in KINDS:
+            if t.startswith(heads):
+                for u in toks[i + 1:i + 3]:
+                    if u in STATES:
+                        return kind, STATES[u]
+                    if u.isdigit():
+                        break
+                return kind, ""
+    return "Other", ""
+
+
+def basis(intent: str, price: float, size: float, side: str = "") -> float:
+    """The money behind an order, for its earning per dollar: what an
+    opening order ties up, or what the shares an exit offers are worth at
+    its price. Yes is priced at the price, No at one less it."""
+    if intent in (BUY_LONG, SELL_LONG) or (intent not in REST_SIDE and side == "BUY"):
+        return price * size
+    return (1.0 - price) * size
+
+
+class Found(dict):
+    """discover()'s answer, with the tags whose feed failed on its first
+    page (their markets are missing from it)."""
+    failed: tuple = ()
+
+
 def discover(client) -> dict[str, dict]:
-    """slug -> {event_n, name} for every open, non-econ politics market:
-    v3/politics.discover's body, without the engine it sits beside. The
-    event size divides the pool; without it no dollar figure is shown."""
-    out: dict[str, dict] = {}
+    """slug -> {event_n, name, event} for every open, non-econ politics
+    market: v3/politics.discover's body, without the engine it sits
+    beside. The event size divides the pool; without it no dollar figure
+    is shown. The event's slug groups a market with the rest of its
+    race."""
+    out = Found()
+    failed: list[str] = []
     order: list[str] = []
     for tag in TAGS:
         n_tag = 0
@@ -154,19 +233,23 @@ def discover(client) -> dict[str, dict]:
             for ev in events_of(client, tag):
                 n_tag += 1
                 title = str(ev.get("title") or ev.get("name") or "").strip()
+                ev_slug = str(ev.get("slug") or "")
                 rows = [m for m in ev.get("markets") or []
-                        if m.get("slug") and not m.get("closed") and not is_econ(m["slug"])]
+                        if m.get("slug") and not m.get("closed") and not is_econ_market(m["slug"])]
                 labels = disambiguate([(m["slug"], name_from_market(m, title)[:110])
                                        for m in rows])
                 for m in rows:
                     if m["slug"] not in out:
                         order.append(m["slug"])
-                    out[m["slug"]] = {"event_n": len(rows), "name": labels[m["slug"]]}
+                    out[m["slug"]] = {"event_n": len(rows), "name": labels[m["slug"]],
+                                      "event": ev_slug}
         except Exception:  # noqa: BLE001
             if n_tag:
                 raise       # a feed that died mid-way must not hand back a part
+            failed.append(tag)
             continue
     _group_sizes(out, order)
+    out.failed = tuple(failed)
     return out
 
 
@@ -200,6 +283,17 @@ class App:
         self.event_slug: dict[str, str] = {}
         self.event_tried: dict[str, float] = {}
         self.discover_n = 0            # markets the last full discovery found
+        # every open politics market discovery found: slug -> its event
+        self.universe: dict[str, str] = {}
+        # an event's market list read on its own (his events discovery
+        # did not cover): event -> (when, slugs)
+        self.ev_fetched: dict[str, tuple[float, list[str]]] = {}
+        self.members: dict[str, list[str]] = {}   # event -> its open markets
+        self.ev_index: dict[str, str] = {}        # slug -> event, from the two above
+        self.watch: dict[str, float] = {}         # markets he tracks -> when
+        self.unwatch: dict[str, float] = {}       # markets he stopped tracking -> when
+        self.universe_at = 0.0                    # when discovery last read the whole list
+        self.short_seen: list[int] = []           # the counts of discovery's short reads in a row
         self.orders: list[dict] = []
         self.ghosts: list[dict] = []    # cancelled by us, still on the exchange's list
         self.orders_at = 0.0           # when the list now shown was READ (its request's start)
@@ -214,6 +308,21 @@ class App:
         self.rewards_seen: dict[str, float] = {}
         self.paid_seen: dict[str, float] = {}
         self.rw_last: dict | None = None
+        # the pay page: what the exchange paid each day (rewards.csv's rows
+        # but the SKIPPED ones), what the meter claimed for each market
+        # each day, when each day last gained a row, and how far the
+        # posting has got
+        self.actuals_by_day: dict[str, float] = {}
+        self.claims: dict[str, float] = {}        # "day|market" -> the meter's figure
+        self.posting_last: dict[str, float] = {}
+        self.pay_progress: list[dict] = []
+        self.pay_checked_at = 0.0
+        self.rw_lock = threading.Lock()           # one payout check at a time
+        # the days before the switch from 3.0, graded as 3.0 graded them:
+        # its per-market claims, its every meter's estimate, its day totals
+        self.pay_seeded = False
+        self.v3_cut = ""                          # the ET day of 3.0's last save
+        self.est_v3: dict[str, float] = {}        # day -> 3.0's estimate, every meter
         self.placed_ids: dict[str, float] = {}
         self.pending: dict[tuple, tuple] = {}     # (market, side) -> (sent at, order id)
         self.busy: set[str] = set()               # order ids with a change in flight
@@ -230,6 +339,10 @@ class App:
         self.v3_head = ""
         self.state_unread = False      # its own save may exist but could not be read
         self.upload_hold = True        # a new container uploads nothing until the old copy is gone
+        # the old copy's last save not merged yet: saved with the state, so
+        # a restart inside the hold keeps the hold and merges it all the same
+        self.hold_pending = False
+        self.hold_tries = 0
         self.stopping = ""
         self.tap_lock = threading.Lock()      # place and move
         self.cancel_lock = threading.Lock()   # a cancel never waits behind a placement
@@ -237,12 +350,15 @@ class App:
         self.orders_lock = threading.Lock()
         self.mem_lock = threading.Lock()      # the payout memory, across threads
         self.save_lock = threading.Lock()
+        self.terms_lock = threading.Lock()    # the loops, the sweep and a scan all refresh terms
         self.desk = OrderDesk(
             self.client, whitelist=self.known,
             switch_on=lambda: False,            # nothing but his tap ever places
             fresh_book=lambda s: self.cache.fresh(s, 120.0, self.clock()),
             log=self._audit, tick_for=self.cache.grid)
         self.streams: list = []
+        from .scan import Scanner
+        self.scanner = Scanner(self)
 
     # -- bookkeeping ---------------------------------------------------------
 
@@ -266,17 +382,35 @@ class App:
             seen, paid = dict(self.rewards_seen), dict(self.paid_seen)
         now = self.clock()
         ids = sorted(self.placed_ids.items(), key=lambda kv: kv[1])[-5000:]
+        with self.terms_lock:
+            # the store hands some of its dicts back by reference: copied
+            # here, under the lock, so a sweep adding a market cannot
+            # change one while the save writes it out
+            terms = {k: (dict(v) if isinstance(v, dict) else v)
+                     for k, v in self.terms.to_dict().items()}
         return {
             "saved_at": round(now, 1),
             "est": self.est.to_dict(),
-            "terms": self.terms.to_dict(),
+            "terms": terms,
             "event_n": dict(self.event_n),
             "event_slug": dict(self.event_slug),
             "discover_n": self.discover_n,
+            "universe": dict(self.universe),
+            "universe_at": round(self.universe_at, 1),
+            "hold": bool(self.upload_hold or self.hold_pending),
+            "watch": dict(self.watch),
+            "unwatch": {s: t for s, t in list(self.unwatch.items()) if now - t < WATCH_FORGET_S},
             "names": self.names.to_dict(),
             "rewards_seen": seen,
             "paid_seen": paid,
             "rw_last": self.rw_last,
+            "actuals_by_day": dict(self.actuals_by_day),
+            "claims": dict(self.claims),
+            "posting_last": dict(self.posting_last),
+            "pay_progress": list(self.pay_progress),
+            "pay_checked_at": round(self.pay_checked_at, 1),
+            "pay_seeded": self.pay_seeded, "v3_cut": self.v3_cut,
+            "est_v3": dict(self.est_v3),
             "placed_ids": dict(ids),
             "cancelled": {i: t for i, t in list(self.desk.cancelled.items()) if now - t < GHOST_S},
             "audit": list(self.audit)[-60:],
@@ -329,10 +463,28 @@ class App:
                 if where == "absent":
                     break
                 self._sleep(2.0 * (i + 1))
-            self.upload_hold = not getattr(self.store, "local_found", False)
+            local_found = bool(getattr(self.store, "local_found", False))
+            # this container's own disk copy, when a newer upload (the old
+            # copy, still running out its overlap) beat it: its hold flag
+            # and its own taps must not be lost with it
+            own = None
+            if local_found and getattr(self.store, "last_source", "local") == "remote":
+                try:
+                    own = self.store.load_local()
+                except Exception:  # noqa: BLE001
+                    own = None
+            self.upload_hold = (not local_found or bool((st or {}).get("hold"))
+                                or bool((own or {}).get("hold")))
+            self.hold_pending = self.upload_hold
             if st:
                 self.from_dict(st)
                 self.restored = f"own save of {st.get('saved_at')}"
+                if own:
+                    self._merge_watch(own.get("watch"), own.get("unwatch"))
+                    self.placed_ids = {**(own.get("placed_ids") or {}), **self.placed_ids}
+                    with self.mem_lock:
+                        self.rewards_seen = {**(own.get("rewards_seen") or {}), **self.rewards_seen}
+                        self.paid_seen = {**(own.get("paid_seen") or {}), **self.paid_seen}
                 self._catch_up_from_v3(st)
             elif where == "absent":
                 self._first_seed()
@@ -340,8 +492,52 @@ class App:
                 self.state_unread = True
                 self.restored = "nothing yet — its own save could not be read; saves held"
                 self.due["restore"] = self.clock() + 60.0
+            if not self.state_unread:
+                try:
+                    self.seed_pay(self.clock())
+                except Exception as e:  # noqa: BLE001 — never holds up a boot
+                    self.note(f"3.0's pay record: {e}")
         finally:
             self.restoring = False
+
+    def seed_pay(self, now: float) -> bool:
+        """3.0's pay record, read once from its last save (read only, never
+        written): the day totals, its per-market claims (every market, where
+        the meter's own closed days keep its top 50) and every one of its
+        meters' estimates — so the days before the switch read on the pay
+        tab as they did on 3.0's page. A failed read is tried again later."""
+        if self.pay_seeded or now - self.due.get("pay_seed_at", 0.0) < PAY_SEED_RETRY_S:
+            return self.pay_seeded
+        self.due["pay_seed_at"] = now
+        try:
+            v3 = self._seed().load_remote()
+        except Exception as e:  # noqa: BLE001
+            self.note(f"3.0's pay record: {e}")
+            v3 = None
+        if not v3:
+            return False
+        for d, v in (v3.get("actuals_by_day") or {}).items():
+            self.actuals_by_day.setdefault(str(d), round(float(v or 0.0), 2))
+        for k, v in (v3.get("mkt_claim_day") or {}).items():
+            k = str(k)
+            self.claims[k] = max(self.claims.get(k, 0.0), float(v or 0.0))
+        est: dict[str, float] = {}
+        for key, e in v3.items():
+            if not (key.startswith("est_") and isinstance(e, dict)):
+                continue
+            for h in e.get("history") or []:
+                if h.get("day"):
+                    est[str(h["day"])] = est.get(str(h["day"]), 0.0) + float(h.get("earned") or 0.0)
+        self.est_v3 = {d: round(v, 4) for d, v in est.items()}
+        sv = float(v3.get("saved_at") or 0.0)
+        self.v3_cut = et_day(sv) if sv else ""
+        if len(self.claims) > CLAIMS_CAP:
+            for k in sorted(self.claims)[:len(self.claims) - CLAIMS_CAP]:
+                del self.claims[k]
+        self.pay_seeded = True
+        self.note(f"3.0's pay record read: {len(self.est_v3)} days of estimates, "
+                  f"days before {self.v3_cut} graded as 3.0 graded them")
+        return True
 
     def _first_seed(self) -> None:
         seed = None
@@ -406,6 +602,12 @@ class App:
             ids = st.get("placed_ids") or {}
             if not self.terms.current and st.get("terms"):
                 self.terms = TermsStore.from_dict(st["terms"])
+            self._merge_watch(st.get("watch"), st.get("unwatch"))
+            if not self.universe and st.get("universe"):
+                self.universe = {str(s): str(e or "") for s, e in st["universe"].items()}
+                self._rebuild_members()
+            self._merge_pay(st)
+            self._merge_history(st.get("est") or {})
         with self.mem_lock:
             self.rewards_seen = {**seen, **self.rewards_seen}
             self.paid_seen = {**paid, **self.paid_seen}
@@ -437,8 +639,78 @@ class App:
             self.paid_seen.update(v3.get("paid_seen") or {})
         e3 = v3.get("est_politics") or {}
         if e3.get("day") == self.est.day and (e3.get("last_ts") or 0) > (self.est.last_ts or 0):
-            self.est = Estimator.from_dict(e3)
+            new = Estimator.from_dict(e3)
+            # lite's own closed days stay; 3.0's fill the days lite lacks
+            days = {str(h.get("day")): h for h in new.history}
+            days.update({str(h.get("day")): h for h in self.est.history})
+            new.history = [days[d] for d in sorted(days)][-HISTORY_DAYS:]
+            dots = {round(float(x[0]), 1): x for x in list(self.est.dots) + list(new.dots)}
+            new.dots = [dots[t] for t in sorted(dots)][-2880:]     # the meter's own cap
+            self.est = new
+        self._fold_v3_pay(v3)
         self.note("caught up from 3.0's newer save")
+
+    def _merge_pay(self, st: dict) -> None:
+        """Another save's pay records folded into this copy's, what this
+        copy learned since winning where both have a value."""
+        for k, v in (st.get("claims") or {}).items():
+            self.claims[str(k)] = max(self.claims.get(str(k), 0.0), float(v or 0.0))
+        self.actuals_by_day = {**{str(d): float(v) for d, v in (st.get("actuals_by_day") or {}).items()},
+                               **self.actuals_by_day}
+        for d, t in (st.get("posting_last") or {}).items():
+            self.posting_last[str(d)] = max(self.posting_last.get(str(d), 0.0), float(t or 0.0))
+        if float(st.get("pay_checked_at") or 0.0) > self.pay_checked_at:
+            self.pay_checked_at = float(st.get("pay_checked_at") or 0.0)
+            self.pay_progress = list(st.get("pay_progress") or [])
+        rl = st.get("rw_last")
+        if rl and float(rl.get("at") or 0.0) > float((self.rw_last or {}).get("at") or 0.0):
+            self.rw_last = rl
+        if not self.pay_seeded and st.get("pay_seeded"):
+            self.pay_seeded = True
+            self.v3_cut = str(st.get("v3_cut") or "")
+            self.est_v3 = {str(d): float(v) for d, v in (st.get("est_v3") or {}).items()}
+        if len(self.claims) > CLAIMS_CAP:
+            for k in sorted(self.claims)[:len(self.claims) - CLAIMS_CAP]:
+                del self.claims[k]
+
+    def _merge_history(self, e: dict) -> None:
+        """The closed days another save's meter has and this one lacks —
+        its running day too, once this meter has moved past it. This
+        meter's running day is its own."""
+        have = {str(h.get("day")) for h in self.est.history}
+        add = [h for h in (e.get("history") or []) if str(h.get("day")) not in have]
+        d = str(e.get("day") or "")
+        if d and self.est.day and d < self.est.day and d not in have:
+            add.append({"day": d, "earned": float(e.get("earned") or 0.0),
+                        "stale_s": float(e.get("stale_s") or 0.0),
+                        "per_market": dict(e.get("per_market") or {})})
+        if add:
+            days = {str(h.get("day")): h for h in add}
+            days.update({str(h.get("day")): h for h in self.est.history})
+            self.est.history = [days[k] for k in sorted(days)][-HISTORY_DAYS:]
+
+    def _fold_v3_pay(self, v3: dict) -> None:
+        """3.0's newer save, back from a spell on it: its per-market claims
+        and day totals for the days lite has none, and its meters'
+        estimates for the days lite's meter has no record of."""
+        mine_days = {k.split("|", 1)[0] for k in self.claims if "|" in k}
+        for k, v in (v3.get("mkt_claim_day") or {}).items():
+            k = str(k)
+            if "|" in k and k.split("|", 1)[0] not in mine_days:
+                self.claims[k] = max(self.claims.get(k, 0.0), float(v or 0.0))
+        for d, v in (v3.get("actuals_by_day") or {}).items():
+            self.actuals_by_day.setdefault(str(d), round(float(v or 0.0), 2))
+        have = {str(h.get("day")) for h in self.est.history} | {self.est.day or ""}
+        for key, e in v3.items():
+            if not (key.startswith("est_") and isinstance(e, dict)):
+                continue
+            for h in e.get("history") or []:
+                d = str(h.get("day") or "")
+                if d and d not in have and d not in self.est_v3:
+                    self.est_v3[d] = round(self.est_v3.get(d, 0.0) + float(h.get("earned") or 0.0), 4)
+        if len(self.claims) > CLAIMS_CAP:
+            for k in sorted(self.claims)[:len(self.claims) - CLAIMS_CAP]:
+                del self.claims[k]
 
     def from_dict(self, st: dict) -> None:
         if st.get("est"):
@@ -448,11 +720,24 @@ class App:
         self.event_n = {s: int(n) for s, n in (st.get("event_n") or {}).items() if n}
         self.event_slug = dict(st.get("event_slug") or {})
         self.discover_n = int(st.get("discover_n") or 0)
+        self.universe = {str(s): str(e or "") for s, e in (st.get("universe") or {}).items()}
+        self.watch = {str(s): float(t or 0) for s, t in (st.get("watch") or {}).items()}
+        self.unwatch = {str(s): float(t or 0) for s, t in (st.get("unwatch") or {}).items()}
+        self.universe_at = float(st.get("universe_at") or 0.0)
+        self._rebuild_members()
         self.names.restore(st.get("names") or {})
         with self.mem_lock:
             self.rewards_seen = dict(st.get("rewards_seen") or {})
             self.paid_seen = dict(st.get("paid_seen") or {})
         self.rw_last = st.get("rw_last")
+        self.actuals_by_day = {str(d): float(v) for d, v in (st.get("actuals_by_day") or {}).items()}
+        self.claims = {str(k): float(v) for k, v in (st.get("claims") or {}).items()}
+        self.posting_last = {str(d): float(t) for d, t in (st.get("posting_last") or {}).items()}
+        self.pay_progress = list(st.get("pay_progress") or [])
+        self.pay_checked_at = float(st.get("pay_checked_at") or 0.0)
+        self.pay_seeded = bool(st.get("pay_seeded", False))
+        self.v3_cut = str(st.get("v3_cut") or "")
+        self.est_v3 = {str(d): float(v) for d, v in (st.get("est_v3") or {}).items()}
         self.placed_ids = dict(st.get("placed_ids") or {})
         for i, t in (st.get("cancelled") or {}).items():
             self.desk.remember_cancel(i, at=t)
@@ -529,11 +814,14 @@ class App:
             else:
                 self.store.save_soon(st, force_remote=force_remote)
 
-    def end_upload_hold(self) -> None:
+    def end_upload_hold(self, give_up: bool = True) -> bool:
         """The old copy has stopped: take its last word on the payout
-        memory and order ids (its stop save), then upload as usual."""
-        if not self.upload_hold:
-            return
+        memory, order ids and tracked markets (its stop save), then upload
+        as usual. A read that fails is not "nothing to merge": the hold
+        stands and the next pass reads again (False), and only after
+        HOLD_READ_TRIES does it go on without — saying so."""
+        if not self.upload_hold and not self.hold_pending:
+            return True
         try:
             remote = self.store.load_remote()
         except Exception:  # noqa: BLE001
@@ -543,7 +831,19 @@ class App:
                 self.rewards_seen.update(remote.get("rewards_seen") or {})
                 self.paid_seen.update(remote.get("paid_seen") or {})
             self.placed_ids = {**(remote.get("placed_ids") or {}), **self.placed_ids}
+            self._merge_watch(remote.get("watch"), remote.get("unwatch"))
+        elif self._branch_state(self.store) != "absent":
+            self.hold_tries += 1
+            if self.hold_tries < HOLD_READ_TRIES or not give_up:
+                if self.hold_tries == 1:
+                    self.note("the old copy's last save could not be read — no upload or "
+                              "payout check until it can")
+                return False
+            self.note(f"the old copy's last save could not be read in {HOLD_READ_TRIES} "
+                      f"tries — going on without it")
         self.upload_hold = False
+        self.hold_pending = False
+        return True
 
     # -- whitelist and labels -----------------------------------------------
 
@@ -570,7 +870,104 @@ class App:
         if not slug or is_econ_market(slug):
             return False
         return (slug in self.order_markets() or slug in self.positions
-                or slug in self.checked)
+                or slug in self.checked or slug in self.watch)
+
+    @staticmethod
+    def _value(p: dict) -> float:
+        cv = (p or {}).get("cashValue")
+        return to_num(cv.get("value") if isinstance(cv, dict) else cv)
+
+    def big_holdings(self) -> list[str]:
+        """Held markets worth a dollar or more, the biggest first."""
+        held = self.held()
+        rows = sorted(((self._value(p), s) for s, p in list(self.positions.items())
+                       if held.get(s)), reverse=True)
+        return [s for v, s in rows if v >= HOLDING_MIN_USD]
+
+    # -- events: the rest of a race he is in ---------------------------------
+
+    def _rebuild_members(self) -> None:
+        """event -> its open markets: discovery's list first, then the
+        events read on their own. Swapped in whole, so a reader on another
+        thread never sees it half built."""
+        m: dict[str, list[str]] = {}
+        for s, ev in self.universe.items():
+            if ev:
+                m.setdefault(ev, []).append(s)
+        for ev, (_t, slugs) in list(self.ev_fetched.items()):
+            if ev not in m:
+                m[ev] = list(slugs)
+        idx = {s: ev for ev, ss in m.items() for s in ss}
+        self.members, self.ev_index = m, idx
+
+    def _listed_fresh(self, slug: str, now: float) -> bool:
+        """Listed open by a full discovery, or by a read of its event,
+        within UNIVERSE_TRUST_S."""
+        if slug in self.universe and now - self.universe_at <= UNIVERSE_TRUST_S:
+            return True
+        got = self.ev_fetched.get(self.ev_index.get(slug, ""))
+        return bool(got and slug in got[1] and now - got[0] <= UNIVERSE_TRUST_S)
+
+    def event_of(self, slug: str) -> str:
+        return self.event_slug.get(slug) or self.ev_index.get(slug, "")
+
+    def my_events(self) -> list[str]:
+        """The events of his orders and of holdings worth a dollar."""
+        out = []
+        for s in self.order_markets() + self.big_holdings():
+            ev = self.event_of(s)
+            if ev and ev not in out:
+                out.append(ev)
+        return out
+
+    def siblings(self) -> list[str]:
+        """Every open market of the events he is in, his own included."""
+        out: list[str] = []
+        for ev in self.my_events():
+            for s in self.members.get(ev, ()):
+                if not is_econ_market(s):
+                    out.append(s)
+        return list(dict.fromkeys(out))
+
+    def listed(self) -> list[str]:
+        """The page's markets: his orders', his holdings worth a dollar,
+        what he tracks, and the rest of every event he is in."""
+        return list(dict.fromkeys(self.order_markets() + [o["market"] for o in self.ghosts]
+                                  + self.big_holdings() + list(self.watch) + self.siblings()))
+
+    def _merge_watch(self, watch, unwatch) -> None:
+        """Another copy's tracked list folded into this one (a deploy runs
+        two copies for a minute; a save can be read late): each market
+        takes whichever came LATER, its track or its untrack."""
+        add: dict[str, float] = {}
+        rem: dict[str, float] = {}
+        for src, dst in ((watch, add), (self.watch, add), (unwatch, rem), (self.unwatch, rem)):
+            for s, t in list((src or {}).items()):
+                dst[str(s)] = max(dst.get(str(s), 0.0), float(t or 0))
+        self.watch = {s: t for s, t in add.items() if t > rem.get(s, -1.0)}
+        self.unwatch = {s: t for s, t in rem.items() if t >= add.get(s, -1.0)}
+
+    def set_watch(self, slug: str, on: bool) -> dict:
+        slug = str(slug or "").strip()
+        if (g := self._gate()):
+            # while the save is read back, a change here would be undone by it
+            return {"ok": False, "note": g}
+        if not on:
+            self.watch.pop(slug, None)
+            self.unwatch[slug] = round(self.clock(), 1)
+            self.save(force_remote=True)
+            return {"ok": True, "watched": False, "note": "no longer tracked"}
+        # the same checks as opening it (open; politics or sports; never econ)
+        r = self.open_market(slug)
+        if not r["ok"]:
+            return r
+        self.watch[slug] = round(self.clock(), 1)
+        self.unwatch.pop(slug, None)
+        if self.terms.get(slug) is None:
+            self.refresh_terms(self.clock(), [slug])
+        # uploaded at once: a deploy's new copy restores what is uploaded
+        self.save(force_remote=True)
+        return {"ok": True, "watched": True, "note": "tracking"}
 
     def label(self, slug: str) -> str:
         """The exchange's own words on his order or position first (the
@@ -706,6 +1103,7 @@ class App:
             self._day_roll_gap(now)
             self.est.sample(now, meter, self.cache, self.terms,
                             side_pool=self.side_pool, verified_at=self.verified_at)
+            self._keep_claims()
         except Exception as e:  # noqa: BLE001
             self.note(f"meter: {e}")
         unverified = self.unverified(now)
@@ -738,13 +1136,12 @@ class App:
 
     def wanted_books(self) -> list[str]:
         """Markets whose books we keep fresh, in priority order: his
-        orders, what he opened lately, then holdings worth a dollar.
-        Called from the stream threads too, so it only reads."""
-        held = sorted(((to_num((p.get("cashValue") or {}).get("value")
-                                if isinstance(p.get("cashValue"), dict) else p.get("cashValue")), s)
-                       for s, p in list(self.positions.items())), reverse=True)
-        big = [s for v, s in held if v >= HOLDING_MIN_USD]
-        return list(dict.fromkeys(self.order_markets() + list(self.opened) + big))
+        orders, what he opened lately, holdings worth a dollar, what he
+        tracks, then the rest of his events. Called from the stream
+        threads too, so it only reads."""
+        return list(dict.fromkeys(self.order_markets() + list(self.opened)
+                                  + self.big_holdings() + list(self.watch)
+                                  + self.siblings()))
 
     def refresh_books(self, now: float) -> None:
         """Re-read the quiet books the stream has not touched lately:
@@ -765,24 +1162,43 @@ class App:
                 if getattr(e, "status", None) == 429:
                     break
 
-    def refresh_terms(self, now: float, slugs: list[str] | None = None) -> None:
+    def refresh_terms(self, now: float, slugs: list[str] | None = None,
+                      quick: bool = False) -> bool:
+        """Re-read reward terms. `quick` (the scan's): one try of ten
+        seconds a host, so a hanging host costs seconds, not minutes."""
         batch = slugs or list(dict.fromkeys(
             self.order_markets() + list(self.opened)
-            + [s for s, n in self.held().items() if abs(n) >= 1]))
+            + [s for s, n in self.held().items() if abs(n) >= 1]
+            + list(self.watch) + self.siblings()))
         if not batch:
-            return
+            return True
         try:
-            raw = self.client.programs(batch)
+            raw = (self.client.programs(batch, tries=1, timeout=10.0) if quick
+                   else self.client.programs(batch))
         except Exception as e:  # noqa: BLE001 — aged terms beat no terms
             self.note(f"terms: {e}")
-            return
+            return False
         live_before = sum(1 for s in batch if self.terms.get(s) is not None)
         if not any(raw.get(s) for s in batch) and live_before >= 3:
             self.note("terms read came back empty for markets that had programs — kept the old")
-            return
+            return False
         for s in batch:
             raw.setdefault(s, {})
-        self.terms.refresh(raw, {s: self.event_n.get(s) or 1 for s in batch}, now=now)
+        with self.terms_lock:
+            self.terms.refresh(raw, {s: self.event_n.get(s) or 1 for s in batch}, now=now)
+        return True
+
+    def sweep_terms(self) -> None:
+        """Every politics market discovery listed, re-read for its reward
+        terms a chunk at a time — what the scan's list of programs counts
+        from. A failed chunk keeps its old terms."""
+        slugs = list(self.universe)
+        bad = 0
+        for i in range(0, len(slugs), TERMS_SWEEP_CHUNK):
+            if not self.refresh_terms(self.clock(), slugs[i:i + TERMS_SWEEP_CHUNK]):
+                bad += 1
+        if bad:
+            self.note(f"terms sweep: {bad} of {-(-len(slugs) // TERMS_SWEEP_CHUNK)} chunks kept their old terms")
 
     def refresh_positions(self, now: float) -> None:
         try:
@@ -803,23 +1219,61 @@ class App:
         if self.event_n.get(slug) or now - self.event_tried.get(slug, 0.0) < EVENT_LOOKUP_S:
             return
         self.event_tried[slug] = now
-        ev_slug = self.event_slug.get(slug)
+        ev_slug = self.event_of(slug)
         if not ev_slug:
             self.note(f"event size {slug}: no event named on its order or position")
             return
+        key = "ev:" + ev_slug          # one read an event, however many of its markets ask
+        if now - self.event_tried.get(key, 0.0) < EVENT_LOOKUP_S:
+            return
+        self.event_tried[key] = now
+        self._fetch_event(ev_slug, now, why=f"event size {slug}")
+
+    def _fetch_event(self, ev_slug: str, now: float, why: str = "") -> bool:
+        """One event's open markets, read once (one try; never holds up
+        the books): their event sizes, names, and the event's member list
+        for the page."""
+        why = why or f"event {ev_slug}"
         try:
             j = self.client.get(f"{GATEWAY}/v1/events/slug/{ev_slug}", tries=1, timeout=8.0)
             ev = j.get("event") or j
+            title = str(ev.get("title") or ev.get("name") or "").strip()
             rows = [m for m in ev.get("markets") or [] if m.get("slug") and not m.get("closed")]
             if not rows:
-                self.note(f"event size {slug}: event {ev_slug} lists no open markets")
-                return
+                self.note(f"{why}: event {ev_slug} lists no open markets")
+                return False
             out = {m["slug"]: {"event_n": len(rows)} for m in rows}
             _group_sizes(out, [m["slug"] for m in rows])
             for s, r in out.items():
                 self.event_n.setdefault(s, int(r["event_n"]))
+            if title:
+                labels = disambiguate([(m["slug"], name_from_market(m, title)[:110]) for m in rows])
+                for s, name in labels.items():
+                    if name:
+                        self.names.known.setdefault(s, name)
+            self.ev_fetched[ev_slug] = (now, [m["slug"] for m in rows
+                                              if not is_econ_market(m["slug"])])
+            self._rebuild_members()
+            return True
         except Exception as e:  # noqa: BLE001
-            self.note(f"event size {slug}: {e}")
+            self.note(f"{why}: {e}")
+            return False
+
+    def fetch_my_events(self, now: float) -> None:
+        """His events that discovery did not list (sports, or listed since
+        it last ran): read each one's market list, once in ten minutes at
+        most per event, again after six hours."""
+        for ev in self.my_events():
+            if ev in self.members and ev not in self.ev_fetched:
+                continue        # discovery lists it
+            got = self.ev_fetched.get(ev)
+            if got and now - got[0] < EVENT_KEEP_S:
+                continue
+            key = "ev:" + ev
+            if now - self.event_tried.get(key, 0.0) < EVENT_LOOKUP_S:
+                continue
+            self.event_tried[key] = now
+            self._fetch_event(ev, now)
 
     def run_discover(self) -> bool:
         try:
@@ -828,32 +1282,73 @@ class App:
             self.note(f"discover: {e}")
             return False
         short = bool(self.discover_n) and len(found) < 0.6 * self.discover_n
+        if short and found and not getattr(found, "failed", ()):
+            # the exchange can really list fewer (races resolve): three
+            # short reads in a row that agree are the new whole list — but
+            # only reads in which every tag answered
+            self.short_seen = (self.short_seen + [len(found)])[-3:]
+            if len(self.short_seen) == 3 and max(self.short_seen) <= 1.1 * min(self.short_seen):
+                self.note(f"discover: three reads agree on {len(found)} markets where the "
+                          f"last full read had {self.discover_n} — taken as the whole list")
+                short = False
+        elif not short:
+            self.short_seen = []
         for s, r in found.items():
             self.event_n[s] = int(r["event_n"])
             if r.get("name"):
                 self.names.known[s] = r["name"]
+        uni = {s: str(r.get("event") or "") for s, r in found.items()}
         if short or not found:
             # a short feed is merged in (above), never taken whole, and
             # read again soon
+            self.universe = {**self.universe, **uni}
+            self._rebuild_members()
             self.note(f"discover: {len(found)} markets where the last full read had "
                       f"{self.discover_n} — merged")
             return False
+        # a full read is the whole list: a market it no longer shows has
+        # closed and leaves the scan and his events' lists
+        self.universe = uni
+        self.universe_at = self.clock()
+        self.short_seen = []
+        self._rebuild_members()
         self.discover_n = len(found)
         return True
 
     def discover_loop(self) -> None:
         while True:
             ok = self.run_discover()
+            if ok:
+                try:
+                    self.sweep_terms()
+                except Exception as e:  # noqa: BLE001
+                    self.note(f"terms sweep: {e}")
             self._sleep(DISCOVER_S if ok else DISCOVER_RETRY_S)
 
-    def check_rewards(self, now: float, write_file: bool) -> None:
+    def check_rewards(self, now: float, write_file: bool,
+                      wait: float | None = None) -> dict | None:
+        """The payout check: the loop's every five minutes, or his tap.
+        One at a time (a tap waits `wait` seconds for one running). Returns
+        what it found, or None when nothing was checked."""
+        if not self.rw_lock.acquire(timeout=-1 if wait is None else wait):
+            return None
+        try:
+            return self._check_rewards(now, write_file)
+        finally:
+            self.rw_lock.release()
+
+    def _check_rewards(self, now: float, write_file: bool) -> dict | None:
         days = 40 if write_file else 6
         start = records.utc_day(now, days)
         try:
             rows = self.client.earnings(start)
         except Exception as e:  # noqa: BLE001
             self.note(f"payouts: {e}")
-            return
+            return None
+        if self.stopping:
+            # the stop save may already be taken: nothing is recorded or
+            # pushed now, and the next copy finds these rows itself
+            return None
         if self.seeded_v3 and not self.seed_caught_up:
             # 3.0 ran on for a minute after the seed was read and may
             # have pushed rows in it: its final word wins
@@ -863,13 +1358,25 @@ class App:
                 v3 = None
             if not v3:
                 self.note("payouts: 3.0's final save could not be read — check held")
-                return
+                return None
             with self.mem_lock:
                 self.rewards_seen.update(v3.get("rewards_seen") or {})
                 self.paid_seen.update(v3.get("paid_seen") or {})
             self.seed_caught_up = True
+        agg = records.aggregate(rows)
         with self.mem_lock:
+            self._mark_posting(agg, now)
             res = records.check_rewards(rows, self.rewards_seen, self.paid_seen, now)
+        # the day totals the read covers whole (strays from before the
+        # asked start are only parts of their days)
+        for d, v in res["days"].items():
+            if d >= start:
+                self.actuals_by_day[d] = round(v, 2)
+        try:
+            self.pay_progress = self._posting_progress(agg, now)
+        except Exception as e:  # noqa: BLE001 — a bar never breaks the check
+            self.note(f"posting progress: {e}")
+        self.pay_checked_at = now
         # the memory first, then the push: a copy that starts after this
         # one must not push the same rows again
         self.save(force_remote=bool(res["new_count"]))
@@ -880,9 +1387,190 @@ class App:
             self.alerts.notify("Rewards posted", records.rewards_push_text(res))
         if res["new_count"] or write_file:
             try:
-                self.note("rewards.csv: " + records.write_rewards(self.repo, rows, start))
+                sink: dict = {}
+                self.note("rewards.csv: " + records.write_rewards(self.repo, rows, start, sink=sink))
+                if sink.get("text"):
+                    # every day the file holds: the all-time total is its
+                    # sum. Merged, never replaced: a day the file lacks is
+                    # not a day that paid nothing
+                    self.actuals_by_day = {**self.actuals_by_day,
+                                           **records.day_totals(sink["text"])}
             except Exception as e:  # noqa: BLE001
                 self.note(f"rewards.csv: {e}")
+        return res
+
+    def check_payouts_now(self) -> dict:
+        """His "Check for new payouts" tap: the same check the loop runs
+        (the push included), now, and what it found."""
+        if (g := self._gate()):
+            return {"ok": False, "note": g}
+        now = self.clock()
+        if self.state_unread:
+            return {"ok": False, "note": "the saved state could not be read yet — payouts are "
+                                         "not checked until it can"}
+        if now < self.boot_ts + BOOT_HOLD_S or self.upload_hold:
+            return {"ok": False, "note": "just restarted — payouts are checked from three "
+                                         "minutes after a restart (the old copy may still run)"}
+        res = self.check_rewards(now, write_file=False, wait=TAP_CHECK_WAIT_S)
+        if res is None:
+            return {"ok": False, "at": round(now, 1),
+                    "note": "the exchange did not answer, or a check is running — "
+                            "try again in a moment"}
+        return {"ok": True, "at": round(now, 1), "new_count": res["new_count"],
+                "note": res.get("note") or "",
+                "new_rows": [{**r, "name": self.label(r["market"])}
+                             for r in res.get("new_rows") or []],
+                "days": res["days"], "progress": self.pay_progress}
+
+    # -- the pay page --------------------------------------------------------
+
+    def _keep_claims(self) -> None:
+        """The meter's figure for each market today, written each sample:
+        what the pay page grades the exchange's postings against."""
+        day = self.est.day
+        if not day:
+            return
+        for m, v in list(self.est.per_market.items()):
+            self.claims[f"{day}|{m}"] = round(v, 4)
+        if len(self.claims) > CLAIMS_CAP:
+            for k in sorted(self.claims)[:len(self.claims) - CLAIMS_CAP]:
+                del self.claims[k]
+
+    def _claims_by_day(self) -> dict[str, dict[str, float]]:
+        """day -> market -> what the meter claimed: the closed days' own
+        record (exact at the close) and the running record, the larger."""
+        out: dict[str, dict[str, float]] = {}
+        for key, v in list(self.claims.items()):
+            if "|" not in key:
+                continue
+            d, m = key.split("|", 1)
+            out.setdefault(d, {})[m] = float(v or 0.0)
+        for h in list(self.est.history):
+            d = str(h.get("day"))
+            if self.v3_cut and d < self.v3_cut and d in out:
+                continue        # 3.0's days, graded on 3.0's own claims as its page did
+            dd = out.setdefault(d, {})
+            for m, v in (h.get("per_market") or {}).items():
+                dd[m] = max(dd.get(m, 0.0), float(v or 0.0))
+        return out
+
+    def _mark_posting(self, agg: dict, now: float) -> None:
+        """When each day last gained a row: a market-day the last check
+        had not seen, or whose amount changed (3.0's, the 14-day floor
+        included: older strays read as new on every check)."""
+        floor = et_day(now - 14 * 86400.0)
+        for key, a in agg.items():
+            d = str(a.get("date") or "")
+            if not d or d < floor:
+                continue
+            if abs(self.rewards_seen.get(key, -1.0) - round(float(a.get("usd") or 0.0), 2)) > 0.005:
+                self.posting_last[d] = now
+        if len(self.posting_last) > 40:
+            for k in sorted(self.posting_last)[:len(self.posting_last) - 40]:
+                del self.posting_last[k]
+
+    def _posting_progress(self, agg: dict, now: float) -> list[dict]:
+        """How much of what the meter claimed has the exchange posted yet,
+        for each day still posting (a new row within a day), 3.0's bars:
+        a row is an appearance whatever its status; the exchange never
+        posts every market claimed, so only time says a day is done."""
+        claims = self._claims_by_day()
+        today, yday = et_day(now), et_day(now - 86400.0)
+        out = []
+        for day in sorted({today, yday} | set(claims), reverse=True)[:14]:
+            if now - float(self.posting_last.get(day, 0.0)) > POSTING_ACTIVE_S:
+                continue
+            expected = {m for m, v in (claims.get(day) or {}).items() if v > 0.005}
+            rows = {a["market"]: a for a in agg.values() if a.get("date") == day}
+            if not expected or not rows:
+                continue
+            hit = expected & set(rows)
+            if len(hit) >= len(expected):
+                continue
+
+            def has(m: str, word: str) -> bool:
+                return any(word in str(x) for x in rows[m].get("status") or ())
+            out.append({
+                "day": day, "expected": len(expected), "appeared": len(hit),
+                "pct": round(100.0 * len(hit) / len(expected)),
+                "pending": sum(1 for m in hit if has(m, "PENDING")),
+                "paid": sum(1 for m in hit if has(m, "PAID") and not has(m, "PENDING")),
+                "extra": len(set(rows) - expected),
+            })
+        return out
+
+    def pay_view(self) -> dict:
+        """3.0's pay page: the all-time total and the tax set aside, and
+        for each of the last two weeks what the exchange paid against what
+        the meter estimated — over the markets posted so far, while the
+        day is still posting — with each day's markets for a tap."""
+        now = self.clock()
+        est_by_day: dict[str, tuple] = {}
+        for h in list(self.est.history):
+            est_by_day[str(h.get("day"))] = (float(h.get("earned") or 0.0),
+                                             float(h.get("stale_s") or 0.0))
+        if self.est.day:
+            est_by_day[self.est.day] = (self.est.earned, self.est.stale_s)
+        # before the switch, every one of 3.0's meters, as its page summed
+        # them; after it, 3.0's only on a day lite's meter has no record of
+        for d, v in self.est_v3.items():
+            if (self.v3_cut and d < self.v3_cut) or d not in est_by_day:
+                est_by_day[d] = (v, est_by_day.get(d, (0.0, 0.0))[1])
+        claims = self._claims_by_day()
+        with self.mem_lock:
+            items = list(self.paid_seen.items())
+        paid: dict[str, dict[str, float]] = {}
+        for key, v in items:
+            if "|" in key:
+                d, m = key.split("|", 1)
+                paid.setdefault(d, {})[m] = float(v or 0.0)
+        actuals = dict(self.actuals_by_day)
+        days = sorted(set(est_by_day) | set(actuals))[-PAY_DAYS:]
+        rows = []
+        for d in days:
+            posted = paid.get(d) or {}
+            est_m = claims.get(d) or {}
+            actual = actuals.get(d)
+            if actual is None and posted:
+                actual = round(sum(posted.values()), 2)
+            row: dict = {"day": d, "actual": actual,
+                         "est": round(est_by_day[d][0], 2) if d in est_by_day else None,
+                         "unmeasured_min": round(est_by_day[d][1] / 60.0, 1)
+                         if d in est_by_day else None}
+            if posted and est_m:
+                both = [m for m in posted if m in est_m]
+                p_est = sum(est_m[m] for m in both)
+                p_paid = sum(posted[m] for m in both)
+                row.update({
+                    "posted_n": len(both),
+                    "est_n": sum(1 for v in est_m.values() if v > 0.005),
+                    "posted_est": round(p_est, 2), "posted_paid": round(p_paid, 2),
+                    "extra_paid": round(sum(v for m, v in posted.items() if m not in est_m), 2),
+                    "ratio_posted": round(p_paid / p_est, 3) if p_est > 0.005 else None,
+                })
+            ms = {m for m, v in est_m.items() if v > 0.005} | set(posted)
+            mk = [{"m": m, "name": self.label(m),
+                   "est": round(est_m[m], 2) if m in est_m else None,
+                   "paid": round(posted[m], 2) if m in posted else None} for m in ms]
+            mk.sort(key=lambda r: -max(r["est"] or 0.0, r["paid"] or 0.0))
+            row["markets"] = mk[:80]
+            row["markets_n"] = len(mk)
+            rows.append(row)
+        total = round(sum(actuals.values()), 2)
+        last = dict(self.rw_last or {})
+        if last.get("new_rows"):
+            last["new_rows"] = [{**r, "name": self.label(r["market"])} for r in last["new_rows"]]
+        return {
+            "ok": True, "days": rows, "tax_rate": TAX_RATE,
+            # no day totals yet (a boot before its first read): said, never $0.00
+            "paid_total": ({"usd": total, "days": len(actuals),
+                            "since": min(actuals) if actuals else None}
+                           if actuals and not self.restoring else None),
+            "progress": list(self.pay_progress),
+            "checked_at": round(self.pay_checked_at, 1) or None,
+            "checked_age": round(now - self.pay_checked_at) if self.pay_checked_at else None,
+            "last": last or None,
+        }
 
     def publish_trades(self) -> None:
         known = set(self.placed_ids) | {o["id"] for o in self.orders}
@@ -900,7 +1588,8 @@ class App:
         if self._is_due("positions", POSITIONS_S, now):
             self.refresh_positions(now)
         self.refresh_books(now)
-        for s in self.order_markets() + list(self.opened):
+        self.fetch_my_events(now)
+        for s in self.order_markets() + list(self.opened) + list(self.watch) + self.siblings():
             if not self.event_n.get(s):
                 self.event_size(s, now)
         if self._is_due("terms", TERMS_S, now):
@@ -913,9 +1602,13 @@ class App:
         so a slow exchange answer never holds up the book reads; none of
         it while the state is unread or the old copy may still run."""
         now = now if now is not None else self.clock()
-        if self.state_unread or self.restoring or now < self.boot_ts + BOOT_HOLD_S:
+        if (self.state_unread or self.restoring or self.stopping
+                or now < self.boot_ts + BOOT_HOLD_S):
             return
-        self.end_upload_hold()
+        if not self.end_upload_hold():
+            return
+        if not self.pay_seeded:
+            self.seed_pay(now)
         if self._is_due("rewards_file", REWARDS_FILE_S, now):
             self.due["rewards"] = now + REWARDS_S
             self.check_rewards(now, write_file=True)
@@ -1173,11 +1866,16 @@ class App:
             return {"ok": False, "note": "no market"}
         if is_econ_market(slug):
             return {"ok": False, "note": "econ markets are off limits"}
+        if not self.known(slug) and self._listed_fresh(slug, self.clock()):
+            # discovery, or a read of his own event, listed it open and not
+            # econ within the last few hours: no second check through the
+            # throttled gateway
+            self.checked[slug] = self.clock()
         if not self.known(slug):
             try:
                 md = self.client.market_details(slug)
             except Exception as e:  # noqa: BLE001
-                return {"ok": False, "note": f"no such market: {e}"}
+                return {"ok": False, "note": f"could not check this market: {e}"}
             if md.get("closed") or md.get("active") is False:
                 return {"ok": False, "note": "that market is closed"}
             if not (slug in self.event_n or category_ok(md)):
@@ -1210,10 +1908,10 @@ class App:
         except Exception as e:  # noqa: BLE001
             return self.cache.any_age(slug), f"book read failed: {str(e)[:80]}"
 
-    def book_view(self, slug: str) -> dict:
+    def book_view(self, slug: str, stake=None) -> dict:
         """The order book with his orders marked, his position, what his
-        orders already offer against it, and the program the market pays
-        under."""
+        orders already offer against it, the program the market pays
+        under, and what a new order joining each side's best would earn."""
         r = self.open_market(slug)
         if not r["ok"]:
             return r
@@ -1222,6 +1920,11 @@ class App:
         mine = [o for o in self.orders if o["market"] == slug]
         prog = self.terms.get(slug)
         pool = self.side_pool(slug, prog) if prog is not None else None
+        stake = self.stake_of(stake)
+        first = slug in self.terms.joined_today(now)
+        fresh = book if book is not None and now - book.fetched_at <= BOOK_MAX_AGE else None
+        new = {sd: self.potential(slug, sd, fresh, prog, pool, stake, first=first)
+               for sd in ("BUY", "SELL")}
         p = self.positions.get(slug) or {}
         cv = p.get("cashValue")
         net = self.held().get(slug, 0.0)
@@ -1240,7 +1943,8 @@ class App:
             "pool": pool, "target": prog.target if prog else None,
             "df": prog.df if prog else None, "live": bool(prog and prog.is_live()),
             "prog": prog is not None, "sized": bool(self.event_n.get(slug)),
-            "first_day": slug in self.terms.joined_today(now),
+            "first_day": first,
+            "watched": slug in self.watch, "stake": stake, "new": new,
         }
 
     def order_math(self, order_id: str) -> dict:
@@ -1282,10 +1986,123 @@ class App:
             math["why"] = "first day in its program — counts nothing until midnight ET"
             math["est"] = 0.0
         return {**view, "order": o, "math": math,
-                "risk": capital_at_risk(o["intent"], o["price"], o["size"])}
+                "risk": capital_at_risk(o["intent"], o["price"], o["size"]),
+                "basis": round(basis(o["intent"], o["price"], o["size"], o["side"]), 2)}
 
-    def data(self) -> dict:
+    # -- what a market pays: his orders, and a new one --------------------------
+
+    def _book_for_new(self, slug: str, now: float):
+        """A book to price a "new" figure from: a fresh one, or one the
+        stream wrote while every stream connection is up — a quiet
+        streamed book has simply not changed. Display only."""
+        b = self.cache.fresh(slug, BOOK_MAX_AGE, now)
+        if b is not None:
+            return b
+        b = self.cache.any_age(slug)
+        if (b is not None and now - b.fetched_at <= WS_VIEW_S
+                and self.cache.last_writer.get(slug) == "ws" and self.streams
+                and all(st.status.get("state") == "live" for st in self.streams)):
+            return b
+        return None
+
+    def potential(self, slug: str, side: str, book, prog, pool, stake: float,
+                  first: bool = False) -> dict:
+        """What a new order of `stake` dollars would earn a day joining the
+        best price on this side (never improving on it), by the meter's
+        own arithmetic, and that per dollar it ties up. A bid ties up its
+        price a share, an ask one less its price."""
+        if book is None:
+            return {"why": "no book"}
+        levels = book.side(side)
+        if not levels:
+            return {"why": "nobody on this side"}
+        if prog is None:
+            return {"why": "no reward program"}
+        if not prog.is_live():
+            return {"why": "program not live"}
+        px = levels[0][0]
+        per = px if side == "BUY" else 1.0 - px
+        if per <= 0:
+            return {"why": "no price"}
+        qty = float(min(math.floor(stake / per), QTY_MAX))
+        out: dict = {"px": px}
+        if qty < 1:
+            return {**out, "why": f"${stake:g} buys less than a share"}
+        cost = qty * per
+        out.update(qty=qty, cost=round(cost, 2))
+        j = estimate_join(side, levels, book.tick, prog.df, prog.target, px, qty)
+        if not j.qualifies:
+            return {**out, "day": 0.0, "pct": 0.0,
+                    "why": f"side short of its {prog.target:,.0f} Target Size by {j.gap:,.0f}"}
+        if first:
+            return {**out, "day": 0.0, "pct": 0.0, "why": "first day in its program"}
+        if pool is None:
+            return {**out, "day": None, "pct": None, "why": "event size unknown"}
+        day = j.share * pool
+        return {**out, "day": round(day, 4), "pct": day / cost, "share": round(j.share, 4)}
+
+    def market_rows(self, now: float, stake: float) -> list[dict]:
+        """One row a market: his orders on each side with what they earn
+        and earn per dollar behind them, and for a side with no order of
+        his, what a new one would."""
+        held = self.held()
+        first = set(self.terms.joined_today(now))
+        by_m: dict[str, list[dict]] = {}
+        for o in self.orders:
+            by_m.setdefault(o["market"], []).append(o)
+        gh_m: dict[str, list[dict]] = {}
+        for o in self.ghosts:
+            gh_m.setdefault(o["market"], []).append(o)
+        big = set(self.big_holdings())
+        rows = []
+        for s in self.listed():
+            prog = self.terms.get(s)
+            pool = self.side_pool(s, prog) if prog is not None else None
+            book = None
+            sides = {}
+            for side in ("BUY", "SELL"):
+                mine = [o for o in by_m.get(s, ()) if o["side"] == side]
+                lines = [{"id": o["id"], "price": o["price"], "size": o["size"],
+                          "est": self.order_est.get(o["id"]),
+                          "basis": round(basis(o["intent"], o["price"], o["size"], side), 2)}
+                         for o in mine]
+                lines += [{"id": o["id"], "price": o["price"], "size": o["size"], "ghost": True}
+                          for o in gh_m.get(s, ()) if o["side"] == side]
+                if mine:
+                    ests = [self.order_est.get(o["id"]) for o in mine]
+                    day = (sum(e for e in ests if e is not None)
+                           if any(e is not None for e in ests) else None)
+                    b = sum(x["basis"] for x in lines if not x.get("ghost"))
+                    sides[side] = {"o": lines, "day": day, "basis": round(b, 2),
+                                   "pct": (day / b) if day is not None and b > 0 else None}
+                else:
+                    if book is None:
+                        book = self._book_for_new(s, now)
+                    sides[side] = {"o": lines, "day": None, "pct": None,
+                                   "new": self.potential(s, side, book, prog, pool, stake,
+                                                         first=s in first)}
+            kind, st = classify(s)
+            why = ("order" if s in by_m else "holding" if s in big
+                   else "watched" if s in self.watch else "event")
+            rows.append({"m": s, "name": self.label(s), "kind": kind, "st": st,
+                         "ev": self.event_of(s), "net": held.get(s, 0.0),
+                         "value": round(self._value(self.positions.get(s) or {}), 2)
+                         if held.get(s) else 0.0,
+                         "w": s in self.watch, "why": why, "has": s in by_m,
+                         "bid": sides["BUY"], "ask": sides["SELL"]})
+        return rows
+
+    @staticmethod
+    def stake_of(x) -> float:
+        try:
+            v = float(x)
+        except (TypeError, ValueError):
+            return STAKE_DEFAULT
+        return min(max(v, 1.0), STAKE_MAX) if v == v else STAKE_DEFAULT
+
+    def data(self, stake=None) -> dict:
         now = self.clock()
+        stake = self.stake_of(stake)
         holdings = []
         small_n, small_v = 0, 0.0
         for s, n in self.held().items():
@@ -1324,6 +2141,9 @@ class App:
             "holdings_value": round(sum(h["value"] for h in holdings) + small_v, 2),
             "positions_age": round(now - self.positions_at) if self.positions_at else None,
             "state_note": note,
+            "stake": stake,
+            "markets": self.market_rows(now, stake),
+            "scan": self.scanner.brief(),
         }
 
     # -- running -------------------------------------------------------------
@@ -1344,9 +2164,12 @@ class App:
     def start_streams(self) -> None:
         from v3.ws import Stream
         kid, sec = self.client.key_id, self.client.secret_key
-        for i in range(2):
+        # books only (the Lite feed is not read here), five requests of
+        # 200 a connection, inside the exchange's ten
+        for i in range(STREAM_SHARDS):
             st = Stream(self.cache, self.wanted_books, kid, sec,
-                        shard=i, shards=2, name=f"lite-books-{i}")
+                        shard=i, shards=STREAM_SHARDS, cap=STREAM_CAP, chunk=STREAM_CHUNK,
+                        lite=False, max_subs=10, name=f"lite-books-{i}")
             st.start()
             self.streams.append(st)
 
@@ -1357,16 +2180,33 @@ class App:
         halted: this app keeps no order records a late cancel could
         contradict, and an in-flight change must be free to finish."""
         self.stopping = why
+        t_end = self.clock() + STOP_TOTAL_S
         got_tap = self.tap_lock.acquire(timeout=STOP_TAP_WAIT_S)
         deadline = self.clock() + 5.0
         while self.busy and self.clock() < deadline:
             self._sleep(0.2)
+        # a payout check past its read finishes (memory, save, push) before
+        # the snapshot; one still reading gives up when it sees the stop
+        got_rw = self.rw_lock.acquire(
+            timeout=max(min(STOP_RW_WAIT_S, t_end - self.clock() - 10.0), 0.1))
         try:
+            if self.upload_hold or self.hold_pending:
+                # stopped inside its hold: the branch still carries the old
+                # copy's last word. Merge it first; one that cannot be read
+                # is left standing (this copy saves to its disk only) rather
+                # than overwritten with payout memory older than it
+                if not self.end_upload_hold(give_up=False):
+                    self.store.save_local(self.to_dict())
+                    print("lite: stop inside the hold, old save unread — saved to disk only",
+                          flush=True)
+                    return
             self.upload_hold = False
             self.save(force_remote=True)
-            self.store.wait_remote(STOP_SAVE_WAIT_S)
+            self.store.wait_remote(max(min(STOP_SAVE_WAIT_S, t_end - self.clock()), 3.0))
         except Exception as e:  # noqa: BLE001
             print(f"lite: stop save failed: {e}", flush=True)
         finally:
+            if got_rw:
+                self.rw_lock.release()
             if got_tap:
                 self.tap_lock.release()
