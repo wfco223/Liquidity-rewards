@@ -114,7 +114,7 @@ function draw(d){
  (d.orders||[]).forEach(function(o){
   h+='<div class="row" onclick="openOrder(\''+esc(o.id)+'\')"><div class="n">'+esc(o.name)+'</div>'
    +'<div class="l"><span class="a">'+side(o.side)+' '+ct(o.price)+' × '+sz(o.size)+'</span>'
-   +'<span class="e">'+day(o.est)+'</span></div></div>';});
+   +'<span class="e">'+(o.ghost?'<span class="warn">cancel sent</span>':day(o.est))+'</span></div></div>';});
  if(!(d.orders||[]).length)h+='<div class="muted">none</div>';
  h+='</div><div class="card"><b>Holdings</b>'+(d.positions_age>120?' <span class="warn">read '+ago(d.positions_age)+' ago</span>':'');
  (d.holdings||[]).forEach(function(p){
@@ -235,7 +235,10 @@ function nums(){var p=parseFloat(document.getElementById('px').value),q=parseFlo
 function busy(on,note){window._busy=on;if(on)window._said={ok:true,note:note};
  var s=document.getElementById('sheet');if(s)s.querySelectorAll('button:not(.close)').forEach(function(b){b.disabled=on;});
  if(on){var n=s&&s.querySelector('.note');if(n)n.textContent=note;else if(s)s.insertAdjacentHTML('beforeend','<div class="note ok">'+esc(note)+'</div>');}}
-function done(r){busy(false);window._typed={};window._shown=null;say(r);}
+function done(r){busy(false);window._typed={};window._shown=null;
+ // a card he closed mid-tap still gets its answer
+ if(!window._card){alert(r.note||'');load();return;}
+ say(r);}
 function doPlace(){var n=nums();if(!n)return;var c=window._card,sd=window._side||'BUY',j=window._mk||{};
  // what he holds, less what his orders already offer, is what an ask
  // can sell or a bid can buy back without tying up money
@@ -256,7 +259,7 @@ function doMove(){var n=nums();if(!n)return;var c=window._card,w=window._shown||
  post(body,function(r){if(r.ok&&r.id)window._card={kind:'order',id:r.id};done(r);});}
 function doCancel(){var c=window._card;if(!confirm('Cancel this order?'))return;
  busy(true,'cancelling…');
- post({op:'cancel',order_id:c.id},function(r){busy(false);if(r.ok){closeSheet();load();alert(r.note);}else say(r);});}
+ post({op:'cancel',order_id:c.id},function(r){busy(false);if(r.ok||!window._card){closeSheet();load();alert(r.note);}else say(r);});}
 
 load();setInterval(load,20000);
 setInterval(function(){var a=document.activeElement;

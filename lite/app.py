@@ -49,7 +49,7 @@ from v3.api import GATEWAY, TRADE_API, Client, DEAD_ORDER_STATES, events_of
 from v3.alerts import Alerts
 from v3.books import BookCache
 from v3.estimator import BOOK_MAX_AGE, MAX_GAP_S, VERIFIED_MAX_S, Estimator, et_day, top_up_book
-from v3.intents import REST_SIDE, SELL_LONG, SELL_SHORT, capital_at_risk
+from v3.intents import BUY_LONG, BUY_SHORT, REST_SIDE, SELL_LONG, SELL_SHORT, capital_at_risk
 from v3.names import Names, disambiguate, name_from_market
 from v3.orders import QTY_MAX, OrderDesk, snap_price
 from v3.programs import is_econ, pool_days, to_num
@@ -90,6 +90,18 @@ ECON_WORDS = ("usfed", "cbpac", "fomc", "cpi", "gdp", "usunemp", "banxico", "bcb
 # (his scope; never econ). The exchange's codes and names for both.
 OPEN_CATEGORIES = ("politics", "pol", "elections", "sports", "spo")
 CLOSING = (SELL_LONG, SELL_SHORT)
+WHAT = {SELL_LONG: "sells what you hold", BUY_SHORT: "opens or adds to a short",
+        SELL_SHORT: "buys back your short", BUY_LONG: "buys"}
+
+
+def iso_ts(s: str) -> float:
+    """Seconds since the epoch for the exchange's ISO times (to the second)."""
+    import datetime as dt
+    try:
+        return dt.datetime.strptime(str(s)[:19], "%Y-%m-%dT%H:%M:%S").replace(
+            tzinfo=dt.timezone.utc).timestamp()
+    except ValueError:
+        return 0.0
 
 
 def normalize_orders(raw: list[dict]) -> list[dict]:
@@ -189,6 +201,7 @@ class App:
         self.event_tried: dict[str, float] = {}
         self.discover_n = 0            # markets the last full discovery found
         self.orders: list[dict] = []
+        self.ghosts: list[dict] = []    # cancelled by us, still on the exchange's list
         self.orders_at = 0.0           # when the list now shown was READ (its request's start)
         self.order_est: dict[str, float | None] = {}
         self.verified_at: float | None = None
@@ -572,12 +585,14 @@ class App:
         we cancelled in the last ten minutes are left out (the list lags a
         cancel by minutes, and a ghost would be metered twice)."""
         now = self.clock()
-        rows = [o for o in normalize_orders(raw)
-                if not ((t := self.desk.cancelled_at(o["id"])) and now - t < GHOST_S)]
+        rows, ghosts = [], []
+        for o in normalize_orders(raw):
+            t = self.desk.cancelled_at(o["id"])
+            (ghosts if t and now - t < GHOST_S else rows).append(o)
         with self.orders_lock:
             if read_at < self.orders_at:
                 return
-            self.orders, self.orders_at = rows, read_at
+            self.orders, self.ghosts, self.orders_at = rows, ghosts, read_at
             self.verified_at = read_at
             ids = {o["id"] for o in rows}
             for o in rows:
@@ -601,9 +616,39 @@ class App:
 
     def offered(self, slug: str, intent: str, but: str = "") -> float:
         """Shares his resting orders already offer to close this position
-        (asks selling the long, bids buying back the short)."""
-        return sum(o["size"] for o in self.orders
+        (asks selling the long, bids buying back the short) — a cancel the
+        exchange has not yet acted on still counts."""
+        return sum(o["size"] for o in self.orders + self.ghosts
                    if o["market"] == slug and o["intent"] == intent and o["id"] != but)
+
+    def _pending_note(self, slug: str, side: str) -> str:
+        sent = self.pending.get((slug, side))
+        if sent and self.clock() - sent[0] < PENDING_S:
+            return (f"an order sent {self.clock() - sent[0]:.0f}s ago on this side "
+                    f"({'id ' + sent[1] if sent[1] != '?' else 'no answer'}) is not listed yet — "
+                    f"wait a minute or check your orders")
+        return ""
+
+    def _new_on_side(self, slug: str, side: str, before: set) -> list[dict]:
+        return [o for o in self.orders if o["market"] == slug and o["side"] == side
+                and o["id"] not in before]
+
+    def _filled_since(self, order_id: str, since: float) -> float | None:
+        """Shares of this order the exchange's trade record shows filled
+        since `since`, or None when the record could not be read."""
+        try:
+            rows = self.client.recent_trades(limit=50, tries=1, timeout=8.0)
+        except Exception:  # noqa: BLE001
+            return None
+        got = 0.0
+        for a in rows:
+            t = a.get("trade") or {}
+            for k in ("passiveExecution", "aggressorExecution"):
+                ex = t.get(k) or {}
+                if (str((ex.get("order") or {}).get("id") or "") == order_id
+                        and iso_ts(ex.get("transactTime") or "") >= since - 1.0):
+                    got += to_num(ex.get("lastShares"))
+        return got
 
     # -- the meter -----------------------------------------------------------
 
@@ -916,10 +961,6 @@ class App:
             return {"ok": False, "note": f"size must be 0.01 to {QTY_MAX:,.0f}"}
         if not self.known(slug):
             return {"ok": False, "note": "not a market of yours — open it first"}
-        p = self.pending.get((slug, side))
-        if p and self.clock() - p[0] < PENDING_S:
-            return {"ok": False, "note": f"an order sent {self.clock() - p[0]:.0f}s ago (id {p[1]}) "
-                                         f"is not listed yet — wait a minute or check your orders"}
         try:
             self._tap_book(slug)
             net = self._net_now(slug)
@@ -930,31 +971,45 @@ class App:
                 return {"ok": False, "note": g}
             if not self._read_orders():
                 return {"ok": False, "note": "could not read your orders — try again"}
+            if (pn := self._pending_note(slug, side)):
+                return {"ok": False, "note": pn}
             # what he already offers to close counts against what he holds:
             # the same shares are never offered twice
             if side == "SELL":
                 free = max(net, 0.0) - self.offered(slug, SELL_LONG)
-                close_short = False
-                net_for = free
+                intent = SELL_LONG if qty <= free + 1e-9 else BUY_SHORT
             else:
                 free = max(-net, 0.0) - self.offered(slug, SELL_SHORT)
-                close_short = free > 0 and qty <= free + 1e-9
-                net_for = net
-            r = self.desk.place_resting(slug, side, price, qty, net_position=net_for,
-                                        close_short=close_short, initiator="owner")
+                intent = SELL_SHORT if qty <= free + 1e-9 else BUY_LONG
+            before = {o["id"] for o in self.orders}
+            r = self.desk.place_resting(slug, side, price, qty, intent=intent, initiator="owner")
             if r.order_id:
                 self.placed_ids[r.order_id] = round(self.clock(), 1)
             self._read_orders()
+            what = WHAT.get(intent, "")
+            if not r.ok and not r.order_id:
+                # no clear answer: it may have landed all the same
+                new = self._new_on_side(slug, side, before)
+                if new:
+                    for o in new:
+                        self.placed_ids[o["id"]] = round(self.clock(), 1)
+                    return {"ok": True, "id": new[0]["id"], "price": new[0]["price"],
+                            "note": f"no clear answer, but it rests: {new[0]['size']:g} @ "
+                                    f"{new[0]['price'] * 100:g}c (id {new[0]['id']}) — {what}"}
+                self.pending[(slug, side)] = (self.clock(), "?")
+                return {"ok": False, "note": f"{r.note} — if there was no answer it may still "
+                                             f"land; check your orders before placing again"}
             if r.order_id and not r.ok:
                 if r.resting_qty:
                     return {"ok": True, "id": r.order_id, "price": r.price,
                             "note": f"resting {r.resting_qty:g} of {qty:g} — the exchange "
-                                    f"kept what the money allows"}
+                                    f"kept what the money allows — {what}"}
                 self.pending[(slug, side)] = (self.clock(), r.order_id)
                 return {"ok": True, "pending": True, "id": r.order_id, "price": r.price,
                         "note": f"sent (id {r.order_id}) but not listed yet — it may still "
                                 f"land; check your orders before placing again"}
-        return {"ok": r.ok, "note": r.note, "id": r.order_id, "price": r.price}
+        return {"ok": r.ok, "note": f"{r.note} — {what}" if r.ok else r.note,
+                "id": r.order_id, "price": r.price}
 
     def move(self, order_id: str, cents: float | None = None, qty: float | None = None,
              was_price: float | None = None, was_size: float | None = None) -> dict:
@@ -1001,6 +1056,7 @@ class App:
             net = self._net_now(o["market"]) if closing else 0.0
         except Exception as e:  # noqa: BLE001
             return {"ok": False, "note": f"could not read the market or your position: {e}"}
+        held = 0.0
         if closing:
             held = max(net, 0.0) if o["intent"] == SELL_LONG else max(-net, 0.0)
             room = held - self.offered(o["market"], o["intent"], but=order_id)
@@ -1011,9 +1067,13 @@ class App:
         price = round(snap_price(price, tick, o["side"]), 4)
         if abs(price - o["price"]) < 1e-9 and abs(size - o["size"]) < 1e-9:
             return {"ok": False, "note": "nothing to change"}
+        t_start = self.clock()
         with self.tap_lock:
             if (g := self._gate()):
                 return {"ok": False, "note": g}
+            if (pn := self._pending_note(o["market"], o["side"])):
+                return {"ok": False, "note": pn}
+            before = {x["id"] for x in self.orders}
             # an exit takes no money, so a shortfall can only be a fill: the
             # part that rests stands. An order that adds to a position the
             # exchange cut to the money free is withdrawn instead.
@@ -1023,6 +1083,22 @@ class App:
             if r.withdrawn_id:
                 self.placed_ids[r.withdrawn_id] = round(self.clock(), 1)
             self._read_orders()
+            if not r.ok and not r.withdrawn_id:
+                # no clear answer to the replacement: one may rest all the
+                # same — withdraw it, the original stays as it was
+                gone = []
+                for x in self._new_on_side(o["market"], o["side"], before):
+                    self.placed_ids[x["id"]] = round(self.clock(), 1)
+                    if not self.desk.cancel(x["id"], o["market"], initiator="owner").ok:
+                        return {"ok": False, "note": f"{r.note} — a new order (id {x['id']}) "
+                                                     f"rests and could not be withdrawn; cancel one"}
+                    gone.append(x["id"])
+                if not gone:
+                    self.pending[(o["market"], o["side"])] = (self.clock(), "?")
+                self._read_orders()
+                return {"ok": False, "note": f"{r.note} — your order is as it was"
+                        + (f"; the new order that landed anyway ({', '.join(gone)}) was withdrawn"
+                           if gone else "; if a new order shows up, cancel it")}
         if not r.ok:
             note = r.note
             if "resting only" in note:
@@ -1038,15 +1114,18 @@ class App:
                 note = "the original filled or was already gone — only the new order rests"
             else:
                 note += " — BOTH rest; cancel one"
+        # the original may have filled while the replacement was checked
+        filled = self._filled_since(order_id, t_start)
+        if filled is None:
+            note += " — the trade record could not be read; check whether the original filled meanwhile"
+        elif filled > 1e-9:
+            note += (f" — {filled:g} of the original filled during the change; the new order "
+                     f"is still {size:g}")
         if closing:
-            try:
-                net2 = self._net_now(o["market"])
-                held2 = max(net2, 0.0) if o["intent"] == SELL_LONG else max(-net2, 0.0)
-                out = self.offered(o["market"], o["intent"])
-                if out > held2 + 1e-9:
-                    note += f" — check: {out:g} offered against {held2:g} held"
-            except Exception:  # noqa: BLE001
-                note += " — your position could not be re-read; check it"
+            held_now = held - (filled or 0.0)
+            out = self.offered(o["market"], o["intent"])
+            if out > held_now + 1e-9:
+                note += f" — check: {out:g} offered against about {max(held_now, 0):g} held"
         return {"ok": True, "note": note, "id": r.order_id, "price": r.price}
 
     def cancel(self, order_id: str) -> dict:
@@ -1055,20 +1134,29 @@ class App:
         for _ in range(40):                 # a change in flight finishes first
             with self.busy_lock:
                 if order_id not in self.busy:
+                    self.busy.add(order_id)  # and no change starts during the cancel
                     break
             self._sleep(0.5)
         else:
             return {"ok": False, "note": "a change of this order is still running — try again"}
-        with self.cancel_lock:
-            o = self._find(order_id)
-            if o is None:
+        try:
+            with self.cancel_lock:
+                o = self._find_any(order_id)
+                if o is None:
+                    self._read_orders()
+                    o = self._find_any(order_id)
+                if o is None:
+                    return {"ok": False, "note": "that order is not on the open list"}
+                r = self.desk.cancel(order_id, o["market"], initiator="owner")
                 self._read_orders()
-                o = self._find(order_id)
-            if o is None:
-                return {"ok": False, "note": "that order is not on the open list"}
-            r = self.desk.cancel(order_id, o["market"], initiator="owner")
-            self._read_orders()
-        return {"ok": r.ok, "note": r.note}
+            return {"ok": r.ok, "note": r.note}
+        finally:
+            with self.busy_lock:
+                self.busy.discard(order_id)
+
+    def _find_any(self, order_id: str) -> dict | None:
+        """An order on the list, a cancel not yet acted on included."""
+        return next((o for o in self.orders + self.ghosts if o["id"] == order_id), None)
 
     def open_market(self, slug: str) -> dict:
         """He opened a market's book. A market that is neither his order's
@@ -1207,6 +1295,9 @@ class App:
         orders = [{"id": o["id"], "market": o["market"], "name": self.label(o["market"]),
                    "side": o["side"], "price": o["price"], "size": o["size"],
                    "est": self.order_est.get(o["id"])} for o in self.orders]
+        orders += [{"id": o["id"], "market": o["market"], "name": self.label(o["market"]),
+                    "side": o["side"], "price": o["price"], "size": o["size"],
+                    "est": None, "ghost": True} for o in self.ghosts]
         orders.sort(key=lambda o: (o["name"], o["side"], -o["price"]))
         b = self.balance
         note = ""

@@ -58,6 +58,8 @@ class FakeClient:
         self.fund = None          # dollars free: a placement is cut to what it funds
         self.listed = True        # False: the open list lags a new order
         self.pos_fail = False
+        self.trades = []
+        self.no_answer = False    # the placement lands but the answer never comes
 
     def open_orders_raw(self, max_pages=20, tries=4, timeout=None):
         if self.fail_orders:
@@ -97,6 +99,9 @@ class FakeClient:
     def activities(self, types=None, pages=10, page_size=100, tries=4, timeout=None):
         return []
 
+    def recent_trades(self, limit=25, tries=4, timeout=None):
+        return list(self.trades)
+
     def event_by_slug(self, ev):
         return self.events[ev]
 
@@ -118,6 +123,8 @@ class FakeClient:
                 self.raw.append(raw_order(oid, json_body["marketSlug"], side,
                                           json_body["price"]["value"], qty,
                                           json_body["intent"]))
+            if self.no_answer:
+                raise ApiError("POST /v1/orders: ReadTimeout")
             return {"id": oid, "executions": []}
         oid = url.split("/v1/order/")[1].split("/")[0]
         self.raw = [o for o in self.raw if o["id"] != oid]
@@ -814,6 +821,95 @@ class TestTheReviewFixes(unittest.TestCase):
                         side_effect=lambda raw, k: known.append(set(k)) or []):
             records.publish_trades(self.c, repo, {"P1"}, deep=False)
         self.assertEqual(known[0], {"P1", "OURS1"})
+
+
+class TestTheFinalReview(unittest.TestCase):
+    """The last review of the order paths, 2026-10-05."""
+
+    def setUp(self):
+        self.app, self.c = make()
+
+    def placed(self):
+        return [b for p, b in self.c.posts if p == "/v1/orders"]
+
+    def test_selling_exactly_what_is_free_sells_it(self):
+        self.c.pos = {M: {"netPositionDecimal": "100.3"}}
+        self.c.raw = [raw_order("X1", M, "SELL", 0.45, 50.1, "ORDER_INTENT_SELL_LONG")]
+        self.app.sample_once()
+        r = self.app.place(M, "SELL", 44, 50.2)
+        self.assertEqual(self.placed()[0]["intent"], "ORDER_INTENT_SELL_LONG")
+        self.assertIn("sells what you hold", r["note"])
+
+    def test_fills_of_the_original_during_a_change_are_said(self):
+        self.c.raw = [raw_order("O1", M, "BUY", 0.40, 1000, "ORDER_INTENT_BUY_LONG")]
+        self.app.sample_once()
+        now = time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(time.time() + 1)) + ".5Z"
+        self.c.trades = [{"trade": {"passiveExecution": {"order": {"id": "O1"},
+                                                         "lastShares": "600",
+                                                         "transactTime": now}}}]
+        r = self.app.move("O1", 39, None, was_price=40, was_size=1000)
+        self.assertTrue(r["ok"], r)
+        self.assertIn("600 of the original filled during the change", r["note"])
+
+    def test_a_placement_with_no_answer_that_landed_is_found(self):
+        self.c.raw = []
+        self.app.checked[M] = time.time()          # he opened the market
+        self.app.sample_once()
+        self.c.no_answer = True
+        r = self.app.place(M, "BUY", 39, 10)
+        self.assertTrue(r["ok"], r)
+        self.assertIn("no clear answer, but it rests", r["note"])
+
+    def test_a_placement_with_no_answer_holds_its_side(self):
+        self.c.raw = []
+        self.app.checked[M] = time.time()
+        self.app.sample_once()
+        self.c.no_answer, self.c.listed = True, False
+        self.assertFalse(self.app.place(M, "BUY", 39, 10)["ok"])
+        r = self.app.place(M, "BUY", 39, 10)
+        self.assertIn("no answer", r["note"])
+        self.assertEqual(len(self.placed()), 1)
+
+    def test_a_change_with_no_answer_withdraws_what_landed(self):
+        self.c.raw = [raw_order("O1", M, "BUY", 0.40, 100, "ORDER_INTENT_BUY_LONG")]
+        self.app.sample_once()
+        self.c.no_answer = True
+        r = self.app.move("O1", 39, None, was_price=40, was_size=100)
+        self.assertFalse(r["ok"])
+        self.assertIn("was withdrawn", r["note"])
+        self.assertEqual([o["id"] for o in self.app.orders], ["O1"])
+
+    def test_a_change_waits_for_a_pending_placement_on_its_side(self):
+        self.c.raw = [raw_order("O1", M, "BUY", 0.40, 100, "ORDER_INTENT_BUY_LONG")]
+        self.app.sample_once()
+        self.app.pending[(M, "BUY")] = (time.time(), "N7")
+        r = self.app.move("O1", 39, None, was_price=40, was_size=100)
+        self.assertFalse(r["ok"])
+        self.assertIn("not listed yet", r["note"])
+        self.assertEqual(self.c.posts, [])
+
+    def test_a_cancel_claims_the_order_while_it_runs(self):
+        self.c.raw = [raw_order("O1", M, "BUY", 0.40, 100, "ORDER_INTENT_BUY_LONG")]
+        self.app.sample_once()
+        seen = []
+        real = self.app.desk.cancel
+        def spy(oid, slug, **kw):
+            seen.append(oid in self.app.busy)
+            return real(oid, slug, **kw)
+        self.app.desk.cancel = spy
+        self.app.cancel("O1")
+        self.assertEqual(seen, [True])
+        self.assertNotIn("O1", self.app.busy)
+
+    def test_a_cancel_the_exchange_has_not_acted_on_still_counts_and_can_be_sent_again(self):
+        self.c.pos = {M: {"netPositionDecimal": "100"}}
+        self.c.raw = [raw_order("X1", M, "SELL", 0.45, 100, "ORDER_INTENT_SELL_LONG")]
+        self.app.sample_once()
+        self.app.desk.remember_cancel("X1")           # cancelled, still listed
+        self.app.sample_once()
+        self.assertEqual(self.app.offered(M, "ORDER_INTENT_SELL_LONG"), 100.0)
+        self.assertTrue(self.app.data()["orders"][0].get("ghost"))
+        self.assertTrue(self.app.cancel("X1")["ok"])
 
 
 class TestTheLauncher(unittest.TestCase):
