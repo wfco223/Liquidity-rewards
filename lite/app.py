@@ -92,6 +92,8 @@ STREAM_CAP = 1000          # markets a connection: five book subscriptions of 20
 STREAM_CHUNK = 200
 TERMS_SWEEP_CHUNK = 400    # the politics terms sweep after each discovery, this many at a time
 WATCH_FORGET_S = 30 * 86400.0  # an untrack is remembered this long: an older copy's save cannot undo it
+HOLD_READ_TRIES = 10       # end-of-hold reads of the old copy's last save before going on without it
+UNIVERSE_TRUST_S = 7 * 3600.0  # a market listed open this recently opens without the gateway check
 STATE_BRANCH = "lite-state"
 SEED_BRANCH = "v3-state"
 TAGS = ("politics", "elections")
@@ -272,6 +274,8 @@ class App:
         self.ev_index: dict[str, str] = {}        # slug -> event, from the two above
         self.watch: dict[str, float] = {}         # markets he tracks -> when
         self.unwatch: dict[str, float] = {}       # markets he stopped tracking -> when
+        self.universe_at = 0.0                    # when discovery last read the whole list
+        self.short_seen: list[int] = []           # the counts of discovery's short reads in a row
         self.orders: list[dict] = []
         self.ghosts: list[dict] = []    # cancelled by us, still on the exchange's list
         self.orders_at = 0.0           # when the list now shown was READ (its request's start)
@@ -302,6 +306,10 @@ class App:
         self.v3_head = ""
         self.state_unread = False      # its own save may exist but could not be read
         self.upload_hold = True        # a new container uploads nothing until the old copy is gone
+        # the old copy's last save not merged yet: saved with the state, so
+        # a restart inside the hold keeps the hold and merges it all the same
+        self.hold_pending = False
+        self.hold_tries = 0
         self.stopping = ""
         self.tap_lock = threading.Lock()      # place and move
         self.cancel_lock = threading.Lock()   # a cancel never waits behind a placement
@@ -355,6 +363,8 @@ class App:
             "event_slug": dict(self.event_slug),
             "discover_n": self.discover_n,
             "universe": dict(self.universe),
+            "universe_at": round(self.universe_at, 1),
+            "hold": bool(self.upload_hold or self.hold_pending),
             "watch": dict(self.watch),
             "unwatch": {s: t for s, t in list(self.unwatch.items()) if now - t < WATCH_FORGET_S},
             "names": self.names.to_dict(),
@@ -413,7 +423,9 @@ class App:
                 if where == "absent":
                     break
                 self._sleep(2.0 * (i + 1))
-            self.upload_hold = not getattr(self.store, "local_found", False)
+            self.upload_hold = (not getattr(self.store, "local_found", False)
+                                or bool((st or {}).get("hold")))
+            self.hold_pending = self.upload_hold
             if st:
                 self.from_dict(st)
                 self.restored = f"own save of {st.get('saved_at')}"
@@ -539,6 +551,7 @@ class App:
         self.universe = {str(s): str(e or "") for s, e in (st.get("universe") or {}).items()}
         self.watch = {str(s): float(t or 0) for s, t in (st.get("watch") or {}).items()}
         self.unwatch = {str(s): float(t or 0) for s, t in (st.get("unwatch") or {}).items()}
+        self.universe_at = float(st.get("universe_at") or 0.0)
         self._rebuild_members()
         self.names.restore(st.get("names") or {})
         with self.mem_lock:
@@ -621,11 +634,14 @@ class App:
             else:
                 self.store.save_soon(st, force_remote=force_remote)
 
-    def end_upload_hold(self) -> None:
+    def end_upload_hold(self) -> bool:
         """The old copy has stopped: take its last word on the payout
-        memory and order ids (its stop save), then upload as usual."""
-        if not self.upload_hold:
-            return
+        memory, order ids and tracked markets (its stop save), then upload
+        as usual. A read that fails is not "nothing to merge": the hold
+        stands and the next pass reads again (False), and only after
+        HOLD_READ_TRIES does it go on without — saying so."""
+        if not self.upload_hold and not self.hold_pending:
+            return True
         try:
             remote = self.store.load_remote()
         except Exception:  # noqa: BLE001
@@ -636,7 +652,18 @@ class App:
                 self.paid_seen.update(remote.get("paid_seen") or {})
             self.placed_ids = {**(remote.get("placed_ids") or {}), **self.placed_ids}
             self._merge_watch(remote.get("watch"), remote.get("unwatch"))
+        elif self._branch_state(self.store) != "absent":
+            self.hold_tries += 1
+            if self.hold_tries < HOLD_READ_TRIES:
+                if self.hold_tries == 1:
+                    self.note("the old copy's last save could not be read — no upload or "
+                              "payout check until it can")
+                return False
+            self.note(f"the old copy's last save could not be read in {HOLD_READ_TRIES} "
+                      f"tries — going on without it")
         self.upload_hold = False
+        self.hold_pending = False
+        return True
 
     # -- whitelist and labels -----------------------------------------------
 
@@ -693,6 +720,14 @@ class App:
         idx = {s: ev for ev, ss in m.items() for s in ss}
         self.members, self.ev_index = m, idx
 
+    def _listed_fresh(self, slug: str, now: float) -> bool:
+        """Listed open by a full discovery, or by a read of its event,
+        within UNIVERSE_TRUST_S."""
+        if slug in self.universe and now - self.universe_at <= UNIVERSE_TRUST_S:
+            return True
+        got = self.ev_fetched.get(self.ev_index.get(slug, ""))
+        return bool(got and slug in got[1] and now - got[0] <= UNIVERSE_TRUST_S)
+
     def event_of(self, slug: str) -> str:
         return self.event_slug.get(slug) or self.ev_index.get(slug, "")
 
@@ -734,21 +769,18 @@ class App:
 
     def set_watch(self, slug: str, on: bool) -> dict:
         slug = str(slug or "").strip()
+        if (g := self._gate()):
+            # while the save is read back, a change here would be undone by it
+            return {"ok": False, "note": g}
         if not on:
             self.watch.pop(slug, None)
             self.unwatch[slug] = round(self.clock(), 1)
             self.save(force_remote=True)
             return {"ok": True, "watched": False, "note": "no longer tracked"}
-        if (g := self._gate()):
-            return {"ok": False, "note": g}
-        if slug not in self.universe:
-            # not a politics market discovery listed: the same checks as
-            # opening one by its slug (open; politics or sports; never econ)
-            r = self.open_market(slug)
-            if not r["ok"]:
-                return r
-        elif is_econ_market(slug):
-            return {"ok": False, "note": "econ markets are off limits"}
+        # the same checks as opening it (open; politics or sports; never econ)
+        r = self.open_market(slug)
+        if not r["ok"]:
+            return r
         self.watch[slug] = round(self.clock(), 1)
         self.unwatch.pop(slug, None)
         if self.terms.get(slug) is None:
@@ -1069,6 +1101,16 @@ class App:
             self.note(f"discover: {e}")
             return False
         short = bool(self.discover_n) and len(found) < 0.6 * self.discover_n
+        if short and found:
+            # the exchange can really list fewer (races resolve): three
+            # short reads in a row that agree are the new whole list
+            self.short_seen = (self.short_seen + [len(found)])[-3:]
+            if len(self.short_seen) == 3 and max(self.short_seen) <= 1.1 * min(self.short_seen):
+                self.note(f"discover: three reads agree on {len(found)} markets where the "
+                          f"last full read had {self.discover_n} — taken as the whole list")
+                short = False
+        else:
+            self.short_seen = []
         for s, r in found.items():
             self.event_n[s] = int(r["event_n"])
             if r.get("name"):
@@ -1085,6 +1127,8 @@ class App:
         # a full read is the whole list: a market it no longer shows has
         # closed and leaves the scan and his events' lists
         self.universe = uni
+        self.universe_at = self.clock()
+        self.short_seen = []
         self._rebuild_members()
         self.discover_n = len(found)
         return True
@@ -1169,7 +1213,8 @@ class App:
         now = now if now is not None else self.clock()
         if self.state_unread or self.restoring or now < self.boot_ts + BOOT_HOLD_S:
             return
-        self.end_upload_hold()
+        if not self.end_upload_hold():
+            return
         if self._is_due("rewards_file", REWARDS_FILE_S, now):
             self.due["rewards"] = now + REWARDS_S
             self.check_rewards(now, write_file=True)
@@ -1427,9 +1472,10 @@ class App:
             return {"ok": False, "note": "no market"}
         if is_econ_market(slug):
             return {"ok": False, "note": "econ markets are off limits"}
-        if not self.known(slug) and slug in self.ev_index:
+        if not self.known(slug) and self._listed_fresh(slug, self.clock()):
             # discovery, or a read of his own event, listed it open and not
-            # econ: no second check through the throttled gateway
+            # econ within the last few hours: no second check through the
+            # throttled gateway
             self.checked[slug] = self.clock()
         if not self.known(slug):
             try:

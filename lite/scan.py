@@ -7,9 +7,9 @@ paying on a market discovery found under the politics and elections tags,
 with its market count and its pool. He ticks the ones to scan. The scan
 then, on its own thread:
 
-1. re-reads the reward terms of those markets the six-hourly sweep has
-   not refreshed (the signed incentives api, one quick try, never the
-   throttled gateway), stopping at the first failure;
+1. re-reads the reward terms of those markets not read in the last half
+   hour (the signed incentives api, one quick try a request, never the
+   throttled gateway), stopping at the first failure or after 150 s;
 2. reads their books over the websocket — a connection carries ten
    subscriptions of 200 markets, so up to three connections open for the
    scan and close when it is done — with a few gateway reads, one try
@@ -40,7 +40,8 @@ SCAN_QUIET_S = 8.0         # ...or this long with nothing new arriving
 GATEWAY_FILL = 60          # stragglers read through the gateway, one try each...
 GATEWAY_FILL_S = 30.0      # ...for this long at most, stopping after three failures
 SCAN_BUDGET_S = 300.0      # the whole scan: past it, what was read is ranked and the rest said
-SCAN_TERMS_AGE_S = 7 * 3600.0  # terms the six-hourly sweep keeps younger than this are not re-read
+SCAN_TERMS_AGE_S = 1800.0  # terms read in the last half hour are not read again
+TERMS_BUDGET_S = 150.0     # the terms step's share of the budget; the books get the rest
 TERMS_CHUNK = 40           # one incentives request a step, one quick try
 SCAN_SHOW = 200            # rows a results page carries
 NOT_POLITICS = ("macro", "econ", "fed", "cpi", "nfl", "cfb", "nba", "nhl", "mlb", "golf",
@@ -220,8 +221,9 @@ class Scanner:
             now = app.clock()
             stale = [s for s in slugs if app.terms.age(s, now) > SCAN_TERMS_AGE_S]
             self.step, self.total, self.done_n = "reading reward terms", len(stale), 0
+            terms_end = min(app.clock() + TERMS_BUDGET_S, deadline)
             for i in range(0, len(stale), TERMS_CHUNK):
-                if app.clock() > deadline:
+                if app.clock() > terms_end:
                     notes.append(f"{len(stale) - i:,} markets kept their old terms (out of time)")
                     break
                 if not app.refresh_terms(app.clock(), stale[i:i + TERMS_CHUNK], quick=True):

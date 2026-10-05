@@ -24,14 +24,20 @@ DEM = M[:-3] + "dem"          # the other side of M's race
 EV = "usse-ok-2026-11-03"
 
 
+def listed(app, uni):
+    """Markets listed the way a full discovery lists them, just now."""
+    app.universe = dict(uni)
+    app.universe_at = time.time()
+    app._rebuild_members()
+
+
 def book(bids, asks, tick=0.01):
     return Book(bids=tuple(bids), asks=tuple(asks), tick=tick, fetched_at=time.time())
 
 
 def setup_event(app, c):
     """M and its other side in one event, discovery's way."""
-    app.universe = {M: EV, DEM: EV, M2: "usse-ks-2026-11-03"}
-    app._rebuild_members()
+    listed(app, {M: EV, DEM: EV, M2: "usse-ks-2026-11-03"})
     app.event_n[DEM] = 2
     c.progs[DEM] = prog()
     c.books[DEM] = book([(0.55, 2000.0)], [(0.58, 1500.0)])
@@ -217,7 +223,7 @@ class TestEvents(unittest.TestCase):
 class TestTracking(unittest.TestCase):
     def test_a_discovered_market_is_tracked_and_saved(self):
         app, c = make()
-        app.universe = {M2: "usse-ks-2026-11-03"}
+        listed(app, {M2: "usse-ks-2026-11-03"})
         c.progs[M2] = prog()
         r = app.set_watch(M2, True)
         self.assertTrue(r["ok"])
@@ -247,9 +253,8 @@ def mid(pool):
 
 def scan_app():
     app, c = make()
-    app.universe = {M: EV, DEM: EV, M2: "usse-ks-2026-11-03",
-                    "nflx-team-1": "nflx", "macro-cpi-1": "m"}
-    app._rebuild_members()
+    listed(app, {M: EV, DEM: EV, M2: "usse-ks-2026-11-03",
+                 "nflx-team-1": "nflx", "macro-cpi-1": "m"})
     for s in (DEM, M2):
         app.event_n[s] = 2
     c.progs.update({M: mid(200), DEM: mid(400), M2: mid(100),
@@ -470,7 +475,7 @@ class TestTheReviewOfTheList(unittest.TestCase):
     def test_an_untrack_before_a_late_read_stays_untracked(self):
         app, c = make()
         t = time.time()
-        app.universe = {M2: "usse-ks-2026-11-03"}
+        listed(app, {M2: "usse-ks-2026-11-03"})
         app.set_watch(M2, True)
         app.set_watch(M2, False)
         app._merge_late({"watch": {M2: t - 3600}, "event_n": {}, "placed_ids": {}})
@@ -478,7 +483,7 @@ class TestTheReviewOfTheList(unittest.TestCase):
 
     def test_a_track_is_uploaded_at_once(self):
         app, c = make()
-        app.universe = {M2: "usse-ks-2026-11-03"}
+        listed(app, {M2: "usse-ks-2026-11-03"})
         app.set_watch(M2, True)
         self.assertTrue(app.store.saved[-1][1])          # force_remote
         app.set_watch(M2, False)
@@ -548,3 +553,84 @@ class TestTheReviewOfTheScan(unittest.TestCase):
         self.assertEqual(v["state"], "running")
         self.assertEqual(v["stake"], 40.0)                # what the rows were priced with
         self.assertEqual(v["run_stake"], 500.0)
+
+
+class TestTheSecondReview(unittest.TestCase):
+    """What the review of the fixes found (2026-10-05)."""
+
+    def test_a_restart_inside_the_hold_keeps_the_hold(self):
+        app, c = make()
+        st = app.to_dict()
+        st["hold"] = True                         # saved to disk while the hold stood
+        app.store = FakeStore(best=st)
+        app.store.local_found = True              # the restart finds its own disk copy
+        app.restore()
+        self.assertTrue(app.upload_hold)
+        self.assertTrue(app.hold_pending)
+
+    def test_a_failed_read_of_the_old_copys_save_keeps_the_hold(self):
+        app, c = make()
+        app.upload_hold = app.hold_pending = True
+
+        class Present(FakeStore):
+            token = "t"
+
+            def _gh(self, method, path):
+                return mock.Mock(status_code=200)
+        app.store = Present(remote=None)
+        c.earn = [{"date": "2026-10-04", "market": M, "program_type": "lp",
+                   "reward_usd": 1.0, "status": "PAID"}]
+        t = app.boot_ts + 200
+        app.records_once(t)
+        self.assertTrue(app.upload_hold)          # no merge, so no upload and no payout check
+        self.assertEqual(app.rewards_seen, {})
+        for i in range(12):
+            app.records_once(t + 30 * (i + 1))
+        self.assertFalse(app.upload_hold)          # gave up after HOLD_READ_TRIES, and said so
+        self.assertTrue(any("could not be read in" in n["note"] for n in app.notes))
+
+    def test_no_track_or_untrack_while_the_save_is_read_back(self):
+        app, c = make()
+        app.restoring = True
+        self.assertFalse(app.set_watch(M2, False)["ok"])
+        self.assertFalse(app.set_watch(M2, True)["ok"])
+
+    def test_an_old_listing_does_not_stand_in_for_the_check(self):
+        app, c = make()
+        listed(app, {M2: "usse-ks-2026-11-03"})
+        app.universe_at = time.time() - 8 * 3600
+        c.details[M2] = {"active": True, "closed": True}
+        r = app.book_view(M2)
+        self.assertFalse(r["ok"])
+        self.assertIn("closed", r["note"])
+
+    def test_three_short_discoveries_that_agree_are_the_new_list(self):
+        app, c = make()
+        full = {f"p{i}": {"event_n": 2, "name": "", "event": "e"} for i in range(500)}
+        short = dict(list(full.items())[:200])
+        with mock.patch("lite.app.discover", return_value=full):
+            self.assertTrue(app.run_discover())
+        with mock.patch("lite.app.discover", return_value=short):
+            self.assertFalse(app.run_discover())
+            self.assertFalse(app.run_discover())
+            self.assertTrue(app.run_discover())      # the third agreeing read is taken
+        self.assertEqual(len(app.universe), 200)
+        self.assertEqual(app.discover_n, 200)
+
+    def test_the_scan_rereads_terms_older_than_half_an_hour(self):
+        app, c = scan_app()
+        seen = []
+        orig = c.programs
+
+        def programs(slugs, tries=4, timeout=20.0):
+            seen.extend(slugs)
+            return orig(slugs)
+        c.programs = programs
+        app.scanner.book_source = fake_source(c, [])
+        for s in app.terms.updated_at:
+            app.terms.updated_at[s] -= 40 * 60
+        c.progs[DEM] = mid(25)                        # the pool was cut
+        app.scanner._run(["politics_mid"], 40.0)
+        self.assertIn(DEM, seen)
+        row = next(r for r in app.scanner.rows if r["m"] == DEM)
+        self.assertAlmostEqual(row["pool"], 25 / 2 / 2)

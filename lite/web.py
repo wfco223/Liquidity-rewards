@@ -179,7 +179,8 @@ function get(url,cb){
 }
 function post(body,cb){
  var h=hdrs();h.set('X-Reprice','1');h.set('Content-Type','application/json');
- fetch('/op',{method:'POST',headers:h,body:JSON.stringify(body)})
+ var ac=window.AbortController?new AbortController():null;if(ac)setTimeout(function(){ac.abort();},60000);
+ fetch('/op',{method:'POST',headers:h,body:JSON.stringify(body),signal:ac?ac.signal:undefined})
   .then(function(r){return r.json();}).then(cb)
   .catch(function(){cb({ok:false,note:'No answer in time. It may still have gone through — check before tapping again.'});});
 }
@@ -217,7 +218,7 @@ function win(sec){window._win=sec;if(window._d)draw(window._d);}
 var SORTS=[['type','Type'],['bid_day','Bid $'],['ask_day','Ask $'],['bid_pct','Bid %'],['ask_pct','Ask %']];
 var KINDS=['House','Senate','Governor','Other'];
 function sortKey(){var k=LS('sort','type');return SORTS.some(function(s){return s[0]===k;})?k:'type';}
-function setSort(k){LSset('sort',k);if(window._d)draw(window._d);}
+function setSort(k){LSset('sort',k);window._revealSort=1;if(window._d)draw(window._d);}
 function noFirst(){return LS('nofirst','0')==='1';}
 function toggleNo(){LSset('nofirst',noFirst()?'0':'1');if(window._d)draw(window._d);}
 function cols(){try{return JSON.parse(LS('col','{}'))||{};}catch(e){return {};}}
@@ -297,11 +298,12 @@ function marketsHtml(d){
 }
 
 // -- the page ----------------------------------------------------------------------
-function rowsKeep(){var o={};['sorts','ssorts'].forEach(function(i){var e=document.getElementById(i);if(e)o[i]=e.scrollLeft;});return o;}
-function rowsBack(o){['sorts','ssorts'].forEach(function(i){var r=document.getElementById(i);if(!r)return;
- if(o[i]!=null)r.scrollLeft=o[i];
+function rowKeep(id){var e=document.getElementById(id);return e?e.scrollLeft:null;}
+function rowBack(id,left,reveal){var r=document.getElementById(id);if(!r)return;
+ if(left!=null)r.scrollLeft=left;
+ if(!reveal)return;
  var c=r.querySelector('.chip.on');if(!c)return;var cr=c.getBoundingClientRect(),rr=r.getBoundingClientRect();
- if(cr.left<rr.left)r.scrollLeft-=rr.left-cr.left+8;else if(cr.right>rr.right)r.scrollLeft+=cr.right-rr.right+8;});}
+ if(cr.left<rr.left)r.scrollLeft-=rr.left-cr.left+8;else if(cr.right>rr.right)r.scrollLeft+=cr.right-rr.right+8;}
 function typing(){var a=document.activeElement;
  return !!(a&&a.tagName==='INPUT'&&a.type!=='checkbox'&&a.closest&&a.closest('#sheet'));}
 function draw(d){
@@ -321,9 +323,9 @@ function draw(d){
   +(d.state_note?'<div class="note bad">'+esc(d.state_note)+'</div>':'')
   +'</div>';
  h+=marketsHtml(d);
- var keep=rowsKeep();
+ var left=rowKeep('sorts');
  document.getElementById('view').innerHTML=h;
- rowsBack(keep);
+ rowBack('sorts',left,window._revealSort);window._revealSort=0;
 }
 function load(){
  get('/data.json?stake='+stake(),function(d){
@@ -370,9 +372,9 @@ function sheet(html){
  if(!s){s=document.createElement('div');s.id='sheet';s.className='bsheet';document.body.appendChild(s);
   var c=document.createElement('div');c.id='scrim';c.className='bscrim';c.onclick=closeSheet;document.body.appendChild(c);}
  var a=document.activeElement,keep=(a&&a.tagName==='INPUT'&&a.id&&s.contains(a))?[a.id,a.value]:null;
- var rows=rowsKeep();
+ var left=rowKeep('ssorts');
  s.innerHTML=html;
- rowsBack(rows);
+ rowBack('ssorts',left,window._revealSS);window._revealSS=0;
  if(keep){var e=document.getElementById(keep[0]);if(e){e.value=keep[1];}}
 }
 function closeSheet(){window._card=null;window._from=null;['sheet','scrim'].forEach(function(i){var e=document.getElementById(i);if(e)e.remove();});}
@@ -382,9 +384,9 @@ function ohead(o){return '<div class="big"><span class="'+(o.side==='BUY'?'ok':'
 function openOrder(id){window._card={kind:'order',id:id};window._said=null;window._typed={};window._shown=null;
  // the order and its Cancel come up at once from the list, before any read
  var o=((window._d||{}).orders||[]).filter(function(x){return x.id===id;})[0];
- sheet(o?head(esc(o.name))+ohead(o)
+ sheet(btns(o?head(esc(o.name))+ohead(o)
   +'<div class="muted">Reading…</div><div class="frm"><button class="btn red" onclick="doCancel()">Cancel order</button></div>'+said()
-  :head('Order')+'<div class="muted">Reading…</div>');
+  :head('Order')+'<div class="muted">Reading…</div>'));
  refreshCard();}
 function openMarket(m){if(!m)return;
  window._from=(window._card&&window._card.kind==='scan')?'scan':null;
@@ -397,12 +399,14 @@ function val(k,d){var t=window._typed||{};return t[k]!=null?t[k]:d;}
 function edited(){var t=window._typed||{};return t.px!=null||t.qty!=null;}
 function refreshCard(force){
  var c=window._card;if(!c||window._busy)return;
- if(c.kind==='order')get('/math.json?id='+encodeURIComponent(c.id),function(j){if(window._card===c&&!window._busy)drawOrder(j);});
- else if(c.kind==='market')get('/book.json?m='+encodeURIComponent(c.m)+'&stake='+stake(),function(j){if(window._card===c&&!window._busy)drawMarket(j);});
+ // an answer that lands while he types is dropped: the next read redraws
+ function ok(){return window._card===c&&!window._busy&&!typing();}
+ if(c.kind==='order')get('/math.json?id='+encodeURIComponent(c.id),function(j){if(ok())drawOrder(j);});
+ else if(c.kind==='market')get('/book.json?m='+encodeURIComponent(c.m)+'&stake='+stake(),function(j){if(ok())drawMarket(j);});
  else if(c.kind==='scan'){
   // the scan sheet re-reads only while a scan runs: his ticks stay put
   var sj=window._scanJ;if(sj&&sj.state!=='running'&&!force)return;
-  get('/scan.json?sort='+LS('ssort','pct'),function(j){if(window._card===c&&!window._busy)drawScan(j);});}
+  get('/scan.json?sort='+LS('ssort','pct'),function(j){if(ok())drawScan(j);});}
 }
 function btns(html){return window._busy?html.replace(/<button(?! class="close")/g,'<button disabled'):html;}
 function drawOrder(j){
@@ -464,24 +468,24 @@ function pick(s){window._side=s;if(window._mk)drawMarket(window._mk);}
 function nums(){var p=parseFloat(document.getElementById('px').value),q=parseFloat(document.getElementById('qty').value);
  if(!(p>0)||!(q>0)){alert('price and size');return null;}return [p,q];}
 function busy(on,note){window._busy=on;
- if(on){window._said={ok:true,note:note};window._tapCard=window._card;}
+ if(on)window._said={ok:true,note:note};
  var s=document.getElementById('sheet');if(s)s.querySelectorAll('button:not(.close)').forEach(function(b){b.disabled=on;});
  if(on){var n=document.getElementById('said');var t='<div class="note ok">'+esc(note)+'</div>';
   if(n)n.innerHTML=t;else if(s)s.insertAdjacentHTML('beforeend',t);}}
-function same(){return !!window._card&&window._card===window._tapCard;}
-function done(r){var here=same();busy(false);window._typed={};window._shown=null;
+function wait(){if(window._busy){alert('Your last tap has not answered yet — wait for it.');return true;}return false;}
+function done(r,mine){var here=!!window._card&&window._card===mine;busy(false);window._typed={};window._shown=null;
  // a card he closed, or left for another, mid-tap still gets its answer
  if(!here){window._said=null;alert(r.note||'');load();return;}
  say(r);}
-function doPlace(){var n=nums();if(!n)return;var c=window._card,sd=window._side||'BUY',j=window._mk||{};
+function doPlace(){if(wait())return;var n=nums();if(!n)return;var c=window._card,sd=window._side||'BUY',j=window._mk||{};
  // what he holds, less what his orders already offer, is what an ask
  // can sell or a bid can buy back without tying up money
  var free=sd==='BUY'?(j.free_short||0):(j.free_long||0);
  var cost=n[1]<=free+1e-9?0:(sd==='BUY'?n[0]/100*n[1]:(1-n[0]/100)*n[1]);
  if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(cost?' — ties up '+usd(cost):' — from what you hold')+'?'))return;
  busy(true,'Placing…');
- post({op:'place',market:c.m,side:sd,px:n[0],qty:n[1]},done);}
-function doMove(){var n=nums();if(!n)return;var c=window._card,w=window._shown||{},t=window._typed||{};
+ post({op:'place',market:c.m,side:sd,px:n[0],qty:n[1]},function(r){done(r,c);});}
+function doMove(){if(wait())return;var n=nums();if(!n)return;var c=window._card,w=window._shown||{},t=window._typed||{};
  // only what he changed is sent, with what the card showed: an order
  // that filled meanwhile is refused, never regrown
  var body={op:'move',order_id:c.id,was_price:Math.round(w.px*100000)/1000,was_size:w.qty};
@@ -490,10 +494,13 @@ function doMove(){var n=nums();if(!n)return;var c=window._card,w=window._shown||
  if(body.px==null&&body.qty==null){alert('change the price or the size first');return;}
  if(!confirm('Change to '+(body.px!=null?n[0]:Math.round(w.px*1000)/10)+'¢ × '+(body.qty!=null?n[1]:w.qty)+'?'))return;
  busy(true,'Changing… (up to 15 s)');
- post(body,function(r){if(r.ok&&r.id&&same()){window._card={kind:'order',id:r.id};window._tapCard=window._card;}done(r);});}
-function doCancel(){var c=window._card;if(!confirm('Cancel this order?'))return;
+ post(body,function(r){
+  // the card follows the order to its new id, only if he is still on it
+  if(r.ok&&r.id&&window._card===c){c={kind:'order',id:r.id};window._card=c;}
+  done(r,c);});}
+function doCancel(){if(wait())return;var c=window._card;if(!confirm('Cancel this order?'))return;
  busy(true,'Cancelling…');
- post({op:'cancel',order_id:c.id},function(r){var here=same();busy(false);
+ post({op:'cancel',order_id:c.id},function(r){var here=!!window._card&&window._card===c;busy(false);
   if(r.ok||!here){if(here)closeSheet();else window._said=null;load();alert(r.note);}else say(r);});}
 function doWatch(m,on){
  post({op:'watch',market:m,on:on},function(r){
@@ -506,7 +513,7 @@ function doWatch(m,on){
 var SSORTS=[['pct','Best %'],['day','Best $'],['bid_pct','Bid %'],['ask_pct','Ask %'],['bid_day','Bid $'],['ask_day','Ask $']];
 function pickG(k,on){window._picks=window._picks||{};window._picks[k]=on?1:0;}
 function allG(on){var j=window._scanJ||{};window._picks={};(j.groups||[]).forEach(function(g){window._picks[g.key]=on?1:0;});drawScan(j);}
-function setSS(k){LSset('ssort',k);refreshCard(true);}
+function setSS(k){LSset('ssort',k);window._revealSS=1;refreshCard(true);}
 function scanRow(r){
  function ns(sd,n){var t='<span class="t '+(sd==='BUY'?'bid':'ask')+'">'+side(sd)+'</span>';
   if(!(n&&n.day>0))return '<div class="side">'+t+'<span class="so"><span class="new">'+esc((n&&n.why)||'—')+'</span></span><span></span><span></span></div>';
@@ -573,7 +580,10 @@ function doScan(){
  if(!(s>0)){alert('Stake must be a number of dollars');return;}
  LSset('stake',''+s);
  post({op:'scan',groups:keys,stake:s},function(r){
-  if(!r.ok){alert(r.note||'');return;}
+  if(!r.ok)alert(r.note||'');
+  // poll until a read says how it stands — even when this answer was lost
+  // or a scan was already running; a read that fails keeps polling
+  var sj=window._scanJ;if(sj&&sj.ok!==false)sj.state='running';
   refreshCard(true);load();});
 }
 

@@ -102,14 +102,27 @@ long and accreted, so search it rather than reading it through.
   politics reward programs (program id, date stamp off) paying on markets
   discovery found under the politics and elections tags — the
   "end points" read as those programs — with market counts and the pool
-  per event; he ticks programs and a stake; the scan re-reads their terms
-  (signed api), reads their books over up to THREE extra websocket
-  connections (10 subscriptions x 200 markets each, closed when done;
-  6,000 markets at most, the smallest pools past that counted and named),
-  a few one-try gateway reads for stragglers, and ranks every side by the
-  new-order figure; a star tracks a market (state["watch"], saved).
+  per event; he ticks programs and a stake; the scan re-reads the terms
+  not read in the last half hour (signed api, one quick try a request,
+  stopping at the first failure or after 150 s), reads their books over
+  up to THREE extra websocket connections (10 subscriptions x 200 markets
+  each, closed when done; 6,000 markets at most, the smallest pools past
+  that counted and named), a few one-try gateway reads for stragglers
+  (stopping after three failures or 30 s), all inside five minutes, and
+  ranks every side by the new-order figure; a star tracks a market
+  (state["watch"], with untracks kept as dated notes in state["unwatch"]
+  so a deploy's two copies merge his list by whichever came later).
   Tracking only lists a market and keeps its book and terms fresh;
   NOTHING about the list, the scan or tracking places, moves or cancels.
+  A market a full discovery (or a read of his event) listed open in the
+  last seven hours opens without the throttled market_details check;
+  older, the check runs. Three short discoveries in a row that agree are
+  taken as the new whole list (resolved races leave it). The upload hold
+  is saved with the state ("hold"), so a restart inside it still merges
+  the old copy's last save, and a failed read of that save keeps the hold
+  (no upload, no payout check) for up to ten passes before going on.
+  The page takes one tap at a time and gives each answer to the card it
+  came from.
   Discovery now keeps every open politics market's event
   (state["universe"]) and re-reads all their terms after each run (the
   sweep). The two book streams now carry 1,000 markets each (books only).
