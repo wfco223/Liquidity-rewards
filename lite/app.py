@@ -49,7 +49,8 @@ from collections import deque
 from v3.api import GATEWAY, TRADE_API, Client, DEAD_ORDER_STATES, events_of
 from v3.alerts import Alerts
 from v3.books import BookCache
-from v3.estimator import BOOK_MAX_AGE, MAX_GAP_S, VERIFIED_MAX_S, Estimator, et_day, top_up_book
+from v3.estimator import (BOOK_MAX_AGE, HISTORY_DAYS, MAX_GAP_S, VERIFIED_MAX_S, Estimator,
+                          et_day, top_up_book)
 from v3.intents import BUY_LONG, BUY_SHORT, REST_SIDE, SELL_LONG, SELL_SHORT, capital_at_risk
 from v3.names import Names, disambiguate, name_from_market
 from v3.orders import QTY_MAX, OrderDesk, snap_price
@@ -605,6 +606,8 @@ class App:
             if not self.universe and st.get("universe"):
                 self.universe = {str(s): str(e or "") for s, e in st["universe"].items()}
                 self._rebuild_members()
+            self._merge_pay(st)
+            self._merge_history(st.get("est") or {})
         with self.mem_lock:
             self.rewards_seen = {**seen, **self.rewards_seen}
             self.paid_seen = {**paid, **self.paid_seen}
@@ -636,8 +639,78 @@ class App:
             self.paid_seen.update(v3.get("paid_seen") or {})
         e3 = v3.get("est_politics") or {}
         if e3.get("day") == self.est.day and (e3.get("last_ts") or 0) > (self.est.last_ts or 0):
-            self.est = Estimator.from_dict(e3)
+            new = Estimator.from_dict(e3)
+            # lite's own closed days stay; 3.0's fill the days lite lacks
+            days = {str(h.get("day")): h for h in new.history}
+            days.update({str(h.get("day")): h for h in self.est.history})
+            new.history = [days[d] for d in sorted(days)][-HISTORY_DAYS:]
+            dots = {round(float(x[0]), 1): x for x in list(self.est.dots) + list(new.dots)}
+            new.dots = [dots[t] for t in sorted(dots)][-2880:]     # the meter's own cap
+            self.est = new
+        self._fold_v3_pay(v3)
         self.note("caught up from 3.0's newer save")
+
+    def _merge_pay(self, st: dict) -> None:
+        """Another save's pay records folded into this copy's, what this
+        copy learned since winning where both have a value."""
+        for k, v in (st.get("claims") or {}).items():
+            self.claims[str(k)] = max(self.claims.get(str(k), 0.0), float(v or 0.0))
+        self.actuals_by_day = {**{str(d): float(v) for d, v in (st.get("actuals_by_day") or {}).items()},
+                               **self.actuals_by_day}
+        for d, t in (st.get("posting_last") or {}).items():
+            self.posting_last[str(d)] = max(self.posting_last.get(str(d), 0.0), float(t or 0.0))
+        if float(st.get("pay_checked_at") or 0.0) > self.pay_checked_at:
+            self.pay_checked_at = float(st.get("pay_checked_at") or 0.0)
+            self.pay_progress = list(st.get("pay_progress") or [])
+        rl = st.get("rw_last")
+        if rl and float(rl.get("at") or 0.0) > float((self.rw_last or {}).get("at") or 0.0):
+            self.rw_last = rl
+        if not self.pay_seeded and st.get("pay_seeded"):
+            self.pay_seeded = True
+            self.v3_cut = str(st.get("v3_cut") or "")
+            self.est_v3 = {str(d): float(v) for d, v in (st.get("est_v3") or {}).items()}
+        if len(self.claims) > CLAIMS_CAP:
+            for k in sorted(self.claims)[:len(self.claims) - CLAIMS_CAP]:
+                del self.claims[k]
+
+    def _merge_history(self, e: dict) -> None:
+        """The closed days another save's meter has and this one lacks —
+        its running day too, once this meter has moved past it. This
+        meter's running day is its own."""
+        have = {str(h.get("day")) for h in self.est.history}
+        add = [h for h in (e.get("history") or []) if str(h.get("day")) not in have]
+        d = str(e.get("day") or "")
+        if d and self.est.day and d < self.est.day and d not in have:
+            add.append({"day": d, "earned": float(e.get("earned") or 0.0),
+                        "stale_s": float(e.get("stale_s") or 0.0),
+                        "per_market": dict(e.get("per_market") or {})})
+        if add:
+            days = {str(h.get("day")): h for h in add}
+            days.update({str(h.get("day")): h for h in self.est.history})
+            self.est.history = [days[k] for k in sorted(days)][-HISTORY_DAYS:]
+
+    def _fold_v3_pay(self, v3: dict) -> None:
+        """3.0's newer save, back from a spell on it: its per-market claims
+        and day totals for the days lite has none, and its meters'
+        estimates for the days lite's meter has no record of."""
+        mine_days = {k.split("|", 1)[0] for k in self.claims if "|" in k}
+        for k, v in (v3.get("mkt_claim_day") or {}).items():
+            k = str(k)
+            if "|" in k and k.split("|", 1)[0] not in mine_days:
+                self.claims[k] = max(self.claims.get(k, 0.0), float(v or 0.0))
+        for d, v in (v3.get("actuals_by_day") or {}).items():
+            self.actuals_by_day.setdefault(str(d), round(float(v or 0.0), 2))
+        have = {str(h.get("day")) for h in self.est.history} | {self.est.day or ""}
+        for key, e in v3.items():
+            if not (key.startswith("est_") and isinstance(e, dict)):
+                continue
+            for h in e.get("history") or []:
+                d = str(h.get("day") or "")
+                if d and d not in have and d not in self.est_v3:
+                    self.est_v3[d] = round(self.est_v3.get(d, 0.0) + float(h.get("earned") or 0.0), 4)
+        if len(self.claims) > CLAIMS_CAP:
+            for k in sorted(self.claims)[:len(self.claims) - CLAIMS_CAP]:
+                del self.claims[k]
 
     def from_dict(self, st: dict) -> None:
         if st.get("est"):
@@ -1367,15 +1440,18 @@ class App:
         """day -> market -> what the meter claimed: the closed days' own
         record (exact at the close) and the running record, the larger."""
         out: dict[str, dict[str, float]] = {}
-        for h in list(self.est.history):
-            for m, v in (h.get("per_market") or {}).items():
-                out.setdefault(str(h.get("day")), {})[m] = float(v or 0.0)
         for key, v in list(self.claims.items()):
             if "|" not in key:
                 continue
             d, m = key.split("|", 1)
+            out.setdefault(d, {})[m] = float(v or 0.0)
+        for h in list(self.est.history):
+            d = str(h.get("day"))
+            if self.v3_cut and d < self.v3_cut and d in out:
+                continue        # 3.0's days, graded on 3.0's own claims as its page did
             dd = out.setdefault(d, {})
-            dd[m] = max(dd.get(m, 0.0), float(v or 0.0))
+            for m, v in (h.get("per_market") or {}).items():
+                dd[m] = max(dd.get(m, 0.0), float(v or 0.0))
         return out
 
     def _mark_posting(self, agg: dict, now: float) -> None:
@@ -1435,9 +1511,10 @@ class App:
                                              float(h.get("stale_s") or 0.0))
         if self.est.day:
             est_by_day[self.est.day] = (self.est.earned, self.est.stale_s)
-        # before the switch, every one of 3.0's meters, as its page summed them
+        # before the switch, every one of 3.0's meters, as its page summed
+        # them; after it, 3.0's only on a day lite's meter has no record of
         for d, v in self.est_v3.items():
-            if self.v3_cut and d < self.v3_cut:
+            if (self.v3_cut and d < self.v3_cut) or d not in est_by_day:
                 est_by_day[d] = (v, est_by_day.get(d, (0.0, 0.0))[1])
         claims = self._claims_by_day()
         with self.mem_lock:

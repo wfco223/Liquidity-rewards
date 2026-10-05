@@ -250,3 +250,54 @@ class TestThePayReview(unittest.TestCase):
         app.boot_ts = time.time() - 400
         r = app.check_payouts_now()
         self.assertIn("at", r)
+
+
+class TestTheFinalCheck(unittest.TestCase):
+    """What the final check found (2026-10-05)."""
+
+    def test_a_late_read_of_its_own_save_keeps_the_pay_records_and_closed_days(self):
+        app, c = make()
+        st = {"saved_at": 1.0, "claims": {"2026-10-04|m": 3.0}, "actuals_by_day": {"2026-10-04": 5.0},
+              "posting_last": {"2026-10-04": 100.0}, "pay_checked_at": 100.0,
+              "rw_last": {"at": 100.0, "new_count": 1}, "pay_seeded": True, "v3_cut": "2026-10-04",
+              "est_v3": {"2026-10-03": 9.0},
+              "est": {"day": "2026-10-05", "history": [{"day": "2026-10-04", "earned": 33.89}]}}
+        app.est.day = "2026-10-06"
+        app._merge_late(st)
+        out = app.to_dict()
+        self.assertEqual(out["claims"]["2026-10-04|m"], 3.0)
+        self.assertEqual(out["actuals_by_day"]["2026-10-04"], 5.0)
+        self.assertTrue(out["pay_seeded"])
+        self.assertEqual(out["rw_last"]["at"], 100.0)
+        days = {h["day"]: h["earned"] for h in app.est.history}
+        self.assertEqual(days["2026-10-04"], 33.89)
+        self.assertIn("2026-10-05", days)              # the save's running day, now closed
+
+    def test_3_0s_days_are_graded_on_3_0s_claims_alone(self):
+        app, c = make()
+        app.v3_cut = "2026-10-04"
+        app.claims = {"2026-09-30|a": 1.0, "2026-10-04|a": 1.0}
+        app.est.history = [{"day": "2026-09-30", "per_market": {"a": 5.0}},
+                           {"day": "2026-10-04", "per_market": {"a": 5.0}}]
+        cl = app._claims_by_day()
+        self.assertEqual(cl["2026-09-30"]["a"], 1.0)    # 3.0's page's figure
+        self.assertEqual(cl["2026-10-04"]["a"], 5.0)    # the switch day: the larger
+
+    def test_back_from_3_0_keeps_lites_closed_days(self):
+        from lite.tests.test_lite import FakeStore
+        app, c = make()
+        app.est.day = "2026-10-09"
+        app.est.last_ts = 100.0
+        app.est.history = [{"day": "2026-10-04", "earned": 33.89}, {"day": "2026-10-08", "earned": 40.0}]
+        app.seed_store = FakeStore(head="h2", remote={
+            "saved_at": 9e9, "rewards_seen": {}, "paid_seen": {},
+            "est_politics": {"day": "2026-10-09", "last_ts": 200.0, "earned": 5.0,
+                             "history": [{"day": "2026-10-04", "earned": 28.95}]},
+            "mkt_claim_day": {"2026-10-09|m": 2.0}})
+        app.v3_head = "h1"
+        app._catch_up_from_v3({"saved_at": 1.0})
+        days = {h["day"]: h["earned"] for h in app.est.history}
+        self.assertEqual(days["2026-10-04"], 33.89)    # lite's, not 3.0's partial day
+        self.assertEqual(days["2026-10-08"], 40.0)
+        self.assertEqual(app.est.earned, 5.0)          # 3.0's newer running day
+        self.assertEqual(app.claims["2026-10-09|m"], 2.0)

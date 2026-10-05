@@ -160,7 +160,13 @@ long and accreted, so search it rather than reading it through.
   ["est_v3"], used for days before state["v3_cut"], the ET day of that
   save). Until any day total is read the tab says so, never "$0.00".
   "Check now"'s answer shows until a newer check lands. New rows list the
-  newest day first, biggest first (3.0's order).
+  newest day first, biggest first (3.0's order). Days before v3_cut are
+  graded on 3.0's claims alone (its page's figures); the switch day and
+  after take the larger of the running record and the closed day's own.
+  A late read of its own save folds in the pay records and the meter's
+  closed days this copy lacks; coming back from a spell on 3.0 keeps
+  lite's closed days and takes 3.0's claims, totals and estimates only for
+  the days lite has none of.
 - STATUS.md is the phone-readable front page: one ✅/❌ freshness line up
   top, summary before detail, plain-English explanations of every number.
 - The live monitor (live/monitor.py) runs on DigitalOcean from the `deploy`
