@@ -397,7 +397,9 @@ function sheet(html){
  var left=rowKeep('ssorts');
  s.innerHTML=html;
  rowBack('ssorts',left,window._revealSS);window._revealSS=0;
- if(keep){var e=document.getElementById(keep[0]);if(e){e.value=keep[1];
+ if(keep){var e=document.getElementById(keep[0]);if(e){
+  // what he is typing stays, and counts as typed: a change sends it
+  if(e.value!==keep[1]){e.value=keep[1];window._typed=window._typed||{};window._typed[keep[0]]=keep[1];}
   try{e.focus();e.setSelectionRange(e.value.length,e.value.length);}catch(x){}}}
 }
 function closeSheet(){window._card=null;window._from=null;['sheet','scrim'].forEach(function(i){var e=document.getElementById(i);if(e)e.remove();});}

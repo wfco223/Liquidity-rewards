@@ -168,3 +168,36 @@ class TestTheRoutes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestTheStop(unittest.TestCase):
+    def test_a_check_still_reading_when_the_stop_comes_records_and_pushes_nothing(self):
+        app, c = make()
+        app.rewards_seen = {"old|m": 1.0}
+        now = time.time()
+        c.earn = [row(records.utc_day(now, 1), M, 2.0)]
+        real = c.earnings
+
+        def earnings(start):
+            app.stopping = "signal 15"           # the stop arrives during the read
+            return real(start)
+        c.earnings = earnings
+        self.assertIsNone(app.check_rewards(now, write_file=False))
+        self.assertEqual(app.alerts.sent, [])
+        self.assertNotIn(f"{records.utc_day(now, 1)}|{M}", app.rewards_seen)
+
+    def test_the_stop_waits_for_a_check_past_its_read(self):
+        import threading
+        app, c = make()
+        app.upload_hold = app.hold_pending = False
+        app.rw_lock.acquire()
+        order = []
+
+        def finish():
+            time.sleep(0.3)
+            order.append("check done")
+            app.rw_lock.release()
+        threading.Thread(target=finish).start()
+        app.shutdown_save("signal 15")
+        order.append("stop saved")
+        self.assertEqual(order, ["check done", "stop saved"])

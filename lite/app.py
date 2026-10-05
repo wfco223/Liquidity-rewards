@@ -82,6 +82,8 @@ GHOST_S = 600.0            # a cancelled id the list still shows is hidden this 
 EVENT_LOOKUP_S = 600.0     # one event-size lookup a market per this
 STOP_TAP_WAIT_S = 20.0     # the stop waits this long for a tap in flight
 STOP_SAVE_WAIT_S = 20.0    # ...and this long for its upload (launcher allows 45)
+STOP_RW_WAIT_S = 5.0       # ...and this long for a payout check past its read to finish
+STOP_TOTAL_S = 42.0        # all of it inside the launcher's 45
 DOTS_SENT_S = 6 * 3600.0 + 600.0
 STAKE_DEFAULT = 50.0       # the money a "new" figure assumes, unless he sets his own
 STAKE_MAX = 5000.0
@@ -1215,6 +1217,10 @@ class App:
         except Exception as e:  # noqa: BLE001
             self.note(f"payouts: {e}")
             return None
+        if self.stopping:
+            # the stop save may already be taken: nothing is recorded or
+            # pushed now, and the next copy finds these rows itself
+            return None
         if self.seeded_v3 and not self.seed_caught_up:
             # 3.0 ran on for a minute after the seed was read and may
             # have pushed rows in it: its final word wins
@@ -2032,10 +2038,15 @@ class App:
         halted: this app keeps no order records a late cancel could
         contradict, and an in-flight change must be free to finish."""
         self.stopping = why
+        t_end = self.clock() + STOP_TOTAL_S
         got_tap = self.tap_lock.acquire(timeout=STOP_TAP_WAIT_S)
         deadline = self.clock() + 5.0
         while self.busy and self.clock() < deadline:
             self._sleep(0.2)
+        # a payout check past its read finishes (memory, save, push) before
+        # the snapshot; one still reading gives up when it sees the stop
+        got_rw = self.rw_lock.acquire(
+            timeout=max(min(STOP_RW_WAIT_S, t_end - self.clock() - 10.0), 0.1))
         try:
             if self.upload_hold or self.hold_pending:
                 # stopped inside its hold: the branch still carries the old
@@ -2049,9 +2060,11 @@ class App:
                     return
             self.upload_hold = False
             self.save(force_remote=True)
-            self.store.wait_remote(STOP_SAVE_WAIT_S)
+            self.store.wait_remote(max(min(STOP_SAVE_WAIT_S, t_end - self.clock()), 3.0))
         except Exception as e:  # noqa: BLE001
             print(f"lite: stop save failed: {e}", flush=True)
         finally:
+            if got_rw:
+                self.rw_lock.release()
             if got_tap:
                 self.tap_lock.release()
