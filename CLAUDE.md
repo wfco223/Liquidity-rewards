@@ -117,12 +117,21 @@ long and accreted, so search it rather than reading it through.
   A market a full discovery (or a read of his event) listed open in the
   last seven hours opens without the throttled market_details check;
   older, the check runs. Three short discoveries in a row that agree are
-  taken as the new whole list (resolved races leave it). The upload hold
-  is saved with the state ("hold"), so a restart inside it still merges
-  the old copy's last save, and a failed read of that save keeps the hold
-  (no upload, no payout check) for up to ten passes before going on.
-  The page takes one tap at a time and gives each answer to the card it
-  came from.
+  taken as the new whole list (resolved races leave it) — but only reads
+  in which every tag answered (discover() names a tag whose feed failed).
+  The upload hold is saved with the state ("hold"); a restart inside it
+  keeps the hold if EITHER the copy it restores or its own disk copy says
+  so, and folds its disk copy's own taps back in. A failed read of the
+  old copy's save keeps the hold (no upload, no payout check) for up to
+  ten passes before going on. A copy stopped inside its hold merges the
+  old copy's last save before its stop upload, and if it cannot read it
+  saves to its disk only, never over the old copy's word; no payout
+  check runs once stopping. The page runs at most one placement or
+  change and one cancel at a time (a cancel may run beside a placement,
+  as the server allows), never two on one order; each answer goes to the
+  card it came from, his own tap's answer always redraws its card, and a
+  change is refused until the card has read the order (the server too
+  refuses a move without the card's was_price/was_size).
   Discovery now keeps every open politics market's event
   (state["universe"]) and re-reads all their terms after each run (the
   sweep). The two book streams now carry 1,000 markets each (books only).

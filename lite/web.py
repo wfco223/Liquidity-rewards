@@ -375,10 +375,14 @@ function sheet(html){
  var left=rowKeep('ssorts');
  s.innerHTML=html;
  rowBack('ssorts',left,window._revealSS);window._revealSS=0;
- if(keep){var e=document.getElementById(keep[0]);if(e){e.value=keep[1];}}
+ if(keep){var e=document.getElementById(keep[0]);if(e){e.value=keep[1];
+  try{e.focus();e.setSelectionRange(e.value.length,e.value.length);}catch(x){}}}
 }
 function closeSheet(){window._card=null;window._from=null;['sheet','scrim'].forEach(function(i){var e=document.getElementById(i);if(e)e.remove();});}
-function say(j){window._said=j;refreshCard();load();}
+function say(j){window._said=j;
+ var n=document.getElementById('said');
+ if(n)n.innerHTML='<div class="note '+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';
+ refreshCard(true,true);load();}
 function said(){var j=window._said;return '<div id="said">'+(j?'<div class="note '+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>':'')+'</div>';}
 function ohead(o){return '<div class="big"><span class="'+(o.side==='BUY'?'ok':'bad')+'">'+side(o.side)+'</span> '+ct(o.price)+' × '+sz(o.size)+'</div>';}
 function openOrder(id){window._card={kind:'order',id:id};window._said=null;window._typed={};window._shown=null;
@@ -397,10 +401,12 @@ function openScan(){window._card={kind:'scan'};window._said=null;window._typed={
 function typed(k){var e=document.getElementById(k);if(e)window._typed[k]=e.value;}
 function val(k,d){var t=window._typed||{};return t[k]!=null?t[k]:d;}
 function edited(){var t=window._typed||{};return t.px!=null||t.qty!=null;}
-function refreshCard(force){
- var c=window._card;if(!c||window._busy)return;
+function refreshCard(force,mine){
+ var c=window._card;if(!c||busyHere())return;
  // an answer that lands while he types is dropped: the next read redraws
- function ok(){return window._card===c&&!window._busy&&!typing();}
+ // a poll's answer that lands while he types is dropped (the next read
+ // redraws); the answer to his own tap ('mine') is never dropped
+ function ok(){return window._card===c&&!busyHere()&&(mine||!typing());}
  if(c.kind==='order')get('/math.json?id='+encodeURIComponent(c.id),function(j){if(ok())drawOrder(j);});
  else if(c.kind==='market')get('/book.json?m='+encodeURIComponent(c.m)+'&stake='+stake(),function(j){if(ok())drawMarket(j);});
  else if(c.kind==='scan'){
@@ -408,7 +414,12 @@ function refreshCard(force){
   var sj=window._scanJ;if(sj&&sj.state!=='running'&&!force)return;
   get('/scan.json?sort='+LS('ssort','pct'),function(j){if(ok())drawScan(j);});}
 }
-function btns(html){return window._busy?html.replace(/<button(?! class="close")/g,'<button disabled'):html;}
+// a placement or change in flight (_pm) and a cancel in flight (_cx), each
+// with the card it came from: the server runs a cancel beside a placement,
+// so the page does too, but never two of one kind, nor two on one card
+function sameCard(a,b){return !!a&&!!b&&a.kind===b.kind&&(a.id||a.m||'')===(b.id||b.m||'');}
+function busyHere(){var c=window._card;return sameCard(c,window._pm)||sameCard(c,window._cx);}
+function btns(html){return busyHere()?html.replace(/<button(?! class="close")/g,'<button disabled'):html;}
 function drawOrder(j){
  var o=j.order||(((window._d||{}).orders||[]).filter(function(x){return x.id===(window._card||{}).id;})[0]);
  if(!j.ok){
@@ -467,15 +478,21 @@ function useNew(sd){var n=((window._mk||{}).new||{})[sd];if(!n||n.px==null)retur
 function pick(s){window._side=s;if(window._mk)drawMarket(window._mk);}
 function nums(){var p=parseFloat(document.getElementById('px').value),q=parseFloat(document.getElementById('qty').value);
  if(!(p>0)||!(q>0)){alert('price and size');return null;}return [p,q];}
-function busy(on,note){window._busy=on;
+function busy(kind,on,note,card){
+ if(kind==='pm')window._pm=on?card:null;else window._cx=on?card:null;
+ if(window._card!==card)return;        // he is on another card: leave it alone
  if(on)window._said={ok:true,note:note};
  var s=document.getElementById('sheet');if(s)s.querySelectorAll('button:not(.close)').forEach(function(b){b.disabled=on;});
  if(on){var n=document.getElementById('said');var t='<div class="note ok">'+esc(note)+'</div>';
   if(n)n.innerHTML=t;else if(s)s.insertAdjacentHTML('beforeend',t);}}
-function wait(){if(window._busy){alert('Your last tap has not answered yet — wait for it.');return true;}return false;}
-function done(r,mine){var here=!!window._card&&window._card===mine;busy(false);window._typed={};window._shown=null;
+function wait(){
+ if(window._pm){alert('Your last placement or change has not answered yet — wait for it.');return true;}
+ if(busyHere()){alert('Your last tap here has not answered yet — wait for it.');return true;}
+ return false;}
+function done(r,mine){var here=!!window._card&&window._card===mine;busy('pm',false,'',mine);
  // a card he closed, or left for another, mid-tap still gets its answer
- if(!here){window._said=null;alert(r.note||'');load();return;}
+ if(!here){alert(r.note||'');load();return;}
+ window._typed={};window._shown=null;
  say(r);}
 function doPlace(){if(wait())return;var n=nums();if(!n)return;var c=window._card,sd=window._side||'BUY',j=window._mk||{};
  // what he holds, less what his orders already offer, is what an ask
@@ -483,9 +500,13 @@ function doPlace(){if(wait())return;var n=nums();if(!n)return;var c=window._card
  var free=sd==='BUY'?(j.free_short||0):(j.free_long||0);
  var cost=n[1]<=free+1e-9?0:(sd==='BUY'?n[0]/100*n[1]:(1-n[0]/100)*n[1]);
  if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(cost?' — ties up '+usd(cost):' — from what you hold')+'?'))return;
- busy(true,'Placing…');
+ busy('pm',true,'Placing…',c);
  post({op:'place',market:c.m,side:sd,px:n[0],qty:n[1]},function(r){done(r,c);});}
-function doMove(){if(wait())return;var n=nums();if(!n)return;var c=window._card,w=window._shown||{},t=window._typed||{};
+function doMove(){if(wait())return;
+ // a change carries what the card showed; a card not drawn from a read
+ // of the order yet has nothing to carry
+ if(!window._shown){alert('Still reading this order — try again in a moment.');refreshCard(true,true);return;}
+ var n=nums();if(!n)return;var c=window._card,w=window._shown,t=window._typed||{};
  // only what he changed is sent, with what the card showed: an order
  // that filled meanwhile is refused, never regrown
  var body={op:'move',order_id:c.id,was_price:Math.round(w.px*100000)/1000,was_size:w.qty};
@@ -493,15 +514,18 @@ function doMove(){if(wait())return;var n=nums();if(!n)return;var c=window._card,
  if(t.qty!=null)body.qty=n[1];
  if(body.px==null&&body.qty==null){alert('change the price or the size first');return;}
  if(!confirm('Change to '+(body.px!=null?n[0]:Math.round(w.px*1000)/10)+'¢ × '+(body.qty!=null?n[1]:w.qty)+'?'))return;
- busy(true,'Changing… (up to 15 s)');
+ busy('pm',true,'Changing… (up to 15 s)',c);
  post(body,function(r){
   // the card follows the order to its new id, only if he is still on it
   if(r.ok&&r.id&&window._card===c){c={kind:'order',id:r.id};window._card=c;}
   done(r,c);});}
-function doCancel(){if(wait())return;var c=window._card;if(!confirm('Cancel this order?'))return;
- busy(true,'Cancelling…');
- post({op:'cancel',order_id:c.id},function(r){var here=!!window._card&&window._card===c;busy(false);
-  if(r.ok||!here){if(here)closeSheet();else window._said=null;load();alert(r.note);}else say(r);});}
+function doCancel(){var c=window._card;
+ if(window._cx){alert('Your last cancel has not answered yet — wait for it.');return;}
+ if(busyHere()){alert('Your last tap on this order has not answered yet — wait for it.');return;}
+ if(!confirm('Cancel this order?'))return;
+ busy('cx',true,'Cancelling…',c);
+ post({op:'cancel',order_id:c.id},function(r){var here=!!window._card&&window._card===c;busy('cx',false,'',c);
+  if(r.ok||!here){if(here)closeSheet();load();alert(r.note);}else say(r);});}
 function doWatch(m,on){
  post({op:'watch',market:m,on:on},function(r){
   if(!r.ok){alert(r.note||'');return;}
@@ -616,6 +640,11 @@ def handle_op(app, body: dict) -> dict:
         return app.place(str(body.get("market") or ""), body.get("side"),
                          body.get("px"), body.get("qty"))
     if op == "move":
+        if body.get("was_price") in (None, "") or body.get("was_size") in (None, ""):
+            # the page always sends what its card showed: without it a fill
+            # in between could not be told from his change
+            return {"ok": False, "note": "the card had not read this order yet — "
+                                         "close it, reopen it and try again"}
         return app.move(str(body.get("order_id") or ""), body.get("px"), body.get("qty"),
                         was_price=body.get("was_price"), was_size=body.get("was_size"))
     if op == "cancel":

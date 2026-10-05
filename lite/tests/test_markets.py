@@ -634,3 +634,94 @@ class TestTheSecondReview(unittest.TestCase):
         self.assertIn(DEM, seen)
         row = next(r for r in app.scanner.rows if r["m"] == DEM)
         self.assertAlmostEqual(row["pool"], 25 / 2 / 2)
+
+
+class TestTheFinalReview(unittest.TestCase):
+    """What the last review of the fixes found (2026-10-05)."""
+
+    def test_a_restart_keeps_the_hold_its_own_disk_copy_had_when_the_upload_is_newer(self):
+        app, c = make()
+        mine = app.to_dict()
+        mine.update(hold=True, saved_at=100.0, watch={M2: 90.0}, placed_ids={"B1": 95.0})
+        theirs = app.to_dict()
+        theirs.update(hold=False, saved_at=120.0, watch={}, placed_ids={"A1": 110.0})
+
+        class Both(FakeStore):
+            local_found = True
+            last_source = "remote"
+
+            def load_local(self):
+                return mine
+        app.store = Both(best=theirs)
+        app.restore()
+        self.assertTrue(app.upload_hold)            # the hold its own disk copy had
+        self.assertIn(M2, app.watch)                 # his track made during the hold
+        self.assertIn("B1", app.placed_ids)
+        self.assertIn("A1", app.placed_ids)
+
+    def test_a_stop_inside_the_hold_merges_the_old_copys_save_first(self):
+        app, c = make()
+        app.upload_hold = app.hold_pending = True
+        app.rewards_seen = {"2026-10-04|m": 1.0}
+        app.store.remote = {"saved_at": 1, "rewards_seen": {"2026-10-04|m": 1.5, "2026-10-04|n": 2.0}}
+        app.shutdown_save("signal 15")
+        st, forced = app.store.saved[-1]
+        self.assertTrue(forced)
+        self.assertEqual(st["rewards_seen"]["2026-10-04|m"], 1.5)
+        self.assertIn("2026-10-04|n", st["rewards_seen"])
+
+    def test_a_stop_inside_the_hold_that_cannot_read_the_old_save_uploads_nothing(self):
+        app, c = make()
+        app.upload_hold = app.hold_pending = True
+
+        class Present(FakeStore):
+            token = "t"
+
+            def _gh(self, method, path):
+                return mock.Mock(status_code=200)
+        app.store = Present(remote=None)
+        app.shutdown_save("signal 15")
+        self.assertEqual(app.store.saved, [])        # nothing uploaded over the old copy's word
+        self.assertEqual(len(app.store.local), 1)    # its own state kept on its disk
+
+    def test_no_payout_check_once_stopping(self):
+        app, c = make()
+        app.stopping = "signal 15"
+        c.earn = [{"date": "2026-10-04", "market": M, "program_type": "lp",
+                   "reward_usd": 1.0, "status": "PAID"}]
+        app.records_once(app.boot_ts + 400)
+        self.assertEqual(app.rewards_seen, {})
+
+    def test_a_discovery_missing_a_tag_never_counts_toward_a_smaller_list(self):
+        from lite.app import Found
+        app, c = make()
+        full = {f"p{i}": {"event_n": 2, "name": "", "event": "e"} for i in range(500)}
+        part = Found(dict(list(full.items())[:200]))
+        part.failed = ("politics",)
+        with mock.patch("lite.app.discover", return_value=full):
+            app.run_discover()
+        with mock.patch("lite.app.discover", return_value=part):
+            for _ in range(4):
+                self.assertFalse(app.run_discover())
+        self.assertEqual(len(app.universe), 500)
+
+    def test_discover_says_which_tag_failed(self):
+        app, c = make()
+
+        def events_by_tag(tag, max_pages=30):
+            if tag == "politics":
+                raise RuntimeError("503")
+            return [{"slug": EV, "title": "Oklahoma Senate", "markets": [{"slug": M}]}]
+        c.events_by_tag = events_by_tag
+        found = discover(c)
+        self.assertEqual(found.failed, ("politics",))
+        self.assertIn(M, found)
+
+    def test_a_change_without_what_the_card_showed_is_refused(self):
+        from lite.web import handle_op
+        app, c = make()
+        c.raw = [raw_order("O1", M, "BUY", 0.40, 100, "ORDER_INTENT_BUY_LONG")]
+        app._read_orders()
+        r = handle_op(app, {"op": "move", "order_id": "O1", "qty": 150})
+        self.assertFalse(r["ok"])
+        self.assertEqual(c.posts, [])

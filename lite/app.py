@@ -203,13 +203,20 @@ def basis(intent: str, price: float, size: float, side: str = "") -> float:
     return (1.0 - price) * size
 
 
+class Found(dict):
+    """discover()'s answer, with the tags whose feed failed on its first
+    page (their markets are missing from it)."""
+    failed: tuple = ()
+
+
 def discover(client) -> dict[str, dict]:
     """slug -> {event_n, name, event} for every open, non-econ politics
     market: v3/politics.discover's body, without the engine it sits
     beside. The event size divides the pool; without it no dollar figure
     is shown. The event's slug groups a market with the rest of its
     race."""
-    out: dict[str, dict] = {}
+    out = Found()
+    failed: list[str] = []
     order: list[str] = []
     for tag in TAGS:
         n_tag = 0
@@ -230,8 +237,10 @@ def discover(client) -> dict[str, dict]:
         except Exception:  # noqa: BLE001
             if n_tag:
                 raise       # a feed that died mid-way must not hand back a part
+            failed.append(tag)
             continue
     _group_sizes(out, order)
+    out.failed = tuple(failed)
     return out
 
 
@@ -423,12 +432,28 @@ class App:
                 if where == "absent":
                     break
                 self._sleep(2.0 * (i + 1))
-            self.upload_hold = (not getattr(self.store, "local_found", False)
-                                or bool((st or {}).get("hold")))
+            local_found = bool(getattr(self.store, "local_found", False))
+            # this container's own disk copy, when a newer upload (the old
+            # copy, still running out its overlap) beat it: its hold flag
+            # and its own taps must not be lost with it
+            own = None
+            if local_found and getattr(self.store, "last_source", "local") == "remote":
+                try:
+                    own = self.store.load_local()
+                except Exception:  # noqa: BLE001
+                    own = None
+            self.upload_hold = (not local_found or bool((st or {}).get("hold"))
+                                or bool((own or {}).get("hold")))
             self.hold_pending = self.upload_hold
             if st:
                 self.from_dict(st)
                 self.restored = f"own save of {st.get('saved_at')}"
+                if own:
+                    self._merge_watch(own.get("watch"), own.get("unwatch"))
+                    self.placed_ids = {**(own.get("placed_ids") or {}), **self.placed_ids}
+                    with self.mem_lock:
+                        self.rewards_seen = {**(own.get("rewards_seen") or {}), **self.rewards_seen}
+                        self.paid_seen = {**(own.get("paid_seen") or {}), **self.paid_seen}
                 self._catch_up_from_v3(st)
             elif where == "absent":
                 self._first_seed()
@@ -634,7 +659,7 @@ class App:
             else:
                 self.store.save_soon(st, force_remote=force_remote)
 
-    def end_upload_hold(self) -> bool:
+    def end_upload_hold(self, give_up: bool = True) -> bool:
         """The old copy has stopped: take its last word on the payout
         memory, order ids and tracked markets (its stop save), then upload
         as usual. A read that fails is not "nothing to merge": the hold
@@ -654,7 +679,7 @@ class App:
             self._merge_watch(remote.get("watch"), remote.get("unwatch"))
         elif self._branch_state(self.store) != "absent":
             self.hold_tries += 1
-            if self.hold_tries < HOLD_READ_TRIES:
+            if self.hold_tries < HOLD_READ_TRIES or not give_up:
                 if self.hold_tries == 1:
                     self.note("the old copy's last save could not be read — no upload or "
                               "payout check until it can")
@@ -1101,15 +1126,16 @@ class App:
             self.note(f"discover: {e}")
             return False
         short = bool(self.discover_n) and len(found) < 0.6 * self.discover_n
-        if short and found:
+        if short and found and not getattr(found, "failed", ()):
             # the exchange can really list fewer (races resolve): three
-            # short reads in a row that agree are the new whole list
+            # short reads in a row that agree are the new whole list — but
+            # only reads in which every tag answered
             self.short_seen = (self.short_seen + [len(found)])[-3:]
             if len(self.short_seen) == 3 and max(self.short_seen) <= 1.1 * min(self.short_seen):
                 self.note(f"discover: three reads agree on {len(found)} markets where the "
                           f"last full read had {self.discover_n} — taken as the whole list")
                 short = False
-        else:
+        elif not short:
             self.short_seen = []
         for s, r in found.items():
             self.event_n[s] = int(r["event_n"])
@@ -1211,7 +1237,8 @@ class App:
         so a slow exchange answer never holds up the book reads; none of
         it while the state is unread or the old copy may still run."""
         now = now if now is not None else self.clock()
-        if self.state_unread or self.restoring or now < self.boot_ts + BOOT_HOLD_S:
+        if (self.state_unread or self.restoring or self.stopping
+                or now < self.boot_ts + BOOT_HOLD_S):
             return
         if not self.end_upload_hold():
             return
@@ -1791,6 +1818,16 @@ class App:
         while self.busy and self.clock() < deadline:
             self._sleep(0.2)
         try:
+            if self.upload_hold or self.hold_pending:
+                # stopped inside its hold: the branch still carries the old
+                # copy's last word. Merge it first; one that cannot be read
+                # is left standing (this copy saves to its disk only) rather
+                # than overwritten with payout memory older than it
+                if not self.end_upload_hold(give_up=False):
+                    self.store.save_local(self.to_dict())
+                    print("lite: stop inside the hold, old save unread — saved to disk only",
+                          flush=True)
+                    return
             self.upload_hold = False
             self.save(force_remote=True)
             self.store.wait_remote(STOP_SAVE_WAIT_S)
