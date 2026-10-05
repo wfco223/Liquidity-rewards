@@ -596,7 +596,8 @@ class Client:
         return normalize_book(bids, asks,
                               fetched_at if fetched_at is not None else time.time())
 
-    def programs(self, slugs: list[str]) -> dict[str, dict]:
+    def programs(self, slugs: list[str], tries: int = 4,
+                 timeout: float = 20.0) -> dict[str, dict]:
         """Raw incentive programs for the given markets, keyed by slug.
         Batched (hundreds of symbols overflow the URL); each batch tries
         each host — api.polymarket.us needs the signed headers, the prod
@@ -612,7 +613,8 @@ class Client:
                 try:
                     j = self.get(host + "/v1/incentives", signed=(host == TRADE_API),
                                  path="/v1/incentives",
-                                 params={"symbols": batch, "page_size": 100}, timeout=20)
+                                 params={"symbols": batch, "page_size": 100},
+                                 timeout=timeout, tries=tries)
                     got = {}
                     for p in j.get("programs") or []:
                         s2 = p.get("marketSlug")

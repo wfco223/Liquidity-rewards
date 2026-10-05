@@ -90,7 +90,7 @@ class FakeClient:
     def gateway_hold(self):
         return 0.0
 
-    def programs(self, slugs):
+    def programs(self, slugs, tries=4, timeout=20.0):
         return {s: self.progs[s] for s in slugs if s in self.progs}
 
     def earnings(self, start):
