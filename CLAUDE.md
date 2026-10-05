@@ -74,6 +74,46 @@ long and accreted, so search it rather than reading it through.
   payout memory days old, so it can book his lite-period changes as
   fills and re-push old reward rows. Ask Claude first so that can be
   prepared.
+  THE MARKETS LIST, THE SCAN AND TRACKING (owner, 2026-10-05: "sort
+  between highest earning and highest current earning per dollar for an
+  order on the ask side and an order on the bid side, then also a sort by
+  market type where the house and senate collapse and below them are
+  states in alphabetical order ... I like it now where I only see markets
+  where I have orders or holdings. But have a button for me to scan for
+  new places to place orders. Give me a pop up with the politics end
+  points. Then show me the results of the scan and let me pick markets to
+  track. Also I'm in a market in an event but there are other sides or
+  other candidates in that event, show those ... give me a button to show
+  those at the top"; then "make the aesthetic a little less hacker and
+  more sleek and mainstream"). The orders and holdings lists became ONE
+  list of markets: his orders' markets, holdings worth $1, markets he
+  tracks, and every other open market of an event he has an order or a
+  $1 holding in. Each row shows, per side, his orders with what they earn
+  a day (the meter's figure) and per dollar behind them — an opening order
+  its collateral, an exit the shares it offers at its price, No priced at
+  one less the price — and on a side with no order of his, what a NEW
+  order of his stake (default $50, set in the scan pop-up, kept on the
+  phone) joining that side's best price would earn, never improving on
+  it. Sorts: Type (House, Senate, Governor, Other; each collapsible;
+  "National" first, then states A-Z, read from the slug), Bid $/day, Ask
+  $/day, Bid % per $, Ask % per $ — his orders first, then sides with no
+  order by the new-order figure. "No orders first" puts every market with
+  no order of his at the top. The SCAN pop-up lists the exchange's
+  politics reward programs (program id, date stamp off) paying on markets
+  discovery found under the politics and elections tags — the
+  "end points" read as those programs — with market counts and the pool
+  per event; he ticks programs and a stake; the scan re-reads their terms
+  (signed api), reads their books over up to THREE extra websocket
+  connections (10 subscriptions x 200 markets each, closed when done;
+  6,000 markets at most, the smallest pools past that counted and named),
+  a few one-try gateway reads for stragglers, and ranks every side by the
+  new-order figure; a star tracks a market (state["watch"], saved).
+  Tracking only lists a market and keeps its book and terms fresh;
+  NOTHING about the list, the scan or tracking places, moves or cancels.
+  Discovery now keeps every open politics market's event
+  (state["universe"]) and re-reads all their terms after each run (the
+  sweep). The two book streams now carry 1,000 markets each (books only).
+  The page has its own look: system font, light or dark with the phone.
 - STATUS.md is the phone-readable front page: one ✅/❌ freshness line up
   top, summary before detail, plain-English explanations of every number.
 - The live monitor (live/monitor.py) runs on DigitalOcean from the `deploy`
