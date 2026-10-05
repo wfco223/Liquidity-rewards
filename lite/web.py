@@ -56,7 +56,7 @@ body{margin:0;background:var(--bg);color:var(--text);
 .hero small{font-size:17px;font-weight:500;color:var(--sub);letter-spacing:0;margin-left:3px}
 .graph{margin:10px -4px 6px}
 .seg{display:inline-flex;background:var(--fill);border-radius:10px;padding:2px;gap:2px}
-.seg button{border:0;background:transparent;color:var(--text);font:600 13px/1 inherit;
+.seg button{border:0;background:transparent;color:var(--text);font-family:inherit;font-size:13px;line-height:1;font-weight:600;
  padding:7px 14px;border-radius:8px;cursor:pointer}
 .seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.14)}
 .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;
@@ -68,22 +68,24 @@ body{margin:0;background:var(--bg);color:var(--text);
 .sec-h h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0}
 .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;padding:2px 0;margin:6px 0}
 .chips::-webkit-scrollbar{display:none}
-.chip{flex:none;border:0;background:var(--fill);color:var(--text);font:600 13px/1 inherit;
+.chip{flex:none;border:0;background:var(--fill);color:var(--text);font-family:inherit;font-size:13px;line-height:1;font-weight:600;
  padding:9px 13px;border-radius:999px;cursor:pointer;white-space:nowrap}
 .chip.on{background:var(--text);color:var(--bg)}
 .chip.tog.on{background:var(--accent);color:#fff}
-.legend{font-size:12px;color:var(--sub);margin:2px 2px 0;display:flex;justify-content:space-between}
-.btn{border:0;border-radius:12px;background:var(--accent);color:#fff;font:600 15px/1 inherit;
+.legend{font-size:12px;color:var(--sub);margin:2px 2px 0;display:flex;flex-wrap:wrap;
+ justify-content:space-between;gap:2px 12px}
+.legend>span{white-space:nowrap}
+.btn{border:0;border-radius:12px;background:var(--accent);color:#fff;font-family:inherit;font-size:15px;line-height:1;font-weight:600;
  padding:12px 18px;cursor:pointer}
 .btn.small{font-size:14px;padding:9px 14px;border-radius:999px}
 .btn.gray{background:var(--fill);color:var(--text)}
 .btn.red{background:rgba(229,72,77,.12);color:var(--neg)}
 .btn:disabled{opacity:.45}
-input{font:16px/1.2 inherit;color:var(--text);background:var(--fill);border:1px solid transparent;
+input{font-family:inherit;font-size:16px;line-height:1.2;color:var(--text);background:var(--fill);border:1px solid transparent;
  border-radius:12px;padding:11px 12px;outline:none;min-width:0}
 input:focus{border-color:var(--accent);background:var(--card)}
 .ghead{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;
- color:var(--text);font:700 17px/1.2 inherit;padding:14px 16px;cursor:pointer;text-align:left}
+ color:var(--text);font-family:inherit;font-size:17px;line-height:1.2;font-weight:700;padding:14px 16px;cursor:pointer;text-align:left}
 .ghead .chev{flex:none;transition:transform .15s;color:var(--sub)}
 .ghead .chev.open{transform:rotate(90deg)}
 .ghead .gm{margin-left:auto;font-size:13px;font-weight:500;color:var(--sub)}
@@ -109,7 +111,7 @@ input:focus{border-color:var(--accent);background:var(--card)}
 .side .d{text-align:right;font-weight:650}
 .side .p{text-align:right;color:var(--sub)}
 .pill{border:0;background:var(--fill);color:var(--text);border-radius:8px;padding:4px 8px;
- font:600 13px/1.2 inherit;font-variant-numeric:tabular-nums;cursor:pointer}
+ font-family:inherit;font-size:13px;line-height:1.2;font-weight:600;font-variant-numeric:tabular-nums;cursor:pointer}
 .pill.ghost{background:transparent;color:var(--warn);padding:4px 0;font-weight:500}
 .new{color:var(--faint);font-size:12.5px}
 .bsheet{position:fixed;left:0;right:0;bottom:0;max-height:90vh;overflow:auto;z-index:20;
@@ -121,7 +123,7 @@ input:focus{border-color:var(--accent);background:var(--card)}
 .shead{display:flex;align-items:flex-start;gap:10px;margin:4px 0 2px}
 .shead .tt{font-size:19px;font-weight:700;letter-spacing:-.01em;flex:1;line-height:1.25}
 .close{border:0;background:var(--fill);color:var(--sub);border-radius:999px;width:30px;height:30px;
- font:600 15px/1 inherit;cursor:pointer;flex:none}
+ font-family:inherit;font-size:15px;line-height:1;font-weight:600;cursor:pointer;flex:none}
 .big{font-size:30px;font-weight:700;letter-spacing:-.02em;margin:6px 0 2px;font-variant-numeric:tabular-nums}
 .stats{display:flex;gap:18px;flex-wrap:wrap;margin:8px 0}
 .stats .v{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
@@ -148,7 +150,7 @@ input:focus{border-color:var(--accent);background:var(--card)}
 .chk .cm{font-size:12.5px;color:var(--sub);text-align:right;white-space:nowrap}
 .bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;margin:8px 0}
 .bar>div{height:100%;background:var(--accent);border-radius:3px;transition:width .3s}
-.link{border:0;background:transparent;color:var(--accent);font:600 13.5px/1 inherit;padding:4px 0;cursor:pointer}
+.link{border:0;background:transparent;color:var(--accent);font-family:inherit;font-size:13.5px;line-height:1;font-weight:600;padding:4px 0;cursor:pointer}
 .banner{background:var(--card);border-radius:14px;padding:12px 16px;margin:12px 0;color:var(--sub);font-size:14px}
 """
 
@@ -212,7 +214,7 @@ function graph(d,win){
 function win(sec){window._win=sec;if(window._d)draw(window._d);}
 
 // -- the list of markets --------------------------------------------------------
-var SORTS=[['type','Type'],['bid_day','Bid $/day'],['ask_day','Ask $/day'],['bid_pct','Bid % per $'],['ask_pct','Ask % per $']];
+var SORTS=[['type','Type'],['bid_day','Bid $'],['ask_day','Ask $'],['bid_pct','Bid %'],['ask_pct','Ask %']];
 var KINDS=['House','Senate','Governor','Other'];
 function sortKey(){var k=LS('sort','type');return SORTS.some(function(s){return s[0]===k;})?k:'type';}
 function setSort(k){LSset('sort',k);if(window._d)draw(window._d);}
@@ -278,10 +280,10 @@ function marketsHtml(d){
  var rows=(d.markets||[]).slice(),k=sortKey(),tot=0,nOrd=0;
  rows.forEach(function(r){tot+=rowDay(r);if(r.has)nOrd++;});
  var h='<div class="sec-h"><h2>Markets</h2><button class="btn small" onclick="openScan()">Scan</button></div>'
-  +'<div class="chips">'+SORTS.map(function(s){return '<button class="chip'+(k===s[0]?' on':'')+'" onclick="setSort(\''+s[0]+'\')">'+s[1]+'</button>';}).join('')+'</div>'
+  +'<div class="chips" id="sorts">'+SORTS.map(function(s){return '<button class="chip'+(k===s[0]?' on':'')+'" onclick="setSort(\''+s[0]+'\')">'+s[1]+'</button>';}).join('')+'</div>'
   +'<div class="chips"><button class="chip tog'+(noFirst()?' on':'')+'" onclick="toggleNo()">No orders first</button></div>'
   +'<div class="legend"><span>'+rows.length+' markets · '+nOrd+' with orders · '+usd(tot)+'/day</span>'
-  +'<span>$/day · % per $</span></div>'
+  +'<span>$ a day · % per $ a day</span></div>'
   +(d.orders_age>60?'<div class="note warn">Orders read '+ago(d.orders_age)+' ago</div>':'')
   +(d.positions_age>120?'<div class="note warn">Holdings read '+ago(d.positions_age)+' ago</div>':'');
  if(noFirst()){
@@ -295,6 +297,13 @@ function marketsHtml(d){
 }
 
 // -- the page ----------------------------------------------------------------------
+function rowsKeep(){var o={};['sorts','ssorts'].forEach(function(i){var e=document.getElementById(i);if(e)o[i]=e.scrollLeft;});return o;}
+function rowsBack(o){['sorts','ssorts'].forEach(function(i){var r=document.getElementById(i);if(!r)return;
+ if(o[i]!=null)r.scrollLeft=o[i];
+ var c=r.querySelector('.chip.on');if(!c)return;var cr=c.getBoundingClientRect(),rr=r.getBoundingClientRect();
+ if(cr.left<rr.left)r.scrollLeft-=rr.left-cr.left+8;else if(cr.right>rr.right)r.scrollLeft+=cr.right-rr.right+8;});}
+function typing(){var a=document.activeElement;
+ return !!(a&&a.tagName==='INPUT'&&a.type!=='checkbox'&&a.closest&&a.closest('#sheet'));}
 function draw(d){
  window._d=d;
  if(window._win==null)window._win=21600;
@@ -312,7 +321,9 @@ function draw(d){
   +(d.state_note?'<div class="note bad">'+esc(d.state_note)+'</div>':'')
   +'</div>';
  h+=marketsHtml(d);
+ var keep=rowsKeep();
  document.getElementById('view').innerHTML=h;
+ rowsBack(keep);
 }
 function load(){
  get('/data.json?stake='+stake(),function(d){
@@ -359,18 +370,20 @@ function sheet(html){
  if(!s){s=document.createElement('div');s.id='sheet';s.className='bsheet';document.body.appendChild(s);
   var c=document.createElement('div');c.id='scrim';c.className='bscrim';c.onclick=closeSheet;document.body.appendChild(c);}
  var a=document.activeElement,keep=(a&&a.tagName==='INPUT'&&a.id&&s.contains(a))?[a.id,a.value]:null;
+ var rows=rowsKeep();
  s.innerHTML=html;
+ rowsBack(rows);
  if(keep){var e=document.getElementById(keep[0]);if(e){e.value=keep[1];}}
 }
 function closeSheet(){window._card=null;window._from=null;['sheet','scrim'].forEach(function(i){var e=document.getElementById(i);if(e)e.remove();});}
 function say(j){window._said=j;refreshCard();load();}
-function said(){var j=window._said;if(!j)return '';return '<div class="note '+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';}
+function said(){var j=window._said;return '<div id="said">'+(j?'<div class="note '+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>':'')+'</div>';}
 function ohead(o){return '<div class="big"><span class="'+(o.side==='BUY'?'ok':'bad')+'">'+side(o.side)+'</span> '+ct(o.price)+' × '+sz(o.size)+'</div>';}
 function openOrder(id){window._card={kind:'order',id:id};window._said=null;window._typed={};window._shown=null;
  // the order and its Cancel come up at once from the list, before any read
  var o=((window._d||{}).orders||[]).filter(function(x){return x.id===id;})[0];
  sheet(o?head(esc(o.name))+ohead(o)
-  +'<div class="muted">Reading…</div><div class="frm"><button class="btn red" onclick="doCancel()">Cancel order</button></div>'
+  +'<div class="muted">Reading…</div><div class="frm"><button class="btn red" onclick="doCancel()">Cancel order</button></div>'+said()
   :head('Order')+'<div class="muted">Reading…</div>');
  refreshCard();}
 function openMarket(m){if(!m)return;
@@ -397,7 +410,7 @@ function drawOrder(j){
  if(!j.ok){
   // the order is still his to cancel when its book cannot be read
   var c0=o?ohead(o)+'<div class="frm"><button class="btn red" onclick="doCancel()">Cancel order</button></div>':'';
-  sheet(btns(head(o?'Order':'Order')+said()+'<div class="note bad">'+esc(j.note)+'</div>'+c0));return;}
+  sheet(btns(head('Order')+'<div class="note bad">'+esc(j.note)+'</div>'+c0+said()));return;}
  // what the card showed when he started typing is what a change is
  // checked against: a fill meanwhile is refused, never resized over
  if(!edited()||!window._shown)window._shown={px:o.price,qty:o.size};
@@ -406,10 +419,11 @@ function drawOrder(j){
   +'<div class="stats"><div><div class="v">'+(m.est==null?'—':usd(m.est))+'</div><div class="l">a day</div></div>'
   +'<div><div class="v">'+(m.est==null||!bs?'—':pct(m.est/bs))+'</div><div class="l">per $ a day</div></div>'
   +'<div><div class="v">'+usd(bs)+'</div><div class="l">money behind it</div></div></div>'
-  +said()+(j.stale?'<div class="note warn">'+esc(j.stale)+'</div>':'')
+  +(j.stale?'<div class="note warn">'+esc(j.stale)+'</div>':'')
   +'<div class="frm"><input id="px" inputmode="decimal" value="'+esc(val('px',Math.round(o.price*1000)/10))+'" oninput="typed(\'px\')"><span class="u">¢</span>'
   +'<input id="qty" inputmode="decimal" value="'+esc(val('qty',o.size))+'" oninput="typed(\'qty\')">'
   +'<button class="btn" onclick="doMove()">Change</button><button class="btn red" onclick="doCancel()">Cancel order</button></div>'
+  +said()
   +'<div class="panel">'+mathHtml(o,m)+'</div>'+bookHtml(j,o);
  sheet(btns(h));
 }
@@ -421,7 +435,7 @@ function newLine(sd,n){
 }
 function drawMarket(j){
  var back=window._from==='scan'?'<button class="link" onclick="openScan()">‹ Scan results</button>':'';
- if(!j.ok){sheet(head('Market')+back+said()+'<div class="note bad">'+esc(j.note)+'</div>');return;}
+ if(!j.ok){sheet(head('Market')+back+'<div class="note bad">'+esc(j.note)+'</div>'+said());return;}
  var sd=window._side||'BUY';
  var h=head(esc(j.name))+back
   +'<div class="muted">'+(j.net?(j.net>0?'Yes ':'No ')+sz(Math.abs(j.net))+' · '+usd(j.value)+' · ':'')
@@ -430,8 +444,7 @@ function drawMarket(j){
   +(j.first_day?' · first day':'')+'</div>'
   +'<div class="frm" style="margin:8px 0"><button class="btn small '+(j.watched?'gray':'')+'" onclick="doWatch(\''+esc(j.market)+'\','+(!j.watched)+')">'
   +(j.watched?'★ Tracking':'☆ Track')+'</button></div>'
-  +(j.stale?'<div class="note warn">'+esc(j.stale)+'</div>':'')
-  +said();
+  +(j.stale?'<div class="note warn">'+esc(j.stale)+'</div>':'');
  (j.ours||[]).forEach(function(o){h+='<div class="nl" style="cursor:pointer" onclick="openOrder(\''+esc(o.id)+'\')"><span><span class="'+(o.side==='BUY'?'ok':'bad')+'">'+side(o.side)+'</span> '
   +ct(o.price)+' × '+sz(o.size)+'</span><span><b>'+day(o.est)+'</b> ›</span></div>';});
  h+='<div class="panel"><div class="label">New order at the best price, $'+esc(j.stake)+'</div>'
@@ -441,7 +454,7 @@ function drawMarket(j){
   +'<button class="'+(sd==='SELL'?'on':'')+'" onclick="pick(\'SELL\')">Ask</button></div></div>'
   +'<div class="frm"><input id="px" inputmode="decimal" placeholder="price" value="'+esc(val('px',''))+'" oninput="typed(\'px\')"><span class="u">¢</span>'
   +'<input id="qty" inputmode="decimal" placeholder="size" value="'+esc(val('qty',''))+'" oninput="typed(\'qty\')">'
-  +'<button class="btn" onclick="doPlace()">Place</button></div>';
+  +'<button class="btn" onclick="doPlace()">Place</button></div>'+said();
  window._mk=j;sheet(btns(h));
 }
 function useNew(sd){var n=((window._mk||{}).new||{})[sd];if(!n||n.px==null)return;
@@ -450,12 +463,15 @@ function useNew(sd){var n=((window._mk||{}).new||{})[sd];if(!n||n.px==null)retur
 function pick(s){window._side=s;if(window._mk)drawMarket(window._mk);}
 function nums(){var p=parseFloat(document.getElementById('px').value),q=parseFloat(document.getElementById('qty').value);
  if(!(p>0)||!(q>0)){alert('price and size');return null;}return [p,q];}
-function busy(on,note){window._busy=on;if(on)window._said={ok:true,note:note};
+function busy(on,note){window._busy=on;
+ if(on){window._said={ok:true,note:note};window._tapCard=window._card;}
  var s=document.getElementById('sheet');if(s)s.querySelectorAll('button:not(.close)').forEach(function(b){b.disabled=on;});
- if(on){var n=s&&s.querySelector('.note');if(n)n.textContent=note;else if(s)s.insertAdjacentHTML('beforeend','<div class="note ok">'+esc(note)+'</div>');}}
-function done(r){busy(false);window._typed={};window._shown=null;
- // a card he closed mid-tap still gets its answer
- if(!window._card){alert(r.note||'');load();return;}
+ if(on){var n=document.getElementById('said');var t='<div class="note ok">'+esc(note)+'</div>';
+  if(n)n.innerHTML=t;else if(s)s.insertAdjacentHTML('beforeend',t);}}
+function same(){return !!window._card&&window._card===window._tapCard;}
+function done(r){var here=same();busy(false);window._typed={};window._shown=null;
+ // a card he closed, or left for another, mid-tap still gets its answer
+ if(!here){window._said=null;alert(r.note||'');load();return;}
  say(r);}
 function doPlace(){var n=nums();if(!n)return;var c=window._card,sd=window._side||'BUY',j=window._mk||{};
  // what he holds, less what his orders already offer, is what an ask
@@ -474,10 +490,11 @@ function doMove(){var n=nums();if(!n)return;var c=window._card,w=window._shown||
  if(body.px==null&&body.qty==null){alert('change the price or the size first');return;}
  if(!confirm('Change to '+(body.px!=null?n[0]:Math.round(w.px*1000)/10)+'¢ × '+(body.qty!=null?n[1]:w.qty)+'?'))return;
  busy(true,'Changing… (up to 15 s)');
- post(body,function(r){if(r.ok&&r.id)window._card={kind:'order',id:r.id};done(r);});}
+ post(body,function(r){if(r.ok&&r.id&&same()){window._card={kind:'order',id:r.id};window._tapCard=window._card;}done(r);});}
 function doCancel(){var c=window._card;if(!confirm('Cancel this order?'))return;
  busy(true,'Cancelling…');
- post({op:'cancel',order_id:c.id},function(r){busy(false);if(r.ok||!window._card){closeSheet();load();alert(r.note);}else say(r);});}
+ post({op:'cancel',order_id:c.id},function(r){var here=same();busy(false);
+  if(r.ok||!here){if(here)closeSheet();else window._said=null;load();alert(r.note);}else say(r);});}
 function doWatch(m,on){
  post({op:'watch',market:m,on:on},function(r){
   if(!r.ok){alert(r.note||'');return;}
@@ -486,7 +503,7 @@ function doWatch(m,on){
   load();});}
 
 // -- the scan ------------------------------------------------------------------------
-var SSORTS=[['pct','Best % per $'],['day','Best $/day'],['bid_pct','Bid %'],['ask_pct','Ask %'],['bid_day','Bid $'],['ask_day','Ask $']];
+var SSORTS=[['pct','Best %'],['day','Best $'],['bid_pct','Bid %'],['ask_pct','Ask %'],['bid_day','Bid $'],['ask_day','Ask $']];
 function pickG(k,on){window._picks=window._picks||{};window._picks[k]=on?1:0;}
 function allG(on){var j=window._scanJ||{};window._picks={};(j.groups||[]).forEach(function(g){window._picks[g.key]=on?1:0;});drawScan(j);}
 function setSS(k){LSset('ssort',k);refreshCard(true);}
@@ -499,9 +516,21 @@ function scanRow(r){
   +'<div class="msub">'+esc(r.kind+(r.st?' · '+r.st:''))+(r.mine?' · yours':'')+(r.pool!=null?' · '+usd(r.pool)+'/day a side':'')+'</div>'
   +ns('BUY',r.bid)+ns('SELL',r.ask)+'</div>';
 }
+function slugBox(){return '<div class="label" style="margin-top:16px">Or open a market by its slug</div>'
+  +'<div class="frm"><input id="slug" style="flex:1" placeholder="market slug" value="'+esc(val('slug',''))+'" oninput="typed(\'slug\')">'
+  +'<button class="btn gray" onclick="openMarket(document.getElementById(\'slug\').value)">Open</button></div>';}
 function drawScan(j){
+ var err='';
+ if(j.ok===false){
+  err=j.note||'no answer';
+  var last=window._scanJ;
+  if(!last||last.ok===false){
+   window._scanJ=j;
+   sheet(head('Scan')+'<div class="note bad">'+esc(err)+'</div>'
+    +'<div class="frm"><button class="btn gray" onclick="refreshCard(true)">Try again</button></div>'+slugBox());return;}
+  j=last;
+ }
  window._scanJ=j;
- if(!j.ok&&j.note){sheet(head('Scan')+'<div class="note bad">'+esc(j.note)+'</div>');return;}
  if(!window._picks){window._picks={};(j.keys||[]).forEach(function(k){window._picks[k]=1;});}
  var p=window._picks,run=j.state==='running';
  var h=head('Scan for places to earn')
@@ -517,21 +546,24 @@ function drawScan(j){
  if(run){var f=j.total?Math.min(j.done/j.total,1):0;
   h+='<div class="muted">'+esc(j.step||'starting')+(j.total?' · '+(j.done||0).toLocaleString()+' of '+j.total.toLocaleString():'')+'</div>'
    +'<div class="bar"><div style="width:'+Math.round(f*100)+'%"></div></div>';
+  // never while he types: a redraw would close the phone's keyboard
   clearTimeout(window._scanT);
-  window._scanT=setTimeout(function(){if(window._card&&window._card.kind==='scan')refreshCard();},2000);}
+  window._scanT=setTimeout(function tick(){
+   if(!(window._card&&window._card.kind==='scan'))return;
+   if(typing()){window._scanT=setTimeout(tick,2000);return;}
+   refreshCard();},2000);}
+ if(err)h+='<div class="note bad">'+esc(err)+(run?' — still trying':'')+'</div>';
  if(j.state==='error')h+='<div class="note bad">'+esc(j.note)+'</div>';
  if(j.state==='done'||(j.rows||[]).length){
   var c=j.counts||{},ss=LS('ssort','pct');
-  h+='<div class="sec-h" style="margin-top:18px"><h2 style="font-size:19px">Results</h2><span class="muted">$'+esc(j.stake)+' a side</span></div>'
-   +'<div class="chips">'+SSORTS.map(function(s){return '<button class="chip'+(ss===s[0]?' on':'')+'" onclick="setSS(\''+s[0]+'\')">'+s[1]+'</button>';}).join('')+'</div>'
+  h+='<div class="sec-h" style="margin-top:18px"><h2 style="font-size:19px">'+(run?'Last results':'Results')+'</h2><span class="muted">$'+esc(j.stake)+' a side</span></div>'
+   +'<div class="chips" id="ssorts">'+SSORTS.map(function(s){return '<button class="chip'+(ss===s[0]?' on':'')+'" onclick="setSS(\''+s[0]+'\')">'+s[1]+'</button>';}).join('')+'</div>'
    +'<div class="muted">'+(c.markets||0).toLocaleString()+' read · '+(j.of||0).toLocaleString()+' would pay'
    +((j.rows||[]).length<(j.of||0)?' · best '+(j.rows||[]).length+' shown':'')+' · tap ☆ to track</div>'
    +(j.note?'<div class="note warn">'+esc(j.note)+'</div>':'')
    +'<div class="card list" style="margin:8px -6px">'+(j.rows||[]).map(scanRow).join('')+'</div>';
  }
- h+='<div class="label" style="margin-top:16px">Or open a market by its slug</div>'
-  +'<div class="frm"><input id="slug" style="flex:1" placeholder="market slug" value="'+esc(val('slug',''))+'" oninput="typed(\'slug\')">'
-  +'<button class="btn gray" onclick="openMarket(document.getElementById(\'slug\').value)">Open</button></div>';
+ h+=slugBox();
  sheet(btns(h));
 }
 function doScan(){
@@ -546,8 +578,7 @@ function doScan(){
 }
 
 load();setInterval(load,20000);
-setInterval(function(){var a=document.activeElement;
- if(window._card&&!(a&&a.tagName==='INPUT'&&a.closest&&a.closest('#sheet')))refreshCard();},5000);
+setInterval(function(){if(window._card&&!typing())refreshCard();},5000);
 """
 
 PAGE = f"""<!doctype html><html><head>

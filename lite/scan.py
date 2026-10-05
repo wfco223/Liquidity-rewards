@@ -7,8 +7,9 @@ paying on a market discovery found under the politics and elections tags,
 with its market count and its pool. He ticks the ones to scan. The scan
 then, on its own thread:
 
-1. re-reads the reward terms of those markets (the signed incentives api,
-   never the throttled gateway);
+1. re-reads the reward terms of those markets the six-hourly sweep has
+   not refreshed (the signed incentives api, one quick try, never the
+   throttled gateway), stopping at the first failure;
 2. reads their books over the websocket — a connection carries ten
    subscriptions of 200 markets, so up to three connections open for the
    scan and close when it is done — with a few gateway reads, one try
@@ -36,8 +37,11 @@ SCAN_CONN = 2000           # a connection: ten subscriptions of 200
 SCAN_CHUNK = 200
 SCAN_WAIT_S = 45.0         # the longest the stream is given to deliver
 SCAN_QUIET_S = 8.0         # ...or this long with nothing new arriving
-GATEWAY_FILL = 60          # stragglers read through the gateway, one try each
-TERMS_CHUNK = 400
+GATEWAY_FILL = 60          # stragglers read through the gateway, one try each...
+GATEWAY_FILL_S = 30.0      # ...for this long at most, stopping after three failures
+SCAN_BUDGET_S = 300.0      # the whole scan: past it, what was read is ranked and the rest said
+SCAN_TERMS_AGE_S = 7 * 3600.0  # terms the six-hourly sweep keeps younger than this are not re-read
+TERMS_CHUNK = 40           # one incentives request a step, one quick try
 SCAN_SHOW = 200            # rows a results page carries
 NOT_POLITICS = ("macro", "econ", "fed", "cpi", "nfl", "cfb", "nba", "nhl", "mlb", "golf",
                 "culture")
@@ -142,6 +146,11 @@ class Scanner:
         self.stake = 0.0
         self.keys: list[str] = []
         self.rows: list[dict] = []
+        # what the rows on show were priced with: a new scan's stake must
+        # never be shown over the last scan's rows
+        self.res_stake = 0.0
+        self.res_keys: list[str] = []
+        self.res_at = 0.0
         self.counts: dict = {}
         self.note = ""
 
@@ -203,35 +212,45 @@ class Scanner:
     def _run(self, keys: list[str], stake: float) -> None:
         app = self.app
         try:
+            deadline = app.clock() + SCAN_BUDGET_S
             slugs = self._pick(keys)
             dropped = max(len(slugs) - SCAN_MAX, 0)
             slugs = slugs[:SCAN_MAX]
-            self.step, self.total, self.done_n = "reading reward terms", len(slugs), 0
-            bad = 0
-            for i in range(0, len(slugs), TERMS_CHUNK):
-                if not app.refresh_terms(app.clock(), slugs[i:i + TERMS_CHUNK]):
-                    bad += 1
-                self.done_n = min(i + TERMS_CHUNK, len(slugs))
+            notes = []
+            now = app.clock()
+            stale = [s for s in slugs if app.terms.age(s, now) > SCAN_TERMS_AGE_S]
+            self.step, self.total, self.done_n = "reading reward terms", len(stale), 0
+            for i in range(0, len(stale), TERMS_CHUNK):
+                if app.clock() > deadline:
+                    notes.append(f"{len(stale) - i:,} markets kept their old terms (out of time)")
+                    break
+                if not app.refresh_terms(app.clock(), stale[i:i + TERMS_CHUNK], quick=True):
+                    notes.append(f"the terms read failed — {len(stale) - i:,} markets kept "
+                                 f"their old terms")
+                    break
+                self.done_n = min(i + TERMS_CHUNK, len(stale))
             slugs = [s for s in slugs if (p := app.terms.get(s)) is not None and p.is_live()]
             self.step, self.total, self.done_n = "reading books", len(slugs), 0
             cache = BookCache()
+            wait = max(min(SCAN_WAIT_S, deadline - app.clock()), 5.0)
             ws_note = self.book_source(cache, slugs, app.client.key_id, app.client.secret_key,
-                                       progress=lambda n: setattr(self, "done_n", n))
+                                       progress=lambda n: setattr(self, "done_n", n),
+                                       wait_s=wait)
             now = app.clock()
             for s in slugs:                  # what the app already holds fresh
                 if cache.any_age(s) is None and (b := app.cache.fresh(s, BOOK_MAX_AGE, now)):
                     cache.put(s, b)
             missing = [s for s in slugs if cache.any_age(s) is None]
-            read = 0
+            read, failed = 0, 0
+            fill_end = min(app.clock() + GATEWAY_FILL_S, deadline)
             for s in missing[:GATEWAY_FILL]:
-                if app.client.gateway_hold() > 0:
+                if app.clock() > fill_end or failed >= 3 or app.client.gateway_hold() > 0:
                     break
                 try:
                     cache.put(s, app.client.book(s, timeout=8.0, tries=1))
                     read += 1
-                except Exception as e:  # noqa: BLE001
-                    if getattr(e, "status", None) == 429:
-                        break
+                except Exception:  # noqa: BLE001 — a straggler is left out and counted
+                    failed += 1
             self.done_n = sum(1 for s in slugs if cache.any_age(s) is not None)
             self.step = "pricing"
             now = app.clock()
@@ -253,20 +272,19 @@ class Scanner:
                     "ask": app.potential(s, "SELL", b, p, pool, stake, first=s in first),
                 })
             paying = sum(1 for r in rows if _best(r, "day") > 0)
-            notes = []
             if dropped:
                 notes.append(f"{dropped:,} markets past the first {SCAN_MAX:,} (smallest pools) "
                              f"were not read — pick fewer programs to reach them")
-            if bad:
-                notes.append(f"{bad} terms reads failed — those markets kept their old terms")
             if no_book:
                 notes.append(f"{no_book:,} markets sent no book")
             if ws_note:
                 notes.append(ws_note)
             with self.lock:
                 self.rows = rows
+                self.res_stake, self.res_keys, self.res_at = stake, list(keys), app.clock()
                 self.counts = {"markets": len(slugs), "books": len(rows), "no_book": no_book,
-                               "paying": paying, "gateway": read, "dropped": dropped}
+                               "paying": paying, "gateway": read, "dropped": dropped,
+                               "terms_read": len(stale)}
                 self.note = "; ".join(notes)
                 self.state, self.step, self.finished = "done", "", app.clock()
             app.note(f"scan: {len(slugs)} markets, {len(rows)} books, {paying} would pay"
@@ -298,7 +316,10 @@ class Scanner:
         mine = set(app.order_markets()) | set(app.held())
         return {
             "ok": True, **self.brief(), "started": round(self.started, 1),
-            "stake": self.stake, "keys": list(self.keys), "counts": dict(self.counts),
+            # the rows' own stake and programs, not a running scan's
+            "stake": self.res_stake, "res_keys": list(self.res_keys),
+            "res_at": round(self.res_at, 1), "run_stake": self.stake,
+            "keys": list(self.keys), "counts": dict(self.counts),
             "note": self.note, "groups": self.groups(), "of": len(rows),
             "rows": [{**r, "w": r["m"] in app.watch, "mine": r["m"] in mine} for r in shown],
         }

@@ -91,6 +91,7 @@ STREAM_SHARDS = 2
 STREAM_CAP = 1000          # markets a connection: five book subscriptions of 200
 STREAM_CHUNK = 200
 TERMS_SWEEP_CHUNK = 400    # the politics terms sweep after each discovery, this many at a time
+WATCH_FORGET_S = 30 * 86400.0  # an untrack is remembered this long: an older copy's save cannot undo it
 STATE_BRANCH = "lite-state"
 SEED_BRANCH = "v3-state"
 TAGS = ("politics", "elections")
@@ -270,6 +271,7 @@ class App:
         self.members: dict[str, list[str]] = {}   # event -> its open markets
         self.ev_index: dict[str, str] = {}        # slug -> event, from the two above
         self.watch: dict[str, float] = {}         # markets he tracks -> when
+        self.unwatch: dict[str, float] = {}       # markets he stopped tracking -> when
         self.orders: list[dict] = []
         self.ghosts: list[dict] = []    # cancelled by us, still on the exchange's list
         self.orders_at = 0.0           # when the list now shown was READ (its request's start)
@@ -340,7 +342,11 @@ class App:
         now = self.clock()
         ids = sorted(self.placed_ids.items(), key=lambda kv: kv[1])[-5000:]
         with self.terms_lock:
-            terms = self.terms.to_dict()
+            # the store hands some of its dicts back by reference: copied
+            # here, under the lock, so a sweep adding a market cannot
+            # change one while the save writes it out
+            terms = {k: (dict(v) if isinstance(v, dict) else v)
+                     for k, v in self.terms.to_dict().items()}
         return {
             "saved_at": round(now, 1),
             "est": self.est.to_dict(),
@@ -350,6 +356,7 @@ class App:
             "discover_n": self.discover_n,
             "universe": dict(self.universe),
             "watch": dict(self.watch),
+            "unwatch": {s: t for s, t in list(self.unwatch.items()) if now - t < WATCH_FORGET_S},
             "names": self.names.to_dict(),
             "rewards_seen": seen,
             "paid_seen": paid,
@@ -483,8 +490,7 @@ class App:
             ids = st.get("placed_ids") or {}
             if not self.terms.current and st.get("terms"):
                 self.terms = TermsStore.from_dict(st["terms"])
-            self.watch = {**{str(s): float(t or 0) for s, t in (st.get("watch") or {}).items()},
-                          **self.watch}
+            self._merge_watch(st.get("watch"), st.get("unwatch"))
             if not self.universe and st.get("universe"):
                 self.universe = {str(s): str(e or "") for s, e in st["universe"].items()}
                 self._rebuild_members()
@@ -532,6 +538,7 @@ class App:
         self.discover_n = int(st.get("discover_n") or 0)
         self.universe = {str(s): str(e or "") for s, e in (st.get("universe") or {}).items()}
         self.watch = {str(s): float(t or 0) for s, t in (st.get("watch") or {}).items()}
+        self.unwatch = {str(s): float(t or 0) for s, t in (st.get("unwatch") or {}).items()}
         self._rebuild_members()
         self.names.restore(st.get("names") or {})
         with self.mem_lock:
@@ -628,6 +635,7 @@ class App:
                 self.rewards_seen.update(remote.get("rewards_seen") or {})
                 self.paid_seen.update(remote.get("paid_seen") or {})
             self.placed_ids = {**(remote.get("placed_ids") or {}), **self.placed_ids}
+            self._merge_watch(remote.get("watch"), remote.get("unwatch"))
         self.upload_hold = False
 
     # -- whitelist and labels -----------------------------------------------
@@ -712,11 +720,24 @@ class App:
         return list(dict.fromkeys(self.order_markets() + [o["market"] for o in self.ghosts]
                                   + self.big_holdings() + list(self.watch) + self.siblings()))
 
+    def _merge_watch(self, watch, unwatch) -> None:
+        """Another copy's tracked list folded into this one (a deploy runs
+        two copies for a minute; a save can be read late): each market
+        takes whichever came LATER, its track or its untrack."""
+        add: dict[str, float] = {}
+        rem: dict[str, float] = {}
+        for src, dst in ((watch, add), (self.watch, add), (unwatch, rem), (self.unwatch, rem)):
+            for s, t in list((src or {}).items()):
+                dst[str(s)] = max(dst.get(str(s), 0.0), float(t or 0))
+        self.watch = {s: t for s, t in add.items() if t > rem.get(s, -1.0)}
+        self.unwatch = {s: t for s, t in rem.items() if t >= add.get(s, -1.0)}
+
     def set_watch(self, slug: str, on: bool) -> dict:
         slug = str(slug or "").strip()
         if not on:
             self.watch.pop(slug, None)
-            self.save()
+            self.unwatch[slug] = round(self.clock(), 1)
+            self.save(force_remote=True)
             return {"ok": True, "watched": False, "note": "no longer tracked"}
         if (g := self._gate()):
             return {"ok": False, "note": g}
@@ -729,9 +750,11 @@ class App:
         elif is_econ_market(slug):
             return {"ok": False, "note": "econ markets are off limits"}
         self.watch[slug] = round(self.clock(), 1)
+        self.unwatch.pop(slug, None)
         if self.terms.get(slug) is None:
             self.refresh_terms(self.clock(), [slug])
-        self.save()
+        # uploaded at once: a deploy's new copy restores what is uploaded
+        self.save(force_remote=True)
         return {"ok": True, "watched": True, "note": "tracking"}
 
     def label(self, slug: str) -> str:
@@ -926,7 +949,10 @@ class App:
                 if getattr(e, "status", None) == 429:
                     break
 
-    def refresh_terms(self, now: float, slugs: list[str] | None = None) -> bool:
+    def refresh_terms(self, now: float, slugs: list[str] | None = None,
+                      quick: bool = False) -> bool:
+        """Re-read reward terms. `quick` (the scan's): one try of ten
+        seconds a host, so a hanging host costs seconds, not minutes."""
         batch = slugs or list(dict.fromkeys(
             self.order_markets() + list(self.opened)
             + [s for s, n in self.held().items() if abs(n) >= 1]
@@ -934,7 +960,8 @@ class App:
         if not batch:
             return True
         try:
-            raw = self.client.programs(batch)
+            raw = (self.client.programs(batch, tries=1, timeout=10.0) if quick
+                   else self.client.programs(batch))
         except Exception as e:  # noqa: BLE001 — aged terms beat no terms
             self.note(f"terms: {e}")
             return False
@@ -1400,11 +1427,15 @@ class App:
             return {"ok": False, "note": "no market"}
         if is_econ_market(slug):
             return {"ok": False, "note": "econ markets are off limits"}
+        if not self.known(slug) and slug in self.ev_index:
+            # discovery, or a read of his own event, listed it open and not
+            # econ: no second check through the throttled gateway
+            self.checked[slug] = self.clock()
         if not self.known(slug):
             try:
                 md = self.client.market_details(slug)
             except Exception as e:  # noqa: BLE001
-                return {"ok": False, "note": f"no such market: {e}"}
+                return {"ok": False, "note": f"could not check this market: {e}"}
             if md.get("closed") or md.get("active") is False:
                 return {"ok": False, "note": "that market is closed"}
             if not (slug in self.event_n or category_ok(md)):

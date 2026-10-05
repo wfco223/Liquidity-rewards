@@ -263,7 +263,7 @@ def scan_app():
 
 
 def fake_source(c, slugs_seen):
-    def src(cache, slugs, kid, sec, progress=None):
+    def src(cache, slugs, kid, sec, progress=None, **kw):
         slugs_seen.extend(slugs)
         for i, s in enumerate(slugs):
             if s in c.books:
@@ -446,3 +446,105 @@ class TestTheScanStream(unittest.TestCase):
         self.assertEqual(len(closed), 2)                 # both connections closed
         self.assertEqual(note, "")
         box["loop"].call_soon_threadsafe(box["stop"].set_result, None)
+
+
+class TestTheReviewOfTheList(unittest.TestCase):
+    """The defects the review of 2026-10-05 confirmed."""
+
+    def test_a_track_made_on_the_old_copy_during_a_deploy_is_kept(self):
+        app, c = make()                       # the new copy, restored from an older save
+        t = time.time()
+        app.watch = {"old-a": t - 500, "old-b": t - 500}
+        app.boot_ts = t - 200
+        app.upload_hold = True
+        # the old copy's stop save: tracked M2 and dropped old-b after that save
+        app.store.remote = {"saved_at": t - 100, "watch": {"old-a": t - 500, M2: t - 150},
+                            "unwatch": {"old-b": t - 140}}
+        app.end_upload_hold()
+        self.assertEqual(set(app.watch), {"old-a", M2})
+        self.assertIn("old-b", app.unwatch)
+        st = app.to_dict()
+        self.assertIn(M2, st["watch"])
+        self.assertIn("old-b", st["unwatch"])
+
+    def test_an_untrack_before_a_late_read_stays_untracked(self):
+        app, c = make()
+        t = time.time()
+        app.universe = {M2: "usse-ks-2026-11-03"}
+        app.set_watch(M2, True)
+        app.set_watch(M2, False)
+        app._merge_late({"watch": {M2: t - 3600}, "event_n": {}, "placed_ids": {}})
+        self.assertNotIn(M2, app.watch)
+
+    def test_a_track_is_uploaded_at_once(self):
+        app, c = make()
+        app.universe = {M2: "usse-ks-2026-11-03"}
+        app.set_watch(M2, True)
+        self.assertTrue(app.store.saved[-1][1])          # force_remote
+        app.set_watch(M2, False)
+        self.assertTrue(app.store.saved[-1][1])
+
+    def test_the_save_never_shares_a_dict_the_sweep_writes(self):
+        app, _ = make()
+        st = app.to_dict()
+        self.assertIsNot(st["terms"]["updated_at"], app.terms.updated_at)
+        self.assertIsNot(st["terms"]["seeded_at"], app.terms.seeded_at)
+
+    def test_a_listed_market_opens_without_the_gateway_check(self):
+        app, c = make()
+        setup_event(app, c)
+        c.market_details = mock.Mock(side_effect=AssertionError("gateway read"))
+        self.assertTrue(app.book_view(DEM)["ok"])
+        c.market_details = mock.Mock(side_effect=RuntimeError("held after a 429"))
+        r = app.book_view("not-listed-anywhere")
+        self.assertIn("could not check this market", r["note"])
+
+
+class TestTheReviewOfTheScan(unittest.TestCase):
+    def test_the_terms_read_stops_at_its_first_failure_and_skips_fresh_terms(self):
+        app, c = scan_app()
+        calls = []
+
+        def programs(slugs, tries=4, timeout=20.0):
+            calls.append((len(slugs), tries, timeout))
+            raise RuntimeError("incentives host hanging")
+        c.programs = programs
+        app.scanner.book_source = fake_source(c, [])
+        # everything was read just now: nothing to re-read
+        app.scanner._run(["politics_mid"], 40.0)
+        self.assertEqual(calls, [])
+        # terms past the sweep's age are re-read, one quick try, and the
+        # first failure ends it
+        for s in app.terms.updated_at:
+            app.terms.updated_at[s] -= 8 * 3600
+        app.scanner._run(["politics_mid"], 40.0)
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][1:], (1, 10.0))
+        self.assertIn("terms read failed", app.scanner.note)
+        self.assertEqual(app.scanner.state, "done")
+
+    def test_the_straggler_reads_stop_after_three_failures(self):
+        app, c = scan_app()
+        app.scanner.book_source = lambda *a, **k: ""      # the stream sent nothing
+        app.cache = type(app.cache)()                    # and nothing is cached
+        n = []
+
+        def book(slug, **kw):
+            n.append(slug)
+            raise RuntimeError("timed out")
+        c.book = book
+        app.scanner._run(["politics_mid"], 40.0)
+        self.assertEqual(len(n), 3)
+        self.assertEqual(app.scanner.counts["no_book"], 3)
+
+    def test_a_running_scan_never_shows_the_last_rows_under_its_own_stake(self):
+        app, c = scan_app()
+        app.scanner.book_source = fake_source(c, [])
+        app.scanner._run(["politics_mid"], 40.0)
+        with mock.patch("threading.Thread") as T:
+            T.return_value.start = lambda: None
+            app.scanner.start(["politics_mid"], 500)
+        v = app.scanner.view()
+        self.assertEqual(v["state"], "running")
+        self.assertEqual(v["stake"], 40.0)                # what the rows were priced with
+        self.assertEqual(v["run_stake"], 500.0)
