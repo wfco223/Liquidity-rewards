@@ -34,6 +34,46 @@ long and accreted, so search it rather than reading it through.
 - Two repos. wfco223/Liquidity-rewards (private) holds everything.
   wfco223/welcome is a group-visible fork: NO tracker data, activity,
   balances, or market info ever goes there.
+- THE SIMPLE APP REPLACES 3.0 (owner, 2026-10-04: "Okay I want to scale
+  wayyy back. Make a very simple version just a dashboard with a graph.
+  My current orders, holdings, earning rate, cash available (buying
+  power) and get rid of most everything else"; then: the graph "the
+  same as the graph shows right now"; "Keep the ntfy for new rewards
+  rows and writing to rewards and trades. You can stop writing to
+  status. Also I want to be able to see the order book, place an order,
+  modify either the price or quantity of an order, or cancel it. I
+  should also see the current earnings math for every pending order by
+  clicking on it. The form should be very simple and not a lot of
+  explanation"; the engines' leftover orders "Leave them, treat as
+  mine"; the old code "Stop running it, keep it"). lite/ is one page:
+  the earning rate and 3.0's earnings graph (v3/estimator.py unchanged,
+  20 s samples), earned today, buying power, holdings value; his orders
+  (a tap shows the earnings math — the meter's own score_resting — the
+  book, a change of price or size, and Cancel); his holdings (a tap
+  opens the book and a place form); a box to open any politics or
+  sports market by slug. NOTHING AUTOMATIC PLACES, MOVES OR CANCELS: the
+  desk's switch is wired off and every order call is his tap. Every
+  engine, the tender, bonds, sweep, maintenance re-placing, the tier
+  engines, every other alert and page, and STATUS.md are gone with 3.0
+  (STATUS.md keeps its last line). Kept: the "Rewards posted" push, and
+  data/rewards.csv and data/trades.csv, now read whole past 1 MiB (3.0
+  read them back empty and rewrote trades.csv from 87 KB on 09-26). The
+  tap rails, from two reviews: a change places, confirms by id, then
+  cancels the original (never /modify); an opening order the exchange
+  cuts to the money is withdrawn, an exit keeps what rests; one change
+  of an order at a time; a change carries what his card showed and is
+  refused if the order filled meanwhile; sales and covers count what is
+  already offered, so shares are never offered twice; a placement not
+  listed yet holds that side a minute; the intent comes from a position
+  read at the tap, and a failed read refuses it; a new market must be
+  politics or sports, never econ. It runs when lite/ACTIVE ships in the
+  image (launcher.app_choice; APP=lite|v3 overrides). Its state lives on
+  branch lite-state, seeded once from v3-state, which it never writes.
+  THE WAY BACK is deleting lite/ACTIVE on main and deploying — but 3.0
+  then wakes on its cutover-day save: order records, positions and
+  payout memory days old, so it can book his lite-period changes as
+  fills and re-push old reward rows. Ask Claude first so that can be
+  prepared.
 - STATUS.md is the phone-readable front page: one ✅/❌ freshness line up
   top, summary before detail, plain-English explanations of every number.
 - The live monitor (live/monitor.py) runs on DigitalOcean from the `deploy`
