@@ -19,22 +19,23 @@ five, nothing on a market's first day in its program. Each order's own
 figure, and the math shown when he taps it, are the same score_resting
 call the meter makes, so the two always agree.
 
-The taps keep 3.0's owner-tap rails and add the ones the review of
+The taps keep 3.0's owner-tap rails and add the ones the two reviews of
 2026-10-05 found missing:
-- a change is placed, confirmed resting at its FULL size by its id, and
-  only then is the original cancelled; a replacement the exchange cuts to
-  the money free is withdrawn and the original left untouched (3.0's own
-  owner move did the same);
-- a change carries the size and price the card showed, and is refused
-  when the order has filled or moved since — a price change never resends
-  a stale size;
-- a placement the exchange accepted but has not listed yet is reported as
-  pending, not failed, and the same order cannot be sent again for a
-  minute;
-- the position that decides a sale's or a cover's intent is read at the
-  tap, and a failed read refuses the tap rather than guess;
-- a cancel never waits behind a placement, and the stop signal waits for
-  a tap in flight before it halts the desk.
+- a change is placed, confirmed resting by its id, and only then is the
+  original cancelled. For an order that opens or adds to a position, a
+  replacement the exchange cut to the money free is withdrawn and the
+  original left as it was; for an exit (it takes no money) a shortfall
+  can only be a fill, and the part that rests stands;
+- one change of an order at a time, and a cancel of an order mid-change
+  waits for it; a change is refused unless the open list was read at the
+  tap, and when the order has filled or moved since his card showed it;
+- a sale or a cover counts what he already offers on that side, so the
+  same shares are never offered twice without his seeing it;
+- a placement the exchange accepted but has not listed yet is pending:
+  nothing more goes on that side of that market for a minute, or until
+  the list shows it;
+- the stop refuses new taps at once and waits for one in flight to finish
+  before it saves.
 """
 
 from __future__ import annotations
@@ -44,7 +45,7 @@ import threading
 import time
 from collections import deque
 
-from v3.api import TRADE_API, Client, DEAD_ORDER_STATES, events_of
+from v3.api import GATEWAY, TRADE_API, Client, DEAD_ORDER_STATES, events_of
 from v3.alerts import Alerts
 from v3.books import BookCache
 from v3.estimator import BOOK_MAX_AGE, MAX_GAP_S, VERIFIED_MAX_S, Estimator, et_day, top_up_book
@@ -67,7 +68,7 @@ DISCOVER_S = 6 * 3600.0
 DISCOVER_RETRY_S = 600.0   # a discovery that failed or came back short
 REWARDS_S = 300.0          # the payout check (and the push)
 REWARDS_FILE_S = 3600.0    # the 40-day rewards.csv rewrite
-REWARDS_HOLD_S = 180.0     # no payout check until the old copy has stopped
+BOOT_HOLD_S = 180.0        # the old copy runs on a minute: no payout check, no upload
 TRADES_S = 3600.0
 SAVE_S = 60.0
 BOOK_STALE_S = 150.0       # a quiet book of ours is re-read past this
@@ -75,15 +76,20 @@ BOOK_READS_PER_PASS = 12
 TAP_BOOK_S = 20.0          # a tap reads the book unless the cache is this fresh
 OPENED_KEEP_S = 1800.0     # a market he opened keeps its book fresh this long
 HOLDING_MIN_USD = 1.0      # holdings worth less are counted, not listed
-PENDING_S = 60.0           # an unconfirmed placement blocks the same one this long
+PENDING_S = 60.0           # an unconfirmed placement holds its side this long
 GHOST_S = 600.0            # a cancelled id the list still shows is hidden this long
 EVENT_LOOKUP_S = 600.0     # one event-size lookup a market per this
+STOP_TAP_WAIT_S = 20.0     # the stop waits this long for a tap in flight
+STOP_SAVE_WAIT_S = 20.0    # ...and this long for its upload (launcher allows 45)
 DOTS_SENT_S = 6 * 3600.0 + 600.0
 STATE_BRANCH = "lite-state"
 SEED_BRANCH = "v3-state"
 TAGS = ("politics", "elections")
-ECON_WORDS = ("usfed", "cbpac", "fomc", "cpi", "gdp")
-ECON_CATEGORIES = ("macro", "econ", "economics", "economy", "finance", "monetary")
+ECON_WORDS = ("usfed", "cbpac", "fomc", "cpi", "gdp", "usunemp", "banxico", "bcb")
+# a market he opens that is not already his must be politics or sports
+# (his scope; never econ). The exchange's codes and names for both.
+OPEN_CATEGORIES = ("politics", "pol", "elections", "sports", "spo")
+CLOSING = (SELL_LONG, SELL_SHORT)
 
 
 def normalize_orders(raw: list[dict]) -> list[dict]:
@@ -106,18 +112,22 @@ def normalize_orders(raw: list[dict]) -> list[dict]:
             "intent": intent,
             "title": str(md.get("title") or ""),
             "subject": str((md.get("subject") or {}).get("name") or ""),
+            "event": str(md.get("eventSlug") or ""),
         })
     return out
 
 
-def is_econ_market(slug: str, md: dict | None = None) -> bool:
-    """Standing rule: NEVER econ markets. v3's token test, the Fed-rate
-    slugs it misses, and the exchange's own category when it is known."""
+def is_econ_market(slug: str) -> bool:
+    """Standing rule: NEVER econ markets. v3's token test plus the
+    central-bank and jobs slugs it misses."""
     s = str(slug or "").lower()
-    if is_econ(s) or any(w in s.split("-") for w in ECON_WORDS):
-        return True
-    cat = str((md or {}).get("category") or "").lower()
-    return any(c == cat or cat.startswith(c + "/") for c in ECON_CATEGORIES)
+    return is_econ(s) or any(w in s.split("-") for w in ECON_WORDS)
+
+
+def category_ok(md: dict) -> bool:
+    cats = [str(md.get(k) or "").lower().split("/")[0]
+            for k in ("category", "subcategory")]
+    return any(c in OPEN_CATEGORIES for c in cats if c)
 
 
 def discover(client) -> dict[str, dict]:
@@ -175,7 +185,9 @@ class App:
         self.est = Estimator()
         self.names = Names()
         self.event_n: dict[str, int] = {}
+        self.event_slug: dict[str, str] = {}
         self.event_tried: dict[str, float] = {}
+        self.discover_n = 0            # markets the last full discovery found
         self.orders: list[dict] = []
         self.orders_at = 0.0           # when the list now shown was READ (its request's start)
         self.order_est: dict[str, float | None] = {}
@@ -190,22 +202,27 @@ class App:
         self.paid_seen: dict[str, float] = {}
         self.rw_last: dict | None = None
         self.placed_ids: dict[str, float] = {}
-        self.pending: dict[tuple, float] = {}     # placements accepted, not yet seen resting
+        self.pending: dict[tuple, tuple] = {}     # (market, side) -> (sent at, order id)
+        self.busy: set[str] = set()               # order ids with a change in flight
         self.audit: deque = deque(maxlen=200)
         self.notes: deque = deque(maxlen=200)
         self.boot_ts = self.clock()
-        # the old copy runs on for about a minute after this one answers:
-        # no payout check (and no push) until it has stopped
-        self.due: dict[str, float] = {"rewards": self.boot_ts + REWARDS_HOLD_S,
-                                      "rewards_file": self.boot_ts + REWARDS_HOLD_S}
-        self.discover_next = 0.0
+        self.due: dict[str, float] = {"rewards": self.boot_ts + BOOT_HOLD_S,
+                                      "rewards_file": self.boot_ts + BOOT_HOLD_S}
         self.trades_deep = True
         self.restored = ""
+        self.restoring = True          # nothing saves and no tap runs until restore is done
         self.seeded_v3 = False
-        self.state_unread = False      # its own save exists but could not be read
+        self.seed_caught_up = False
+        self.v3_head = ""
+        self.state_unread = False      # its own save may exist but could not be read
+        self.upload_hold = True        # a new container uploads nothing until the old copy is gone
+        self.stopping = ""
         self.tap_lock = threading.Lock()      # place and move
         self.cancel_lock = threading.Lock()   # a cancel never waits behind a placement
+        self.busy_lock = threading.Lock()
         self.orders_lock = threading.Lock()
+        self.mem_lock = threading.Lock()      # the payout memory, across threads
         self.save_lock = threading.Lock()
         self.desk = OrderDesk(
             self.client, whitelist=self.known,
@@ -232,19 +249,28 @@ class App:
     # -- state ---------------------------------------------------------------
 
     def to_dict(self) -> dict:
+        with self.mem_lock:
+            seen, paid = dict(self.rewards_seen), dict(self.paid_seen)
+        now = self.clock()
+        ids = sorted(self.placed_ids.items(), key=lambda kv: kv[1])[-5000:]
         return {
-            "saved_at": round(self.clock(), 1),
+            "saved_at": round(now, 1),
             "est": self.est.to_dict(),
             "terms": self.terms.to_dict(),
-            "event_n": self.event_n,
+            "event_n": dict(self.event_n),
+            "event_slug": dict(self.event_slug),
+            "discover_n": self.discover_n,
             "names": self.names.to_dict(),
-            "rewards_seen": self.rewards_seen,
-            "paid_seen": self.paid_seen,
+            "rewards_seen": seen,
+            "paid_seen": paid,
             "rw_last": self.rw_last,
-            "placed_ids": dict(list(self.placed_ids.items())[-5000:]),
+            "placed_ids": dict(ids),
+            "cancelled": {i: t for i, t in list(self.desk.cancelled.items()) if now - t < GHOST_S},
             "audit": list(self.audit)[-60:],
             "trades_deep": self.trades_deep,
             "seeded_v3": self.seeded_v3,
+            "seed_caught_up": self.seed_caught_up,
+            "v3_head": self.v3_head,
         }
 
     def _branch_state(self, store) -> str:
@@ -264,35 +290,41 @@ class App:
         return self.seed_store or StateStore("lite_v3_seed.json", branch=SEED_BRANCH)
 
     def restore(self) -> None:
-        """Its own save when there is one. The first boot (the branch
-        absent, not merely unread) seeds the graph, terms, event sizes,
+        """Its own save when there is one. The first boot (its branch
+        ABSENT, not merely unread) seeds the graph, terms, event sizes,
         names, known order ids and the payout memory from 3.0's save,
-        which is read only and never written. When its own branch exists
-        but cannot be read, nothing is saved until it can be — a hiccup
-        at boot must not overwrite the real state."""
-        st, where = None, "unknown"
-        for i in range(3):
-            try:
-                st = self.store.load_best()
-            except Exception as e:  # noqa: BLE001
-                self.note(f"state read failed: {e}")
+        which is read only and never written. When its own branch cannot
+        be read and cannot be ruled out, nothing is saved and no payout
+        is checked until it can — a hiccup at boot must not overwrite the
+        real state."""
+        try:
+            st, where = None, "unknown"
+            for i in range(3):
+                try:
+                    st = self.store.load_best()
+                except Exception as e:  # noqa: BLE001
+                    self.note(f"state read failed: {e}")
+                if st:
+                    break
+                where = self._branch_state(self.store)
+                if where == "absent":
+                    break
+                self._sleep(2.0 * (i + 1))
+            self.upload_hold = not getattr(self.store, "local_found", False)
             if st:
-                break
-            where = self._branch_state(self.store)
-            if where == "absent":
-                break
-            self._sleep(2.0 * (i + 1))
-        if st:
-            self.from_dict(st)
-            self.state_unread = False
-            self.restored = f"own save of {st.get('saved_at')}"
-            self._catch_up_from_v3(st)
-            return
-        if where != "absent":
-            self.state_unread = True
-            self.restored = "nothing yet — its own save exists but could not be read; saves held"
-            self.due["restore"] = self.clock() + 60.0
-            return
+                self.from_dict(st)
+                self.restored = f"own save of {st.get('saved_at')}"
+                self._catch_up_from_v3(st)
+            elif where == "absent":
+                self._first_seed()
+            else:
+                self.state_unread = True
+                self.restored = "nothing yet — its own save could not be read; saves held"
+                self.due["restore"] = self.clock() + 60.0
+        finally:
+            self.restoring = False
+
+    def _first_seed(self) -> None:
         seed = None
         for i in range(3):
             try:
@@ -306,11 +338,16 @@ class App:
             self.seed_from_v3(seed)
             self.restored = f"3.0's save of {seed.get('saved_at')}"
         else:
-            self.restored = "nothing — a fresh start"
+            # 3.0's save unread: run without it, and keep trying — the
+            # first state this copy writes would otherwise rule it out
+            self.state_unread = True
+            self.restored = "nothing — 3.0's save could not be read; saves held"
+            self.due["restore"] = self.clock() + 60.0
 
     def retry_restore(self, now: float) -> None:
-        """Its own save was unreadable at boot: try again; until it reads,
-        the running copy saves nothing."""
+        """A save that could not be read at boot: try again. What this
+        copy learned meanwhile (payout memory, event sizes, names, order
+        ids, the meter) wins over the save."""
         if not self.state_unread or not self._is_due("restore", 60.0, now):
             return
         try:
@@ -318,33 +355,71 @@ class App:
         except Exception:  # noqa: BLE001
             st = None
         if st:
-            keep_orders = self.orders
-            self.from_dict(st)
-            self.orders = keep_orders
+            self._merge_late(st)
             self.state_unread = False
             self.restored = f"own save of {st.get('saved_at')} (read late)"
-            self.note("own save read — saving again")
+            self.note("own save read late — merged, saving again")
+            return
+        if self._branch_state(self.store) == "absent":
+            try:
+                seed = self._seed().load_remote()
+            except Exception:  # noqa: BLE001
+                seed = None
+            if seed:
+                self._merge_late(seed, from_v3=True)
+                self.seeded_v3 = True
+                self.state_unread = False
+                self.restored = f"3.0's save of {seed.get('saved_at')} (read late)"
+
+    def _merge_late(self, st: dict, from_v3: bool = False) -> None:
+        if from_v3:
+            fam = st.get("fam_politics") or {}
+            seen, paid = st.get("rewards_seen") or {}, st.get("paid_seen") or {}
+            n = dict(self._v3_sizes(st))
+            names = (st.get("names") or {}).get("known") or {}
+            ids = self._v3_ids(st)
+            if not self.terms.current and fam.get("terms"):
+                self.terms = TermsStore.from_dict(fam["terms"])
+        else:
+            seen, paid = st.get("rewards_seen") or {}, st.get("paid_seen") or {}
+            n = st.get("event_n") or {}
+            names = (st.get("names") or {}).get("known") or {}
+            ids = st.get("placed_ids") or {}
+            if not self.terms.current and st.get("terms"):
+                self.terms = TermsStore.from_dict(st["terms"])
+        with self.mem_lock:
+            self.rewards_seen = {**seen, **self.rewards_seen}
+            self.paid_seen = {**paid, **self.paid_seen}
+        self.event_n = {**{s: int(v) for s, v in n.items() if v}, **self.event_n}
+        self.names.known = {**names, **self.names.known}
+        self.placed_ids = {**ids, **self.placed_ids}
 
     def _catch_up_from_v3(self, own: dict) -> None:
         """Back from a spell on 3.0 (the way back is deleting lite/ACTIVE):
-        3.0's newer save carries what it pushed meanwhile."""
+        3.0's newer save carries what it pushed and earned meanwhile, and
+        it wins. Read only when 3.0's branch has moved since last seen."""
+        try:
+            head = self._seed().remote_head() or ""
+        except Exception:  # noqa: BLE001
+            return
+        if not head or head == self.v3_head:
+            return
         try:
             v3 = self._seed().load_remote()
         except Exception:  # noqa: BLE001
+            v3 = None
+        if not v3:
             return
-        if not v3 or (v3.get("saved_at") or 0) <= (own.get("saved_at") or 0):
+        self.v3_head = head
+        if (v3.get("saved_at") or 0) <= (own.get("saved_at") or 0):
             return
-        self._union_seen(v3)
+        with self.mem_lock:
+            self.rewards_seen.update(v3.get("rewards_seen") or {})
+            self.paid_seen.update(v3.get("paid_seen") or {})
         e3 = v3.get("est_politics") or {}
         if e3.get("day") == self.est.day and (e3.get("last_ts") or 0) > (self.est.last_ts or 0):
             self.est = Estimator.from_dict(e3)
         self.note("caught up from 3.0's newer save")
-
-    def _union_seen(self, v3: dict) -> None:
-        for k, v in (v3.get("rewards_seen") or {}).items():
-            self.rewards_seen.setdefault(k, v)
-        for k, v in (v3.get("paid_seen") or {}).items():
-            self.paid_seen.setdefault(k, v)
 
     def from_dict(self, st: dict) -> None:
         if st.get("est"):
@@ -352,53 +427,104 @@ class App:
         if st.get("terms"):
             self.terms = TermsStore.from_dict(st["terms"])
         self.event_n = {s: int(n) for s, n in (st.get("event_n") or {}).items() if n}
+        self.event_slug = dict(st.get("event_slug") or {})
+        self.discover_n = int(st.get("discover_n") or 0)
         self.names.restore(st.get("names") or {})
-        self.rewards_seen = dict(st.get("rewards_seen") or {})
-        self.paid_seen = dict(st.get("paid_seen") or {})
+        with self.mem_lock:
+            self.rewards_seen = dict(st.get("rewards_seen") or {})
+            self.paid_seen = dict(st.get("paid_seen") or {})
         self.rw_last = st.get("rw_last")
         self.placed_ids = dict(st.get("placed_ids") or {})
+        for i, t in (st.get("cancelled") or {}).items():
+            self.desk.remember_cancel(i, at=t)
         self.audit.extend(st.get("audit") or [])
         self.trades_deep = bool(st.get("trades_deep", True))
         self.seeded_v3 = bool(st.get("seeded_v3", False))
+        self.seed_caught_up = bool(st.get("seed_caught_up", False))
+        self.v3_head = str(st.get("v3_head") or "")
 
-    def seed_from_v3(self, v3: dict) -> None:
-        fams = [v for k, v in v3.items() if k.startswith("fam_") and isinstance(v, dict)]
-        if v3.get("est_politics"):
-            self.est = Estimator.from_dict(v3["est_politics"])
-        pol = v3.get("fam_politics") or {}
-        if pol.get("terms"):
-            self.terms = TermsStore.from_dict(pol["terms"])
+    @staticmethod
+    def _v3_sizes(v3: dict) -> dict[str, int]:
         n: dict[str, int] = {}
-        ids: dict[str, float] = {}
-        for fam in fams:
+        for k, fam in v3.items():
+            if not (k.startswith("fam_") and isinstance(fam, dict)):
+                continue
             for s, v in (fam.get("event_n_seen") or {}).items():
                 if v:
                     n[s] = int(v)
             for s, u in (fam.get("universe") or {}).items():
                 if (u or {}).get("event_n"):
                     n[s] = int(u["event_n"])
-            if fam is not pol and fam.get("terms"):
+        return n
+
+    @staticmethod
+    def _v3_ids(v3: dict) -> dict[str, float]:
+        """3.0's order ids, newest first by when they were placed or
+        filled, so the trades file reads which side of a trade was ours
+        the way 3.0 did."""
+        ids: dict[str, float] = {}
+        for k, fam in v3.items():
+            if not (k.startswith("fam_") and isinstance(fam, dict)):
+                continue
+            for oid, t in (fam.get("placed_at") or {}).items():
+                ids[str(oid)] = max(ids.get(str(oid), 0.0), float(t or 0))
+            for oid, o in (fam.get("orders") or {}).items():
+                ids[str(oid)] = max(ids.get(str(oid), 0.0), float((o or {}).get("placed_ts") or 0))
+            for f in fam.get("fills") or []:
+                if f.get("oid"):
+                    ids[str(f["oid"])] = max(ids.get(str(f["oid"]), 0.0), float(f.get("ts") or 0))
+        return dict(sorted(ids.items(), key=lambda kv: kv[1])[-5000:])
+
+    def seed_from_v3(self, v3: dict) -> None:
+        if v3.get("est_politics"):
+            self.est = Estimator.from_dict(v3["est_politics"])
+        pol = v3.get("fam_politics") or {}
+        if pol.get("terms"):
+            self.terms = TermsStore.from_dict(pol["terms"])
+        for k, fam in v3.items():
+            if k.startswith("fam_") and fam is not pol and isinstance(fam, dict) and fam.get("terms"):
                 other = TermsStore.from_dict(fam["terms"])
                 for s, p in other.current.items():
                     if self.terms.get(s) is None:
                         self.terms.current[s] = p
                         self.terms.updated_at[s] = other.updated_at.get(s, 0.0)
-            # 3.0's order ids, so the trades file reads which side of a
-            # trade was ours the way 3.0 did
-            for oid in list((fam.get("orders") or {}).keys()) + list((fam.get("placed_at") or {}).keys()):
-                ids[str(oid)] = 0.0
-        self.event_n = n
-        self.placed_ids = dict(list(ids.items())[-5000:])
+        self.event_n = self._v3_sizes(v3)
+        self.placed_ids = self._v3_ids(v3)
         self.names.restore(v3.get("names") or {})
-        self.rewards_seen = dict(v3.get("rewards_seen") or {})
-        self.paid_seen = dict(v3.get("paid_seen") or {})
+        with self.mem_lock:
+            self.rewards_seen = dict(v3.get("rewards_seen") or {})
+            self.paid_seen = dict(v3.get("paid_seen") or {})
+        try:
+            self.v3_head = self._seed().remote_head() or ""
+        except Exception:  # noqa: BLE001
+            self.v3_head = ""
         self.seeded_v3 = True
 
     def save(self, force_remote: bool = False) -> None:
-        if self.state_unread:
+        if self.state_unread or self.restoring:
             return
         with self.save_lock:
-            self.store.save_soon(self.to_dict(), force_remote=force_remote)
+            st = self.to_dict()
+            if self.upload_hold:
+                self.store.save_local(st)
+            else:
+                self.store.save_soon(st, force_remote=force_remote)
+
+    def end_upload_hold(self) -> None:
+        """The old copy has stopped: take its last word on the payout
+        memory and order ids (its stop save), then upload as usual."""
+        if not self.upload_hold:
+            return
+        try:
+            remote = self.store.load_remote()
+        except Exception:  # noqa: BLE001
+            remote = None
+        if remote:
+            with self.mem_lock:
+                self.rewards_seen.update(remote.get("rewards_seen") or {})
+                self.paid_seen.update(remote.get("paid_seen") or {})
+            self.placed_ids = {**(remote.get("placed_ids") or {}), **self.placed_ids}
+        self.upload_hold = False
 
     # -- whitelist and labels -----------------------------------------------
 
@@ -420,8 +546,8 @@ class App:
 
     def known(self, slug: str) -> bool:
         """The markets a tap may act in: his orders' and holdings' markets,
-        and any market he opened that the exchange confirmed is open and
-        not an econ market (standing rule: never econ)."""
+        and any market he opened that the exchange confirmed is open,
+        politics or sports, and not econ (standing rule: never econ)."""
         if not slug or is_econ_market(slug):
             return False
         return (slug in self.order_markets() or slug in self.positions
@@ -453,20 +579,31 @@ class App:
                 return
             self.orders, self.orders_at = rows, read_at
             self.verified_at = read_at
-            live = {(o["market"], o["side"], round(o["price"], 4)) for o in rows}
-            for k in [k for k, t in self.pending.items()
-                      if now - t > PENDING_S or (k[0], k[1], k[2]) in live]:
+            ids = {o["id"] for o in rows}
+            for o in rows:
+                if o["event"]:
+                    self.event_slug[o["market"]] = o["event"]
+            for k in [k for k, (t, oid) in self.pending.items()
+                      if now - t > PENDING_S or oid in ids]:
                 del self.pending[k]
 
-    def _read_orders(self, tries: int = 2) -> None:
+    def _read_orders(self, tries: int = 2) -> bool:
         t0 = self.clock()
         try:
             self._take_orders(self.client.open_orders_raw(tries=tries, timeout=10.0), t0)
+            return True
         except Exception as e:  # noqa: BLE001 — the last list stands, unverified
             self.note(f"open list: {e}")
+            return False
 
     def _find(self, order_id: str) -> dict | None:
         return next((o for o in self.orders if o["id"] == order_id), None)
+
+    def offered(self, slug: str, intent: str, but: str = "") -> float:
+        """Shares his resting orders already offer to close this position
+        (asks selling the long, bids buying back the short)."""
+        return sum(o["size"] for o in self.orders
+                   if o["market"] == slug and o["intent"] == intent and o["id"] != but)
 
     # -- the meter -----------------------------------------------------------
 
@@ -481,21 +618,32 @@ class App:
     def score(self, o: dict, book, here: list[dict]):
         """The meter's own arithmetic for one order: (Score, prog, pool)."""
         prog = self.terms.get(o["market"])
+        pool = self.side_pool(o["market"], prog) if prog is not None else None
         if prog is None or not prog.is_live() or book is None:
-            return None, prog, None
-        pool = self.side_pool(o["market"], prog)
+            return None, prog, pool
         s = score_resting(o["side"], o["price"], o["size"], top_up_book(book, here),
                           df=prog.df, target=prog.target, daily_side_pool=pool)
         return s, prog, pool
 
     def _day_roll_gap(self, now: float) -> None:
-        """A sample after a restart that spans ET midnight: the unmeasured
-        gap is today's only from midnight on, and the graph reads zero
-        across it."""
+        """A sample after an outage of more than five minutes that spans
+        ET midnight: the closed day banks its part of the gap, today
+        banks the part since midnight, nothing is billed, and the graph
+        reads zero across it."""
         e = self.est
-        if e.last_ts and e.day and et_day(now) != e.day and now - e.last_ts > MAX_GAP_S:
-            e.dots.append([round(e.last_ts + 20.0, 1), 0.0, 0])
-            e.last_ts = max(e.last_ts, et_day_start(now))
+        if not (e.last_ts and e.day and et_day(now) != e.day and now - e.last_ts > MAX_GAP_S):
+            return
+        midnight = et_day_start(now)
+        e.stale_s += max(midnight - e.last_ts, 0.0)
+        e._close_day()
+        e.day = et_day(now)
+        e.stale_s = max(now - midnight, 0.0)
+        e.dots.append([round(e.last_ts + 20.0, 1), 0.0, 0])
+        e.dots.append([round(now - 20.0, 1), 0.0, 0])
+        e.last_ts = now
+
+    def unverified(self, now: float) -> bool:
+        return self.verified_at is None or now - self.verified_at > VERIFIED_MAX_S
 
     def sample_once(self, now: float | None = None) -> None:
         now = now if now is not None else self.clock()
@@ -509,7 +657,7 @@ class App:
                             side_pool=self.side_pool, verified_at=self.verified_at)
         except Exception as e:  # noqa: BLE001
             self.note(f"meter: {e}")
-        unverified = self.verified_at is None or now - self.verified_at > VERIFIED_MAX_S
+        unverified = self.unverified(now)
         est: dict[str, float | None] = {}
         by_m: dict[str, list[dict]] = {}
         for o in orders:
@@ -587,26 +735,33 @@ class App:
 
     def refresh_positions(self, now: float) -> None:
         try:
-            self.positions = self.client.positions()
-            self.positions_at = now
+            pos = self.client.positions()
+            self.positions, self.positions_at = pos, now
+            for s, p in pos.items():
+                ev = ((p or {}).get("marketMetadata") or {}).get("eventSlug")
+                if ev:
+                    self.event_slug[s] = str(ev)
         except Exception as e:  # noqa: BLE001
             self.note(f"positions: {e}")
 
     def event_size(self, slug: str, now: float) -> None:
         """A market of his with no event size (listed since the last
-        discovery, or outside politics): count its event's open markets
-        directly, at most once in ten minutes a market."""
+        discovery, or outside politics): count its event's open markets,
+        the event named on his order or position, at most once in ten
+        minutes a market. One try each: this never holds up the books."""
         if self.event_n.get(slug) or now - self.event_tried.get(slug, 0.0) < EVENT_LOOKUP_S:
             return
         self.event_tried[slug] = now
+        ev_slug = self.event_slug.get(slug)
+        if not ev_slug:
+            self.note(f"event size {slug}: no event named on its order or position")
+            return
         try:
-            md = self.client.market_details(slug)
-            ev_slug = md.get("eventSlug") or (md.get("event") or {}).get("slug")
-            if not ev_slug:
-                return
-            ev = self.client.event_by_slug(ev_slug)
+            j = self.client.get(f"{GATEWAY}/v1/events/slug/{ev_slug}", tries=1, timeout=8.0)
+            ev = j.get("event") or j
             rows = [m for m in ev.get("markets") or [] if m.get("slug") and not m.get("closed")]
             if not rows:
+                self.note(f"event size {slug}: event {ev_slug} lists no open markets")
                 return
             out = {m["slug"]: {"event_n": len(rows)} for m in rows}
             _group_sizes(out, [m["slug"] for m in rows])
@@ -621,16 +776,18 @@ class App:
         except Exception as e:  # noqa: BLE001
             self.note(f"discover: {e}")
             return False
-        short = len(found) < 0.6 * len(self.event_n)
+        short = bool(self.discover_n) and len(found) < 0.6 * self.discover_n
         for s, r in found.items():
             self.event_n[s] = int(r["event_n"])
             if r.get("name"):
                 self.names.known[s] = r["name"]
-        if short:
+        if short or not found:
             # a short feed is merged in (above), never taken whole, and
             # read again soon
-            self.note(f"discover: {len(found)} markets against {len(self.event_n)} known — merged")
+            self.note(f"discover: {len(found)} markets where the last full read had "
+                      f"{self.discover_n} — merged")
             return False
+        self.discover_n = len(found)
         return True
 
     def discover_loop(self) -> None:
@@ -646,17 +803,22 @@ class App:
         except Exception as e:  # noqa: BLE001
             self.note(f"payouts: {e}")
             return
-        if self.seeded_v3 and not getattr(self, "_seed_caught_up", False):
+        if self.seeded_v3 and not self.seed_caught_up:
             # 3.0 ran on for a minute after the seed was read and may
-            # have pushed rows in it: take its final word first
+            # have pushed rows in it: its final word wins
             try:
                 v3 = self._seed().load_remote()
-                if v3:
-                    self._union_seen(v3)
-                self._seed_caught_up = True
             except Exception:  # noqa: BLE001
-                pass
-        res = records.check_rewards(rows, self.rewards_seen, self.paid_seen, now)
+                v3 = None
+            if not v3:
+                self.note("payouts: 3.0's final save could not be read — check held")
+                return
+            with self.mem_lock:
+                self.rewards_seen.update(v3.get("rewards_seen") or {})
+                self.paid_seen.update(v3.get("paid_seen") or {})
+            self.seed_caught_up = True
+        with self.mem_lock:
+            res = records.check_rewards(rows, self.rewards_seen, self.paid_seen, now)
         # the memory first, then the push: a copy that starts after this
         # one must not push the same rows again
         self.save(force_remote=bool(res["new_count"]))
@@ -697,8 +859,12 @@ class App:
 
     def records_once(self, now: float | None = None) -> None:
         """The payout check, the files and the push: on their own thread,
-        so a slow exchange answer never holds up the book reads."""
+        so a slow exchange answer never holds up the book reads; none of
+        it while the state is unread or the old copy may still run."""
         now = now if now is not None else self.clock()
+        if self.state_unread or self.restoring or now < self.boot_ts + BOOT_HOLD_S:
+            return
+        self.end_upload_hold()
         if self._is_due("rewards_file", REWARDS_FILE_S, now):
             self.due["rewards"] = now + REWARDS_S
             self.check_rewards(now, write_file=True)
@@ -709,9 +875,17 @@ class App:
 
     # -- his taps ------------------------------------------------------------
 
+    def _gate(self) -> str:
+        if self.restoring:
+            return "starting — try again in a minute"
+        if self.stopping:
+            return f"stopping ({self.stopping}) — try again after the restart"
+        return ""
+
     def _tap_book(self, slug: str):
-        """A book under 20 s old for a tap: the cache's, else one read
-        that waits out a gateway hold (priority) rather than fail."""
+        """A book under 20 s old for a tap that places: the cache's, else
+        one read that waits out a gateway hold (priority) rather than
+        fail."""
         now = self.clock()
         if self.cache.age(slug, now) <= TAP_BOOK_S:
             return self.cache.fresh(slug, TAP_BOOK_S, now)
@@ -728,6 +902,8 @@ class App:
         return self._held_of(pos).get(slug, 0.0)
 
     def place(self, slug: str, side: str, cents: float, qty: float) -> dict:
+        if (g := self._gate()):
+            return {"ok": False, "note": g}
         side = str(side or "").upper()
         if side not in ("BUY", "SELL"):
             return {"ok": False, "note": "side must be bid or ask"}
@@ -740,29 +916,41 @@ class App:
             return {"ok": False, "note": f"size must be 0.01 to {QTY_MAX:,.0f}"}
         if not self.known(slug):
             return {"ok": False, "note": "not a market of yours — open it first"}
+        p = self.pending.get((slug, side))
+        if p and self.clock() - p[0] < PENDING_S:
+            return {"ok": False, "note": f"an order sent {self.clock() - p[0]:.0f}s ago (id {p[1]}) "
+                                         f"is not listed yet — wait a minute or check your orders"}
         try:
-            book = self._tap_book(slug)
+            self._tap_book(slug)
             net = self._net_now(slug)
         except Exception as e:  # noqa: BLE001
             return {"ok": False, "note": f"could not read the market or your position: {e}"}
-        tick = self.cache.grid(slug) or book.tick
-        key = (slug, side, round(snap_price(price, tick, side), 4), qty)
         with self.tap_lock:
-            if self.clock() - self.pending.get(key, -1e9) < PENDING_S:
-                return {"ok": False, "note": "the same order was sent a moment ago and may "
-                                             "still land — check your orders first"}
-            close_short = side == "BUY" and net < 0 and qty <= -net + 1e-9
-            r = self.desk.place_resting(slug, side, price, qty, net_position=net,
+            if (g := self._gate()):
+                return {"ok": False, "note": g}
+            if not self._read_orders():
+                return {"ok": False, "note": "could not read your orders — try again"}
+            # what he already offers to close counts against what he holds:
+            # the same shares are never offered twice
+            if side == "SELL":
+                free = max(net, 0.0) - self.offered(slug, SELL_LONG)
+                close_short = False
+                net_for = free
+            else:
+                free = max(-net, 0.0) - self.offered(slug, SELL_SHORT)
+                close_short = free > 0 and qty <= free + 1e-9
+                net_for = net
+            r = self.desk.place_resting(slug, side, price, qty, net_position=net_for,
                                         close_short=close_short, initiator="owner")
             if r.order_id:
                 self.placed_ids[r.order_id] = round(self.clock(), 1)
             self._read_orders()
             if r.order_id and not r.ok:
-                self.pending[key] = self.clock()
                 if r.resting_qty:
-                    return {"ok": True, "pending": True, "id": r.order_id, "price": r.price,
+                    return {"ok": True, "id": r.order_id, "price": r.price,
                             "note": f"resting {r.resting_qty:g} of {qty:g} — the exchange "
                                     f"kept what the money allows"}
+                self.pending[(slug, side)] = (self.clock(), r.order_id)
                 return {"ok": True, "pending": True, "id": r.order_id, "price": r.price,
                         "note": f"sent (id {r.order_id}) but not listed yet — it may still "
                                 f"land; check your orders before placing again"}
@@ -771,17 +959,28 @@ class App:
     def move(self, order_id: str, cents: float | None = None, qty: float | None = None,
              was_price: float | None = None, was_size: float | None = None) -> dict:
         """New price and/or size: the replacement is placed and confirmed
-        resting at its full size by its id BEFORE the original is
-        cancelled (never the exchange's modify, which destroys the order).
-        `was_price`/`was_size` are what his card showed: an order that has
-        filled or changed since is refused, not resized from a stale
-        number."""
-        self._read_orders()
+        resting by its id BEFORE the original is cancelled (never the
+        exchange's modify, which destroys the order). `was_price` /
+        `was_size` are what his card showed: an order that has filled or
+        changed since is refused, not resized from a stale number."""
+        if (g := self._gate()):
+            return {"ok": False, "note": g}
+        with self.busy_lock:
+            if order_id in self.busy:
+                return {"ok": False, "note": "a change of this order is already in flight"}
+            self.busy.add(order_id)
+        try:
+            return self._move(order_id, cents, qty, was_price, was_size)
+        finally:
+            with self.busy_lock:
+                self.busy.discard(order_id)
+
+    def _move(self, order_id, cents, qty, was_price, was_size) -> dict:
+        if not self._read_orders():
+            return {"ok": False, "note": "could not read your orders — try again"}
         o = self._find(order_id)
-        if o is None:
+        if o is None or self.desk.cancelled_at(order_id):
             return {"ok": False, "note": "that order is not on the open list"}
-        if self.desk.cancelled_at(order_id):
-            return {"ok": False, "note": "that order was cancelled"}
         if o["intent"] not in REST_SIDE:
             return {"ok": False, "note": "the exchange gave no intent for it — cancel and place instead"}
         try:
@@ -796,16 +995,29 @@ class App:
             return {"ok": False, "note": "price and size must be numbers"}
         if size < 0.01 or size > QTY_MAX:
             return {"ok": False, "note": f"size must be 0.01 to {QTY_MAX:,.0f}"}
+        closing = o["intent"] in CLOSING
         try:
             book = self._tap_book(o["market"])
+            net = self._net_now(o["market"]) if closing else 0.0
         except Exception as e:  # noqa: BLE001
-            return {"ok": False, "note": f"could not read the market: {e}"}
+            return {"ok": False, "note": f"could not read the market or your position: {e}"}
+        if closing:
+            held = max(net, 0.0) if o["intent"] == SELL_LONG else max(-net, 0.0)
+            room = held - self.offered(o["market"], o["intent"], but=order_id)
+            if size > room + 1e-9:
+                return {"ok": False, "note": f"you hold {held:g} and other orders offer "
+                                             f"{held - room:g} of it — at most {max(room, 0):g} here"}
         tick = self.cache.grid(o["market"]) or book.tick
         price = round(snap_price(price, tick, o["side"]), 4)
         if abs(price - o["price"]) < 1e-9 and abs(size - o["size"]) < 1e-9:
             return {"ok": False, "note": "nothing to change"}
         with self.tap_lock:
-            r = self.desk.reprice(dict(o), price, size, initiator="owner")
+            if (g := self._gate()):
+                return {"ok": False, "note": g}
+            # an exit takes no money, so a shortfall can only be a fill: the
+            # part that rests stands. An order that adds to a position the
+            # exchange cut to the money free is withdrawn instead.
+            r = self.desk.reprice(dict(o), price, size, initiator="owner", keep_trimmed=closing)
             if r.order_id and r.order_id != order_id:
                 self.placed_ids[r.order_id] = round(self.clock(), 1)
             if r.withdrawn_id:
@@ -814,8 +1026,9 @@ class App:
         if not r.ok:
             note = r.note
             if "resting only" in note:
-                note = ("not enough buying power free for the new order while the old one "
-                        "rests — your order is untouched; lower the size, or cancel and place")
+                note = ("the new order rested only in part (the money cut it, or part of it "
+                        "filled) — it was withdrawn and your order is as it was; check your "
+                        "position and buying power")
             if r.withdrawn_id and not self.desk.cancelled_at(r.withdrawn_id):
                 note += f" — the new order (id {r.withdrawn_id}) could not be withdrawn; check your orders"
             return {"ok": False, "note": note}
@@ -823,13 +1036,29 @@ class App:
         if r.two_orders:
             if self._find(order_id) is None:
                 note = "the original filled or was already gone — only the new order rests"
-                if o["intent"] in (SELL_LONG, SELL_SHORT):
-                    note += "; check your position: it may now offer more than you hold"
             else:
                 note += " — BOTH rest; cancel one"
+        if closing:
+            try:
+                net2 = self._net_now(o["market"])
+                held2 = max(net2, 0.0) if o["intent"] == SELL_LONG else max(-net2, 0.0)
+                out = self.offered(o["market"], o["intent"])
+                if out > held2 + 1e-9:
+                    note += f" — check: {out:g} offered against {held2:g} held"
+            except Exception:  # noqa: BLE001
+                note += " — your position could not be re-read; check it"
         return {"ok": True, "note": note, "id": r.order_id, "price": r.price}
 
     def cancel(self, order_id: str) -> dict:
+        if self.restoring:
+            return {"ok": False, "note": "starting — try again in a minute"}
+        for _ in range(40):                 # a change in flight finishes first
+            with self.busy_lock:
+                if order_id not in self.busy:
+                    break
+            self._sleep(0.5)
+        else:
+            return {"ok": False, "note": "a change of this order is still running — try again"}
         with self.cancel_lock:
             o = self._find(order_id)
             if o is None:
@@ -843,7 +1072,8 @@ class App:
 
     def open_market(self, slug: str) -> dict:
         """He opened a market's book. A market that is neither his order's
-        nor a holding is checked with the exchange first."""
+        nor a holding is checked with the exchange first: open, and
+        politics or sports."""
         slug = str(slug or "").strip()
         if not slug:
             return {"ok": False, "note": "no market"}
@@ -856,10 +1086,13 @@ class App:
                 return {"ok": False, "note": f"no such market: {e}"}
             if md.get("closed") or md.get("active") is False:
                 return {"ok": False, "note": "that market is closed"}
-            if is_econ_market(slug, md):
-                return {"ok": False, "note": "econ markets are off limits"}
+            if not (slug in self.event_n or category_ok(md)):
+                return {"ok": False, "note": "only politics and sports markets"}
             self.checked[slug] = self.clock()
             self.names.learn(slug, md)
+            ev = md.get("eventSlug") or (md.get("event") or {}).get("slug")
+            if ev:
+                self.event_slug[slug] = str(ev)
         self.opened[slug] = self.clock()
         if self.terms.get(slug) is None:
             self.refresh_terms(self.clock(), [slug])
@@ -869,25 +1102,35 @@ class App:
 
     # -- what the page reads --------------------------------------------------
 
+    def _view_book(self, slug: str):
+        """The book to SHOW: the cache when fresh, else one quick read,
+        else the last book with its age — a view never waits out a
+        gateway hold."""
+        now = self.clock()
+        if self.cache.age(slug, now) <= TAP_BOOK_S:
+            return self.cache.any_age(slug), ""
+        try:
+            book = self.client.book(slug, timeout=8.0, tries=1)
+            self.cache.put(slug, book)
+            return book, ""
+        except Exception as e:  # noqa: BLE001
+            return self.cache.any_age(slug), f"book read failed: {str(e)[:80]}"
+
     def book_view(self, slug: str) -> dict:
-        """The order book with his orders marked, his position, and the
-        program the market pays under. A failed read shows the last book
-        it had, with its age."""
+        """The order book with his orders marked, his position, what his
+        orders already offer against it, and the program the market pays
+        under."""
         r = self.open_market(slug)
         if not r["ok"]:
             return r
-        stale = ""
-        try:
-            book = self._tap_book(slug)
-        except Exception as e:  # noqa: BLE001
-            book = self.cache.any_age(slug)
-            stale = f"book read failed: {str(e)[:80]}"
+        book, stale = self._view_book(slug)
         now = self.clock()
         mine = [o for o in self.orders if o["market"] == slug]
         prog = self.terms.get(slug)
         pool = self.side_pool(slug, prog) if prog is not None else None
         p = self.positions.get(slug) or {}
         cv = p.get("cashValue")
+        net = self.held().get(slug, 0.0)
         return {
             "ok": True, "market": slug, "name": self.label(slug), "stale": stale,
             "age": round(now - book.fetched_at, 1) if book else None,
@@ -896,7 +1139,9 @@ class App:
             "asks": [list(x) for x in book.asks[:10]] if book else [],
             "ours": [{"id": o["id"], "side": o["side"], "price": o["price"], "size": o["size"],
                       "est": self.order_est.get(o["id"])} for o in mine],
-            "net": self.held().get(slug, 0.0),
+            "net": net,
+            "free_long": max(net, 0.0) - self.offered(slug, SELL_LONG),
+            "free_short": max(-net, 0.0) - self.offered(slug, SELL_SHORT),
             "value": to_num(cv.get("value") if isinstance(cv, dict) else cv),
             "pool": pool, "target": prog.target if prog else None,
             "df": prog.df if prog else None, "live": bool(prog and prog.is_live()),
@@ -917,6 +1162,7 @@ class App:
         view = self.book_view(o["market"])
         if not view.get("ok"):
             return {**view, "order": o}
+        now = self.clock()
         here = [x for x in self.orders if x["market"] == o["market"]]
         book = self.cache.any_age(o["market"])
         s, prog, pool = self.score(o, book, here)
@@ -926,6 +1172,8 @@ class App:
             math["why"] = "no reward program read for this market"
         elif not prog.is_live():
             math["why"] = "the program is not live"
+        elif book is None:
+            math["why"] = "no book to score against (read failed)"
         elif pool is None:
             math["why"] = "event size unknown — no dollar figure"
         if s is not None:
@@ -933,7 +1181,10 @@ class App:
                         denom=s.denom, share=s.share, est=s.est_day,
                         score=(o["size"] * prog.df ** s.ticks) if s.share else 0.0,
                         window=[list(w) for w in (s.window or ())])
-        if view.get("first_day"):
+        if self.unverified(now):
+            math["est"] = None
+            math["why"] = "your orders have not been read back for 5 min — nothing counted"
+        elif view.get("first_day"):
             math["why"] = "first day in its program — counts nothing until midnight ET"
             math["est"] = 0.0
         return {**view, "order": o, "math": math,
@@ -958,6 +1209,9 @@ class App:
                    "est": self.order_est.get(o["id"])} for o in self.orders]
         orders.sort(key=lambda o: (o["name"], o["side"], -o["price"]))
         b = self.balance
+        note = ""
+        if self.state_unread:
+            note = "its saved state could not be read — not saving or checking payouts until it can"
         return {
             "now": round(now, 1),
             "starting": not self.orders_at,
@@ -972,8 +1226,7 @@ class App:
             "holdings": holdings, "small_n": small_n, "small_v": round(small_v, 2),
             "holdings_value": round(sum(h["value"] for h in holdings) + small_v, 2),
             "positions_age": round(now - self.positions_at) if self.positions_at else None,
-            "state_note": ("its saved state could not be read — not saving until it can"
-                           if self.state_unread else ""),
+            "state_note": note,
         }
 
     # -- running -------------------------------------------------------------
@@ -1001,19 +1254,22 @@ class App:
             self.streams.append(st)
 
     def shutdown_save(self, why: str) -> None:
-        """The stop: wait for a tap in flight (a change half done must
-        finish its cancel), halt the desk, save, upload. Within the
-        launcher's 45 seconds: up to 15 to wait, 25 to upload."""
-        got_tap = self.tap_lock.acquire(timeout=12.0)
-        got_cancel = self.cancel_lock.acquire(timeout=3.0)
-        OrderDesk.halted = why
+        """The stop: refuse new taps at once, wait for one in flight to
+        finish (a change half done must reach its cancel), then save and
+        upload — 20 s and 20 s inside the launcher's 45. The desk is not
+        halted: this app keeps no order records a late cancel could
+        contradict, and an in-flight change must be free to finish."""
+        self.stopping = why
+        got_tap = self.tap_lock.acquire(timeout=STOP_TAP_WAIT_S)
+        deadline = self.clock() + 5.0
+        while self.busy and self.clock() < deadline:
+            self._sleep(0.2)
         try:
+            self.upload_hold = False
             self.save(force_remote=True)
-            self.store.wait_remote(25.0)
+            self.store.wait_remote(STOP_SAVE_WAIT_S)
         except Exception as e:  # noqa: BLE001
             print(f"lite: stop save failed: {e}", flush=True)
         finally:
-            if got_cancel:
-                self.cancel_lock.release()
             if got_tap:
                 self.tap_lock.release()

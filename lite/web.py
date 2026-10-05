@@ -116,7 +116,7 @@ function draw(d){
    +'<div class="l"><span class="a">'+side(o.side)+' '+ct(o.price)+' × '+sz(o.size)+'</span>'
    +'<span class="e">'+day(o.est)+'</span></div></div>';});
  if(!(d.orders||[]).length)h+='<div class="muted">none</div>';
- h+='</div><div class="card"><b>Holdings</b>';
+ h+='</div><div class="card"><b>Holdings</b>'+(d.positions_age>120?' <span class="warn">read '+ago(d.positions_age)+' ago</span>':'');
  (d.holdings||[]).forEach(function(p){
   h+='<div class="row" onclick="openMarket(\''+esc(p.market)+'\')"><div class="n">'+esc(p.name)+'</div>'
    +'<div class="l"><span class="a">'+(p.net>0?'Yes ':'No ')+sz(Math.abs(p.net))+'</span>'
@@ -140,7 +140,7 @@ function bookHtml(b,mine){
   return r+'</table>';}
  return '<div class="bk"><div><div class="muted">bids</div>'+col(b.bids||[],'BUY')
   +'</div><div><div class="muted">asks</div>'+col(b.asks||[],'SELL')+'</div></div>'
-  +'<div class="muted">book '+Math.round(b.age||0)+'s old · tick '+ct(b.tick)+'</div>';
+  +'<div class="muted">'+(b.age==null?'no book':'book '+Math.round(b.age)+'s old · tick '+ct(b.tick))+'</div>';
 }
 function mathHtml(o,m){
  var h='<table>';
@@ -175,33 +175,43 @@ function sheet(html){
 function closeSheet(){window._card=null;['sheet','scrim'].forEach(function(i){var e=document.getElementById(i);if(e)e.remove();});}
 function say(j){window._said=j;refreshCard();load();}
 function said(){var j=window._said;if(!j)return '';return '<div class="note '+(j.ok?'ok':'bad')+'">'+esc(j.note||'')+'</div>';}
-function openOrder(id){window._card={kind:'order',id:id};window._said=null;window._typed=null;sheet('<div class="muted">reading…</div>');refreshCard();}
-function openMarket(m){if(!m)return;window._card={kind:'market',m:m};window._said=null;window._typed=null;window._side=null;sheet('<div class="muted">reading…</div>');refreshCard();}
-function typed(){var p=document.getElementById('px'),q=document.getElementById('qty');
- if(p&&q)window._typed={px:p.value,qty:q.value};}
+function openOrder(id){window._card={kind:'order',id:id};window._said=null;window._typed={};window._shown=null;
+ // the order and its Cancel come up at once from the list, before any read
+ var o=((window._d||{}).orders||[]).filter(function(x){return x.id===id;})[0];
+ sheet(o?'<div><b>'+esc(o.name)+'</b></div><div class="hero" style="font-size:26px">'+side(o.side)+' '+ct(o.price)+' × '+sz(o.size)+'</div>'
+  +'<div class="muted">reading…</div><div class="frm"><button class="no" onclick="doCancel()">Cancel order</button></div>'
+  :'<div class="muted">reading…</div>');
+ refreshCard();}
+function openMarket(m){if(!m)return;window._card={kind:'market',m:m};window._said=null;window._typed={};window._side=null;sheet('<div class="muted">reading…</div>');refreshCard();}
+function typed(k){var e=document.getElementById(k);if(e)window._typed[k]=e.value;}
+function val(k,d){var t=window._typed||{};return t[k]!=null?t[k]:d;}
+function edited(){var t=window._typed||{};return t.px!=null||t.qty!=null;}
 function refreshCard(){
- var c=window._card;if(!c)return;
- if(c.kind==='order')get('/math.json?id='+encodeURIComponent(c.id),function(j){if(window._card===c)drawOrder(j);});
- else get('/book.json?m='+encodeURIComponent(c.m),function(j){if(window._card===c)drawMarket(j);});
+ var c=window._card;if(!c||window._busy)return;
+ if(c.kind==='order')get('/math.json?id='+encodeURIComponent(c.id),function(j){if(window._card===c&&!window._busy)drawOrder(j);});
+ else get('/book.json?m='+encodeURIComponent(c.m),function(j){if(window._card===c&&!window._busy)drawMarket(j);});
 }
+function btns(html){return window._busy?html.replace(/<button(?! class="close")/g,'<button disabled'):html;}
 function drawOrder(j){
+ var o=j.order||(((window._d||{}).orders||[]).filter(function(x){return x.id===(window._card||{}).id;})[0]);
  if(!j.ok){
   // the order is still his to cancel when its book cannot be read
-  var c0=j.order?'<div class="hero" style="font-size:26px">'+side(j.order.side)+' '+ct(j.order.price)+' × '+sz(j.order.size)+'</div>'
+  var c0=o?'<div class="hero" style="font-size:26px">'+side(o.side)+' '+ct(o.price)+' × '+sz(o.size)+'</div>'
    +'<div class="frm"><button class="no" onclick="doCancel()">Cancel order</button></div>':'';
-  sheet(said()+'<div class="bad">'+esc(j.note)+'</div>'+c0);return;}
- var o=j.order,t=window._typed||{px:(Math.round(o.price*1000)/10),qty:o.size};
- window._shown={px:o.price,qty:o.size};
+  sheet(btns(said()+'<div class="bad">'+esc(j.note)+'</div>'+c0));return;}
+ // what the card showed when he started typing is what a change is
+ // checked against: a fill meanwhile is refused, never resized over
+ if(!edited()||!window._shown)window._shown={px:o.price,qty:o.size};
  var h='<div><b>'+esc(j.name)+'</b></div><div class="hero" style="font-size:26px">'+side(o.side)+' '+ct(o.price)+' × '+sz(o.size)+'</div>'
   +said()+(j.stale?'<div class="warn">'+esc(j.stale)+'</div>':'')+mathHtml(o,j.math)+bookHtml(j,o)
-  +'<div class="frm"><input id="px" inputmode="decimal" value="'+esc(t.px)+'" oninput="typed()">¢'
-  +'<input id="qty" inputmode="decimal" value="'+esc(t.qty)+'" oninput="typed()">'
+  +'<div class="frm"><input id="px" inputmode="decimal" value="'+esc(val('px',Math.round(o.price*1000)/10))+'" oninput="typed(\'px\')">¢'
+  +'<input id="qty" inputmode="decimal" value="'+esc(val('qty',o.size))+'" oninput="typed(\'qty\')">'
   +'<button onclick="doMove()">Change</button><button class="no" onclick="doCancel()">Cancel order</button></div>';
- sheet(h);
+ sheet(btns(h));
 }
 function drawMarket(j){
  if(!j.ok){sheet(said()+'<div class="bad">'+esc(j.note)+'</div>');return;}
- var sd=window._side||'BUY',t=window._typed||{px:'',qty:''};
+ var sd=window._side||'BUY';
  var h='<div><b>'+esc(j.name)+'</b></div>'
   +'<div class="muted">'+(j.net?(j.net>0?'Yes ':'No ')+sz(Math.abs(j.net))+' · '+usd(j.value)+' · ':'')
   +(j.pool!=null?usd(j.pool)+'/day a side, Target '+sz(j.target)
@@ -214,33 +224,43 @@ function drawMarket(j){
  h+=bookHtml(j,null)
   +'<div class="frm seg"><button class="'+(sd==='BUY'?'on':'')+'" onclick="pick(\'BUY\')">Bid</button>'
   +'<button class="'+(sd==='SELL'?'on':'')+'" onclick="pick(\'SELL\')">Ask</button></div>'
-  +'<div class="frm"><input id="px" inputmode="decimal" placeholder="¢" value="'+esc(t.px)+'" oninput="typed()">¢'
-  +'<input id="qty" inputmode="decimal" placeholder="size" value="'+esc(t.qty)+'" oninput="typed()">'
+  +'<div class="frm"><input id="px" inputmode="decimal" placeholder="¢" value="'+esc(val('px',''))+'" oninput="typed(\'px\')">¢'
+  +'<input id="qty" inputmode="decimal" placeholder="size" value="'+esc(val('qty',''))+'" oninput="typed(\'qty\')">'
   +'<button onclick="doPlace()">Place</button></div>';
- window._mk=j;sheet(h);
+ window._mk=j;sheet(btns(h));
 }
-function pick(s){window._side=s;typed();if(window._mk)drawMarket(window._mk);}
+function pick(s){window._side=s;if(window._mk)drawMarket(window._mk);}
 function nums(){var p=parseFloat(document.getElementById('px').value),q=parseFloat(document.getElementById('qty').value);
  if(!(p>0)||!(q>0)){alert('price and size');return null;}return [p,q];}
+function busy(on,note){window._busy=on;if(on)window._said={ok:true,note:note};
+ var s=document.getElementById('sheet');if(s)s.querySelectorAll('button:not(.close)').forEach(function(b){b.disabled=on;});
+ if(on){var n=s&&s.querySelector('.note');if(n)n.textContent=note;else if(s)s.insertAdjacentHTML('beforeend','<div class="note ok">'+esc(note)+'</div>');}}
+function done(r){busy(false);window._typed={};window._shown=null;say(r);}
 function doPlace(){var n=nums();if(!n)return;var c=window._card,sd=window._side||'BUY',j=window._mk||{};
- var held=j.net||0,cost=sd==='BUY'?(held<0&&n[1]<=-held?0:n[0]/100*n[1]):(held>=n[1]?0:(1-n[0]/100)*n[1]);
- if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(cost?' — ties up '+usd(cost):'')+'?'))return;
- window._said={ok:true,note:'placing…'};drawMarket(j);
- post({op:'place',market:c.m,side:sd,px:n[0],qty:n[1]},function(r){window._typed=null;say(r);});}
-function doMove(){var n=nums();if(!n)return;var c=window._card,w=window._shown||{};
- // the size goes only when he changed it, and with it what the card
- // showed: an order that filled meanwhile is refused, never regrown
- var body={op:'move',order_id:c.id,px:n[0],was_price:Math.round(w.px*100000)/1000,was_size:w.qty};
- if(Math.abs(n[1]-w.qty)>1e-9)body.qty=n[1];
- if(!confirm('Change to '+n[0]+'¢ × '+(body.qty!=null?n[1]:w.qty)+'?'))return;
- post(body,function(r){window._typed=null;
-  if(r.ok&&r.id)window._card={kind:'order',id:r.id};say(r);});}
+ // what he holds, less what his orders already offer, is what an ask
+ // can sell or a bid can buy back without tying up money
+ var free=sd==='BUY'?(j.free_short||0):(j.free_long||0);
+ var cost=n[1]<=free+1e-9?0:(sd==='BUY'?n[0]/100*n[1]:(1-n[0]/100)*n[1]);
+ if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(cost?' — ties up '+usd(cost):' — from what you hold')+'?'))return;
+ busy(true,'placing…');
+ post({op:'place',market:c.m,side:sd,px:n[0],qty:n[1]},done);}
+function doMove(){var n=nums();if(!n)return;var c=window._card,w=window._shown||{},t=window._typed||{};
+ // only what he changed is sent, with what the card showed: an order
+ // that filled meanwhile is refused, never regrown
+ var body={op:'move',order_id:c.id,was_price:Math.round(w.px*100000)/1000,was_size:w.qty};
+ if(t.px!=null)body.px=n[0];
+ if(t.qty!=null)body.qty=n[1];
+ if(body.px==null&&body.qty==null){alert('change the price or the size first');return;}
+ if(!confirm('Change to '+(body.px!=null?n[0]:Math.round(w.px*1000)/10)+'¢ × '+(body.qty!=null?n[1]:w.qty)+'?'))return;
+ busy(true,'changing… (up to 15 s)');
+ post(body,function(r){if(r.ok&&r.id)window._card={kind:'order',id:r.id};done(r);});}
 function doCancel(){var c=window._card;if(!confirm('Cancel this order?'))return;
- post({op:'cancel',order_id:c.id},function(r){if(r.ok){closeSheet();load();alert(r.note);}else say(r);});}
+ busy(true,'cancelling…');
+ post({op:'cancel',order_id:c.id},function(r){busy(false);if(r.ok){closeSheet();load();alert(r.note);}else say(r);});}
 
 load();setInterval(load,20000);
 setInterval(function(){var a=document.activeElement;
- if(window._card&&!window._typed&&!(a&&a.tagName==='INPUT'&&a.closest&&a.closest('#sheet')))refreshCard();},5000);
+ if(window._card&&!(a&&a.tagName==='INPUT'&&a.closest&&a.closest('#sheet')))refreshCard();},5000);
 """
 
 PAGE = f"""<!doctype html><html><head>

@@ -126,9 +126,18 @@ class FakeClient:
 
 class FakeStore:
     token, repo, branch = None, "r", "lite-state"
+    local_found = False
 
-    def __init__(self, best=None, remote=None):
-        self.best, self.remote, self.saved = best, remote, []
+    def __init__(self, best=None, remote=None, head="h1"):
+        self.best, self.remote, self.saved, self.local = best, remote, [], []
+        self.head = head
+
+    def save_local(self, state):
+        self.local.append(state)
+        return True
+
+    def remote_head(self):
+        return self.head
 
     def load_best(self):
         return self.best
@@ -171,8 +180,11 @@ def make(**kw):
     OrderDesk.halted = None
     c = FakeClient()
     kw.setdefault("sleep", lambda s: None)
+    kw.setdefault("seed_store", FakeStore())
     app = App(client=c, store=FakeStore(), alerts=FakeAlerts(), repo=FakeRepo(), **kw)
     app.desk._sleep = lambda s: None
+    app.restoring = False
+    app.upload_hold = False
     app.event_n[M] = 2
     app.refresh_terms(time.time(), [M])
     return app, c
@@ -323,7 +335,7 @@ class TestHisTaps(unittest.TestCase):
         self.assertEqual(self.app.orders, [])
 
     def test_opening_a_new_market_checks_it_first(self):
-        self.c.details[M2] = {"slug": M2, "active": True, "closed": False}
+        self.c.details[M2] = {"slug": M2, "active": True, "closed": False, "category": "politics"}
         self.c.books[M2] = self.c.books[M]
         self.assertFalse(self.app.known(M2))
         self.assertTrue(self.app.book_view(M2)["ok"])
@@ -341,12 +353,14 @@ class TestHisTaps(unittest.TestCase):
         self.assertGreater(m["math"]["share"], 0)
         self.assertTrue(any(w[4] for w in m["math"]["window"]))
 
-    def test_a_stop_halts_the_taps(self):
+    def test_a_stop_refuses_new_taps_and_saves(self):
         self.app.shutdown_save("signal 15")
-        self.assertFalse(self.app.place(M, "BUY", 39, 10)["ok"])
-        self.assertFalse(self.app.cancel("O1")["ok"])
+        r = self.app.place(M, "BUY", 39, 10)
+        self.assertFalse(r["ok"])
+        self.assertIn("stopping", r["note"])
+        self.assertEqual(self.c.posts, [])
         self.assertTrue(self.app.store.saved[-1][1])
-        OrderDesk.halted = None
+        self.assertIsNone(OrderDesk.halted)
 
 
 class TestRecords(unittest.TestCase):
@@ -500,7 +514,7 @@ class TestTheReviewFixes(unittest.TestCase):
         self.c.fund = 20.0
         r = self.app.move("O1", 41, None, was_price=40, was_size=1000)
         self.assertFalse(r["ok"])
-        self.assertIn("untouched", r["note"])
+        self.assertIn("as it was", r["note"])
         ids = {o["id"]: o["size"] for o in self.app.orders}
         self.assertEqual(ids, {"O1": 1000.0})        # the cut replacement withdrawn
 
@@ -519,12 +533,15 @@ class TestTheReviewFixes(unittest.TestCase):
         self.assertEqual(r["note"], "nothing to change")
         self.assertEqual(self.c.posts, [])
 
-    def test_a_placement_not_listed_yet_is_pending_and_not_sent_twice(self):
+    def test_a_placement_not_listed_yet_holds_its_side(self):
         self.c.listed = False
         r = self.app.place(M, "BUY", 38, 500)
         self.assertTrue(r.get("pending"), r)
-        r2 = self.app.place(M, "BUY", 38, 500)
-        self.assertFalse(r2["ok"])
+        # another order at that price showing does not release it; only its own id
+        self.c.raw.append(raw_order("O5", M, "BUY", 0.38, 200, "ORDER_INTENT_BUY_LONG"))
+        self.app.sample_once()
+        for args in ((M, "BUY", 38, 500), (M, "BUY", 38, 499)):
+            self.assertFalse(self.app.place(*args)["ok"])
         self.assertEqual(len([p for p, _ in self.c.posts if p == "/v1/orders"]), 1)
 
     def test_an_unreadable_position_refuses_the_tap(self):
@@ -540,16 +557,14 @@ class TestTheReviewFixes(unittest.TestCase):
         self.assertTrue(r["ok"])
 
     def test_the_stop_waits_for_a_tap_in_flight(self):
-        done = []
         self.app.tap_lock.acquire()
-        t = threading.Thread(target=lambda: (self.app.shutdown_save("signal 15"), done.append(1)))
+        t = threading.Thread(target=lambda: self.app.shutdown_save("signal 15"))
         t.start()
         time.sleep(0.3)
-        self.assertIsNone(OrderDesk.halted)            # still waiting for the tap
+        self.assertEqual(self.app.store.saved, [])      # still waiting for the tap
         self.app.tap_lock.release()
         t.join(5)
-        self.assertEqual(OrderDesk.halted, "signal 15")
-        OrderDesk.halted = None
+        self.assertTrue(self.app.store.saved)
 
     def test_a_cancelled_order_the_list_still_shows_is_not_metered(self):
         self.app.desk.remember_cancel("O1")
@@ -576,10 +591,151 @@ class TestTheReviewFixes(unittest.TestCase):
         self.c.details["xyz-rate-2026"] = {"active": True, "closed": False, "category": "macro"}
         self.assertFalse(self.app.open_market("xyz-rate-2026")["ok"])
 
+    def test_two_changes_of_one_order_never_both_go(self):
+        self.app.busy.add("O1")
+        r = self.app.move("O1", 41, None, was_price=40, was_size=1000)
+        self.assertFalse(r["ok"])
+        self.assertIn("in flight", r["note"])
+        self.assertEqual(self.c.posts, [])
+
+    def test_a_change_needs_the_open_list_read_at_the_tap(self):
+        self.c.fail_orders = True
+        r = self.app.move("O1", 41, None, was_price=40, was_size=1000)
+        self.assertFalse(r["ok"])
+        self.assertIn("could not read your orders", r["note"])
+        self.assertEqual(self.c.posts, [])
+
+    def test_an_exit_part_filled_during_its_change_keeps_what_rests(self):
+        self.c.pos = {M: {"netPositionDecimal": "100"}}
+        self.c.raw = [raw_order("X1", M, "SELL", 0.43, 100, "ORDER_INTENT_SELL_LONG")]
+        self.app.sample_once()
+        orig = self.c.post
+
+        def part_fill(url, body, **kw):
+            out = orig(url, body, **kw)
+            if url.endswith("/v1/orders"):
+                self.c.raw[-1]["leavesQuantity"] = 70        # 30 filled at once
+                self.c.pos = {M: {"netPositionDecimal": "70"}}
+            return out
+        self.c.post = part_fill
+        r = self.app.move("X1", 44, None, was_price=43, was_size=100)
+        self.assertTrue(r["ok"], r)
+        self.assertEqual([(o["id"], o["size"]) for o in self.app.orders], [(r["id"], 70.0)])
+
+    def test_the_same_shares_are_never_offered_twice(self):
+        self.c.pos = {M: {"netPositionDecimal": "100"}}
+        self.c.raw.append(raw_order("X1", M, "SELL", 0.45, 100, "ORDER_INTENT_SELL_LONG"))
+        self.app.sample_once()
+        self.app.place(M, "SELL", 44, 100)
+        intents = [b["intent"] for p, b in self.c.posts if p == "/v1/orders"]
+        self.assertEqual(intents, ["ORDER_INTENT_BUY_SHORT"])   # not a second sale
+        r = self.app.move("X1", None, 250, was_price=45, was_size=100)
+        self.assertFalse(r["ok"])
+        self.assertIn("you hold 100", r["note"])
+
+    def test_a_new_market_must_be_politics_or_sports(self):
+        for slug, md in (("rdc-banxico-2026-09-24-cut25", {}),
+                         ("abc-thing-2026", {"category": "MAC", "subcategory": "MAC/RATES"}),
+                         ("abc-other-2026", {})):
+            self.c.details[slug] = {"active": True, "closed": False, **md}
+            self.assertFalse(self.app.open_market(slug)["ok"], slug)
+        self.c.details["abc-pol-2026"] = {"active": True, "closed": False, "category": "politics"}
+        self.c.books["abc-pol-2026"] = self.c.books[M]
+        self.assertTrue(self.app.open_market("abc-pol-2026")["ok"])
+
+    def test_a_stop_during_the_restore_saves_nothing(self):
+        app, c = make()
+        app.restoring = True
+        app.shutdown_save("signal 15")
+        self.assertEqual((app.store.saved, app.store.local), ([], []))
+
+    def test_a_new_container_uploads_nothing_until_the_old_copy_is_gone(self):
+        app, c = make()
+        app.upload_hold = True
+        app.store.remote = {"rewards_seen": {"d|old": 2.0}, "placed_ids": {"OLDX": 5.0}}
+        app.save()
+        self.assertEqual((len(app.store.local), app.store.saved), (1, []))
+        app.records_once(app.boot_ts + 60)
+        self.assertTrue(app.upload_hold)
+        app.records_once(app.boot_ts + 200)
+        self.assertFalse(app.upload_hold)
+        self.assertEqual(app.rewards_seen.get("d|old"), 2.0)
+        self.assertIn("OLDX", app.placed_ids)
+
+    def test_an_absent_branch_found_late_seeds_from_3_0(self):
+        app, c = make()
+        app.state_unread = True
+        class Late(FakeStore):
+            token = "t"
+            def _gh(self, method, path):
+                return mock.Mock(status_code=404)
+        app.store = Late(best=None)
+        app.seed_store = FakeStore(remote={"rewards_seen": {"a": 1.0}})
+        app.rewards_seen = {"b": 2.0}
+        app.retry_restore(time.time() + 120)
+        self.assertFalse(app.state_unread)
+        self.assertEqual(app.rewards_seen, {"a": 1.0, "b": 2.0})
+
+    def test_a_late_read_keeps_what_this_copy_learned(self):
+        app, c = make()
+        app.state_unread = True
+        app.rewards_seen = {"k": 9.0}
+        app.store = FakeStore(best={"saved_at": 1, "rewards_seen": {"k": 1.0, "j": 2.0},
+                                    "event_n": {"s": 3}})
+        app.retry_restore(time.time() + 120)
+        self.assertEqual(app.rewards_seen, {"k": 9.0, "j": 2.0})
+        self.assertEqual(app.event_n["s"], 3)
+
+    def test_3_0s_final_memory_unread_holds_the_first_check(self):
+        app, c = make()
+        app.seeded_v3 = True
+        app.seed_store = FakeStore(remote=None)
+        c.earn = [{"date": records.utc_day(time.time(), 1), "market": M, "program_type": "lp",
+                   "reward_usd": 1.0, "status": "PAID"}]
+        app.check_rewards(time.time(), write_file=False)
+        self.assertFalse(app.seed_caught_up)
+        self.assertEqual(app.rewards_seen, {})
+
+    def test_discovery_is_short_against_its_own_last_read(self):
+        app, c = make()
+        app.event_n = {f"m{i}": 2 for i in range(10000)}
+        found = {f"p{i}": {"event_n": 2, "name": ""} for i in range(500)}
+        with mock.patch("lite.app.discover", return_value=found):
+            self.assertTrue(app.run_discover())          # first full read: no comparison
+            self.assertEqual(app.discover_n, 500)
+        with mock.patch("lite.app.discover", return_value=dict(list(found.items())[:100])):
+            self.assertFalse(app.run_discover())          # a fifth of the last: short
+
+    def test_an_order_names_its_event_for_the_size_lookup(self):
+        o = raw_order("Q1", M2, "BUY", 0.3, 10, "ORDER_INTENT_BUY_LONG")
+        o["marketMetadata"]["eventSlug"] = "ev-ks"
+        self.c.raw.append(o)
+        self.c.events["ev-ks"] = {"markets": [{"slug": M2}, {"slug": "kansas-dem"}]}
+        self.c.get = lambda url, **kw: ({"balances": self.c.bal} if "balances" in url
+                                        else self.c.events[url.rsplit("/", 1)[1]])
+        self.app.sample_once()
+        self.app.upkeep_once()
+        self.assertEqual(self.app.event_n[M2], 2)
+
+    def test_a_restart_just_after_midnight_bills_nothing_for_the_outage(self):
+        from v3.terms import et_day_start
+        app, c = make()
+        now = time.time()
+        midnight = et_day_start(now)
+        app.est.day = "1999-01-01"
+        app.est.last_ts = midnight - 23 * 60
+        app.est.market_rates = {M: 67.0}
+        app.cache.put(M, c.book(M))
+        app.sample_once(midnight + 180)
+        self.assertEqual(app.est.earned, 0.0)
+        self.assertAlmostEqual(app.est.history[-1]["stale_s"], 23 * 60, delta=1)
+
     def test_a_market_with_no_event_size_is_looked_up(self):
-        self.c.details[M2] = {"active": True, "closed": False, "eventSlug": "ev-ks"}
+        self.c.details[M2] = {"active": True, "closed": False, "eventSlug": "ev-ks",
+                              "category": "politics"}
         self.c.events["ev-ks"] = {"markets": [{"slug": M2}, {"slug": M2[:-3] + "dem"},
                                               {"slug": "x", "closed": True}]}
+        self.c.get = lambda url, **kw: self.c.events[url.rsplit("/", 1)[1]]
         self.c.books[M2] = self.c.books[M]
         self.app.open_market(M2)
         self.assertEqual(self.app.event_n[M2], 2)

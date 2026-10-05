@@ -17,16 +17,18 @@ from .web import serve
 def main() -> int:
     app = App()
     serve(app)
-    app.restore()
-    app.note(f"started — restored from {app.restored}")
 
     def stop(signum, frame):  # noqa: ARG001
         app.note(f"stop signal {signum} — saving")
         app.shutdown_save(f"signal {signum}")
         sys.exit(0)
 
+    # before the restore: a stop during it saves nothing (App.save waits
+    # for the restore) and exits, rather than being killed mid-read
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
+    app.restore()
+    app.note(f"started — restored from {app.restored}")
     app._read_orders()
     app.refresh_positions(time.time())
     app.start_streams()
