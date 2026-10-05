@@ -99,6 +99,7 @@ TAX_RATE = 0.22            # the pay page's set-aside (3.0's)
 PAY_DAYS = 14              # days the pay page lists
 POSTING_ACTIVE_S = 24 * 3600.0  # a day is "posting" while it gained a row within this
 CLAIMS_CAP = 8000          # market-days of the meter's per-market figures kept
+PAY_SEED_RETRY_S = 600.0   # 3.0's pay record, read once; a failed read is tried again after this
 TAP_CHECK_WAIT_S = 30.0    # his "check now" waits this long for a check already running
 UNIVERSE_TRUST_S = 7 * 3600.0  # a market listed open this recently opens without the gateway check
 STATE_BRANCH = "lite-state"
@@ -316,6 +317,11 @@ class App:
         self.pay_progress: list[dict] = []
         self.pay_checked_at = 0.0
         self.rw_lock = threading.Lock()           # one payout check at a time
+        # the days before the switch from 3.0, graded as 3.0 graded them:
+        # its per-market claims, its every meter's estimate, its day totals
+        self.pay_seeded = False
+        self.v3_cut = ""                          # the ET day of 3.0's last save
+        self.est_v3: dict[str, float] = {}        # day -> 3.0's estimate, every meter
         self.placed_ids: dict[str, float] = {}
         self.pending: dict[tuple, tuple] = {}     # (market, side) -> (sent at, order id)
         self.busy: set[str] = set()               # order ids with a change in flight
@@ -402,6 +408,8 @@ class App:
             "posting_last": dict(self.posting_last),
             "pay_progress": list(self.pay_progress),
             "pay_checked_at": round(self.pay_checked_at, 1),
+            "pay_seeded": self.pay_seeded, "v3_cut": self.v3_cut,
+            "est_v3": dict(self.est_v3),
             "placed_ids": dict(ids),
             "cancelled": {i: t for i, t in list(self.desk.cancelled.items()) if now - t < GHOST_S},
             "audit": list(self.audit)[-60:],
@@ -483,8 +491,52 @@ class App:
                 self.state_unread = True
                 self.restored = "nothing yet — its own save could not be read; saves held"
                 self.due["restore"] = self.clock() + 60.0
+            if not self.state_unread:
+                try:
+                    self.seed_pay(self.clock())
+                except Exception as e:  # noqa: BLE001 — never holds up a boot
+                    self.note(f"3.0's pay record: {e}")
         finally:
             self.restoring = False
+
+    def seed_pay(self, now: float) -> bool:
+        """3.0's pay record, read once from its last save (read only, never
+        written): the day totals, its per-market claims (every market, where
+        the meter's own closed days keep its top 50) and every one of its
+        meters' estimates — so the days before the switch read on the pay
+        tab as they did on 3.0's page. A failed read is tried again later."""
+        if self.pay_seeded or now - self.due.get("pay_seed_at", 0.0) < PAY_SEED_RETRY_S:
+            return self.pay_seeded
+        self.due["pay_seed_at"] = now
+        try:
+            v3 = self._seed().load_remote()
+        except Exception as e:  # noqa: BLE001
+            self.note(f"3.0's pay record: {e}")
+            v3 = None
+        if not v3:
+            return False
+        for d, v in (v3.get("actuals_by_day") or {}).items():
+            self.actuals_by_day.setdefault(str(d), round(float(v or 0.0), 2))
+        for k, v in (v3.get("mkt_claim_day") or {}).items():
+            k = str(k)
+            self.claims[k] = max(self.claims.get(k, 0.0), float(v or 0.0))
+        est: dict[str, float] = {}
+        for key, e in v3.items():
+            if not (key.startswith("est_") and isinstance(e, dict)):
+                continue
+            for h in e.get("history") or []:
+                if h.get("day"):
+                    est[str(h["day"])] = est.get(str(h["day"]), 0.0) + float(h.get("earned") or 0.0)
+        self.est_v3 = {d: round(v, 4) for d, v in est.items()}
+        sv = float(v3.get("saved_at") or 0.0)
+        self.v3_cut = et_day(sv) if sv else ""
+        if len(self.claims) > CLAIMS_CAP:
+            for k in sorted(self.claims)[:len(self.claims) - CLAIMS_CAP]:
+                del self.claims[k]
+        self.pay_seeded = True
+        self.note(f"3.0's pay record read: {len(self.est_v3)} days of estimates, "
+                  f"days before {self.v3_cut} graded as 3.0 graded them")
+        return True
 
     def _first_seed(self) -> None:
         seed = None
@@ -610,6 +662,9 @@ class App:
         self.posting_last = {str(d): float(t) for d, t in (st.get("posting_last") or {}).items()}
         self.pay_progress = list(st.get("pay_progress") or [])
         self.pay_checked_at = float(st.get("pay_checked_at") or 0.0)
+        self.pay_seeded = bool(st.get("pay_seeded", False))
+        self.v3_cut = str(st.get("v3_cut") or "")
+        self.est_v3 = {str(d): float(v) for d, v in (st.get("est_v3") or {}).items()}
         self.placed_ids = dict(st.get("placed_ids") or {})
         for i, t in (st.get("cancelled") or {}).items():
             self.desk.remember_cancel(i, at=t)
@@ -1285,9 +1340,11 @@ class App:
                                          "minutes after a restart (the old copy may still run)"}
         res = self.check_rewards(now, write_file=False, wait=TAP_CHECK_WAIT_S)
         if res is None:
-            return {"ok": False, "note": "the exchange did not answer, or a check is running — "
-                                         "try again in a moment"}
-        return {"ok": True, "new_count": res["new_count"], "note": res.get("note") or "",
+            return {"ok": False, "at": round(now, 1),
+                    "note": "the exchange did not answer, or a check is running — "
+                            "try again in a moment"}
+        return {"ok": True, "at": round(now, 1), "new_count": res["new_count"],
+                "note": res.get("note") or "",
                 "new_rows": [{**r, "name": self.label(r["market"])}
                              for r in res.get("new_rows") or []],
                 "days": res["days"], "progress": self.pay_progress}
@@ -1378,6 +1435,10 @@ class App:
                                              float(h.get("stale_s") or 0.0))
         if self.est.day:
             est_by_day[self.est.day] = (self.est.earned, self.est.stale_s)
+        # before the switch, every one of 3.0's meters, as its page summed them
+        for d, v in self.est_v3.items():
+            if self.v3_cut and d < self.v3_cut:
+                est_by_day[d] = (v, est_by_day.get(d, (0.0, 0.0))[1])
         claims = self._claims_by_day()
         with self.mem_lock:
             items = list(self.paid_seen.items())
@@ -1424,8 +1485,10 @@ class App:
             last["new_rows"] = [{**r, "name": self.label(r["market"])} for r in last["new_rows"]]
         return {
             "ok": True, "days": rows, "tax_rate": TAX_RATE,
-            "paid_total": {"usd": total, "days": len(actuals),
-                           "since": min(actuals) if actuals else None},
+            # no day totals yet (a boot before its first read): said, never $0.00
+            "paid_total": ({"usd": total, "days": len(actuals),
+                            "since": min(actuals) if actuals else None}
+                           if actuals and not self.restoring else None),
             "progress": list(self.pay_progress),
             "checked_at": round(self.pay_checked_at, 1) or None,
             "checked_age": round(now - self.pay_checked_at) if self.pay_checked_at else None,
@@ -1467,6 +1530,8 @@ class App:
             return
         if not self.end_upload_hold():
             return
+        if not self.pay_seeded:
+            self.seed_pay(now)
         if self._is_due("rewards_file", REWARDS_FILE_S, now):
             self.due["rewards"] = now + REWARDS_S
             self.check_rewards(now, write_file=True)

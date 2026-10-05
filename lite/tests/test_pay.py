@@ -201,3 +201,52 @@ class TestTheStop(unittest.TestCase):
         app.shutdown_save("signal 15")
         order.append("stop saved")
         self.assertEqual(order, ["check done", "stop saved"])
+
+
+class TestThePayReview(unittest.TestCase):
+    """What the review of the pay tab found (2026-10-05)."""
+
+    def test_new_rows_list_the_biggest_first(self):
+        now = time.time()
+        d = records.utc_day(now, 1)
+        rows = [row(d, f"m{i}", v) for i, v in enumerate([5, 0.01, 2.5, 0.2, 12])]
+        seen, paid = {"old|m": 1.0}, {}
+        res = records.check_rewards(rows, seen, paid, now)
+        self.assertEqual([r["usd"] for r in res["new_rows"]], [12.0, 5.0, 2.5, 0.2, 0.01])
+
+    def test_the_days_before_the_switch_read_as_3_0_graded_them(self):
+        from lite.tests.test_lite import FakeStore
+        app, c = make()
+        d = "2026-09-30"
+        app.est.history = [{"day": d, "earned": 20.0, "stale_s": 0.0,
+                            "per_market": {M: 15.0}}]            # the top 50 of politics only
+        app.paid_seen = {f"{d}|{M}": 14.0, f"{d}|{M2}": 3.0}
+        app.seed_store = FakeStore(remote={
+            "saved_at": 1791165791.0,                              # 2026-10-04, ET
+            "actuals_by_day": {d: 17.0, "2026-07-01": 50.0},
+            "mkt_claim_day": {f"{d}|{M}": 15.0, f"{d}|{M2}": 4.0},
+            "est_politics": {"history": [{"day": d, "earned": 20.0}]},
+            "est_cfb": {"history": [{"day": d, "earned": 1.5}]}})
+        self.assertTrue(app.seed_pay(time.time()))
+        self.assertEqual(app.v3_cut, "2026-10-04")
+        v = app.pay_view()
+        r = next(x for x in v["days"] if x["day"] == d)
+        self.assertEqual(r["est"], 21.5)                           # every meter, as 3.0 summed them
+        self.assertEqual((r["posted_n"], r["est_n"]), (2, 2))      # every market 3.0 claimed
+        self.assertAlmostEqual(r["ratio_posted"], 17 / 19, places=3)
+        self.assertEqual(v["paid_total"]["days"], 2)
+        self.assertFalse(app.seed_pay(time.time()) is False)       # read once, then done
+
+    def test_no_day_totals_yet_reads_as_not_read_never_as_nothing_paid(self):
+        app, c = make()
+        app.actuals_by_day = {}
+        self.assertIsNone(app.pay_view()["paid_total"])
+        app.actuals_by_day = {"2026-10-01": 1.0}
+        app.restoring = True
+        self.assertIsNone(app.pay_view()["paid_total"])
+
+    def test_the_taps_answer_carries_its_time(self):
+        app, c = make()
+        app.boot_ts = time.time() - 400
+        r = app.check_payouts_now()
+        self.assertIn("at", r)

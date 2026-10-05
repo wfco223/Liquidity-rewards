@@ -152,7 +152,15 @@ long and accreted, so search it rather than reading it through.
   rewards.csv but the SKIPPED ones (the same as 3.0's totals, to the cent,
   checked 2026-10-05), re-read hourly with the file and merged, never
   replaced; the meter's per-market figures are kept each sample
-  (state["claims"], 8,000 market-days) beside its closed days' own.
+  (state["claims"], 8,000 market-days) beside its closed days' own. The
+  days before the switch read as 3.0 graded them: 3.0's last save is read
+  once (read only; state["pay_seeded"]) for its day totals, its
+  per-market claims (every market — the meter's own closed days keep only
+  their top 50) and the sum of all its meters' estimates (state
+  ["est_v3"], used for days before state["v3_cut"], the ET day of that
+  save). Until any day total is read the tab says so, never "$0.00".
+  "Check now"'s answer shows until a newer check lands. New rows list the
+  newest day first, biggest first (3.0's order).
 - STATUS.md is the phone-readable front page: one ✅/❌ freshness line up
   top, summary before detail, plain-English explanations of every number.
 - The live monitor (live/monitor.py) runs on DigitalOcean from the `deploy`

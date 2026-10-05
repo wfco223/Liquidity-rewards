@@ -59,9 +59,10 @@ body{margin:0;background:var(--bg);color:var(--text);
 .seg button{border:0;background:transparent;color:var(--text);font-family:inherit;font-size:13px;line-height:1;font-weight:600;
  padding:7px 14px;border-radius:8px;cursor:pointer}
 .seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.14)}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:16px;
  padding-top:14px;border-top:1px solid var(--line)}
-.kpis .v{font-size:19px;font-weight:650;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.kpis .v{font-size:clamp(14px,4.4vw,19px);font-weight:650;letter-spacing:-.01em;font-variant-numeric:tabular-nums;
+ white-space:nowrap}
 .kpis .l{font-size:12px;color:var(--sub);margin-top:1px}
 .note{margin:8px 0;font-size:13px}
 .sec-h{display:flex;align-items:center;justify-content:space-between;margin:22px 2px 8px}
@@ -179,7 +180,7 @@ var K='dashKey';
 function LS(k,d){try{var v=localStorage.getItem(k);return v==null?d:v;}catch(e){return d;}}
 function LSset(k,v){try{localStorage.setItem(k,v);}catch(e){}}
 function hdrs(){var h=new Headers();h.set('X-Dash-Key',LS(K,''));return h;}
-function saveKey(){LSset(K,document.getElementById('k').value);load();}
+function saveKey(){LSset(K,document.getElementById('k').value);load();if(window._tab==='pay')loadPay();}
 function usd(x){var v=x||0,a=Math.abs(v);
  return (v<0?'−$':'$')+(a>=1000?a.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):a.toFixed(2));}
 function usd0(x){var v=x||0;return '$'+(v>=100?Math.round(v).toLocaleString():v.toFixed(v%1?2:0));}
@@ -646,7 +647,8 @@ function tab(t){
  document.getElementById('ttl').textContent=window._tab==='pay'?'Pay':'Rewards';
  window.scrollTo(0,0);
  if(window._tab==='pay'){if(window._p)drawPay(window._p);else document.getElementById('view').innerHTML='<div class="banner">Loading&hellip;</div>';loadPay();}
- else if(window._d)draw(window._d);else load();
+ else if(window._d)draw(window._d);
+ else{document.getElementById('view').innerHTML='<div class="banner">Loading&hellip;</div>';load();}
 }
 function loadPay(){
  get('/pay.json',function(p){
@@ -698,18 +700,23 @@ function drawPay(p){
  if(window._tab!=='pay')return;
  var v=document.getElementById('view');
  if(!p.ok){v.innerHTML='<div class="card"><div class="note bad">'+esc(p.note||'no answer')+'</div></div>';return;}
- var pt=p.paid_total||{usd:0,days:0},rate=p.tax_rate||0.22,tax=(pt.usd||0)*rate;
- var h='<div class="card"><div class="label">Paid all time</div><div class="hero">'+usd(pt.usd)+'</div>'
+ var pt=p.paid_total,rate=p.tax_rate||0.22,h;
+ if(!pt){h='<div class="card"><div class="label">Paid all time</div>'
+   +'<div class="note muted" style="margin:10px 0 2px">Reading the payout record — a few minutes after a restart.</div></div>';}
+ else{var tax=(pt.usd||0)*rate;
+  h='<div class="card"><div class="label">Paid all time</div><div class="hero">'+usd(pt.usd)+'</div>'
   +'<div class="muted">'+(pt.days||0)+' posted days'+(pt.since?' since '+fmtDay(pt.since):'')+'</div>'
   +'<div class="kpis"><div><div class="v">'+usd(pt.usd)+'</div><div class="l">Gross paid</div></div>'
   +'<div><div class="v warn">'+usd(tax)+'</div><div class="l">Set aside · tax '+Math.round(rate*100)+'%</div></div>'
   +'<div><div class="v">'+usd((pt.usd||0)-tax)+'</div><div class="l">Yours after</div></div></div>'
-  +(window._payErr?'<div class="note warn">'+esc(window._payErr)+' — showing the last read</div>':'')+'</div>';
+  +(window._payErr?'<div class="note warn">'+esc(window._payErr)+' — showing the last read</div>':'')+'</div>';}
+ // a tap's answer shows until a newer check lands, then the loop's own
  var rw=window._rw;
+ if(rw&&p.checked_at&&p.checked_at>(rw.at||0)+0.5){window._rw=null;rw=null;}
  h+='<div class="card"><div class="sec-h" style="margin:0 0 4px"><h2 style="font-size:19px">New payouts</h2>'
   +'<button class="btn small" id="ckpay" onclick="checkPay()"'+(window._rwbusy?' disabled':'')+'>'+(window._rwbusy?'Checking…':'Check now')+'</button></div>'
   +'<div class="muted">'+(p.checked_age==null?'Not checked yet':'Checked '+ago(p.checked_age)+' ago · checked every 5 min')+'</div>'
-  +progressHtml(rw&&rw.ok?rw.progress:p.progress)+(rw?newRowsHtml(rw,true):newRowsHtml(p.last,false))+'</div>';
+  +progressHtml(p.progress)+(rw?newRowsHtml(rw,true):newRowsHtml(p.last,false))+'</div>';
  var mx=1;(p.days||[]).forEach(function(r){mx=Math.max(mx,r.est||0,r.actual||0);});
  h+='<div class="sec-h"><h2>By day</h2><span class="muted">tap a day for its markets</span></div>'
   +'<div class="legend"><span><span style="display:inline-block;width:10px;height:6px;border-radius:3px;background:var(--fill2)"></span> estimate'
@@ -724,7 +731,10 @@ function drawPay(p){
 function checkPay(){
  if(window._rwbusy)return;
  window._rwbusy=true;if(window._p)drawPay(window._p);
- post({op:'check_payouts'},function(j){window._rwbusy=false;window._rw=j;loadPay();});
+ post({op:'check_payouts'},function(j){window._rwbusy=false;
+  // an answer lost on the way carries no time: it stands until the next check
+  if(j.at==null)j.at=(window._p&&window._p.checked_at)||0;
+  window._rw=j;loadPay();});
 }
 
 window._tab=(location.hash==='#pay')?'pay':'home';

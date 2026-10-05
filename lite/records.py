@@ -184,7 +184,7 @@ def check_rewards(rows: list[dict], seen: dict, paid_seen: dict, now: float) -> 
         return {"new_count": 0, "days": days, "note": "baseline re-recorded"}
     show_from = utc_day(now, SHOW_DAYS)
     new = [a for a in fresh if a["date"] >= show_from]
-    new.sort(key=lambda a: (a["date"], -a["usd"]), reverse=True)
+    new.sort(key=lambda a: (a["date"], a["usd"]), reverse=True)     # newest day, biggest first (3.0's)
     return {"new_count": len(new), "days": days, "note": "",
             "new_rows": [{"date": a["date"], "market": a["market"], "usd": round(a["usd"], 2)}
                          for a in new[:50]]}
