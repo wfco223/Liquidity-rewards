@@ -3598,3 +3598,4 @@ ts,family,market,side,qty,px,purpose,est_day,rested_h,fair,band_lo,band_hi,conf,
 1791159131.1,politics,scc-senate-gop-2026-11-03-51,SELL,-31.36,0.08,fix,0.0829,35,0.070625,6,9,0.599,0.07,0.08,-0.0094,-75.36,size trimmed by 31.36 to the exchange's count (order CW9NKCEQ4YHH),CW9NKCEQ4YHH
 1791159131.1,politics,ussewc-usse-ks-2026-11-03-dem,SELL,0.13,0.38,backfill,,4.8,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CX46F9EQMYH8
 1791159131.1,politics,scc-senate-gop-2026-11-03-53,BUY,10.34,0.06,backfill,,0.79,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CX7XA7KJ8YG6
+1791162731.1,politics,scc-senate-gop-2026-11-03-51,SELL,43.91,0.08,backfill,,0.91,,,,,,,,,recovered from the exchange's transaction history — this fill was never journale,CX7YJ89KWYHC
