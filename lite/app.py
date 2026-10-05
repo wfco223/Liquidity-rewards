@@ -40,6 +40,7 @@ The taps keep 3.0's owner-tap rails and add the ones the two reviews of
 
 from __future__ import annotations
 
+import math
 import os
 import threading
 import time
@@ -53,7 +54,7 @@ from v3.intents import BUY_LONG, BUY_SHORT, REST_SIDE, SELL_LONG, SELL_SHORT, ca
 from v3.names import Names, disambiguate, name_from_market
 from v3.orders import QTY_MAX, OrderDesk, snap_price
 from v3.programs import is_econ, pool_days, to_num
-from v3.scoring import score_resting
+from v3.scoring import estimate_join, score_resting
 from v3.state import StateStore
 from v3.terms import TermsStore, et_day_start
 
@@ -82,6 +83,14 @@ EVENT_LOOKUP_S = 600.0     # one event-size lookup a market per this
 STOP_TAP_WAIT_S = 20.0     # the stop waits this long for a tap in flight
 STOP_SAVE_WAIT_S = 20.0    # ...and this long for its upload (launcher allows 45)
 DOTS_SENT_S = 6 * 3600.0 + 600.0
+STAKE_DEFAULT = 50.0       # the money a "new" figure assumes, unless he sets his own
+STAKE_MAX = 5000.0
+WS_VIEW_S = 1800.0         # a streamed book, while its stream is up, stands for a "new" figure this long
+EVENT_KEEP_S = 6 * 3600.0  # an event's market list read outside discovery is read again after this
+STREAM_SHARDS = 2
+STREAM_CAP = 1000          # markets a connection: five book subscriptions of 200
+STREAM_CHUNK = 200
+TERMS_SWEEP_CHUNK = 400    # the politics terms sweep after each discovery, this many at a time
 STATE_BRANCH = "lite-state"
 SEED_BRANCH = "v3-state"
 TAGS = ("politics", "elections")
@@ -142,10 +151,61 @@ def category_ok(md: dict) -> bool:
     return any(c in OPEN_CATEGORIES for c in cats if c)
 
 
+STATES = {
+    "al": "Alabama", "ak": "Alaska", "az": "Arizona", "ar": "Arkansas", "ca": "California",
+    "co": "Colorado", "ct": "Connecticut", "de": "Delaware", "dc": "District of Columbia",
+    "fl": "Florida", "ga": "Georgia", "hi": "Hawaii", "id": "Idaho", "il": "Illinois",
+    "in": "Indiana", "ia": "Iowa", "ks": "Kansas", "ky": "Kentucky", "la": "Louisiana",
+    "me": "Maine", "md": "Maryland", "ma": "Massachusetts", "mi": "Michigan",
+    "mn": "Minnesota", "ms": "Mississippi", "mo": "Missouri", "mt": "Montana",
+    "ne": "Nebraska", "nv": "Nevada", "nh": "New Hampshire", "nj": "New Jersey",
+    "nm": "New Mexico", "ny": "New York", "nc": "North Carolina", "nd": "North Dakota",
+    "oh": "Ohio", "ok": "Oklahoma", "or": "Oregon", "pa": "Pennsylvania",
+    "ri": "Rhode Island", "sc": "South Carolina", "sd": "South Dakota", "tn": "Tennessee",
+    "tx": "Texas", "ut": "Utah", "vt": "Vermont", "va": "Virginia", "wa": "Washington",
+    "wv": "West Virginia", "wi": "Wisconsin", "wy": "Wyoming",
+}
+# the slug token that names a race's chamber, and the words that may sit
+# between it and the state ("vmc-usgubp-mov-ok-rep": Oklahoma governor)
+KINDS = (("House", ("ushr", "hrep", "usho", "housepop")),
+         ("Senate", ("usse", "senate")),
+         ("Governor", ("usgub", "usgov")))
+KIND_ORDER = ("House", "Senate", "Governor", "Other")
+
+
+def classify(slug: str) -> tuple[str, str]:
+    """(kind, state) for the page's grouping: House, Senate, Governor or
+    Other, and the state's name when the slug names one right after its
+    chamber token. National races (control, seat counts, the closest
+    race) carry no state."""
+    toks = str(slug or "").lower().split("-")
+    for i, t in enumerate(toks):
+        for kind, heads in KINDS:
+            if t.startswith(heads):
+                for u in toks[i + 1:i + 3]:
+                    if u in STATES:
+                        return kind, STATES[u]
+                    if u.isdigit():
+                        break
+                return kind, ""
+    return "Other", ""
+
+
+def basis(intent: str, price: float, size: float, side: str = "") -> float:
+    """The money behind an order, for its earning per dollar: what an
+    opening order ties up, or what the shares an exit offers are worth at
+    its price. Yes is priced at the price, No at one less it."""
+    if intent in (BUY_LONG, SELL_LONG) or (intent not in REST_SIDE and side == "BUY"):
+        return price * size
+    return (1.0 - price) * size
+
+
 def discover(client) -> dict[str, dict]:
-    """slug -> {event_n, name} for every open, non-econ politics market:
-    v3/politics.discover's body, without the engine it sits beside. The
-    event size divides the pool; without it no dollar figure is shown."""
+    """slug -> {event_n, name, event} for every open, non-econ politics
+    market: v3/politics.discover's body, without the engine it sits
+    beside. The event size divides the pool; without it no dollar figure
+    is shown. The event's slug groups a market with the rest of its
+    race."""
     out: dict[str, dict] = {}
     order: list[str] = []
     for tag in TAGS:
@@ -154,14 +214,16 @@ def discover(client) -> dict[str, dict]:
             for ev in events_of(client, tag):
                 n_tag += 1
                 title = str(ev.get("title") or ev.get("name") or "").strip()
+                ev_slug = str(ev.get("slug") or "")
                 rows = [m for m in ev.get("markets") or []
-                        if m.get("slug") and not m.get("closed") and not is_econ(m["slug"])]
+                        if m.get("slug") and not m.get("closed") and not is_econ_market(m["slug"])]
                 labels = disambiguate([(m["slug"], name_from_market(m, title)[:110])
                                        for m in rows])
                 for m in rows:
                     if m["slug"] not in out:
                         order.append(m["slug"])
-                    out[m["slug"]] = {"event_n": len(rows), "name": labels[m["slug"]]}
+                    out[m["slug"]] = {"event_n": len(rows), "name": labels[m["slug"]],
+                                      "event": ev_slug}
         except Exception:  # noqa: BLE001
             if n_tag:
                 raise       # a feed that died mid-way must not hand back a part
@@ -200,6 +262,14 @@ class App:
         self.event_slug: dict[str, str] = {}
         self.event_tried: dict[str, float] = {}
         self.discover_n = 0            # markets the last full discovery found
+        # every open politics market discovery found: slug -> its event
+        self.universe: dict[str, str] = {}
+        # an event's market list read on its own (his events discovery
+        # did not cover): event -> (when, slugs)
+        self.ev_fetched: dict[str, tuple[float, list[str]]] = {}
+        self.members: dict[str, list[str]] = {}   # event -> its open markets
+        self.ev_index: dict[str, str] = {}        # slug -> event, from the two above
+        self.watch: dict[str, float] = {}         # markets he tracks -> when
         self.orders: list[dict] = []
         self.ghosts: list[dict] = []    # cancelled by us, still on the exchange's list
         self.orders_at = 0.0           # when the list now shown was READ (its request's start)
@@ -237,12 +307,15 @@ class App:
         self.orders_lock = threading.Lock()
         self.mem_lock = threading.Lock()      # the payout memory, across threads
         self.save_lock = threading.Lock()
+        self.terms_lock = threading.Lock()    # the loops, the sweep and a scan all refresh terms
         self.desk = OrderDesk(
             self.client, whitelist=self.known,
             switch_on=lambda: False,            # nothing but his tap ever places
             fresh_book=lambda s: self.cache.fresh(s, 120.0, self.clock()),
             log=self._audit, tick_for=self.cache.grid)
         self.streams: list = []
+        from .scan import Scanner
+        self.scanner = Scanner(self)
 
     # -- bookkeeping ---------------------------------------------------------
 
@@ -266,13 +339,17 @@ class App:
             seen, paid = dict(self.rewards_seen), dict(self.paid_seen)
         now = self.clock()
         ids = sorted(self.placed_ids.items(), key=lambda kv: kv[1])[-5000:]
+        with self.terms_lock:
+            terms = self.terms.to_dict()
         return {
             "saved_at": round(now, 1),
             "est": self.est.to_dict(),
-            "terms": self.terms.to_dict(),
+            "terms": terms,
             "event_n": dict(self.event_n),
             "event_slug": dict(self.event_slug),
             "discover_n": self.discover_n,
+            "universe": dict(self.universe),
+            "watch": dict(self.watch),
             "names": self.names.to_dict(),
             "rewards_seen": seen,
             "paid_seen": paid,
@@ -406,6 +483,11 @@ class App:
             ids = st.get("placed_ids") or {}
             if not self.terms.current and st.get("terms"):
                 self.terms = TermsStore.from_dict(st["terms"])
+            self.watch = {**{str(s): float(t or 0) for s, t in (st.get("watch") or {}).items()},
+                          **self.watch}
+            if not self.universe and st.get("universe"):
+                self.universe = {str(s): str(e or "") for s, e in st["universe"].items()}
+                self._rebuild_members()
         with self.mem_lock:
             self.rewards_seen = {**seen, **self.rewards_seen}
             self.paid_seen = {**paid, **self.paid_seen}
@@ -448,6 +530,9 @@ class App:
         self.event_n = {s: int(n) for s, n in (st.get("event_n") or {}).items() if n}
         self.event_slug = dict(st.get("event_slug") or {})
         self.discover_n = int(st.get("discover_n") or 0)
+        self.universe = {str(s): str(e or "") for s, e in (st.get("universe") or {}).items()}
+        self.watch = {str(s): float(t or 0) for s, t in (st.get("watch") or {}).items()}
+        self._rebuild_members()
         self.names.restore(st.get("names") or {})
         with self.mem_lock:
             self.rewards_seen = dict(st.get("rewards_seen") or {})
@@ -570,7 +655,84 @@ class App:
         if not slug or is_econ_market(slug):
             return False
         return (slug in self.order_markets() or slug in self.positions
-                or slug in self.checked)
+                or slug in self.checked or slug in self.watch)
+
+    @staticmethod
+    def _value(p: dict) -> float:
+        cv = (p or {}).get("cashValue")
+        return to_num(cv.get("value") if isinstance(cv, dict) else cv)
+
+    def big_holdings(self) -> list[str]:
+        """Held markets worth a dollar or more, the biggest first."""
+        held = self.held()
+        rows = sorted(((self._value(p), s) for s, p in list(self.positions.items())
+                       if held.get(s)), reverse=True)
+        return [s for v, s in rows if v >= HOLDING_MIN_USD]
+
+    # -- events: the rest of a race he is in ---------------------------------
+
+    def _rebuild_members(self) -> None:
+        """event -> its open markets: discovery's list first, then the
+        events read on their own. Swapped in whole, so a reader on another
+        thread never sees it half built."""
+        m: dict[str, list[str]] = {}
+        for s, ev in self.universe.items():
+            if ev:
+                m.setdefault(ev, []).append(s)
+        for ev, (_t, slugs) in list(self.ev_fetched.items()):
+            if ev not in m:
+                m[ev] = list(slugs)
+        idx = {s: ev for ev, ss in m.items() for s in ss}
+        self.members, self.ev_index = m, idx
+
+    def event_of(self, slug: str) -> str:
+        return self.event_slug.get(slug) or self.ev_index.get(slug, "")
+
+    def my_events(self) -> list[str]:
+        """The events of his orders and of holdings worth a dollar."""
+        out = []
+        for s in self.order_markets() + self.big_holdings():
+            ev = self.event_of(s)
+            if ev and ev not in out:
+                out.append(ev)
+        return out
+
+    def siblings(self) -> list[str]:
+        """Every open market of the events he is in, his own included."""
+        out: list[str] = []
+        for ev in self.my_events():
+            for s in self.members.get(ev, ()):
+                if not is_econ_market(s):
+                    out.append(s)
+        return list(dict.fromkeys(out))
+
+    def listed(self) -> list[str]:
+        """The page's markets: his orders', his holdings worth a dollar,
+        what he tracks, and the rest of every event he is in."""
+        return list(dict.fromkeys(self.order_markets() + [o["market"] for o in self.ghosts]
+                                  + self.big_holdings() + list(self.watch) + self.siblings()))
+
+    def set_watch(self, slug: str, on: bool) -> dict:
+        slug = str(slug or "").strip()
+        if not on:
+            self.watch.pop(slug, None)
+            self.save()
+            return {"ok": True, "watched": False, "note": "no longer tracked"}
+        if (g := self._gate()):
+            return {"ok": False, "note": g}
+        if slug not in self.universe:
+            # not a politics market discovery listed: the same checks as
+            # opening one by its slug (open; politics or sports; never econ)
+            r = self.open_market(slug)
+            if not r["ok"]:
+                return r
+        elif is_econ_market(slug):
+            return {"ok": False, "note": "econ markets are off limits"}
+        self.watch[slug] = round(self.clock(), 1)
+        if self.terms.get(slug) is None:
+            self.refresh_terms(self.clock(), [slug])
+        self.save()
+        return {"ok": True, "watched": True, "note": "tracking"}
 
     def label(self, slug: str) -> str:
         """The exchange's own words on his order or position first (the
@@ -738,13 +900,12 @@ class App:
 
     def wanted_books(self) -> list[str]:
         """Markets whose books we keep fresh, in priority order: his
-        orders, what he opened lately, then holdings worth a dollar.
-        Called from the stream threads too, so it only reads."""
-        held = sorted(((to_num((p.get("cashValue") or {}).get("value")
-                                if isinstance(p.get("cashValue"), dict) else p.get("cashValue")), s)
-                       for s, p in list(self.positions.items())), reverse=True)
-        big = [s for v, s in held if v >= HOLDING_MIN_USD]
-        return list(dict.fromkeys(self.order_markets() + list(self.opened) + big))
+        orders, what he opened lately, holdings worth a dollar, what he
+        tracks, then the rest of his events. Called from the stream
+        threads too, so it only reads."""
+        return list(dict.fromkeys(self.order_markets() + list(self.opened)
+                                  + self.big_holdings() + list(self.watch)
+                                  + self.siblings()))
 
     def refresh_books(self, now: float) -> None:
         """Re-read the quiet books the stream has not touched lately:
@@ -765,24 +926,39 @@ class App:
                 if getattr(e, "status", None) == 429:
                     break
 
-    def refresh_terms(self, now: float, slugs: list[str] | None = None) -> None:
+    def refresh_terms(self, now: float, slugs: list[str] | None = None) -> bool:
         batch = slugs or list(dict.fromkeys(
             self.order_markets() + list(self.opened)
-            + [s for s, n in self.held().items() if abs(n) >= 1]))
+            + [s for s, n in self.held().items() if abs(n) >= 1]
+            + list(self.watch) + self.siblings()))
         if not batch:
-            return
+            return True
         try:
             raw = self.client.programs(batch)
         except Exception as e:  # noqa: BLE001 — aged terms beat no terms
             self.note(f"terms: {e}")
-            return
+            return False
         live_before = sum(1 for s in batch if self.terms.get(s) is not None)
         if not any(raw.get(s) for s in batch) and live_before >= 3:
             self.note("terms read came back empty for markets that had programs — kept the old")
-            return
+            return False
         for s in batch:
             raw.setdefault(s, {})
-        self.terms.refresh(raw, {s: self.event_n.get(s) or 1 for s in batch}, now=now)
+        with self.terms_lock:
+            self.terms.refresh(raw, {s: self.event_n.get(s) or 1 for s in batch}, now=now)
+        return True
+
+    def sweep_terms(self) -> None:
+        """Every politics market discovery listed, re-read for its reward
+        terms a chunk at a time — what the scan's list of programs counts
+        from. A failed chunk keeps its old terms."""
+        slugs = list(self.universe)
+        bad = 0
+        for i in range(0, len(slugs), TERMS_SWEEP_CHUNK):
+            if not self.refresh_terms(self.clock(), slugs[i:i + TERMS_SWEEP_CHUNK]):
+                bad += 1
+        if bad:
+            self.note(f"terms sweep: {bad} of {-(-len(slugs) // TERMS_SWEEP_CHUNK)} chunks kept their old terms")
 
     def refresh_positions(self, now: float) -> None:
         try:
@@ -803,23 +979,61 @@ class App:
         if self.event_n.get(slug) or now - self.event_tried.get(slug, 0.0) < EVENT_LOOKUP_S:
             return
         self.event_tried[slug] = now
-        ev_slug = self.event_slug.get(slug)
+        ev_slug = self.event_of(slug)
         if not ev_slug:
             self.note(f"event size {slug}: no event named on its order or position")
             return
+        key = "ev:" + ev_slug          # one read an event, however many of its markets ask
+        if now - self.event_tried.get(key, 0.0) < EVENT_LOOKUP_S:
+            return
+        self.event_tried[key] = now
+        self._fetch_event(ev_slug, now, why=f"event size {slug}")
+
+    def _fetch_event(self, ev_slug: str, now: float, why: str = "") -> bool:
+        """One event's open markets, read once (one try; never holds up
+        the books): their event sizes, names, and the event's member list
+        for the page."""
+        why = why or f"event {ev_slug}"
         try:
             j = self.client.get(f"{GATEWAY}/v1/events/slug/{ev_slug}", tries=1, timeout=8.0)
             ev = j.get("event") or j
+            title = str(ev.get("title") or ev.get("name") or "").strip()
             rows = [m for m in ev.get("markets") or [] if m.get("slug") and not m.get("closed")]
             if not rows:
-                self.note(f"event size {slug}: event {ev_slug} lists no open markets")
-                return
+                self.note(f"{why}: event {ev_slug} lists no open markets")
+                return False
             out = {m["slug"]: {"event_n": len(rows)} for m in rows}
             _group_sizes(out, [m["slug"] for m in rows])
             for s, r in out.items():
                 self.event_n.setdefault(s, int(r["event_n"]))
+            if title:
+                labels = disambiguate([(m["slug"], name_from_market(m, title)[:110]) for m in rows])
+                for s, name in labels.items():
+                    if name:
+                        self.names.known.setdefault(s, name)
+            self.ev_fetched[ev_slug] = (now, [m["slug"] for m in rows
+                                              if not is_econ_market(m["slug"])])
+            self._rebuild_members()
+            return True
         except Exception as e:  # noqa: BLE001
-            self.note(f"event size {slug}: {e}")
+            self.note(f"{why}: {e}")
+            return False
+
+    def fetch_my_events(self, now: float) -> None:
+        """His events that discovery did not list (sports, or listed since
+        it last ran): read each one's market list, once in ten minutes at
+        most per event, again after six hours."""
+        for ev in self.my_events():
+            if ev in self.members and ev not in self.ev_fetched:
+                continue        # discovery lists it
+            got = self.ev_fetched.get(ev)
+            if got and now - got[0] < EVENT_KEEP_S:
+                continue
+            key = "ev:" + ev
+            if now - self.event_tried.get(key, 0.0) < EVENT_LOOKUP_S:
+                continue
+            self.event_tried[key] = now
+            self._fetch_event(ev, now)
 
     def run_discover(self) -> bool:
         try:
@@ -832,18 +1046,30 @@ class App:
             self.event_n[s] = int(r["event_n"])
             if r.get("name"):
                 self.names.known[s] = r["name"]
+        uni = {s: str(r.get("event") or "") for s, r in found.items()}
         if short or not found:
             # a short feed is merged in (above), never taken whole, and
             # read again soon
+            self.universe = {**self.universe, **uni}
+            self._rebuild_members()
             self.note(f"discover: {len(found)} markets where the last full read had "
                       f"{self.discover_n} — merged")
             return False
+        # a full read is the whole list: a market it no longer shows has
+        # closed and leaves the scan and his events' lists
+        self.universe = uni
+        self._rebuild_members()
         self.discover_n = len(found)
         return True
 
     def discover_loop(self) -> None:
         while True:
             ok = self.run_discover()
+            if ok:
+                try:
+                    self.sweep_terms()
+                except Exception as e:  # noqa: BLE001
+                    self.note(f"terms sweep: {e}")
             self._sleep(DISCOVER_S if ok else DISCOVER_RETRY_S)
 
     def check_rewards(self, now: float, write_file: bool) -> None:
@@ -900,7 +1126,8 @@ class App:
         if self._is_due("positions", POSITIONS_S, now):
             self.refresh_positions(now)
         self.refresh_books(now)
-        for s in self.order_markets() + list(self.opened):
+        self.fetch_my_events(now)
+        for s in self.order_markets() + list(self.opened) + list(self.watch) + self.siblings():
             if not self.event_n.get(s):
                 self.event_size(s, now)
         if self._is_due("terms", TERMS_S, now):
@@ -1210,10 +1437,10 @@ class App:
         except Exception as e:  # noqa: BLE001
             return self.cache.any_age(slug), f"book read failed: {str(e)[:80]}"
 
-    def book_view(self, slug: str) -> dict:
+    def book_view(self, slug: str, stake=None) -> dict:
         """The order book with his orders marked, his position, what his
-        orders already offer against it, and the program the market pays
-        under."""
+        orders already offer against it, the program the market pays
+        under, and what a new order joining each side's best would earn."""
         r = self.open_market(slug)
         if not r["ok"]:
             return r
@@ -1222,6 +1449,11 @@ class App:
         mine = [o for o in self.orders if o["market"] == slug]
         prog = self.terms.get(slug)
         pool = self.side_pool(slug, prog) if prog is not None else None
+        stake = self.stake_of(stake)
+        first = slug in self.terms.joined_today(now)
+        fresh = book if book is not None and now - book.fetched_at <= BOOK_MAX_AGE else None
+        new = {sd: self.potential(slug, sd, fresh, prog, pool, stake, first=first)
+               for sd in ("BUY", "SELL")}
         p = self.positions.get(slug) or {}
         cv = p.get("cashValue")
         net = self.held().get(slug, 0.0)
@@ -1240,7 +1472,8 @@ class App:
             "pool": pool, "target": prog.target if prog else None,
             "df": prog.df if prog else None, "live": bool(prog and prog.is_live()),
             "prog": prog is not None, "sized": bool(self.event_n.get(slug)),
-            "first_day": slug in self.terms.joined_today(now),
+            "first_day": first,
+            "watched": slug in self.watch, "stake": stake, "new": new,
         }
 
     def order_math(self, order_id: str) -> dict:
@@ -1282,10 +1515,123 @@ class App:
             math["why"] = "first day in its program — counts nothing until midnight ET"
             math["est"] = 0.0
         return {**view, "order": o, "math": math,
-                "risk": capital_at_risk(o["intent"], o["price"], o["size"])}
+                "risk": capital_at_risk(o["intent"], o["price"], o["size"]),
+                "basis": round(basis(o["intent"], o["price"], o["size"], o["side"]), 2)}
 
-    def data(self) -> dict:
+    # -- what a market pays: his orders, and a new one --------------------------
+
+    def _book_for_new(self, slug: str, now: float):
+        """A book to price a "new" figure from: a fresh one, or one the
+        stream wrote while every stream connection is up — a quiet
+        streamed book has simply not changed. Display only."""
+        b = self.cache.fresh(slug, BOOK_MAX_AGE, now)
+        if b is not None:
+            return b
+        b = self.cache.any_age(slug)
+        if (b is not None and now - b.fetched_at <= WS_VIEW_S
+                and self.cache.last_writer.get(slug) == "ws" and self.streams
+                and all(st.status.get("state") == "live" for st in self.streams)):
+            return b
+        return None
+
+    def potential(self, slug: str, side: str, book, prog, pool, stake: float,
+                  first: bool = False) -> dict:
+        """What a new order of `stake` dollars would earn a day joining the
+        best price on this side (never improving on it), by the meter's
+        own arithmetic, and that per dollar it ties up. A bid ties up its
+        price a share, an ask one less its price."""
+        if book is None:
+            return {"why": "no book"}
+        levels = book.side(side)
+        if not levels:
+            return {"why": "nobody on this side"}
+        if prog is None:
+            return {"why": "no reward program"}
+        if not prog.is_live():
+            return {"why": "program not live"}
+        px = levels[0][0]
+        per = px if side == "BUY" else 1.0 - px
+        if per <= 0:
+            return {"why": "no price"}
+        qty = float(min(math.floor(stake / per), QTY_MAX))
+        out: dict = {"px": px}
+        if qty < 1:
+            return {**out, "why": f"${stake:g} buys less than a share"}
+        cost = qty * per
+        out.update(qty=qty, cost=round(cost, 2))
+        j = estimate_join(side, levels, book.tick, prog.df, prog.target, px, qty)
+        if not j.qualifies:
+            return {**out, "day": 0.0, "pct": 0.0,
+                    "why": f"side short of its {prog.target:,.0f} Target Size by {j.gap:,.0f}"}
+        if first:
+            return {**out, "day": 0.0, "pct": 0.0, "why": "first day in its program"}
+        if pool is None:
+            return {**out, "day": None, "pct": None, "why": "event size unknown"}
+        day = j.share * pool
+        return {**out, "day": round(day, 4), "pct": day / cost, "share": round(j.share, 4)}
+
+    def market_rows(self, now: float, stake: float) -> list[dict]:
+        """One row a market: his orders on each side with what they earn
+        and earn per dollar behind them, and for a side with no order of
+        his, what a new one would."""
+        held = self.held()
+        first = set(self.terms.joined_today(now))
+        by_m: dict[str, list[dict]] = {}
+        for o in self.orders:
+            by_m.setdefault(o["market"], []).append(o)
+        gh_m: dict[str, list[dict]] = {}
+        for o in self.ghosts:
+            gh_m.setdefault(o["market"], []).append(o)
+        big = set(self.big_holdings())
+        rows = []
+        for s in self.listed():
+            prog = self.terms.get(s)
+            pool = self.side_pool(s, prog) if prog is not None else None
+            book = None
+            sides = {}
+            for side in ("BUY", "SELL"):
+                mine = [o for o in by_m.get(s, ()) if o["side"] == side]
+                lines = [{"id": o["id"], "price": o["price"], "size": o["size"],
+                          "est": self.order_est.get(o["id"]),
+                          "basis": round(basis(o["intent"], o["price"], o["size"], side), 2)}
+                         for o in mine]
+                lines += [{"id": o["id"], "price": o["price"], "size": o["size"], "ghost": True}
+                          for o in gh_m.get(s, ()) if o["side"] == side]
+                if mine:
+                    ests = [self.order_est.get(o["id"]) for o in mine]
+                    day = (sum(e for e in ests if e is not None)
+                           if any(e is not None for e in ests) else None)
+                    b = sum(x["basis"] for x in lines if not x.get("ghost"))
+                    sides[side] = {"o": lines, "day": day, "basis": round(b, 2),
+                                   "pct": (day / b) if day is not None and b > 0 else None}
+                else:
+                    if book is None:
+                        book = self._book_for_new(s, now)
+                    sides[side] = {"o": lines, "day": None, "pct": None,
+                                   "new": self.potential(s, side, book, prog, pool, stake,
+                                                         first=s in first)}
+            kind, st = classify(s)
+            why = ("order" if s in by_m else "holding" if s in big
+                   else "watched" if s in self.watch else "event")
+            rows.append({"m": s, "name": self.label(s), "kind": kind, "st": st,
+                         "ev": self.event_of(s), "net": held.get(s, 0.0),
+                         "value": round(self._value(self.positions.get(s) or {}), 2)
+                         if held.get(s) else 0.0,
+                         "w": s in self.watch, "why": why, "has": s in by_m,
+                         "bid": sides["BUY"], "ask": sides["SELL"]})
+        return rows
+
+    @staticmethod
+    def stake_of(x) -> float:
+        try:
+            v = float(x)
+        except (TypeError, ValueError):
+            return STAKE_DEFAULT
+        return min(max(v, 1.0), STAKE_MAX) if v == v else STAKE_DEFAULT
+
+    def data(self, stake=None) -> dict:
         now = self.clock()
+        stake = self.stake_of(stake)
         holdings = []
         small_n, small_v = 0, 0.0
         for s, n in self.held().items():
@@ -1324,6 +1670,9 @@ class App:
             "holdings_value": round(sum(h["value"] for h in holdings) + small_v, 2),
             "positions_age": round(now - self.positions_at) if self.positions_at else None,
             "state_note": note,
+            "stake": stake,
+            "markets": self.market_rows(now, stake),
+            "scan": self.scanner.brief(),
         }
 
     # -- running -------------------------------------------------------------
@@ -1344,9 +1693,12 @@ class App:
     def start_streams(self) -> None:
         from v3.ws import Stream
         kid, sec = self.client.key_id, self.client.secret_key
-        for i in range(2):
+        # books only (the Lite feed is not read here), five requests of
+        # 200 a connection, inside the exchange's ten
+        for i in range(STREAM_SHARDS):
             st = Stream(self.cache, self.wanted_books, kid, sec,
-                        shard=i, shards=2, name=f"lite-books-{i}")
+                        shard=i, shards=STREAM_SHARDS, cap=STREAM_CAP, chunk=STREAM_CHUNK,
+                        lite=False, max_subs=10, name=f"lite-books-{i}")
             st.start()
             self.streams.append(st)
 
