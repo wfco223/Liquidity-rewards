@@ -284,6 +284,12 @@ class App:
             "seeded_v3": self.seeded_v3,
             "seed_caught_up": self.seed_caught_up,
             "v3_head": self.v3_head,
+            # for a check from outside: what it said, where it came from
+            "notes": list(self.notes)[-60:],
+            "restored": self.restored, "boot_ts": round(self.boot_ts, 1),
+            "orders_n": len(self.orders), "orders_at": round(self.orders_at, 1),
+            "rate": round(self.est.rate, 2), "bp": to_num(self.balance.get("buyingPower"))
+            if self.balance else None,
         }
 
     def _branch_state(self, store) -> str:

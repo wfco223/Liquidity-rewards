@@ -1,0 +1,3 @@
+The simple app runs in 3.0's place while this file ships in the image
+(launcher.app_choice). Deleting it and deploying brings 3.0 back — ask
+Claude first: 3.0 would wake on its cutover-day records.
