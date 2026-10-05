@@ -1,0 +1,139 @@
+{
+ "pulled_utc": "2026-10-04T15:38:54Z",
+ "stamp": "2026-10-04T1538Z",
+ "seconds": 88.2,
+ "run": "https://github.com/wfco223/Liquidity-rewards/actions/runs/37213775112",
+ "reads": {
+  "activities": "GET https://api.polymarket.us/v1/portfolio/activities limit=100 sortOrder=SORT_ORDER_DESCENDING, no type filter",
+  "earnings": "GET /v1/incentives/earnings startDate=2025-01-01 pageSize=500"
+ },
+ "activities": {
+  "pages": 143,
+  "raw_rows": 14297,
+  "duplicates": 0,
+  "complete": true,
+  "stopped": "the exchange said eof",
+  "eof_flag": true,
+  "page_size": 100,
+  "rows": 14297,
+  "by_type": {
+   "ACTIVITY_TYPE_POSITION_RESOLUTION": 76,
+   "ACTIVITY_TYPE_TRADE": 14042,
+   "ACTIVITY_TYPE_ACCOUNT_WITHDRAWAL": 42,
+   "ACTIVITY_TYPE_TRANSFER": 90,
+   "ACTIVITY_TYPE_REFERRAL_BONUS": 3,
+   "ACTIVITY_TYPE_ACCOUNT_DEPOSIT": 44
+  },
+  "first_utc": "2025-12-16T21:32:03.613120005Z",
+  "last_utc": "2026-10-04T14:44:06.618669744Z"
+ },
+ "earnings": {
+  "host": "https://api.polymarket.us",
+  "start": "2025-01-01",
+  "pages": 1,
+  "complete": true,
+  "stopped": "no further page token",
+  "errors_before": [
+   "https://api.prod.polymarketexchange.com: error on page 1: /v1/incentives/earnings -> HTTP 401: missing bearer token (0 rows)"
+  ],
+  "starts_tried": [
+   {
+    "start": "2025-01-01",
+    "rows": 13068,
+    "stopped": "no further page token"
+   }
+  ],
+  "rows": 13068,
+  "first_date": "2026-07-01",
+  "last_date": "2026-10-02",
+  "paid_usd": 17509.64
+ },
+ "snapshot": {
+  "positions_read": {
+   "pages": 1,
+   "n": 496,
+   "eof": true,
+   "ended": true
+  },
+  "complete": true,
+  "errors": []
+ },
+ "files": [
+  {
+   "file": "activities-0001.jsonl.gz",
+   "bytes": 984076,
+   "sha256": "84647b7935ff10cdc276ad266940a240bf706f194bce0a6f3889ec808600874f",
+   "rows": 2000
+  },
+  {
+   "file": "activities-0002.jsonl.gz",
+   "bytes": 1011151,
+   "sha256": "264d2baa2abde16d25df7ae3381fc4a8f11a7d689ada423b309715a039b513c7",
+   "rows": 2000
+  },
+  {
+   "file": "activities-0003.jsonl.gz",
+   "bytes": 1013233,
+   "sha256": "d43048afe37cc0599c09a2c354f26608e2ffc7e2d6d7117ca82a9943c7f5a584",
+   "rows": 2000
+  },
+  {
+   "file": "activities-0004.jsonl.gz",
+   "bytes": 858345,
+   "sha256": "ba4ae1904beb8b027ed2bd4079da4caea4cd9e18a11a89ed7cee425fd0a9ea2d",
+   "rows": 2000
+  },
+  {
+   "file": "activities-0005.jsonl.gz",
+   "bytes": 948093,
+   "sha256": "eb52338b4d478f0b1e7aad8e127b9b402c3f8fe6d671a80f9cf15d12021fc9c3",
+   "rows": 2000
+  },
+  {
+   "file": "activities-0006.jsonl.gz",
+   "bytes": 807489,
+   "sha256": "70ec174a69bd98d84415629b50c50515796be0cdeffb8491ee011e50145688b6",
+   "rows": 2000
+  },
+  {
+   "file": "activities-0007.jsonl.gz",
+   "bytes": 1003701,
+   "sha256": "1a3188afeec6e35865e45e63bea014cdf37520c91ca75a89c3d169b10140c6ce",
+   "rows": 2000
+  },
+  {
+   "file": "activities-0008.jsonl.gz",
+   "bytes": 121113,
+   "sha256": "f0daa31bc41d8bb6a26c590e977d907fcd97ce40f06f7a4c9df5b191f88f5cf2",
+   "rows": 297
+  },
+  {
+   "file": "activities.csv",
+   "bytes": 5229145,
+   "sha256": "f0652eadc24942d32749a1f1120e9d9a9ee8b7ae62093eb63bfba917727cfe8c",
+   "rows": 14297
+  },
+  {
+   "file": "earnings.jsonl.gz",
+   "bytes": 93174,
+   "sha256": "e852d454f0396f1822eb93c615f7ef8a0c18e9be8fe3730fabb64a86978aa7da",
+   "rows": 13068
+  },
+  {
+   "file": "earnings.csv",
+   "bytes": 966524,
+   "sha256": "66a62ccc5f91e14262f6a2aaa4585e879029704ff2b7a5240d0a2f8b327aeabd",
+   "rows": 13068
+  },
+  {
+   "file": "positions.json.gz",
+   "bytes": 42642,
+   "sha256": "b2a75fcb8b035624d20aebeae0d1efad2b4a8a03067ba8d5163b599a844179f3"
+  },
+  {
+   "file": "balances.json",
+   "bytes": 559,
+   "sha256": "2aa68dd531b087041853dbd47799097858e74f0f4c893f42535dbed64b7fed2b"
+  }
+ ]
+}

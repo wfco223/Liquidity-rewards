@@ -9,6 +9,9 @@ COPY track_rewards.py scan_markets.py launcher.py ./
 COPY live ./live
 COPY v2 ./v2
 COPY v3 ./v3
+# the simple app (owner, 2026-10-04); lite/ACTIVE in the image makes it
+# the one that runs (launcher.app_choice)
+COPY lite ./lite
 # the two race tables the map scores against, as a last-resort fallback:
 # the monitor prefers the CDN, then the daily copy on main, then these
 COPY data/silver_senate_races.csv data/silver_gov_races.csv ./data/

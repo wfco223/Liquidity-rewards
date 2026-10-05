@@ -1,0 +1,102 @@
+name: Ledger archive
+
+# The account's whole transaction record from the exchange's own API —
+# every activity row (trades, settlements, cash moves) back to the first,
+# and every reward payout — saved as a NEW folder, data/ledger/<UTC stamp>/,
+# and tagged ledger-<stamp> so the commit stays reachable whatever happens
+# to main. Owner, 2026-10-04: "store them somewhere where they won't be
+# deleted or overwritten. If there is already a record in the repo, do not
+# overwrite any information there."
+#
+# Read-only against the exchange: GET only, places nothing, cancels nothing.
+# No schedule (owner, 2026-08-24). It runs on a manual dispatch, or when
+# THIS FILE is pushed to main — the fill_history pattern, because the
+# session that built it can push but cannot dispatch. Every run writes a
+# new folder; none rewrites an old one.
+# The commit step refuses anything but additions inside the new folder.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/ledger_archive.yml
+  workflow_dispatch:
+    inputs:
+      earnings_start:
+        description: "first date to ask the rewards endpoint for"
+        default: "2025-01-01"
+      max_pages:
+        description: "activity pages to walk at most (100 rows a page); the run says so if it is not enough"
+        default: "3000"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ledger-archive
+  cancel-in-progress: false
+
+jobs:
+  archive:
+    # main only: a run dispatched from any other branch would carry that
+    # branch's commits onto main with the folder
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Pull the record
+        id: pull
+        env:
+          POLYMARKET_KEY_ID: ${{ secrets.POLYMARKET_KEY_ID }}
+          POLYMARKET_SECRET_KEY: ${{ secrets.POLYMARKET_SECRET_KEY }}
+          EARNINGS_START: ${{ github.event.inputs.earnings_start || '2025-01-01' }}
+          MAX_PAGES: ${{ github.event.inputs.max_pages || '3000' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PYTHONPATH: .
+        run: |
+          pip install -q -r requirements.txt
+          python3 tools/ledger_archive.py
+
+      - name: Commit the new folder and tag it
+        if: always() && steps.pull.outputs.stamp != ''
+        env:
+          STAMP: ${{ steps.pull.outputs.stamp }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          DIR="data/ledger/$STAMP"
+          git add -- "$DIR"
+          # write-once: every staged path must be a NEW file inside the new
+          # folder; anything else (a modified or deleted file) stops the run
+          bad=$(git diff --cached --name-status | grep -v -P "^A\t\Q$DIR\E/" || true)
+          if [ -n "$bad" ]; then echo "refusing to commit:"; echo "$bad"; exit 1; fi
+          if git diff --cached --quiet; then echo "nothing to commit"; exit 1; fi
+          git commit -m "Ledger archive $STAMP [skip ci]"
+          # what goes out must be exactly ONE commit on top of main, adding
+          # files inside the new folder and nothing else
+          outgoing_ok() {
+            [ "$(git rev-list --count FETCH_HEAD..HEAD)" = "1" ] || { echo "not one commit ahead of main"; return 1; }
+            extra=$(git diff --name-status FETCH_HEAD HEAD | grep -v -P "^A\t\Q$DIR\E/" || true)
+            [ -z "$extra" ] || { echo "outgoing touches more than the folder:"; echo "$extra"; return 1; }
+          }
+          pushed=""
+          for attempt in 1 2 3 4 5; do
+            git rebase --abort 2>/dev/null || true
+            if git fetch origin main && git rebase FETCH_HEAD; then
+              outgoing_ok || exit 1
+              if git push origin HEAD:main; then pushed=yes; break; fi
+            fi
+            echo "push race lost (attempt $attempt) — retrying"
+            sleep $((attempt * 3))
+          done
+          if [ -z "$pushed" ]; then echo "push failed after 5 attempts"; exit 1; fi
+          git tag -a "ledger-$STAMP" -m "Transaction record pulled $STAMP"
+          git push origin "ledger-$STAMP"
+          echo "saved $DIR at $(git rev-parse HEAD), tag ledger-$STAMP"
