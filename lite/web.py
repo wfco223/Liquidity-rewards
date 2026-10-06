@@ -115,6 +115,7 @@ input:focus{border-color:var(--accent);background:var(--card)}
  font-family:inherit;font-size:13px;line-height:1.2;font-weight:600;font-variant-numeric:tabular-nums;cursor:pointer}
 .pill.ghost{background:transparent;color:var(--warn);padding:4px 0;font-weight:500}
 .new{color:var(--faint);font-size:12.5px}
+.mrisk{font-size:12.5px;color:var(--pos);margin-top:4px;line-height:1.45}
 .bsheet{position:fixed;left:0;right:0;bottom:0;max-height:90vh;overflow:auto;z-index:20;
  background:var(--card);border-radius:22px 22px 0 0;padding:10px 18px 30px;
  box-shadow:0 -10px 40px rgba(0,0,0,.18);max-width:680px;margin:0 auto}
@@ -243,6 +244,8 @@ function sortKey(){var k=LS('sort','type');return SORTS.some(function(s){return 
 function setSort(k){LSset('sort',k);window._revealSort=1;if(window._d)draw(window._d);}
 function noFirst(){return LS('nofirst','0')==='1';}
 function toggleNo(){LSset('nofirst',noFirst()?'0':'1');if(window._d)draw(window._d);}
+function lowOnly(){return LS('lowrisk','0')==='1';}
+function toggleLow(){LSset('lowrisk',lowOnly()?'0':'1');if(window._d)draw(window._d);}
 function cols(){try{return JSON.parse(LS('col','{}'))||{};}catch(e){return {};}}
 function tog(id){var c=cols();c[id]=!c[id];LSset('col',JSON.stringify(c));if(window._d)draw(window._d);}
 function live(x){return (x.o||[]).filter(function(o){return !o.ghost;});}
@@ -268,6 +271,15 @@ function sideHtml(sd,x){
  else h+='<span class="d dim">'+(n.day>0?usd(n.day):'')+'</span><span class="p dim">'+(n.day>0?pct(n.pct):'')+'</span>';
  return h+'</div>';
 }
+// what a fill gives back where the event's outcomes net (owner, 2026-10-06)
+function frTxt(v){return v>=0.005?'frees '+usd(v):v<=-0.005?'ties up '+usd(-v):'';}
+function riskHtml(r){
+ var p=[];
+ ['BUY','SELL'].forEach(function(sd){var x=sd==='BUY'?r.bid:r.ask,w=side(sd).toLowerCase();
+  var b=(r.risk||{})[sd];if(b)p.push([w.charAt(0).toUpperCase()+w.slice(1)+' at '+ct(b.px)+' frees up to '+usd(b.frees)+' at '+sz(b.q)+' ('+ct(b.ps)+' a share)','ok']);
+  live(x).forEach(function(o){var f=frTxt(o.fr);if(f&&(b||o.fr>0))p.push(['Your '+w+' '+ct(o.price)+' × '+sz(o.size)+' '+f+' if it all fills',o.fr>0?'ok':'warn']);});});
+ return p.length?'<div class="mrisk">'+p.map(function(x){return '<span class="'+x[1]+'">'+esc(x[0])+'</span>';}).join('<br>')+'</div>':'';
+}
 function rowHtml(r){
  var sub=[];
  if(r.net)sub.push((r.net>0?'Yes ':'No ')+sz(Math.abs(r.net))+(r.value?' · '+usd(r.value):''));
@@ -275,7 +287,7 @@ function rowHtml(r){
  return '<div class="mrow" onclick="openMarket(\''+esc(r.m)+'\')"><div class="mtop"><div class="mn">'+esc(r.name)
   +(r.w?'<span class="star">★</span>':'')+'</div></div>'
   +(sub.length?'<div class="msub">'+esc(sub.join(' · '))+'</div>':'')
-  +sideHtml('BUY',r.bid)+sideHtml('SELL',r.ask)+'</div>';
+  +sideHtml('BUY',r.bid)+sideHtml('SELL',r.ask)+(lowOnly()?riskHtml(r):'')+'</div>';
 }
 function groupsHtml(pre,rows){
  var h='',c=cols();
@@ -299,12 +311,20 @@ function listHtml(pre,rows,k){
  rows.sort(cmp(k));
  return '<div class="card list">'+rows.map(rowHtml).join('')+'</div>';
 }
+function marginHtml(m){
+ if(!m)return '';
+ return '<div class="note muted" style="margin:4px 2px">Margin held by the exchange '+(m.exchange==null?'—':usd(m.exchange))
+  +' · netted '+usd(m.netted)+' · each alone '+usd(m.plain)+(m.est>=1?' · '+usd(m.est)+' of it at an estimated cost':'')+'</div>';
+}
 function marketsHtml(d){
- var rows=(d.markets||[]).slice(),k=sortKey(),tot=0,nOrd=0;
+ var rows=(d.markets||[]).slice(),k=sortKey(),tot=0,nOrd=0,low=lowOnly();
+ if(low)rows=rows.filter(function(r){return r.lr;});
  rows.forEach(function(r){tot+=rowDay(r);if(r.has)nOrd++;});
  var h='<div class="sec-h"><h2>Markets</h2><button class="btn small" onclick="openScan()">Scan</button></div>'
   +'<div class="chips" id="sorts">'+SORTS.map(function(s){return '<button class="chip'+(k===s[0]?' on':'')+'" onclick="setSort(\''+s[0]+'\')">'+s[1]+'</button>';}).join('')+'</div>'
-  +'<div class="chips"><button class="chip tog'+(noFirst()?' on':'')+'" onclick="toggleNo()">No orders first</button></div>'
+  +'<div class="chips"><button class="chip tog'+(noFirst()?' on':'')+'" onclick="toggleNo()">No orders first</button>'
+  +'<button class="chip tog'+(low?' on':'')+'" onclick="toggleLow()">Lowers risk</button></div>'
+  +(low?marginHtml(d.margin):'')
   +'<div class="legend"><span>'+rows.length+' markets · '+nOrd+' with orders · '+usd(tot)+'/day</span>'
   +'<span>$ a day · % per $ a day</span></div>'
   +(d.orders_age>60?'<div class="note warn">Orders read '+ago(d.orders_age)+' ago</div>':'')
@@ -314,7 +334,8 @@ function marketsHtml(d){
   if(top.length)h+='<div class="secname">No orders</div>'+listHtml('n',top,k);
   if(rest.length)h+='<div class="secname">With orders</div>'+listHtml('',rest,k);
  } else if(rows.length)h+=listHtml('',rows,k);
- if(!rows.length)h+='<div class="card muted">No orders or holdings yet. Tap Scan to find places to earn.</div>';
+ if(!rows.length)h+='<div class="card muted">'+(low?'No market where a fill would lower your risk right now.'
+  :'No orders or holdings yet. Tap Scan to find places to earn.')+'</div>';
  if(d.small_n)h+='<div class="muted" style="margin:6px 4px">+'+d.small_n+' holdings under $1 ('+usd(d.small_v)+')</div>';
  return h;
 }
@@ -462,6 +483,7 @@ function drawOrder(j){
   +'<div class="stats"><div><div class="v">'+(m.est==null?'—':usd(m.est))+'</div><div class="l">a day</div></div>'
   +'<div><div class="v">'+(m.est==null||!bs?'—':pct(m.est/bs))+'</div><div class="l">per $ a day</div></div>'
   +'<div><div class="v">'+usd(bs)+'</div><div class="l">money behind it</div></div></div>'
+  +(j.fill!=null&&frTxt(j.fill)?'<div class="note '+(j.fill>0?'ok':'muted')+'">If it fills: '+frTxt(j.fill)+'</div>':'')
   +(j.stale?'<div class="note warn">'+esc(j.stale)+'</div>':'')
   +'<div class="frm"><input id="px" inputmode="decimal" value="'+esc(val('px',Math.round(o.price*1000)/10))+'" oninput="typed(\'px\')"><span class="u">¢</span>'
   +'<input id="qty" inputmode="decimal" value="'+esc(val('qty',o.size))+'" oninput="typed(\'qty\')">'
@@ -488,22 +510,55 @@ function drawMarket(j){
   +'<div class="frm" style="margin:8px 0"><button class="btn small '+(j.watched?'gray':'')+'" onclick="doWatch(\''+esc(j.market)+'\','+(!j.watched)+')">'
   +(j.watched?'★ Tracking':'☆ Track')+'</button></div>'
   +(j.stale?'<div class="note warn">'+esc(j.stale)+'</div>':'');
- (j.ours||[]).forEach(function(o){h+='<div class="nl" style="cursor:pointer" onclick="openOrder(\''+esc(o.id)+'\')"><span><span class="'+(o.side==='BUY'?'ok':'bad')+'">'+side(o.side)+'</span> '
-  +ct(o.price)+' × '+sz(o.size)+'</span><span><b>'+day(o.est)+'</b> ›</span></div>';});
+ (j.ours||[]).forEach(function(o){var f=frTxt(o.fr);h+='<div class="nl" style="cursor:pointer" onclick="openOrder(\''+esc(o.id)+'\')"><span><span class="'+(o.side==='BUY'?'ok':'bad')+'">'+side(o.side)+'</span> '
+  +ct(o.price)+' × '+sz(o.size)+'</span><span><b>'+day(o.est)+'</b>'+(f?' · <span class="'+(o.fr>0?'ok':'muted')+'">'+f+' if filled</span>':'')+' ›</span></div>';});
  h+='<div class="panel"><div class="label">New order at the best price, $'+esc(j.stake)+'</div>'
-  +newLine('BUY',(j.new||{}).BUY)+newLine('SELL',(j.new||{}).SELL)+'</div>';
+  +newLine('BUY',(j.new||{}).BUY)+newLine('SELL',(j.new||{}).SELL)+'</div>'+riskPanel(j);
  h+=bookHtml(j,null)
   +'<div class="frm"><div class="seg"><button class="'+(sd==='BUY'?'on':'')+'" onclick="pick(\'BUY\')">Bid</button>'
   +'<button class="'+(sd==='SELL'?'on':'')+'" onclick="pick(\'SELL\')">Ask</button></div></div>'
-  +'<div class="frm"><input id="px" inputmode="decimal" placeholder="price" value="'+esc(val('px',''))+'" oninput="typed(\'px\')"><span class="u">¢</span>'
-  +'<input id="qty" inputmode="decimal" placeholder="size" value="'+esc(val('qty',''))+'" oninput="typed(\'qty\')">'
-  +'<button class="btn" onclick="doPlace()">Place</button></div>'+said();
+  +'<div class="frm"><input id="px" inputmode="decimal" placeholder="price" value="'+esc(val('px',''))+'" oninput="typed(\'px\');rkq()"><span class="u">¢</span>'
+  +'<input id="qty" inputmode="decimal" placeholder="size" value="'+esc(val('qty',''))+'" oninput="typed(\'qty\');rkq()">'
+  +'<button class="btn" onclick="doPlace()">Place</button></div>'
+  +'<div id="rk" class="muted">'+rkText()+'</div>'+said();
  window._mk=j;sheet(btns(h));
 }
+// what a new order at each side's best price gives back if it fills
+function riskPanel(j){
+ var rk=j.rk||{},h='';
+ ['BUY','SELL'].forEach(function(sd){var b=rk[sd];if(!b)return;
+  var t='<span class="'+(sd==='BUY'?'ok':'bad')+'">'+side(sd)+'</span> '+ct(b.px)+' ';
+  var mo=b.more,use=b.ahead?(mo&&mo.q>0):b.q>0;
+  if(b.frees>=0.01){h+='<div class="nl"><span>'+t+'frees up to <b>'+usd(b.frees)+'</b> at '+sz(b.q)+'</span>'
+   +'<span class="muted">'+ct(b.ps)+' a share'+(use?' <button class="link" onclick="useRisk(\''+sd+'\')">Use</button>':'')+'</span></div>';
+   if(b.ahead)h+='<div class="muted">Your '+sz(b.ahead)+' there come first'+(mo&&mo.frees>=0.01?'; then up to '+usd(mo.frees)+' more at '+sz(mo.q)
+    :b.ahead>b.q+0.005?'; past '+sz(b.q)+' a fill adds risk':' and cover it')+'</div>';}
+  else h+='<div class="nl"><span>'+t+'<span class="muted">ties up '+ct(-b.ps)+' a share</span></span></div>';});
+ if(!h)return '';
+ return '<div class="panel"><div class="label">If an order at the best price fills'+(j.netted?' · netted over the event\'s '+j.outcomes+' outcomes':'')+'</div>'+h+'</div>';
+}
+function useRisk(sd){var b=((window._mk||{}).rk||{})[sd];if(!b)return;var q=b.ahead?(b.more||{}).q:b.q;if(!q)return;
+ window._side=sd;window._typed=window._typed||{};
+ window._typed.px=''+Math.round(b.px*1000)/10;window._typed.qty=''+q;drawMarket(window._mk);rkq();}
+// as he types: what this order gives back if it fills, and the most an order at that price can
+function rkKey(){var c=window._card||{};return [c.m,window._side||'BUY',val('px',''),val('qty','')].join('|');}
+function rkText(){var v=window._rkv;if(!v||v.key!==rkKey()||!v.j||!v.j.ok)return '';
+ var j=v.j,h='',b=j.best||{};
+ if(j.frees!=null&&frTxt(j.frees))h+='If it fills: <b class="'+(j.frees>0?'ok':'')+'">'+frTxt(j.frees)+'</b>'+(j.ahead?' after your '+sz(j.ahead)+' ahead':'');
+ if(b.frees>=0.01&&!(j.qty===b.q))h+=(h?' · ':'')+'most at this price: '+usd(b.frees)+' at '+sz(b.q)
+  +' <button class="link" onclick="useBest()">Use</button>';
+ return h;}
+function rkq(){clearTimeout(window._rkT);window._rkT=setTimeout(function(){
+ var c=window._card;if(!c||c.kind!=='market')return;var px=parseFloat(val('px',''));if(!(px>0))return;
+ var key=rkKey(),q=parseFloat(val('qty',''));
+ get('/risk.json?m='+encodeURIComponent(c.m)+'&side='+(window._side||'BUY')+'&px='+px+'&qty='+(q>0?q:''),function(j){
+  window._rkv={key:key,j:j};var e=document.getElementById('rk');if(e&&key===rkKey())e.innerHTML=rkText();});},300);}
+function useBest(){var v=window._rkv,b=v&&v.j&&v.j.best;if(!b||!b.q)return;
+ window._typed=window._typed||{};window._typed.qty=''+b.q;drawMarket(window._mk);rkq();}
 function useNew(sd){var n=((window._mk||{}).new||{})[sd];if(!n||n.px==null)return;
  window._side=sd;window._typed=window._typed||{};
- window._typed.px=''+Math.round(n.px*1000)/10;window._typed.qty=''+n.qty;drawMarket(window._mk);}
-function pick(s){window._side=s;if(window._mk)drawMarket(window._mk);}
+ window._typed.px=''+Math.round(n.px*1000)/10;window._typed.qty=''+n.qty;drawMarket(window._mk);rkq();}
+function pick(s){window._side=s;if(window._mk)drawMarket(window._mk);rkq();}
 function nums(){var p=parseFloat(document.getElementById('px').value),q=parseFloat(document.getElementById('qty').value);
  if(!(p>0)||!(q>0)){alert('price and size');return null;}return [p,q];}
 function busy(kind,on,note,card){
@@ -527,7 +582,8 @@ function doPlace(){if(wait())return;var n=nums();if(!n)return;var c=window._card
  // can sell or a bid can buy back without tying up money
  var free=sd==='BUY'?(j.free_short||0):(j.free_long||0);
  var cost=n[1]<=free+1e-9?0:(sd==='BUY'?n[0]/100*n[1]:(1-n[0]/100)*n[1]);
- if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(cost?' — ties up '+usd(cost):' — from what you hold')+'?'))return;
+ var v=window._rkv,f=(v&&v.key===rkKey()&&v.j&&v.j.ok)?frTxt(v.j.frees):'';
+ if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(cost?' — ties up '+usd(cost):' — from what you hold')+(f?'; if it fills, '+f:'')+'?'))return;
  busy('pm',true,'Placing…',c);
  post({op:'place',market:c.m,side:sd,px:n[0],qty:n[1]},function(r){done(r,c);});}
 function doMove(){if(wait())return;
@@ -844,7 +900,8 @@ class Handler(BaseHTTPRequestHandler):
 
         def arg(k: str, d: str = "") -> str:
             return (q.get(k) or [d])[0]
-        if path in ("/data.json", "/book.json", "/math.json", "/scan.json", "/pay.json"):
+        if path in ("/data.json", "/book.json", "/math.json", "/scan.json", "/pay.json",
+                    "/risk.json"):
             if not self._authed(u.query):
                 return self._json({"ok": False, "note": "key"}, 401)
             try:
@@ -856,6 +913,9 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json(self.app.scanner.view(sort=arg("sort", "pct")))
                 if path == "/pay.json":
                     return self._json(self.app.pay_view())
+                if path == "/risk.json":
+                    return self._json(self.app.risk_quote(arg("m"), arg("side"), arg("px"),
+                                                          arg("qty")))
                 return self._json(self.app.order_math(arg("id")))
             except Exception as e:  # noqa: BLE001
                 return self._json({"ok": False, "note": str(e)[:200]}, 500)
