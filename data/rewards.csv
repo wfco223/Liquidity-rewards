@@ -13090,9 +13090,12 @@ date,market,program_type,reward_usd,status
 2026-10-03,ussewc-usse-co-2026-11-03-rep,liquidityProgram,0.13,PENDING
 2026-10-04,ewc-usse-ak-2026-11-03-rep,liquidityProgram,0.29,PENDING
 2026-10-04,paccc-balpow-2026-11-03-dhou-rsen,liquidityProgram,0.02,PENDING
+2026-10-04,paccc-balpow-2026-11-03-dsweep,liquidityProgram,0.04,PENDING
 2026-10-04,paccc-balpow-2026-11-03-rhou-dsen,liquidityProgram,0.09,PENDING
+2026-10-04,paccc-balpow-2026-11-03-rsweep,liquidityProgram,0.04,PENDING
 2026-10-04,scc-senate-gop-2026-11-03-47,liquidityProgram,0.12,PENDING
 2026-10-04,scc-senate-gop-2026-11-03-48,liquidityProgram,0.07,PENDING
+2026-10-04,scc-senate-gop-2026-11-03-50,liquidityProgram,0.06,PENDING
 2026-10-04,scc-senate-gop-2026-11-03-51,liquidityProgram,0.02,PENDING
 2026-10-04,scc-senate-gop-2026-11-03-52,liquidityProgram,0.04,PENDING
 2026-10-04,scc-senate-gop-2026-11-03-54,liquidityProgram,0.55,PENDING
