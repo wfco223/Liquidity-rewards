@@ -1928,7 +1928,10 @@ class App:
         p = self.positions.get(slug) or {}
         cv = p.get("cashValue")
         net = self.held().get(slug, 0.0)
-        g = self.risk_book().group(slug)
+        g = self._risk_safe(lambda: self.risk_book().group(slug), None)
+        rk = self._risk_safe(lambda: self._touch_risk(g, slug, book), {}) if g else {}
+        fr = {o["id"]: self._risk_safe(lambda o=o: self._order_frees(g, o), None)
+              for o in mine} if g else {}
         return {
             "ok": True, "market": slug, "name": self.label(slug), "stale": stale,
             "age": round(now - book.fetched_at, 1) if book else None,
@@ -1936,13 +1939,12 @@ class App:
             "bids": [list(x) for x in book.bids[:10]] if book else [],
             "asks": [list(x) for x in book.asks[:10]] if book else [],
             "ours": [{"id": o["id"], "side": o["side"], "price": o["price"], "size": o["size"],
-                      "est": self.order_est.get(o["id"]),
-                      "fr": round(g.frees(slug, o["side"], o["price"], o["size"]), 2)}
+                      "est": self.order_est.get(o["id"]), "fr": fr.get(o["id"])}
                      for o in mine],
             # what a fill gives back: a new order at each side's best price,
             # and whether this event's outcomes are netted together
-            "rk": self._touch_risk(g, slug, book), "netted": g.kind is not None,
-            "outcomes": len(g.markets),
+            "rk": rk, "netted": bool(g and g.kind is not None),
+            "outcomes": len(g.markets) if g else 1,
             "net": net,
             "free_long": max(net, 0.0) - self.offered(slug, SELL_LONG),
             "free_short": max(-net, 0.0) - self.offered(slug, SELL_SHORT),
@@ -1992,8 +1994,8 @@ class App:
         elif view.get("first_day"):
             math["why"] = "first day in its program — counts nothing until midnight ET"
             math["est"] = 0.0
-        fill = round(self.risk_book().group(o["market"]).frees(
-            o["market"], o["side"], o["price"], o["size"]), 2)
+        fill = self._risk_safe(
+            lambda: self._order_frees(self.risk_book().group(o["market"]), o), None)
         return {**view, "order": o, "math": math, "fill": fill,
                 "risk": capital_at_risk(o["intent"], o["price"], o["size"]),
                 "basis": round(basis(o["intent"], o["price"], o["size"], o["side"]), 2)}
@@ -2022,18 +2024,37 @@ class App:
         rb.estimated = round(est, 2)          # dollars of it from an estimated cost
         return rb
 
-    def _ahead(self, g, slug: str, side: str, px: float):
+    def _ahead(self, g, slug: str, side: str, px: float, strict: bool = False):
         """The event once his own resting orders on this side priced at px
-        or better have filled (they fill before a new order there), and
-        how many shares that is."""
+        or better have filled (they fill before a new order there; for one
+        of his resting orders, the ones strictly better), and how many
+        shares that is."""
         n = 0.0
-        for o in self.orders:
+        tol = -1e-9 if strict else 1e-9
+        for o in list(self.orders):
             if o["market"] != slug or o["side"] != side:
                 continue
-            if (o["price"] >= px - 1e-9) if side == "BUY" else (o["price"] <= px + 1e-9):
+            if (o["price"] >= px - tol) if side == "BUY" else (o["price"] <= px + tol):
                 g = g.after(slug, side, o["price"], o["size"])
                 n += o["size"]
         return g, n
+
+    def _order_frees(self, g, o: dict) -> float:
+        """What one resting order gives back if it all fills, after his
+        orders strictly better than it on its side."""
+        g2, _ = self._ahead(g, o["market"], o["side"], o["price"], strict=True)
+        return round(g2.frees(o["market"], o["side"], o["price"], o["size"]), 2)
+
+    def _risk_safe(self, fn, default):
+        """The figures are a view: a failure leaves them out, never the page."""
+        try:
+            return fn()
+        except Exception as e:  # noqa: BLE001
+            msg = f"risk figures: {str(e)[:120]}"
+            if msg != getattr(self, "_risk_err", None):
+                self._risk_err = msg
+                self.note(msg)
+            return default
 
     def _touch_risk(self, g, slug: str, book) -> dict:
         """For each side, what an order joining its best price gives back
@@ -2068,14 +2089,16 @@ class App:
             return {"ok": False, "note": "price and size"}
         if not (0.0 < p < 1.0) or not (0.0 <= q <= QTY_MAX) or p != p or q != q:
             return {"ok": False, "note": "price 0.1-99.9c, size up to 20,000"}
-        g0 = self.risk_book().group(slug)
-        g, ahead = self._ahead(g0, slug, side, p)
-        out = {"ok": True, "market": slug, "side": side, "px": p, "qty": q,
-               "netted": g0.kind is not None, "n": len(g0.markets), "ahead": ahead,
-               "best": g.best(slug, side, p)}
-        if q > 0:
-            out["frees"] = round(g.frees(slug, side, p, q), 2)
-        return out
+        def quote():
+            g0 = self.risk_book().group(slug)
+            g, ahead = self._ahead(g0, slug, side, p)
+            out = {"ok": True, "market": slug, "side": side, "px": p, "qty": q,
+                   "netted": g0.kind is not None, "n": len(g0.markets), "ahead": ahead,
+                   "best": g.best(slug, side, p)}
+            if q > 0:
+                out["frees"] = round(g.frees(slug, side, p, q), 2)
+            return out
+        return self._risk_safe(quote, {"ok": False, "note": "the figure could not be worked out"})
 
     # -- what a market pays: his orders, and a new one --------------------------
 
@@ -2142,21 +2165,22 @@ class App:
         for o in self.ghosts:
             gh_m.setdefault(o["market"], []).append(o)
         big = set(self.big_holdings())
-        rb = self.risk_book()
+        rb = self._risk_safe(self.risk_book, None)
         rows = []
         for s in self.listed():
             prog = self.terms.get(s)
             pool = self.side_pool(s, prog) if prog is not None else None
             book = None
             sides = {}
-            g = rb.group(s)
+            g = self._risk_safe(lambda s=s: rb.group(s), None) if rb else None
             for side in ("BUY", "SELL"):
                 mine = [o for o in by_m.get(s, ()) if o["side"] == side]
                 lines = [{"id": o["id"], "price": o["price"], "size": o["size"],
                           "est": self.order_est.get(o["id"]),
                           "basis": round(basis(o["intent"], o["price"], o["size"], side), 2),
-                          # what it gives back if it fills, alone, against what is held
-                          "fr": round(g.frees(s, side, o["price"], o["size"]), 2)}
+                          # what it gives back if it all fills, against what is held
+                          "fr": self._risk_safe(lambda o=o: self._order_frees(g, o), None)
+                          if g else None}
                          for o in mine]
                 lines += [{"id": o["id"], "price": o["price"], "size": o["size"], "ghost": True}
                           for o in gh_m.get(s, ()) if o["side"] == side]
@@ -2173,16 +2197,17 @@ class App:
                     sides[side] = {"o": lines, "day": None, "pct": None,
                                    "new": self.potential(s, side, book, prog, pool, stake,
                                                          first=s in first)}
-            # in an event where one outcome wins: what a fill there gives back
-            # (his orders, and a new one at each side's best price)
-            risk = {}
-            if g.kind is not None:
+            # in an event where one outcome wins: where a fill gives back more
+            # than the same fill would in that market alone — the money his
+            # other outcomes there hand back (a plain sale of what he holds
+            # frees its price anywhere and is not, on its own, a reason)
+            risk, lowers = {}, False
+            if g is not None and g.kind is not None:
                 if book is None:
                     book = self._book_for_new(s, now)
-                risk = {sd: b for sd, b in self._touch_risk(g, s, book).items()
-                        if b["frees"] >= 0.01}
-            lowers = g.kind is not None and (bool(risk) or any(
-                (x.get("fr") or 0) >= 0.01 for sd in sides.values() for x in sd["o"]))
+                risk, lowers = self._risk_safe(
+                    lambda s=s, g=g, book=book, sides=sides: self._row_risk(rb, g, s, book, sides),
+                    ({}, False))
             kind, st = classify(s)
             why = ("order" if s in by_m else "holding" if s in big
                    else "watched" if s in self.watch else "event")
@@ -2195,11 +2220,29 @@ class App:
                          "lr": lowers, "risk": risk})
         return rows
 
+    def _row_risk(self, rb, g, s: str, book, sides: dict):
+        lone = rb.lone(s)
+        risk = {}
+        for sd, b in self._touch_risk(g, s, book).items():
+            if b["frees"] >= 0.01:
+                b["gain"] = round(b["frees"] - lone.frees(s, sd, b["px"], b["q"]), 2)
+                risk[sd] = b
+        lowers = any(b["gain"] >= 0.01 for b in risk.values())
+        for sd, x in sides.items():
+            for o in x["o"]:
+                if o.get("ghost") or (o.get("fr") or 0) < 0.01:
+                    continue
+                alone = lone.frees(s, sd, o["price"], o["size"])
+                lowers = lowers or o["fr"] - alone >= 0.01
+        return risk, lowers
+
     def margin_view(self) -> dict:
         """What the exchange holds as margin beside what everything he
         holds ties up netted and each market alone."""
-        rb = self.risk_book()
-        m = rb.margin()
+        rb = self._risk_safe(self.risk_book, None)
+        m = self._risk_safe(rb.margin, None) if rb else None
+        if m is None:
+            return None
         b = self.balance or {}
         mr = b.get("marginRequirement")
         return {"exchange": to_num(mr) if mr is not None else None,

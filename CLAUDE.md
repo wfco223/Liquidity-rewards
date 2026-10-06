@@ -173,30 +173,39 @@ long and accreted, so search it rather than reading it through.
   of collateral return" ... "And include the amount that I would be getting
   back if my order is filled so I can know what size to place"): a
   "Lowers risk" chip beside "No orders first" keeps the markets where a
-  fill gives money back, and each row then says what: an order at each
-  side's best price frees up to $X at N shares (Y¢ a share), and what each
-  of his orders frees, or ties up, if it all fills. The market card says
-  the same, with Use to fill the form, and as he types a price and size
-  the form says what that order frees or ties up if it fills (his own
-  orders at that price or better counted as filling first) and the most
-  an order at that price can; the order card says what it frees if it
-  fills; the place confirm carries it. The arithmetic is lite/hedge.py:
-  an event's money is its worst outcome — stakes (the feed's cost.value a
-  share; a short held as No) less what pays — never under zero; a fill
-  closes what is held first, booking what it realizes, then opens the
-  rest; what it gives back is the money before less after plus what it
-  realizes. Netted only where one outcome wins: politics seat counts
-  (swept over the count) and "who wins" products (slugs ending "wc",
-  paccc, cpoc, vmc, cmovcuss, cmovcusg), "none of them" kept as an
-  outcome; dates, "over N", a "wins" beside its own brackets, other
-  products and every non-politics market are priced market by market
-  and never in the filter. Resting orders are not counted as held. The
-  exchange's own margin rule is not published: on the 10-04 and 10-05
-  saves it held $695.53 and $855.11 where the positions each alone came
-  to $1,074.56 and $1,259.92 and netted this way $772.56 and $799.92, so
-  it nets, but not exactly this way; with the filter on, the list shows
-  the exchange's margin, the netted figure and the each-alone figure
-  side by side. Read only: nothing here places, moves or cancels.
+  fill gives back MORE than the same fill would in that market alone —
+  the money his other outcomes there hand back (a plain sale of what he
+  holds frees its price anywhere and is not, on its own, a reason). Each
+  row then says what: an order at each side's best price frees up to $X
+  at N shares (Y¢ a share) — after his own orders at that price, which
+  fill first, when he has some there — and what each of his orders frees,
+  or ties up, if it all fills, after his orders strictly better than it.
+  The market card says the same, with Use to fill the form; as he types a
+  price and size the form says what that order frees or ties up if it
+  fills (his orders at that price or better first) and the most an order
+  at that price can; the order card says what it frees if it fills; the
+  place confirm says it in place of the bare collateral. The arithmetic is
+  lite/hedge.py: an event's money is its worst outcome — stakes (the
+  feed's cost.value a share; a short held as No) less what pays — never
+  under zero; a fill closes what is held first, booking what it realizes,
+  then opens the rest; what it gives back is the money before less after
+  plus what it realizes. Netted only where one outcome wins, politics
+  only, by a list of products: seat counts (scc, ushsscc; swept over the
+  count, never under zero) and race winners (ewc, ushrewc, usgubewc,
+  ussewc, pvwc, usmayewc, enwc, usexpwc, paccc, cpoc, vmc, cmovcuss,
+  cmovcusg). Anything dated (a year, a day or a slug ending in a date), "over
+  N", a "<who>win" beside its own brackets, other products and every
+  non-politics market are priced market by market. Outcomes nobody may
+  count on ("none of them", a count no listed market pays on) stay in the
+  margin, and what a fill gives back is the smaller of the readings with
+  and without them. Resting orders are not counted as held. The exchange's
+  own margin rule is not published: on the 10-04 and 10-05 saves it held
+  $695.53 and $855.11 where the positions each alone came to $1,074.56
+  and $1,259.92 and netted this way $772.56 and $799.92, so it nets, but
+  not exactly this way; with the filter on, the list shows the exchange's
+  margin, the netted figure and the each-alone figure side by side. A
+  failure in these figures leaves them off the page, never the page. Read
+  only: nothing here places, moves or cancels.
 - STATUS.md is the phone-readable front page: one ✅/❌ freshness line up
   top, summary before detail, plain-English explanations of every number.
 - The live monitor (live/monitor.py) runs on DigitalOcean from the `deploy`

@@ -40,6 +40,27 @@ class Kinds(unittest.TestCase):
         # not politics: never netted
         self.assertIsNone(hedge.event_kind([SEN + "46", SEN + "47"], politics=False)[0])
 
+    def test_dated_ladders_are_never_netted(self):
+        # by-date pairs whose dates share a prefix: what tells them apart is
+        # a day, a month-day or a year — all of them can resolve Yes
+        for pair in (["ewc-x-2026-12-15", "ewc-x-2026-12-31"],
+                     ["mowc-nato-us-12-31-2026", "mowc-nato-us-12-31-2027"],
+                     ["mowc-x-10-15-2026", "mowc-x-10-31-2026"],
+                     ["scc-x-2026-12-15", "scc-x-2026-12-31"]):
+            self.assertIsNone(hedge.event_kind(pair)[0], pair)
+        # a count is netted only for the seat-count products
+        self.assertIsNone(hedge.event_kind(["vtc-x-2026-11-03-15", "vtc-x-2026-11-03-31"])[0])
+        # an outcome named for a product we do not know: not netted
+        self.assertIsNone(hedge.event_kind(["mowc-x-2026-11-03-dem",
+                                            "mowc-x-2026-11-03-rep"])[0])
+
+    def test_a_win_beside_its_own_brackets(self):
+        for toks in (["demwin", "dem0-2", "rep0-2"], ["lulawin", "lula5-10", "bols0-5"],
+                     ["dwin", "dgte10", "r0-5"]):
+            self.assertIsNone(hedge.event_kind(["vmc-x-2026-11-03-" + t for t in toks])[0], toks)
+        self.assertEqual(hedge.event_kind(["vmc-x-2026-11-03-" + t
+                                           for t in ("dwin", "r0-5", "r5-10")])[0], "categorical")
+
 
 class OneMarket(unittest.TestCase):
     def test_sale_of_what_he_holds_gives_back_the_price(self):
@@ -98,6 +119,27 @@ class Netted(unittest.TestCase):
         b = g.best(SEN + "47", "BUY", 0.05)
         self.assertEqual((b["q"], b["frees"]), (200.0, 190.0))
 
+    def test_a_full_set_is_figured_both_ways(self):
+        # long both parties: if the exchange counts "neither wins", selling
+        # the Democrat frees its price; if it counts only the two, the pair
+        # was nearly riskless and the sale ties money up. The smaller stands.
+        ev = {"e": ["ewc-x-dem", "ewc-x-rep"]}
+        g = book({"ewc-x-dem": (100.0, 0.45), "ewc-x-rep": (100.0, 0.50)}, ev).group("ewc-x-dem")
+        self.assertAlmostEqual(g.money, 95.0)
+        self.assertAlmostEqual(g.money_core, 0.0)
+        self.assertAlmostEqual(g.frees("ewc-x-dem", "SELL", 0.46, 100), -49.0)
+        # only the first 9 shares' 1c profit is sure either way
+        b = g.best("ewc-x-dem", "SELL", 0.46)
+        self.assertEqual((b["q"], b["frees"]), (9.09, 0.09))
+
+    def test_no_count_under_zero_and_one_past_the_ladder_both_ways(self):
+        t = "ushsscc-ushrsc-nv-2026-11-03-"
+        ev = {"e": [t + k for k in ("0", "1", "2", "3")]}
+        g = book({t + k: (100.0, 0.18) for k in ("0", "1", "2", "3")}, ev).group(t + "0")
+        self.assertEqual(g.kind, "numeric")
+        self.assertEqual(len(g.base), 5)                     # 0 to 4, nothing under zero
+        self.assertAlmostEqual(g.frees(t + "0", "SELL", 0.20, 100), -52.0)
+
     def test_margin_plain_and_netted(self):
         ev = {"e": ["ewc-x-dem", "ewc-x-rep"]}
         rb = book({"ewc-x-dem": (-100.0, 0.60), "ewc-x-rep": (-100.0, 0.45), "lone": (10.0, 0.5)},
@@ -148,9 +190,6 @@ class Stake(unittest.TestCase):
         self.assertEqual(hedge.stake_a_share(10, {}, None), (0.5, True))
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 class TheApp(unittest.TestCase):
     """The page's figures (lite/app.py): rows, the card, the order card,
@@ -190,9 +229,37 @@ class TheApp(unittest.TestCase):
         self.assertEqual((b["more"]["q"], b["more"]["frees"]), (50.0, 21.0))
         self.assertNotIn("BUY", m["risk"])        # an independent can still win
         self.assertEqual(m["ask"]["o"][0]["fr"], 21.0)
+        self.assertGreater(m["risk"]["SELL"]["gain"], 40)    # alone it would tie money up
         d = r[self.DEM]
-        self.assertEqual(d["risk"]["BUY"]["frees"], 45.0)   # buying the short back at 55c
-        self.assertTrue(d["lr"])
+        # buying the short back at 55c frees 45c a share — what it would
+        # free in a market by itself, so it is not what the filter is for
+        self.assertEqual(d["risk"]["BUY"]["frees"], 45.0)
+        self.assertEqual(d["risk"]["BUY"]["gain"], 0.0)
+        self.assertFalse(d["lr"])
+
+    def test_a_resting_order_counts_the_better_ones_first(self):
+        from lite.tests.test_lite import raw_order
+        self.c.raw = [raw_order("O1", self.M, "SELL", 0.42, 100, "ORDER_INTENT_BUY_SHORT"),
+                      raw_order("O2", self.M, "SELL", 0.45, 100, "ORDER_INTENT_BUY_SHORT")]
+        self.app._read_orders()
+        r = self.rows()[self.M]
+        fr = {o["id"]: o["fr"] for o in r["ask"]["o"]}
+        # the 42c ask fills first and takes the whole 100 of the hedge; the
+        # 45c one after it opens a short beside it
+        self.assertEqual(fr, {"O1": 42.0, "O2": -55.0})
+        self.assertEqual(self.app.order_math("O2")["fill"], -55.0)
+        self.assertEqual(self.app.risk_quote(self.M, "SELL", "45", "100")["frees"], -55.0)
+
+    def test_a_plain_sale_is_not_a_reason(self):
+        # long the Republican alone in his race: selling it frees its price,
+        # exactly what it would free in a market by itself
+        self.app.positions = {self.M: {"netPositionDecimal": "10", "cost": {"value": "3"},
+                                       "cashValue": {"value": "4"}}}
+        self.c.raw = []
+        self.app._read_orders()
+        r = self.rows()[self.M]
+        self.assertEqual(r["risk"]["SELL"]["gain"], 0.0)
+        self.assertFalse(r["lr"])
 
     def test_a_market_alone_is_not_in_the_filter(self):
         r = self.rows()
@@ -229,9 +296,29 @@ class TheApp(unittest.TestCase):
         self.app.balance = {}
         self.assertIsNone(self.app.data()["margin"]["exchange"])
 
+    def test_a_failure_in_the_figures_leaves_the_page_standing(self):
+        def boom():
+            raise ValueError("bad feed row")
+        self.app.risk_book = boom
+        d = self.app.data()
+        self.assertIsNone(d["margin"])
+        self.assertTrue(d["markets"])
+        self.assertFalse(any(r["lr"] for r in d["markets"]))
+        v = self.app.book_view(self.M)
+        self.assertTrue(v["ok"])
+        self.assertEqual(v["rk"], {})
+        self.assertIsNone(self.app.order_math("O1")["fill"])
+        self.assertFalse(self.app.risk_quote(self.M, "SELL", "42", "5")["ok"])
+        self.assertEqual(sum("risk figures" in n["note"] for n in self.app.notes), 1)
+
     def test_nothing_is_placed_moved_or_cancelled(self):
         self.rows()
         self.app.book_view(self.M)
         self.app.risk_quote(self.M, "SELL", "42", "50")
         self.app.data()
-        self.assertEqual([p for p in self.c.posts if "orders" in p[0]], [])
+        self.app.order_math("O1")
+        self.assertEqual(self.c.posts, [])
+
+
+if __name__ == "__main__":
+    unittest.main()

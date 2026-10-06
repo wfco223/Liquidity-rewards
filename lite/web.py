@@ -276,7 +276,10 @@ function frTxt(v){return v>=0.005?'frees '+usd(v):v<=-0.005?'ties up '+usd(-v):'
 function riskHtml(r){
  var p=[];
  ['BUY','SELL'].forEach(function(sd){var x=sd==='BUY'?r.bid:r.ask,w=side(sd).toLowerCase();
-  var b=(r.risk||{})[sd];if(b)p.push([w.charAt(0).toUpperCase()+w.slice(1)+' at '+ct(b.px)+' frees up to '+usd(b.frees)+' at '+sz(b.q)+' ('+ct(b.ps)+' a share)','ok']);
+  var b=(r.risk||{})[sd],W=w.charAt(0).toUpperCase()+w.slice(1),mo=b&&b.more;
+  // a new order's figure comes after his own at that price, which fill first
+  if(b&&!b.ahead)p.push([W+' at '+ct(b.px)+' frees up to '+usd(b.frees)+' at '+sz(b.q)+' ('+ct(b.ps)+' a share)','ok']);
+  else if(b&&mo&&mo.frees>=0.01)p.push(['New '+w+' at '+ct(b.px)+' frees up to '+usd(mo.frees)+' more at '+sz(mo.q)+', after your '+sz(b.ahead)+' there','ok']);
   live(x).forEach(function(o){var f=frTxt(o.fr);if(f&&(b||o.fr>0))p.push(['Your '+w+' '+ct(o.price)+' × '+sz(o.size)+' '+f+' if it all fills',o.fr>0?'ok':'warn']);});});
  return p.length?'<div class="mrisk">'+p.map(function(x){return '<span class="'+x[1]+'">'+esc(x[0])+'</span>';}).join('<br>')+'</div>':'';
 }
@@ -533,7 +536,7 @@ function riskPanel(j){
    +'<span class="muted">'+ct(b.ps)+' a share'+(use?' <button class="link" onclick="useRisk(\''+sd+'\')">Use</button>':'')+'</span></div>';
    if(b.ahead)h+='<div class="muted">Your '+sz(b.ahead)+' there come first'+(mo&&mo.frees>=0.01?'; then up to '+usd(mo.frees)+' more at '+sz(mo.q)
     :b.ahead>b.q+0.005?'; past '+sz(b.q)+' a fill adds risk':' and cover it')+'</div>';}
-  else h+='<div class="nl"><span>'+t+'<span class="muted">ties up '+ct(-b.ps)+' a share</span></span></div>';});
+  else if(j.netted&&b.ps<=-0.0005)h+='<div class="nl"><span>'+t+'<span class="muted">ties up '+ct(-b.ps)+' a share</span></span></div>';});
  if(!h)return '';
  return '<div class="panel"><div class="label">If an order at the best price fills'+(j.netted?' · netted over the event\'s '+j.outcomes+' outcomes':'')+'</div>'+h+'</div>';
 }
@@ -552,7 +555,9 @@ function rkq(){clearTimeout(window._rkT);window._rkT=setTimeout(function(){
  var c=window._card;if(!c||c.kind!=='market')return;var px=parseFloat(val('px',''));if(!(px>0))return;
  var key=rkKey(),q=parseFloat(val('qty',''));
  get('/risk.json?m='+encodeURIComponent(c.m)+'&side='+(window._side||'BUY')+'&px='+px+'&qty='+(q>0?q:''),function(j){
-  window._rkv={key:key,j:j};var e=document.getElementById('rk');if(e&&key===rkKey())e.innerHTML=rkText();});},300);}
+  // an answer for inputs he has since changed is dropped
+  if(key!==rkKey())return;
+  window._rkv={key:key,j:j};var e=document.getElementById('rk');if(e)e.innerHTML=rkText();});},300);}
 function useBest(){var v=window._rkv,b=v&&v.j&&v.j.best;if(!b||!b.q)return;
  window._typed=window._typed||{};window._typed.qty=''+b.q;drawMarket(window._mk);rkq();}
 function useNew(sd){var n=((window._mk||{}).new||{})[sd];if(!n||n.px==null)return;
@@ -583,7 +588,8 @@ function doPlace(){if(wait())return;var n=nums();if(!n)return;var c=window._card
  var free=sd==='BUY'?(j.free_short||0):(j.free_long||0);
  var cost=n[1]<=free+1e-9?0:(sd==='BUY'?n[0]/100*n[1]:(1-n[0]/100)*n[1]);
  var v=window._rkv,f=(v&&v.key===rkKey()&&v.j&&v.j.ok)?frTxt(v.j.frees):'';
- if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(cost?' — ties up '+usd(cost):' — from what you hold')+(f?'; if it fills, '+f:'')+'?'))return;
+ // the netted figure, where it is known, says what the fill does; else what it ties up
+ if(!confirm(side(sd)+' '+n[0]+'¢ × '+n[1]+(f?' — if it fills, '+f:cost?' — ties up '+usd(cost):' — from what you hold')+'?'))return;
  busy('pm',true,'Placing…',c);
  post({op:'place',market:c.m,side:sd,px:n[0],qty:n[1]},function(r){done(r,c);});}
 function doMove(){if(wait())return;
