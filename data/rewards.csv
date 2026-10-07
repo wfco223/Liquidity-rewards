@@ -13103,5 +13103,7 @@ date,market,program_type,reward_usd,status
 2026-10-04,scc-senate-gop-2026-11-03-56,liquidityProgram,0.02,PAID
 2026-10-04,ussewc-usse-ks-2026-11-03-dem,liquidityProgram,0.28,PAID
 2026-10-04,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.03,PAID
+2026-10-05,ewc-usse-ak-2026-11-03-rep,liquidityProgram,0.84,PENDING
 2026-10-05,scc-hrep-rep-2026-11-03-gte220,liquidityProgram,0.3,PENDING
 2026-10-05,scc-senate-gop-2026-11-03-47,liquidityProgram,1.36,PENDING
+2026-10-05,scc-senate-gop-2026-11-03-51,liquidityProgram,0.19,PENDING
