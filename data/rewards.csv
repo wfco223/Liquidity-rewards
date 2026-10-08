@@ -13105,6 +13105,7 @@ date,market,program_type,reward_usd,status
 2026-10-04,ussewc-usse-ks-2026-11-03-rep,liquidityProgram,0.03,PAID
 2026-10-05,ewc-usgub-oh-2026-11-03-dem,liquidityProgram,2.4,PENDING
 2026-10-05,ewc-usse-ak-2026-11-03-rep,liquidityProgram,0.84,PENDING
+2026-10-05,ewc-usse-me-2026-11-03-rep,liquidityProgram,0.44,PENDING
 2026-10-05,ewc-usse-nc-2026-11-03-dem,liquidityProgram,0.41,PENDING
 2026-10-05,paccc-balpow-2026-11-03-dhou-rsen,liquidityProgram,0.49,PENDING
 2026-10-05,paccc-balpow-2026-11-03-dsweep,liquidityProgram,0.22,PENDING
